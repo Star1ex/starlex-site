@@ -20,6 +20,7 @@ type UserRepository struct{
 	db *gorm.DB
 }
 
+//factory from domain structure
 func fromDomain(u *user.User)*User{
 	return &User{
 		ID: u.ID,
@@ -30,6 +31,7 @@ func fromDomain(u *user.User)*User{
 	}
 }
 
+//factory to domain structure
 func toDomain(u *User)*user.User{
 	return &user.User{
 		ID: u.ID,
@@ -44,9 +46,13 @@ func NewRepository(db *gorm.DB)*UserRepository{
 	return &UserRepository{db: db}
 }
 
+
+//CreateUser method for registration 
 func (r *UserRepository) CreateUser(ctx context.Context,u *user.User)error{
+	//Сreating a user
 	err:=r.db.WithContext(ctx).Create(fromDomain(u)).Error
 	if err!=nil{
+		//Uniqueness check
 		if errors.Is(err, gorm.ErrDuplicatedKey){
 			return ErrAlreadyExists
 		}
@@ -57,6 +63,7 @@ func (r *UserRepository) CreateUser(ctx context.Context,u *user.User)error{
 
 func (r *UserRepository) GetUserByEmail(ctx context.Context,email string)(*user.User,error){
 	var model User
+	//Search for a user by email
 	result:=r.db.WithContext(ctx).Where("email = ?", email).First(&model)
 	if result.Error != nil{
 		if errors.Is(result.Error,gorm.ErrRecordNotFound){
@@ -64,5 +71,6 @@ func (r *UserRepository) GetUserByEmail(ctx context.Context,email string)(*user.
 		}
 		return nil,result.Error
 	}
+	//Use toDomain factory
 	return toDomain(&model),nil
 }
