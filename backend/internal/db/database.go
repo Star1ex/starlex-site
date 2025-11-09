@@ -5,6 +5,7 @@ import (
 	"log"
 
 	"github.com/Team-Tracks/team-track-site/internal/config"
+	"github.com/Team-Tracks/team-track-site/internal/repository"
 	pgdriver "gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
@@ -40,7 +41,7 @@ func setupDB(cfg *config.DatabaseConfig) (*DB, error) {
 
 func migrate(db *DB) error {
 
-	if err := db.AutoMigrate(); err != nil {
+	if err := db.AutoMigrate(&repository.User{}); err != nil {
 		return fmt.Errorf("error migrating models: %v", err)
 	}
 
