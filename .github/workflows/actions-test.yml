@@ -1,0 +1,20 @@
+name: Actions Test
+
+on:
+  push:
+    branches:
+      - dev
+      - feature/workflows
+
+jobs:
+  build:
+    runs-on: self-hosted
+
+    steps:
+      - name: Get the code
+        uses: actions/checkout@v4
+
+      - name: Say Hello World
+        run: echo "Hello, World! Github Actions are working!"
+
+      
