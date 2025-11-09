@@ -16,7 +16,7 @@ func NewUserService(repo user.Repository) *UserService {
 	}
 }
 
-func (s *UserService) Create(ctx *context.Context, u *user.User) error {
+func (s *UserService) Create(ctx context.Context, u *user.User) error {
 	if err := s.repo.Create(ctx, u); err != nil {
 		return err
 	}
@@ -24,7 +24,7 @@ func (s *UserService) Create(ctx *context.Context, u *user.User) error {
 	return nil
 }
 
-func (s *UserService) GetByEmail(ctx *context.Context, email string) (*user.User, error) {
+func (s *UserService) GetByEmail(ctx context.Context, email string) (*user.User, error) {
 	user, err := s.repo.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, err
