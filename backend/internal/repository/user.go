@@ -60,6 +60,11 @@ func (r *UserRepository) Create(ctx context.Context, u *user.User) error {
 	return nil
 }
 
+// Delete user by ID
+func (r *UserRepository) Delete(ctx context.Context, id string) error {
+	return nil
+}
+
 // Retrieves user by email
 func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*user.User, error) {
 	var model User
