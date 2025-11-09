@@ -4,7 +4,7 @@ services:
     container_name: team-track-site-db
     restart: unless-stopped
     env_file:
-      - backend/.env.example
+      - backend/.env
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -32,7 +32,7 @@ services:
     ports:
       - "${BACKEND_PORT}:3000"
     env_file:
-      - backend/.env.example
+      - backend/.env
 
 volumes:
   postgres_data:
