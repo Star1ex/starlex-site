@@ -20,6 +20,8 @@ func StartServer() {
 		AllowHeaders: "Origins, Content-Type, Accept, Authorization",
 	}))
 
+	//userRepo := repository.NewRepository(db.DB)
+
 	handlers := handlers.NewHandlers()
 
 	routes.InitRoutes(app, handlers)

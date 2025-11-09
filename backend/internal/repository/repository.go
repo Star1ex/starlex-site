@@ -7,7 +7,8 @@ import (
 	"github.com/Team-Tracks/team-track-site/internal/domain/user"
 	"gorm.io/gorm"
 )
-type User struct{
+
+type User struct {
 	ID        string `gorm:"primaryKey"`
 	Email     string `gorm:"unique;not null"`
 	Password  string `gorm:"not null"`
@@ -15,45 +16,43 @@ type User struct{
 	LastName  string `gorm:"not null;size:50"`
 }
 
-
-type UserRepository struct{
+type UserRepository struct {
 	db *gorm.DB
 }
 
-//factory from domain structure
-func fromDomain(u *user.User)*User{
+// factory from domain structure
+func fromDomain(u *user.User) *User {
 	return &User{
-		ID: u.ID,
-		Email: u.Email,
-		Password: u.Password,
+		ID:        u.ID,
+		Email:     u.Email,
+		Password:  u.Password,
 		FirstName: u.FirstName,
-		LastName: u.LastName,
+		LastName:  u.LastName,
 	}
 }
 
-//factory to domain structure
-func toDomain(u *User)*user.User{
+// factory to domain structure
+func toDomain(u *User) *user.User {
 	return &user.User{
-		ID: u.ID,
-		Email: u.Email,
-		Password: u.Password,
+		ID:        u.ID,
+		Email:     u.Email,
+		Password:  u.Password,
 		FirstName: u.FirstName,
-		LastName: u.LastName,
+		LastName:  u.LastName,
 	}
 }
 
-func NewRepository(db *gorm.DB)*UserRepository{
+func NewRepository(db *gorm.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
-
-//CreateUser method for registration 
-func (r *UserRepository) CreateUser(ctx context.Context,u *user.User)error{
+// CreateUser method for registration
+func (r *UserRepository) Create(ctx context.Context, u *user.User) error {
 	//Сreating a user
-	err:=r.db.WithContext(ctx).Create(fromDomain(u)).Error
-	if err!=nil{
+	err := r.db.WithContext(ctx).Create(fromDomain(u)).Error
+	if err != nil {
 		//Uniqueness check
-		if errors.Is(err, gorm.ErrDuplicatedKey){
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
 			return ErrAlreadyExists
 		}
 		return err
@@ -61,16 +60,17 @@ func (r *UserRepository) CreateUser(ctx context.Context,u *user.User)error{
 	return nil
 }
 
-func (r *UserRepository) GetUserByEmail(ctx context.Context,email string)(*user.User,error){
+// Retrieves user by email
+func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*user.User, error) {
 	var model User
 	//Search for a user by email
-	result:=r.db.WithContext(ctx).Where("email = ?", email).First(&model)
-	if result.Error != nil{
-		if errors.Is(result.Error,gorm.ErrRecordNotFound){
-			return nil,ErrUserNotFound
+	result := r.db.WithContext(ctx).Where("email = ?", email).First(&model)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, ErrUserNotFound
 		}
-		return nil,result.Error
+		return nil, result.Error
 	}
 	//Use toDomain factory
-	return toDomain(&model),nil
+	return toDomain(&model), nil
 }
