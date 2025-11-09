@@ -23,10 +23,10 @@ type DatabaseConfig struct {
 	SSLMode  string
 }
 
-// Loading full config with data from .env
+// Loading full config with data from .env.example.example
 func LoadConfig() *Config {
 	if err := godotenv.Load(); err != nil {
-		log.Fatalf("error loading .env file: %v", err)
+		log.Fatalf("error loading .env.example.example file: %v", err)
 	}
 
 	return &Config{
