@@ -1,0 +1,41 @@
+name: Website Deploy
+
+on:
+  push:
+    branches:
+    - dev
+    - main
+    - feature/workflows
+
+jobs:
+  build:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Create Backend .env File
+        run: |
+          echo "DB_USER=${{ secrets.DB_USER }}" > backend/.env
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> backend/.env
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> backend/.env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> backend/.env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> backend/.env
+          echo "DB_SSL_MODE=${{ secrets.DB_SSL_MODE }}" >> backend/.env
+          echo "BACKEND_PORT=${{ secrets.BACKEND_PORT }}" >> backend/.env
+          echo "PORT=${{ secrets.PORT }}" >> backend/.env
+          echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> backend/.env
+
+      - name: Create .env File
+        run: |
+          echo "DB_USER=${{ secrets.DB_USER }}" > .env
+          echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
+          echo "BACKEND_PORT=${{ secrets.BACKEND_PORT }}" >> .env
+
+      - name: Build and Deploy
+        run: |
+          docker compose down
+          docker compose up -d --build

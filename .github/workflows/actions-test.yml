@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - dev
+      - main
       - feature/workflows
 
 jobs:
