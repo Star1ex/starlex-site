@@ -21,7 +21,7 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{})
 	}
 
-	user, err := h.service.GetByEmail(ctx.Context(), loginInput.Email)
+	user, err := h.service.Login(ctx.Context(), loginInput.Email)
 	if err != nil {
 		log.Println(err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

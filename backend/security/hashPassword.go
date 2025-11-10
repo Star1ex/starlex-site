@@ -26,6 +26,7 @@ func ComparePassword(userPassword ,inputPassword string)error{
 		log.Println(err)
 		return ErrInvalidCred
 	}
+	return nil
 }
 
 
