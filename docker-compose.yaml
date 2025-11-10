@@ -1,3 +1,5 @@
+# CHANGE .ENV.EXAMPLE TO .ENV IN BOTH FOLDERS BEFORE RUNNING
+
 services:
   db:
     image: postgres:latest
