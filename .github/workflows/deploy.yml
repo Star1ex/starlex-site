@@ -37,4 +37,5 @@ jobs:
 
       - name: Build and Deploy
         run: |
-          docker compose up -d --build --force-recreate --wait
+          docker compoe down
+          docker compose up -d --build
