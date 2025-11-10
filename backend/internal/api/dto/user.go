@@ -19,3 +19,13 @@ func ToUserApi(u *user.User) *UserApi {
 		LastName:  u.LastName,
 	}
 }
+
+func FromUserApi(u *UserApi) *user.User {
+	return &user.User{
+		ID:        u.ID,
+		Email:     u.Email,
+		Password:  u.Password,
+		FirstName: u.FirstName,
+		LastName:  u.LastName,
+	}
+}

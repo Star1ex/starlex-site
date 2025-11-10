@@ -12,31 +12,29 @@ type SignIn struct {
 	Password string `json:"password" binding:"required"`
 }
 
-
-//Login method
+// Login method
 func (h *Handlers) Login(ctx *fiber.Ctx) error {
 	var loginInput SignIn
 
-	if err := ctx.BodyParser(&loginInput); err != nil{
+	if err := ctx.BodyParser(&loginInput); err != nil {
 		log.Println(err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{})
 	}
 
-	user,err:=h.service.GetByEmail(ctx.Context(),loginInput.Email)
-	if err != nil{
+	user, err := h.service.GetByEmail(ctx.Context(), loginInput.Email)
+	if err != nil {
 		log.Println(err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error":"failed to authenticate user",
+			"error": "failed to authenticate user",
 		})
 	}
 
-
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"user":dto.ToUserApi(user),
+		"user": dto.ToUserApi(user),
 	})
 }
 
-//Register method
+// Register method
 func (h *Handlers) Register(ctx *fiber.Ctx) error {
 
 	var input dto.UserApi
@@ -46,12 +44,12 @@ func (h *Handlers) Register(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{})
 	}
 
-
-	err:=h.service.Create(ctx.Context(),input)
-	if err != nil{
+	// create user with service
+	err := h.service.Create(ctx.Context(), dto.FromUserApi(&input))
+	if err != nil {
 		log.Println(err)
 		ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error":"failed to authenticate user",
+			"error": "failed to authenticate user",
 		})
 	}
 	return ctx.Status(fiber.StatusCreated).JSON(fiber.Map{
