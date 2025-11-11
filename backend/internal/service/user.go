@@ -23,18 +23,22 @@ func (s *UserService) Create(ctx context.Context, u *user.User) error {
 	if err != nil{
 		return err
 	}
-	if err := s.repo.Create(ctx, u); err != nil {
+	newUser:=user.NewUser(id,u.Email,hashedPassword,u.FirstName,u.LastName)
+	if err := s.repo.Create(ctx, newUser); err != nil {
 		return err
 	}
-
+	
 	return nil
 }
 
-func (s *UserService) GetByEmail(ctx context.Context, email string) (*user.User, error) {
+func (s *UserService) Login(ctx context.Context, email,password string) (*user.User, error) {
 	user, err := s.repo.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, err
 	}
-
+	err=security.ComparePassword(user.Password,password)
+	if err!=nil{
+		return nil,err
+	}
 	return user, nil
 }

@@ -21,7 +21,7 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{})
 	}
 
-	user, err := h.service.GetByEmail(ctx.Context(), loginInput.Email)
+	user, err := h.service.Login(ctx.Context(), loginInput.Email, loginInput.Password)
 	if err != nil {
 		log.Println(err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -30,7 +30,7 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"user": dto.ToUserApi(user),
+		"user": dto.ToUserResponse(user),
 	})
 }
 
@@ -48,7 +48,7 @@ func (h *Handlers) Register(ctx *fiber.Ctx) error {
 	err := h.service.Create(ctx.Context(), dto.FromUserApi(&input))
 	if err != nil {
 		log.Println(err)
-		ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "failed to authenticate user",
 		})
 	}
