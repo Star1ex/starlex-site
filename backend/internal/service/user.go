@@ -19,7 +19,10 @@ func NewUserService(repo user.Repository) *UserService {
 
 func (s *UserService) Create(ctx context.Context, u *user.User) error {
 	id:=security.GenerateNewID()
-	
+	hashedPassword,err:=security.HashPassword(u.Password)
+	if err != nil{
+		return err
+	}
 	if err := s.repo.Create(ctx, u); err != nil {
 		return err
 	}
