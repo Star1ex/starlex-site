@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/Team-Tracks/team-track-site/internal/domain/user"
+	"github.com/Team-Tracks/team-track-site/security"
 )
 
 type UserService struct {
@@ -17,6 +18,8 @@ func NewUserService(repo user.Repository) *UserService {
 }
 
 func (s *UserService) Create(ctx context.Context, u *user.User) error {
+	id:=security.GenerateNewID()
+	
 	if err := s.repo.Create(ctx, u); err != nil {
 		return err
 	}
