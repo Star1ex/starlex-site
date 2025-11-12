@@ -30,7 +30,7 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"user": dto.ToUserResponse(user),
+		"user": dto.ToUserApi(user),
 	})
 }
 
@@ -48,7 +48,7 @@ func (h *Handlers) Register(ctx *fiber.Ctx) error {
 	err := h.service.Create(ctx.Context(), dto.FromUserApi(&input))
 	if err != nil {
 		log.Println(err)
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+		ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "failed to authenticate user",
 		})
 	}
