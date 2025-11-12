@@ -20,7 +20,7 @@ func main() {
 
 	ctx := context.Background()
 
-	userRepo := repository.NewRepository(db.DB)
+	userRepo := repository.NewUserRepository(db.DB)
 	serviceUser := service.NewUserService(userRepo)
 
 	u := user.User{

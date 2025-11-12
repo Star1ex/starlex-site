@@ -24,7 +24,7 @@ func StartServer() {
 		AllowHeaders: "Origins, Content-Type, Accept, Authorization",
 	}))
 
-	userRepo := repository.NewRepository(db.DB)
+	userRepo := repository.NewUserRepository(db.DB)
 
 	userService := service.NewUserService(userRepo)
 

@@ -14,6 +14,7 @@ type User struct {
 	Password  string `gorm:"not null"`
 	FirstName string `gorm:"not null;size:50"`
 	LastName  string `gorm:"not null;size:50"`
+	Teams []Team `gorm:"many2many:users_teams"`
 }
 
 type UserRepository struct {
@@ -42,7 +43,7 @@ func toDomain(u *User) *user.User {
 	}
 }
 
-func NewRepository(db *gorm.DB) *UserRepository {
+func NewUserRepository(db *gorm.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
