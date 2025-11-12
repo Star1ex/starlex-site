@@ -14,4 +14,8 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 		auth.Post("/login", handlers.Login)
 		auth.Post("/register", handlers.Register)
 	}
+	team:=api.Group("team")
+	{
+		team.Post("/create", handlers.CreateTeam)
+	}
 }
