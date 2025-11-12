@@ -7,6 +7,9 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+
+
+
 type SignIn struct {
 	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
@@ -21,7 +24,7 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{})
 	}
 
-	user, err := h.service.Login(ctx.Context(), loginInput.Email, loginInput.Password)
+	user, err := h.userService.Login(ctx.Context(), loginInput.Email, loginInput.Password)
 	if err != nil {
 		log.Println(err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -45,7 +48,7 @@ func (h *Handlers) Register(ctx *fiber.Ctx) error {
 	}
 
 	// create user with service
-	err := h.service.Create(ctx.Context(), dto.FromUserApi(&input))
+	err := h.userService.Create(ctx.Context(), dto.FromUserApi(&input))
 	if err != nil {
 		log.Println(err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{

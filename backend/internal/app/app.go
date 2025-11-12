@@ -28,8 +28,7 @@ func StartServer() {
 	teamRepo := repository.NewTeamRepository(db.DB)
 	userService := service.NewUserService(userRepo)
 	teamService := service.NewTeamService(teamRepo)
-	handlers := handlers.NewHandlers(userService)
-	
+	handlers := handlers.NewHandlers(userService,teamService)
 	routes.InitRoutes(app, handlers)
 
 	app.Listen(":3000")

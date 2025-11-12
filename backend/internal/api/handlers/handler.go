@@ -1,15 +1,18 @@
 package handlers
 
 import (
+	"github.com/Team-Tracks/team-track-site/internal/domain/team"
 	"github.com/Team-Tracks/team-track-site/internal/domain/user"
 )
 
 type Handlers struct {
-	service user.Service
+	userService user.Service
+	teamService team.Service
 }
 
-func NewHandlers(service user.Service) *Handlers {
+func NewHandlers(userService user.Service, teamService team.Service) *Handlers {
 	return &Handlers{
-		service: service,
+		userService: userService,
+		teamService: teamService,
 	}
 }
