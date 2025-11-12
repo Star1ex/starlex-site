@@ -8,5 +8,5 @@ type Service interface {
 	Create(ctx context.Context, u *User) error
 
 	// GetByEmail
-	Login(ctx context.Context, email,password string) (*User, error)
+	Login(ctx context.Context, email, password string) (*User, error)
 }

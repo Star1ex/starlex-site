@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"log"
+	"time"
 
 	"github.com/Team-Tracks/team-track-site/internal/api/dto"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type SignIn struct {
@@ -29,9 +31,20 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 		})
 	}
 
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"user": dto.ToUserResponse(user),
+	// Generater new token with paramaters and add expired time 24 hours
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"email": loginInput.Email,
+		"exp":   time.Now().Add(24 * time.Hour).Unix(),
 	})
+
+	// Hash the token
+	tokenStr, err := token.SignedString([]byte(jwtSecret))
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to generate token")
+	}
+
+	// Return token, user
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"token": tokenStr, "user": dto.ToUserResponse(user)})
 }
 
 // Register method
@@ -48,7 +61,7 @@ func (h *Handlers) Register(ctx *fiber.Ctx) error {
 	err := h.service.Create(ctx.Context(), dto.FromUserApi(&input))
 	if err != nil {
 		log.Println(err)
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+		ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "failed to authenticate user",
 		})
 	}

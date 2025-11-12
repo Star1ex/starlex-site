@@ -9,12 +9,11 @@ type UserApi struct {
 	LastName  string `json:"last_name"`
 }
 
-
 type UserResponse struct {
-    ID        string `json:"id"` 
-    Email     string `json:"email"`
-    FirstName string `json:"first_name"`
-    LastName  string `json:"last_name"`
+	ID        string `json:"id"`
+	Email     string `json:"email"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
 }
 
 func ToUserApi(u *user.User) *UserApi {
@@ -35,11 +34,11 @@ func FromUserApi(u *UserApi) *user.User {
 	}
 }
 
-func ToUserResponse(u *user.User) *UserResponse{
-	return  &UserResponse{
-		ID: u.ID,
-		Email: u.Email,
+func ToUserResponse(u *user.User) *UserResponse {
+	return &UserResponse{
+		ID:        u.ID,
+		Email:     u.Email,
 		FirstName: u.FirstName,
-		LastName: u.LastName,
+		LastName:  u.LastName,
 	}
 }
