@@ -21,5 +21,5 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 	{
 		team.Post("/create", handlers.CreateTeam)
 	}
-
+}
 	// After we add a dashboard with UserIndentity by jwt
