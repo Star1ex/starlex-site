@@ -14,6 +14,12 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 		auth.Post("/login", handlers.Login)
 		auth.Post("/register", handlers.Register)
 	}
+  
+  // After we add a dashboard with UserIndentity by jwt
+  
+	team:=api.Group("team")
+	{
+		team.Post("/create", handlers.CreateTeam)
+	}
 
 	// After we add a dashboard with UserIndentity by jwt
-}

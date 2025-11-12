@@ -24,12 +24,11 @@ func StartServer() {
 		AllowHeaders: "Origins, Content-Type, Accept, Authorization",
 	}))
 
-	userRepo := repository.NewRepository(db.DB)
-
+	userRepo := repository.NewUserRepository(db.DB)
+	teamRepo := repository.NewTeamRepository(db.DB)
 	userService := service.NewUserService(userRepo)
-
-	handlers := handlers.NewHandlers(userService)
-
+	teamService := service.NewTeamService(teamRepo)
+	handlers := handlers.NewHandlers(userService,teamService)
 	routes.InitRoutes(app, handlers)
 
 	app.Listen(":3000")

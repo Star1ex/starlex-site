@@ -4,7 +4,7 @@ import (
 	"context"
 
 	"github.com/Team-Tracks/team-track-site/internal/domain/user"
-	"github.com/Team-Tracks/team-track-site/security"
+	"github.com/Team-Tracks/team-track-site/internal/security"
 )
 
 type UserService struct {
