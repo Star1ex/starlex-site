@@ -14,6 +14,8 @@ const (
 	jwtSecret  = "super_secret_key_123"
 )
 
+// UserIdentity for indentiry user by jwt token session
+// Session saves 24 hours
 func (h *Handlers) UserIndentity(c *fiber.Ctx) error {
 	header := c.Get(authHeader)
 
@@ -23,6 +25,7 @@ func (h *Handlers) UserIndentity(c *fiber.Ctx) error {
 		})
 	}
 
+	// Split header for give a two parts "Bearer" and "Token"
 	parts := strings.Split(header, " ")
 	if len(parts) != 2 || parts[0] != "Bearer" {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -30,6 +33,7 @@ func (h *Handlers) UserIndentity(c *fiber.Ctx) error {
 		})
 	}
 
+	// This is token
 	tokenStr := parts[1]
 
 	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (any, error) {
@@ -66,7 +70,9 @@ func (h *Handlers) UserIndentity(c *fiber.Ctx) error {
 		})
 	}
 
+	// Saved email in local storage
 	c.Locals("email", email)
 
+	// Next proccess
 	return c.Next()
 }

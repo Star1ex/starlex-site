@@ -8,13 +8,12 @@ type User struct {
 	LastName  string
 }
 
-
-func NewUser(id,email,hashedPassword,firstName,lastName string)*User{
+func NewUser(id, email, hashedPassword, firstName, lastName string) *User {
 	return &User{
-		ID: id,
-		Email: email,
-		Password: hashedPassword,
+		ID:        id,
+		Email:     email,
+		Password:  hashedPassword,
 		FirstName: firstName,
-		LastName: lastName,
+		LastName:  lastName,
 	}
 }
