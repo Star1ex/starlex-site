@@ -8,3 +8,4 @@ var ErrUserNotFound error = errors.New("repository: user with this email not fou
 
 // Errors for repository package(team)
 var ErrTeamAlreadyExists error = errors.New("repository: team with this name already exists")
+var ErrTeamNotFound error = errors.New("repository: team with this id not found")

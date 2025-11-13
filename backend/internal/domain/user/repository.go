@@ -1,6 +1,10 @@
 package user
 
-import "context"
+import (
+	"context"
+
+	"github.com/Team-Tracks/team-track-site/internal/domain/team"
+)
 
 type Repository interface {
 
@@ -10,4 +14,5 @@ type Repository interface {
 
 	// Get user by email
 	GetByEmail(ctx context.Context, email string) (*User, error)
+	GetUserTeams(ctx context.Context, userID string)([]*team.Team,error)
 }

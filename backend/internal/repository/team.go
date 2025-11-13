@@ -6,6 +6,7 @@ import (
 	"log"
 
 	"github.com/Team-Tracks/team-track-site/internal/domain/team"
+	"github.com/Team-Tracks/team-track-site/internal/domain/user"
 	"gorm.io/gorm"
 )
 
@@ -21,6 +22,14 @@ func fromDomainToTeam(team *team.Team)*Team{
 		ID: team.ID,
 		Name: team.Name,
 		Description: team.Description,
+	}
+}
+
+func toTeamDomain(Team *Team)*team.Team{
+	return &team.Team{
+		ID: Team.ID,
+		Name: Team.Name,
+		Description: Team.Description,
 	}
 }
 
@@ -60,4 +69,23 @@ func (t *TeamRepository) CreateAndAddCreator(ctx context.Context, team *team.Tea
 		return err
 	}
 	return nil
+}
+
+
+func (t *TeamRepository) GetUsersInTeam(ctx context.Context, teamId string)([]*user.User,error){
+	var teamModel Team
+	err:=t.db.WithContext(ctx).Preload("Users").First(&teamModel,"id = ?",teamId).Error
+	if err!=nil{
+		if errors.Is(err,gorm.ErrRecordNotFound){
+			return nil,ErrTeamNotFound
+		}
+		return nil,err
+	}
+	users:=teamModel.Users
+	usersInTeam:=make([]*user.User,len(users))
+	for i,user:=range users{
+		usersInTeam[i]=toDomain(&user)
+	}
+	return usersInTeam,nil
+
 }

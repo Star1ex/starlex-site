@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 
+	"github.com/Team-Tracks/team-track-site/internal/domain/team"
 	"github.com/Team-Tracks/team-track-site/internal/domain/user"
 	"gorm.io/gorm"
 )
@@ -79,4 +80,23 @@ func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*user.Us
 	}
 	//Use toDomain factory
 	return toDomain(&model), nil
+}
+
+
+func(r *UserRepository) GetUserTeams(ctx context.Context, userID string)([]*team.Team,error){
+	var userModel User
+	err := r.db.WithContext(ctx).Preload("Teams").First(&userModel, "id = ?",userID).Error
+	if err!=nil{
+		if errors.Is(err,gorm.ErrRecordNotFound){
+			return nil,ErrUserNotFound
+		}
+		return nil,err
+	}
+
+	teams:=userModel.Teams
+	teamsInUser:=make([]*team.Team,len(teams))
+	for i,team:=range teams{
+		teamsInUser[i]=toTeamDomain(&team)
+	}
+	return teamsInUser,nil
 }
