@@ -1,17 +1,24 @@
-import  { useState } from 'react';
-import { User, Mail, Lock, LogOut, Sparkles, Zap, Shield, TrendingUp, Users, Target, Award } from 'lucide-react';
+import { useState } from "preact/hooks";
+import {
+  User,
+  Mail,
+  Lock,
+  LogOut,
+  Sparkles,
+  Zap,
+  Shield,
+  TrendingUp,
+  Users,
+  Target,
+  Award,
+} from "lucide-react";
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
 
-  const handleLogin = () => {
-    setIsLoggedIn(true);
-  };
-
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-  };
+  const handleLogin = () => setIsLoggedIn(true);
+  const handleLogout = () => setIsLoggedIn(false);
 
   if (isLoggedIn) {
     return (
@@ -26,6 +33,7 @@ export default function App() {
                 Dashboard
               </span>
             </div>
+
             <button
               onClick={handleLogout}
               className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white rounded-lg transition-all duration-300 font-semibold shadow-lg hover:shadow-red-500/50"
@@ -36,6 +44,7 @@ export default function App() {
           </div>
         </nav>
 
+        {/* MAIN CONTENT */}
         <main className="max-w-7xl mx-auto px-6 py-16">
           <div className="mb-16 text-center">
             <h1 className="text-6xl font-black text-white mb-4 animate-pulse">
@@ -46,6 +55,7 @@ export default function App() {
             </p>
           </div>
 
+          {/* CARDS */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
             <div className="bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl p-6 shadow-2xl hover:scale-105 transition-transform duration-300 cursor-pointer">
               <div className="flex items-center justify-between mb-4">
@@ -84,14 +94,17 @@ export default function App() {
             </div>
           </div>
 
+          {/* INFO BLOCKS */}
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="bg-black bg-opacity-40 backdrop-blur-xl rounded-2xl p-8 border border-purple-500 border-opacity-30 shadow-2xl">
               <div className="w-16 h-16 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-orange-500/50">
                 <Zap className="w-9 h-9 text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-white mb-3">Быстрый старт</h3>
+              <h3 className="text-2xl font-bold text-white mb-3">
+                Быстрый старт
+              </h3>
               <p className="text-purple-300 leading-relaxed">
-                Начните работу с нашей платформой за считанные минуты. Интуитивный интерфейс и мощные инструменты.
+                Начните работу с нашей платформой за считанные минуты.
               </p>
             </div>
 
@@ -99,9 +112,11 @@ export default function App() {
               <div className="w-16 h-16 bg-gradient-to-br from-green-400 to-emerald-500 rounded-2xl flex items-center justify-center mb-6 shadow-lg shadow-emerald-500/50">
                 <Shield className="w-9 h-9 text-white" />
               </div>
-              <h3 className="text-2xl font-bold text-white mb-3">Максимальная защита</h3>
+              <h3 className="text-2xl font-bold text-white mb-3">
+                Максимальная защита
+              </h3>
               <p className="text-purple-300 leading-relaxed">
-                Ваши данные защищены 24/7 современными системами безопасности и шифрованием.
+                Данные защищены современными системами безопасности.
               </p>
             </div>
 
@@ -111,7 +126,7 @@ export default function App() {
               </div>
               <h3 className="text-2xl font-bold text-white mb-3">Инновации</h3>
               <p className="text-purple-300 leading-relaxed">
-                Используйте самые современные технологии и будьте на шаг впереди конкурентов.
+                Используйте современные технологии.
               </p>
             </div>
           </div>
@@ -134,40 +149,40 @@ export default function App() {
             <User className="w-14 h-14 text-white" />
           </div>
           <h1 className="text-4xl font-black text-white mb-3">
-            {showRegister ? 'Регистрация' : 'Добро пожаловать'}
+            {showRegister ? "Регистрация" : "Добро пожаловать"}
           </h1>
           <p className="text-lg text-purple-100">
-            {showRegister ? 'Создайте новый аккаунт' : 'Войдите в свой аккаунт'}
+            {showRegister ? "Создайте новый аккаунт" : "Войдите в аккаунт"}
           </p>
         </div>
 
         <div className="space-y-6">
           {showRegister && (
             <div className="relative group">
-              <User className="absolute left-4 top-1/2 transform -translate-y-1/2 text-purple-200 w-5 h-5 group-focus-within:text-white transition-colors" />
+              <User className="absolute left-4 top-1/2 -translate-y-1/2 text-purple-200 w-5 h-5 transition-colors" />
               <input
                 type="text"
                 placeholder="Введите ваше имя"
-                className="w-full pl-12 pr-4 py-4 bg-white bg-opacity-20 border-2 border-white border-opacity-30 rounded-xl text-white placeholder-purple-200 focus:outline-none focus:border-purple-300 focus:bg-opacity-30 transition-all text-lg"
+                className="w-full pl-12 pr-4 py-4 bg-white bg-opacity-20 border-2 border-white border-opacity-30 rounded-xl text-white placeholder-purple-200 focus:border-purple-300 focus:bg-opacity-30 transition-all text-lg"
               />
             </div>
           )}
 
           <div className="relative group">
-            <Mail className="absolute left-4 top-1/2 transform -translate-y-1/2 text-purple-200 w-5 h-5 group-focus-within:text-white transition-colors" />
+            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-purple-200 w-5 h-5 transition-colors" />
             <input
               type="email"
               placeholder="Введите email"
-              className="w-full pl-12 pr-4 py-4 bg-white bg-opacity-20 border-2 border-white border-opacity-30 rounded-xl text-white placeholder-purple-200 focus:outline-none focus:border-purple-300 focus:bg-opacity-30 transition-all text-lg"
+              className="w-full pl-12 pr-4 py-4 bg-white bg-opacity-20 border-2 border-white border-opacity-30 rounded-xl text-white placeholder-purple-200 focus:border-purple-300 focus:bg-opacity-30 transition-all text-lg"
             />
           </div>
 
           <div className="relative group">
-            <Lock className="absolute left-4 top-1/2 transform -translate-y-1/2 text-purple-200 w-5 h-5 group-focus-within:text-white transition-colors" />
+            <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-purple-200 w-5 h-5 transition-colors" />
             <input
               type="password"
               placeholder="Введите пароль"
-              className="w-full pl-12 pr-4 py-4 bg-white bg-opacity-20 border-2 border-white border-opacity-30 rounded-xl text-white placeholder-purple-200 focus:outline-none focus:border-purple-300 focus:bg-opacity-30 transition-all text-lg"
+              className="w-full pl-12 pr-4 py-4 bg-white bg-opacity-20 border-2 border-white border-opacity-30 rounded-xl text-white placeholder-purple-200 focus:border-purple-300 focus:bg-opacity-30 transition-all text-lg"
             />
           </div>
 
@@ -175,16 +190,18 @@ export default function App() {
             onClick={handleLogin}
             className="w-full py-4 bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 text-white font-bold text-lg rounded-xl hover:shadow-2xl hover:shadow-purple-500/50 transition-all duration-300 transform hover:scale-105"
           >
-            {showRegister ? 'Зарегистрироваться' : 'Войти'}
+            {showRegister ? "Зарегистрироваться" : "Войти"}
           </button>
         </div>
 
         <div className="mt-8 text-center">
           <button
             onClick={() => setShowRegister(!showRegister)}
-            className="text-white hover:text-purple-200 transition-colors font-semibold text-lg"
+            className="text-white hover:text-purple-200 text-lg font-semibold"
           >
-            {showRegister ? '← Уже есть аккаунт? Войти' : 'Нет аккаунта? Создать →'}
+            {showRegister
+              ? "← You already have an account? Login"
+              : "Don't have an account? Create →"}
           </button>
         </div>
       </div>
