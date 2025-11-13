@@ -1,5 +1,4 @@
-package team
-
+package entity
 
 type Team struct{
 	ID string

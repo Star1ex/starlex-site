@@ -1,7 +1,7 @@
 package dto
 
 import (
-	"github.com/Team-Tracks/team-track-site/internal/domain/team"
+	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
 )
 
 
@@ -19,7 +19,7 @@ type TeamResponse struct{
 	Description string `json:"description"`
 }
 
-func ToTeamResponse(team *team.Team)*TeamResponse{
+func ToTeamResponse(team *entity.Team)*TeamResponse{
 	return &TeamResponse{
 		TeamID: team.ID,
 		Name: team.Name,

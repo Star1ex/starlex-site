@@ -2,10 +2,11 @@ package team
 
 import (
 	"context"
-	"os/user"
+
+	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
 )
 
 type Repository interface{
-	CreateAndAddCreator(ctx context.Context, team *Team, userId string)error
-	GetUsersInTeam(ctx context.Context, teamId string)([]*user.User,error)
+	CreateAndAddCreator(ctx context.Context, team *entity.Team, userId string)error
+	GetUsersInTeam(ctx context.Context, teamId string)([]*entity.User,error)
 }

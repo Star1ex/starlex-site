@@ -4,8 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"github.com/Team-Tracks/team-track-site/internal/domain/team"
-	"github.com/Team-Tracks/team-track-site/internal/domain/user"
+	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
 	"gorm.io/gorm"
 )
 
@@ -23,7 +22,7 @@ type UserRepository struct {
 }
 
 // factory from domain structure
-func fromDomain(u *user.User) *User {
+func fromDomain(u *entity.User) *User {
 	return &User{
 		ID:        u.ID,
 		Email:     u.Email,
@@ -34,8 +33,8 @@ func fromDomain(u *user.User) *User {
 }
 
 // factory to domain structure
-func toDomain(u *User) *user.User {
-	return &user.User{
+func toDomain(u *User) *entity.User {
+	return &entity.User{
 		ID:        u.ID,
 		Email:     u.Email,
 		Password:  u.Password,
@@ -49,7 +48,7 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 }
 
 // CreateUser method for registration
-func (r *UserRepository) Create(ctx context.Context, u *user.User) error {
+func (r *UserRepository) Create(ctx context.Context, u *entity.User) error {
 	//Сreating a user
 	err := r.db.WithContext(ctx).Create(fromDomain(u)).Error
 	if err != nil {
@@ -68,7 +67,7 @@ func (r *UserRepository) Delete(ctx context.Context, id string) error {
 }
 
 // Retrieves user by email
-func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*user.User, error) {
+func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*entity.User, error) {
 	var model User
 	//Search for a user by email
 	result := r.db.WithContext(ctx).Where("email = ?", email).First(&model)
@@ -83,7 +82,7 @@ func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*user.Us
 }
 
 
-func(r *UserRepository) GetUserTeams(ctx context.Context, userID string)([]*team.Team,error){
+func(r *UserRepository) GetUserTeams(ctx context.Context, userID string)([]*entity.Team,error){
 	var userModel User
 	err := r.db.WithContext(ctx).Preload("Teams").First(&userModel, "id = ?",userID).Error
 	if err!=nil{
@@ -94,7 +93,7 @@ func(r *UserRepository) GetUserTeams(ctx context.Context, userID string)([]*team
 	}
 
 	teams:=userModel.Teams
-	teamsInUser:=make([]*team.Team,len(teams))
+	teamsInUser:=make([]*entity.Team,len(teams))
 	for i,team:=range teams{
 		teamsInUser[i]=toTeamDomain(&team)
 	}
