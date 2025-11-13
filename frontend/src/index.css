@@ -1,0 +1,13 @@
+/* Tailwind директивы — обязательно вверху */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Кастомные анимации */
+.animation-delay-1 {
+  animation-delay: 1s;
+}
+
+.animation-delay-2 {
+  animation-delay: 2s;
+}
