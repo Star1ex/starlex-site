@@ -26,3 +26,16 @@ func ToTeamResponse(team *entity.Team)*TeamResponse{
 		Description: team.Description,
 	}
 }
+
+func ToUsersResponse(users []*entity.User)[]UserResponse{
+	response:=make([]UserResponse, len(users))
+	for i,user :=range users{
+		response[i] = UserResponse{
+			ID: user.ID,
+			Email: user.Email,
+			FirstName: user.FirstName,
+			LastName: user.LastName,
+		}
+	}
+	return response
+}

@@ -30,3 +30,14 @@ func (h *Handlers) CreateTeam(ctx *fiber.Ctx)error{
 	
 	return ctx.Status(fiber.StatusCreated).JSON(response)
 }
+
+func (h *Handlers) GetUsers(ctx *fiber.Ctx)error{
+	var id string //type how we will get id
+	users,err:=h.teamService.GetUsers(ctx.Context(),id)
+	if err!=nil{
+		log.Println(err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{})
+	}
+	response:=dto.ToUsersResponse(users)
+	return ctx.Status(fiber.StatusOK).JSON(response)
+}
