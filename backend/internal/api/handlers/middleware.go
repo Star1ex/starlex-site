@@ -10,7 +10,6 @@ import (
 
 const (
 	authHeader = "Authorization"
-	email      = "email"
 	jwtSecret  = "super_secret_key_123"
 )
 

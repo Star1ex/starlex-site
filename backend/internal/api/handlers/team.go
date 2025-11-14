@@ -7,37 +7,53 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func (h *Handlers) CreateTeam(ctx *fiber.Ctx)error{
+// CreateTeam godoc
+// @Summary      Created team
+// @Description  Created new team
+// @Tags         team
+// @Accept       json
+// @Produce      json
+// @Param        user            body      dto.TeamApi  true  "Team data"
+// @Success      201  {object}   map[string]interface{}    "team created successfuly"
+// @Failure      400  {object}   map[string]string         "bad request"
+// @Failure      500  {object}   map[string]string         "internal server error"
+// @Router       /team [post]
+func (h *Handlers) CreateTeam(ctx *fiber.Ctx) error {
 	var input dto.TeamApi
-	if err := ctx.BodyParser(&input);err != nil{
+	if err := ctx.BodyParser(&input); err != nil {
 		log.Println(err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{})
 	}
 
+	team, err := h.teamService.CreateTeam(ctx.Context(), input.Name, input.Description, input.UserID)
 
-	team,err:=h.teamService.CreateTeam(ctx.Context(),input.Name,input.Description,input.UserID)
-
-
-	if err != nil{
+	if err != nil {
 		log.Println(err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error":"failed to create team",
+			"error": "failed to create team",
 		})
 	}
 
-
 	response := dto.ToTeamResponse(team)
-	
+
 	return ctx.Status(fiber.StatusCreated).JSON(response)
 }
 
-func (h *Handlers) GetUsers(ctx *fiber.Ctx)error{
+// GetUsers godoc
+// @Summary 		Get all users from team
+// @Description 	Return all users from team
+// @Tags team
+// @Param id path string true "Team ID"
+// @Success 200 {array} dto.UserResponse "List of users"
+// @Failure 500 {object} map[string]string "Server error"
+// @Router /team/{id} [get]
+func (h *Handlers) GetUsers(ctx *fiber.Ctx) error {
 	var id string = ctx.Params("id")
-	users,err:=h.teamService.GetUsers(ctx.Context(),id)
-	if err!=nil{
+	users, err := h.teamService.GetUsers(ctx.Context(), id)
+	if err != nil {
 		log.Println(err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{})
 	}
-	response:=dto.ToUsersResponse(users)
+	response := dto.ToUsersResponse(users)
 	return ctx.Status(fiber.StatusOK).JSON(response)
 }

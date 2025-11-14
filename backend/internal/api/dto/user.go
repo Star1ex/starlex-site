@@ -44,11 +44,3 @@ func ToUserResponse(u *entity.User) *UserResponse {
 		LastName:  u.LastName,
 	}
 }
-
-func ToTeamsResponse(teams []*entity.Team)[]TeamResponse{
-	response := make([]TeamResponse, len(teams))
-	for i,team := range teams{
-		response[i] = *ToTeamResponse(team)
-	}
-	return response
-}

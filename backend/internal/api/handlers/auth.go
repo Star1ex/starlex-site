@@ -9,15 +9,24 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-
-
-
 type SignIn struct {
 	Email    string `json:"email" binding:"required"`
 	Password string `json:"password" binding:"required"`
 }
 
 // Login method
+
+// Login godoc:
+// @Summary      Auth
+// @Description  Auth if user created
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        user            body      SignIn  true  "User data"
+// @Success      201  {object}   map[string]interface{}    "user auth successfuly"
+// @Failure      400  {object}   map[string]string         "bad request"
+// @Failure      500  {object}   map[string]string         "internal server error"
+// @Router       /auth/login [post]
 func (h *Handlers) Login(ctx *fiber.Ctx) error {
 	var loginInput SignIn
 
@@ -51,6 +60,18 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 }
 
 // Register method
+
+// Register godoc
+// @Summary      Register
+// @Description  Register new user
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        user            body      dto.UserApi  true  "User data"
+// @Success      201  {object}   map[string]interface{}    "user created successfuly"
+// @Failure      400  {object}   map[string]string         "bad request"
+// @Failure      500  {object}   map[string]string         "internal server error"
+// @Router       /auth/register [post]
 func (h *Handlers) Register(ctx *fiber.Ctx) error {
 
 	var input dto.UserApi
