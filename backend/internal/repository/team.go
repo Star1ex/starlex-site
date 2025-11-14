@@ -5,7 +5,7 @@ import (
 	"errors"
 	"log"
 
-	"github.com/Team-Tracks/team-track-site/internal/domain/team"
+	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
 	"gorm.io/gorm"
 )
 
@@ -16,11 +16,19 @@ type Team struct{
 	Users []User `gorm:"many2many:users_teams"`
 }
 
-func fromDomainToTeam(team *team.Team)*Team{
+func fromDomainToTeam(team *entity.Team)*Team{
 	return &Team{
 		ID: team.ID,
 		Name: team.Name,
 		Description: team.Description,
+	}
+}
+
+func toTeamDomain(Team *Team)*entity.Team{
+	return &entity.Team{
+		ID: Team.ID,
+		Name: Team.Name,
+		Description: Team.Description,
 	}
 }
 
@@ -35,7 +43,7 @@ func NewTeamRepository(db *gorm.DB)*TeamRepository{
 }
 
 
-func (t *TeamRepository) CreateAndAddCreator(ctx context.Context, team *team.Team, userId string)error{
+func (t *TeamRepository) CreateAndAddCreator(ctx context.Context, team *entity.Team, userId string)error{
 	err := t.db.Transaction(func(tx *gorm.DB) error {
 		//Creating team
 		newTeam:=fromDomainToTeam(team)
@@ -60,4 +68,23 @@ func (t *TeamRepository) CreateAndAddCreator(ctx context.Context, team *team.Tea
 		return err
 	}
 	return nil
+}
+
+
+func (t *TeamRepository) GetUsersInTeam(ctx context.Context, teamId string)([]*entity.User,error){
+	var teamModel Team
+	err:=t.db.WithContext(ctx).Preload("Users").First(&teamModel,"id = ?",teamId).Error
+	if err!=nil{
+		if errors.Is(err,gorm.ErrRecordNotFound){
+			return nil,ErrTeamNotFound
+		}
+		return nil,err
+	}
+	users:=teamModel.Users
+	usersInTeam:=make([]*entity.User,len(users))
+	for i,user:=range users{
+		usersInTeam[i]=toDomain(&user)
+	}
+	return usersInTeam,nil
+
 }

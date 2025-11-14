@@ -1,6 +1,8 @@
 package dto
 
-import "github.com/Team-Tracks/team-track-site/internal/domain/user"
+import (
+	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
+)
 
 type UserApi struct {
 	Email     string `json:"email" binding:"required"`
@@ -16,7 +18,7 @@ type UserResponse struct {
 	LastName  string `json:"last_name"`
 }
 
-func ToUserApi(u *user.User) *UserApi {
+func ToUserApi(u *entity.User) *UserApi {
 	return &UserApi{
 		Email:     u.Email,
 		Password:  u.Password,
@@ -25,8 +27,8 @@ func ToUserApi(u *user.User) *UserApi {
 	}
 }
 
-func FromUserApi(u *UserApi) *user.User {
-	return &user.User{
+func FromUserApi(u *UserApi) *entity.User {
+	return &entity.User{
 		Email:     u.Email,
 		Password:  u.Password,
 		FirstName: u.FirstName,
@@ -34,11 +36,19 @@ func FromUserApi(u *UserApi) *user.User {
 	}
 }
 
-func ToUserResponse(u *user.User) *UserResponse {
+func ToUserResponse(u *entity.User) *UserResponse {
 	return &UserResponse{
 		ID:        u.ID,
 		Email:     u.Email,
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
 	}
+}
+
+func ToTeamsResponse(teams []*entity.Team)[]TeamResponse{
+	response := make([]TeamResponse, len(teams))
+	for i,team := range teams{
+		response[i] = *ToTeamResponse(team)
+	}
+	return response
 }

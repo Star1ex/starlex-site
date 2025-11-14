@@ -6,7 +6,7 @@ import (
 
 	"github.com/Team-Tracks/team-track-site/internal/config"
 	"github.com/Team-Tracks/team-track-site/internal/db"
-	"github.com/Team-Tracks/team-track-site/internal/domain/user"
+	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
 	"github.com/Team-Tracks/team-track-site/internal/repository"
 	"github.com/Team-Tracks/team-track-site/internal/service"
 )
@@ -23,7 +23,7 @@ func main() {
 	userRepo := repository.NewUserRepository(db.DB)
 	serviceUser := service.NewUserService(userRepo)
 
-	u := user.User{
+	u := entity.User{
 		Email:     "eblan@gmail.com",
 		Password:  "1234",
 		FirstName: "John",
