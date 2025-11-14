@@ -6,6 +6,7 @@ on:
     - dev
     - main
     - feature/workflows
+    - feature/docker
 
 jobs:
   build:
