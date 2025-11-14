@@ -8,7 +8,7 @@ import (
 )
 
 func (h *Handlers) GetTeams(ctx *fiber.Ctx)error{
-	var id string // type how we will get id(jwt/json)
+	var id string = ctx.Params("id")
 	teams,err:=h.userService.GetTeams(ctx.Context(),id)
 	if err!=nil{
 		log.Println(err)

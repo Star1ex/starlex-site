@@ -32,7 +32,7 @@ func (h *Handlers) CreateTeam(ctx *fiber.Ctx)error{
 }
 
 func (h *Handlers) GetUsers(ctx *fiber.Ctx)error{
-	var id string //type how we will get id
+	var id string = ctx.Params("id")
 	users,err:=h.teamService.GetUsers(ctx.Context(),id)
 	if err!=nil{
 		log.Println(err)
