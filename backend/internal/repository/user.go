@@ -14,7 +14,7 @@ type User struct {
 	Password  string `gorm:"not null"`
 	FirstName string `gorm:"not null;size:50"`
 	LastName  string `gorm:"not null;size:50"`
-	Teams []Team `gorm:"many2many:users_teams"`
+	Teams     []Team `gorm:"many2many:users_teams"`
 }
 
 type UserRepository struct {
@@ -81,21 +81,20 @@ func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*entity.
 	return toDomain(&model), nil
 }
 
-
-func(r *UserRepository) GetUserTeams(ctx context.Context, userID string)([]*entity.Team,error){
+func (r *UserRepository) GetUserTeams(ctx context.Context, userID string) ([]*entity.Team, error) {
 	var userModel User
-	err := r.db.WithContext(ctx).Preload("Teams").First(&userModel, "id = ?",userID).Error
-	if err!=nil{
-		if errors.Is(err,gorm.ErrRecordNotFound){
-			return nil,ErrUserNotFound
+	err := r.db.WithContext(ctx).Preload("Teams").First(&userModel, "id = ?", userID).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrUserNotFound
 		}
-		return nil,err
+		return nil, err
 	}
 
-	teams:=userModel.Teams
-	teamsInUser:=make([]*entity.Team,len(teams))
-	for i,team:=range teams{
-		teamsInUser[i]=toTeamDomain(&team)
+	teams := userModel.Teams
+	teamsInUser := make([]*entity.Team, len(teams))
+	for i, team := range teams {
+		teamsInUser[i] = toTeamDomain(&team)
 	}
-	return teamsInUser,nil
+	return teamsInUser, nil
 }

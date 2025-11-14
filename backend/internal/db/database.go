@@ -8,6 +8,7 @@ import (
 	"github.com/Team-Tracks/team-track-site/internal/repository"
 	pgdriver "gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
 type DB struct {
@@ -28,8 +29,9 @@ func Must(cfg *config.DatabaseConfig) *DB {
 }
 
 func setupDB(cfg *config.DatabaseConfig) (*DB, error) {
-	db, err := gorm.Open(pgdriver.Open(cfg.DSN()), &gorm.Config{})
-
+	db, err := gorm.Open(pgdriver.Open(cfg.DSN()), &gorm.Config{
+		Logger: logger.Default.LogMode(logger.Info),
+	})
 	if err != nil {
 		return nil, fmt.Errorf("failed connect to DB: %v", err)
 	}

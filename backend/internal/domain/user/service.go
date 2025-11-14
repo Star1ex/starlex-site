@@ -11,7 +11,9 @@ type Service interface {
 	// CRUD
 	Create(ctx context.Context, u *entity.User) error
 
-	// GetByEmail
+	// Auth
 	Login(ctx context.Context, email, password string) (*entity.User, error)
-	GetTeams(ctx context.Context, userID string)([]*entity.Team, error)
+
+	// Others
+	GetTeams(ctx context.Context, userID string) ([]*entity.Team, error)
 }

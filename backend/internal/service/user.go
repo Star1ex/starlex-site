@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 
 	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
 	"github.com/Team-Tracks/team-track-site/internal/domain/user"
@@ -19,36 +20,40 @@ func NewUserService(repo user.Repository) *UserService {
 }
 
 func (s *UserService) Create(ctx context.Context, u *entity.User) error {
-	id:=security.GenerateNewID()
-	hashedPassword,err:=security.HashPassword(u.Password)
-	if err != nil{
+	id := security.GenerateNewID()
+	hashedPassword, err := security.HashPassword(u.Password)
+	if err != nil {
 		return err
 	}
-	newUser:=entity.NewUser(id,u.Email,hashedPassword,u.FirstName,u.LastName)
+	newUser := entity.NewUser(id, u.Email, hashedPassword, u.FirstName, u.LastName)
 	if err := s.repo.Create(ctx, newUser); err != nil {
 		return err
 	}
-	
+
 	return nil
 }
 
-func (s *UserService) Login(ctx context.Context, email,password string) (*entity.User, error) {
+func (s *UserService) Login(ctx context.Context, email, password string) (*entity.User, error) {
 	user, err := s.repo.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, err
 	}
-	err=security.ComparePassword(user.Password,password)
-	if err!=nil{
-		return nil,err
+
+	ok, err := security.VerifyPassword(user.Password, password)
+	if err != nil {
+		return nil, err
 	}
+	if !ok {
+		return nil, errors.New("invalid password")
+	}
+
 	return user, nil
 }
 
-
-func (s *UserService) GetTeams(ctx context.Context, userID string)([]*entity.Team, error){
-	teams,err:=s.repo.GetUserTeams(ctx,userID)
-	if err != nil{
-		return nil,err
+func (s *UserService) GetTeams(ctx context.Context, userID string) ([]*entity.Team, error) {
+	teams, err := s.repo.GetUserTeams(ctx, userID)
+	if err != nil {
+		return nil, err
 	}
-	return teams,nil
+	return teams, nil
 }
