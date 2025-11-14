@@ -14,12 +14,12 @@ var params = argon2id.Params{
 	KeyLength:   32,
 }
 
-// HashPassword возвращает хеш в формате "$argon2id$v=19$m=32768,t=2,p=2$..."
+// HashPassword
 func HashPassword(password string) (string, error) {
 	return argon2id.CreateHash(password, &params)
 }
 
-// VerifyPassword сравнивает обычный пароль и хеш из базы
+// VerifyPassword
 func VerifyPassword(hash, password string) (bool, error) {
 	return argon2id.ComparePasswordAndHash(password, hash)
 }

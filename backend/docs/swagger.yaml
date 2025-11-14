@@ -1,0 +1,11 @@
+basePath: /api
+host: 'localhost: 3000'
+info:
+  contact: {}
+  description: This is the API for TeamTrack web-site
+  title: TeamTrack API
+  version: "1.0"
+paths: {}
+schemes:
+- http
+swagger: "2.0"
