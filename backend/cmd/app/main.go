@@ -7,7 +7,7 @@ import (
 // @title TeamTrack API
 // @version 1.0
 // @description This is the API for TeamTrack web-site
-// @host localhost: 3000
+// @host localhost:3000
 // @BasePath /api
 // @schemes http
 func main() {

@@ -1,11 +1,190 @@
 basePath: /api
-host: 'localhost: 3000'
+definitions:
+  dto.TeamApi:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      user_id:
+        type: string
+    required:
+    - description
+    - name
+    - user_id
+    type: object
+  dto.UserApi:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dto.UserResponse:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+    type: object
+  handlers.SignIn:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+host: localhost:3000
 info:
   contact: {}
   description: This is the API for TeamTrack web-site
   title: TeamTrack API
   version: "1.0"
-paths: {}
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Auth if user created
+      parameters:
+      - description: User data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.SignIn'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: user auth successfuly
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Auth
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Register new user
+      parameters:
+      - description: User data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UserApi'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: user created successfuly
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register
+      tags:
+      - auth
+  /team:
+    post:
+      consumes:
+      - application/json
+      description: Created new team
+      parameters:
+      - description: Team data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dto.TeamApi'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: team created successfuly
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Created team
+      tags:
+      - team
+  /team/{id}:
+    get:
+      description: Return all users from team
+      parameters:
+      - description: Team ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: List of users
+          schema:
+            items:
+              $ref: '#/definitions/dto.UserResponse'
+            type: array
+        "500":
+          description: Server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get all users from team
+      tags:
+      - team
 schemes:
 - http
 swagger: "2.0"
