@@ -18,11 +18,24 @@ func NewTaskService(repo task.Repository) *TaskService {
 }
 
 func (s *TaskService) CreateTask(ctx context.Context, userID string, task *entity.Task) error {
+	err := s.repo.Create(ctx, task)
+	if err != nil {
+		return err
+	}
 	return nil
 }
 func (s *TaskService) GetTeamTasks(ctx context.Context, teamID string) ([]*entity.Task, error) {
-	return nil, nil
+	tasks, err := s.repo.GetTeamTasks(ctx, teamID)
+	if err != nil {
+		return nil, err
+	}
+	return tasks, nil
 }
+
 func (s *TaskService) GetUserTasks(ctx context.Context, userID string) ([]*entity.Task, error) {
-	return nil, nil
+	tasks, err := s.repo.GetUserTasks(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+	return tasks, nil
 }
