@@ -69,7 +69,7 @@ func (t *TeamRepository) CreateAndAddCreator(ctx context.Context, team *entity.T
 	return nil
 }
 
-func (t *TeamRepository) GetUsersInTeam(ctx context.Context, teamId string) ([]*entity.User, error) {
+func (t *TeamRepository) GetTeam(ctx context.Context, teamId string) ([]*entity.User, error) {
 	var teamModel Team
 	err := t.db.WithContext(ctx).Preload("Users").First(&teamModel, "id = ?", teamId).Error
 	if err != nil {

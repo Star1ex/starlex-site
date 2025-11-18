@@ -6,7 +6,13 @@ import (
 	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
 )
 
-type Repository interface{
-	CreateAndAddCreator(ctx context.Context, team *entity.Team, userId string)error
-	GetUsersInTeam(ctx context.Context, teamId string)([]*entity.User,error)
+// Intarfaces for repository Team
+// Have full CRUD operations
+
+type Repository interface {
+	// CRUD
+	CreateAndAddCreator(ctx context.Context, team *entity.Team, userId string) error
+	GetTeam(ctx context.Context, teamID string) ([]*entity.User, error)
+	//Update(ctx context.Context, teamID string, updateTeam *entity.UpdateTeam) (*entity.Team, error)
+	//Delete(ctx context.Context, teamID string) error
 }
