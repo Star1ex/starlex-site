@@ -43,7 +43,7 @@ func setupDB(cfg *config.DatabaseConfig) (*DB, error) {
 
 func migrate(db *DB) error {
 
-	if err := db.AutoMigrate(&repository.User{}); err != nil {
+	if err := db.AutoMigrate(&repository.UserModel{}, &repository.TeamModel{}, &repository.TaskModel{}); err != nil {
 		return fmt.Errorf("error migrating models: %v", err)
 	}
 

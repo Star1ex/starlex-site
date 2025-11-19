@@ -8,13 +8,13 @@ import (
 	"gorm.io/gorm"
 )
 
-type User struct {
-	ID        string `gorm:"primaryKey"`
-	Email     string `gorm:"unique;not null"`
-	Password  string `gorm:"not null"`
-	FirstName string `gorm:"not null;size:50"`
-	LastName  string `gorm:"not null;size:50"`
-	Teams     []Team `gorm:"many2many:users_teams"`
+type UserModel struct {
+	ID        string      `gorm:"primaryKey"`
+	Email     string      `gorm:"unique;not null"`
+	Password  string      `gorm:"not null"`
+	FirstName string      `gorm:"not null;size:50"`
+	LastName  string      `gorm:"not null;size:50"`
+	Teams     []TeamModel `gorm:"many2many:users_teams"`
 }
 
 type UserRepository struct {
@@ -22,8 +22,8 @@ type UserRepository struct {
 }
 
 // factory from domain structure
-func fromDomain(u *entity.User) *User {
-	return &User{
+func fromDomain(u *entity.User) *UserModel {
+	return &UserModel{
 		ID:        u.ID,
 		Email:     u.Email,
 		Password:  u.Password,
@@ -33,7 +33,7 @@ func fromDomain(u *entity.User) *User {
 }
 
 // factory to domain structure
-func toDomain(u *User) *entity.User {
+func toDomain(u *UserModel) *entity.User {
 	return &entity.User{
 		ID:        u.ID,
 		Email:     u.Email,
@@ -41,6 +41,14 @@ func toDomain(u *User) *entity.User {
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
 	}
+}
+
+func toUserDomains(users []*UserModel) []*entity.User {
+	response := make([]*entity.User, len(users))
+	for i, user := range users {
+		response[i] = toDomain(user)
+	}
+	return response
 }
 
 func NewUserRepository(db *gorm.DB) *UserRepository {
@@ -68,7 +76,7 @@ func (r *UserRepository) Delete(ctx context.Context, id string) error {
 
 // Retrieves user by email
 func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*entity.User, error) {
-	var model User
+	var model UserModel
 	//Search for a user by email
 	result := r.db.WithContext(ctx).Where("email = ?", email).First(&model)
 	if result.Error != nil {
@@ -82,7 +90,7 @@ func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*entity.
 }
 
 func (r *UserRepository) GetUserTeams(ctx context.Context, userID string) ([]*entity.Team, error) {
-	var userModel User
+	var userModel UserModel
 	err := r.db.WithContext(ctx).Preload("Teams").First(&userModel, "id = ?", userID).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -97,4 +105,13 @@ func (r *UserRepository) GetUserTeams(ctx context.Context, userID string) ([]*en
 		teamsInUser[i] = toTeamDomain(&team)
 	}
 	return teamsInUser, nil
+}
+
+func (r *UserRepository) GetByIDs(ctx context.Context, ids []string) ([]*entity.User, error) {
+	var models []*UserModel
+	err := r.db.WithContext(ctx).Where("id IN ?", ids).Find(&models).Error
+	if err != nil {
+		return nil, err
+	}
+	return toUserDomains(models), nil
 }

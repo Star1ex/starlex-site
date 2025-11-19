@@ -6,7 +6,11 @@ import (
 	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
 )
 
-type Service interface{
-	CreateTeam(ctx context.Context,name,description,userID string)(*entity.Team,error)
-	GetUsers(ctx context.Context,teamId string)([]*entity.User,error)
+type Service interface {
+
+	// Create team
+	CreateTeam(ctx context.Context, name, description, userID string) (*entity.Team, error)
+
+	// Retrieves all users from team
+	GetUsers(ctx context.Context, teamId string) ([]*entity.User, error)
 }

@@ -19,7 +19,7 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 	{
 		auth.Post("/login", handlers.Login)
 		auth.Post("/register", handlers.Register)
-		
+
 	}
 
 	// After we add a dashboard with UserIndentity by jwt
@@ -30,8 +30,8 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 		team.Get("/:id", handlers.GetUsers)
 		task := team.Group("/:teamID/task")
 		{
-			task.Post("/new",handlers.CreateTask)
-			task.Get("/",handlers.GetTeamTasks)
+			task.Post("/new", handlers.CreateTask)
+			task.Get("/", handlers.GetTeamTasks)
 			task.Get("/assigned", handlers.GetUserTasks)
 		}
 	}

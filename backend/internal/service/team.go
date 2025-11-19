@@ -8,28 +8,28 @@ import (
 	"github.com/Team-Tracks/team-track-site/internal/security"
 )
 
-type TeamService struct{
+type TeamService struct {
 	repo team.Repository
 }
 
-func NewTeamService(repo team.Repository)*TeamService{
+func NewTeamService(repo team.Repository) *TeamService {
 	return &TeamService{repo: repo}
 }
 
-func (s *TeamService) CreateTeam(ctx context.Context,name,description,userID string)(*entity.Team,error){
-	newId:=security.GenerateNewID()
-	newTeam:=entity.NewTeam(newId,name,description)
-	err:=s.repo.CreateAndAddCreator(ctx,newTeam,userID)
-	if err!=nil{
-		return nil,err
+func (s *TeamService) CreateTeam(ctx context.Context, name, description, userID string) (*entity.Team, error) {
+	newId := security.GenerateNewID()
+	newTeam := entity.NewTeam(newId, name, description)
+	err := s.repo.CreateAndAddCreator(ctx, newTeam, userID)
+	if err != nil {
+		return nil, err
 	}
-	return newTeam,nil
+	return newTeam, nil
 }
 
-func (s *TeamService) GetUsers(ctx context.Context,teamId string)([]*entity.User,error){
-	users,err:=s.repo.GetUsersInTeam(ctx,teamId)
-	if err != nil{
-		return nil,err
+func (s *TeamService) GetUsers(ctx context.Context, teamId string) ([]*entity.User, error) {
+	users, err := s.repo.GetTeam(ctx, teamId)
+	if err != nil {
+		return nil, err
 	}
-	return users,nil
+	return users, nil
 }
