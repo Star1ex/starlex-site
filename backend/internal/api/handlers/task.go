@@ -4,28 +4,30 @@ import (
 	"log"
 
 	"github.com/Team-Tracks/team-track-site/internal/api/dto"
+	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
 	"github.com/gofiber/fiber/v2"
 )
 
 func (h *Handlers) CreateTask(ctx *fiber.Ctx) error {
-	var teamID string = ctx.Params("teamID")
+	teamID := ctx.Params("teamID")
+
 	var input dto.TaskApi
-	err := ctx.BodyParser(&input)
-	if err != nil {
-		log.Println(err)
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{})
+	if err := ctx.BodyParser(&input); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad json"})
 	}
 
-	err = h.taskService.CreateTask(ctx.Context(), teamID, dto.FromTaskApi(&input))
-	if err != nil {
-		log.Println(err)
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "failed to create new task",
-		})
+	entityTask := &entity.Task{
+		Task:        input.Task,
+		Description: input.Description,
 	}
-	//response := dto.ToTaskResponse(task)
 
-	return ctx.Status(fiber.StatusCreated).JSON("Task successfuly created")
+	err := h.taskService.CreateTask(ctx.Context(), teamID, input.AssignedToID, entityTask)
+
+	if err != nil {
+		return ctx.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return ctx.Status(201).JSON("Task created")
 }
 
 func (h *Handlers) GetTeamTasks(ctx *fiber.Ctx) error {

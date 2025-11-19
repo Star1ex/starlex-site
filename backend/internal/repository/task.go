@@ -9,11 +9,11 @@ import (
 )
 
 type TaskModel struct {
-	ID          string        `gorm:"primaryKey"`
-	Task        string        `gorm:"unique;not null"`
-	Description string        `gorm:"not null"`
-	Assigned    []entity.User `gorm:"many2many:task_users"`
-	TeamID      string        `gorm:"not null"`
+	ID          string      `gorm:"primaryKey"`
+	Task        string      `gorm:"unique;not null"`
+	Description string      `gorm:"not null"`
+	Assigned    []UserModel `gorm:"many2many:task_users"`
+	TeamID      string      `gorm:"not null"`
 }
 
 type TaskRepository struct {
@@ -26,16 +26,21 @@ func NewTaskRepository(db *gorm.DB) *TaskRepository {
 	}
 }
 
-func toTaskDomain(task TaskModel) *entity.Task {
+func toTaskDomain(m TaskModel) *entity.Task {
+	users := make([]*entity.User, len(m.Assigned))
+	for i, u := range m.Assigned {
+		user := toDomain(&u)
+		users[i] = user
+	}
+
 	return &entity.Task{
-		ID:          task.ID,
-		Task:        task.Task,
-		Description: task.Description,
-		AssignedTo:  task.Assigned,
-		TeamID:      task.TeamID,
+		ID:          m.ID,
+		Task:        m.Task,
+		Description: m.Description,
+		AssignedTo:  users,
+		TeamID:      m.TeamID,
 	}
 }
-
 func toTaskDomains(tasks []TaskModel) []*entity.Task {
 	response := make([]*entity.Task, len(tasks))
 	for i, task := range tasks {
@@ -44,25 +49,24 @@ func toTaskDomains(tasks []TaskModel) []*entity.Task {
 	return response
 }
 
-func fromDomainToTaskModel(task *entity.Task) *TaskModel {
+func fromTaskDomain(t *entity.Task) *TaskModel {
+	users := make([]UserModel, len(t.AssignedTo))
+	for i, u := range t.AssignedTo {
+		users[i] = *fromDomain(u)
+	}
+
 	return &TaskModel{
-		ID:          task.ID,
-		Task:        task.Task,
-		Description: task.Description,
-		Assigned:    task.AssignedTo,
-		TeamID:      task.TeamID,
+		ID:          t.ID,
+		Task:        t.Task,
+		Description: t.Description,
+		Assigned:    users,
+		TeamID:      t.TeamID,
 	}
 }
 
 func (r *TaskRepository) Create(ctx context.Context, task *entity.Task) error {
-	err := r.db.WithContext(ctx).Create(fromDomainToTaskModel(task)).Error
-	if err != nil {
-		if errors.Is(err, gorm.ErrDuplicatedKey) {
-			return ErrAlreadyExists
-		}
-		return err
-	}
-	return nil
+	model := fromTaskDomain(task)
+	return r.db.WithContext(ctx).Create(model).Error
 }
 
 func (r *TaskRepository) Get(ctx context.Context, id string) (*entity.Task, error) {
@@ -108,16 +112,29 @@ func (r *TaskRepository) Delete(ctx context.Context, id string) error {
 
 func (r *TaskRepository) GetTeamTasks(ctx context.Context, teamID string) ([]*entity.Task, error) {
 	var models []TaskModel
-	result := r.db.WithContext(ctx).Where("team_id = ?", teamID).First(&models)
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, gorm.ErrRecordNotFound
-		}
-		return nil, result.Error
+
+	err := r.db.WithContext(ctx).
+		Where("team_id = ?", teamID).
+		Find(&models).Error
+
+	if err != nil {
+		return nil, err
 	}
+
 	return toTaskDomains(models), nil
 }
 
 func (r *TaskRepository) GetUserTasks(ctx context.Context, userID string) ([]*entity.Task, error) {
-	return nil, nil
+	var models []TaskModel
+
+	err := r.db.WithContext(ctx).
+		Joins("JOIN task_users tu ON tu.task_model_id = task_models.id").
+		Where("tu.user_id = ?", userID).
+		Find(&models).Error
+
+	if err != nil {
+		return nil, err
+	}
+
+	return toTaskDomains(models), nil
 }

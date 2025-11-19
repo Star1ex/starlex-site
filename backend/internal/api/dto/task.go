@@ -7,30 +7,37 @@ import (
 )
 
 type TaskApi struct {
-	AssignedToID []entity.User `json:"user_id" binding:"required"`
-	Task         string        `json:"task" binding:"required"`
-	Description  string        `json:"description" binding:"required"`
+	AssignedToID []string `json:"user_id" binding:"required"`
+	Task         string   `json:"task" binding:"required"`
+	Description  string   `json:"description" binding:"required"`
 }
 
 type TaskResponse struct {
 	ID          string
 	Task        string
 	Description string
-	AssignedTo  []entity.User
+	AssignedTo  []string
 	TeamID      string
 	CreatedAt   time.Time
 }
 
 func ToTaskResponse(task *entity.Task) *TaskResponse {
+
+	assignedIDs := make([]string, len(task.AssignedTo))
+	for i, u := range task.AssignedTo {
+		assignedIDs[i] = u.ID
+	}
+
 	return &TaskResponse{
 		ID:          task.ID,
 		Task:        task.Task,
 		Description: task.Description,
-		AssignedTo:  task.AssignedTo,
+		AssignedTo:  assignedIDs,
 		TeamID:      task.TeamID,
 		CreatedAt:   task.CreatedAt,
 	}
 }
+
 func TeamTasksList(tasks []*entity.Task) []TaskResponse {
 	response := make([]TaskResponse, len(tasks))
 	for i, task := range tasks {
@@ -39,10 +46,9 @@ func TeamTasksList(tasks []*entity.Task) []TaskResponse {
 	return response
 }
 
-func FromTaskApi(task *TaskApi) *entity.Task {
+func FromTaskApi(api *TaskApi) (*entity.Task, []string) {
 	return &entity.Task{
-		Task:        task.Task,
-		Description: task.Description,
-		AssignedTo:  task.AssignedToID,
-	}
+		Task:        api.Task,
+		Description: api.Description,
+	}, api.AssignedToID
 }

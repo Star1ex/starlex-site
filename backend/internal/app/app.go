@@ -27,7 +27,7 @@ func StartServer() {
 	userRepo := repository.NewUserRepository(db.DB)
 	teamRepo := repository.NewTeamRepository(db.DB)
 	taskRepo := repository.NewTaskRepository(db.DB)
-	taskService := service.NewTaskService(taskRepo)
+	taskService := service.NewTaskService(taskRepo, userRepo)
 	userService := service.NewUserService(userRepo)
 	teamService := service.NewTeamService(teamRepo)
 	handlers := handlers.NewHandlers(userService, teamService, taskService)

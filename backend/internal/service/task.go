@@ -5,27 +5,41 @@ import (
 
 	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
 	"github.com/Team-Tracks/team-track-site/internal/domain/task"
+	"github.com/Team-Tracks/team-track-site/internal/domain/user"
+	"github.com/google/uuid"
 )
 
 type TaskService struct {
-	repo task.Repository
+	taskRepo task.Repository
+	userRepo user.Repository
 }
 
-func NewTaskService(repo task.Repository) *TaskService {
+func NewTaskService(taskRepo task.Repository, userRepo user.Repository) *TaskService {
 	return &TaskService{
-		repo: repo,
+		taskRepo: taskRepo, userRepo: userRepo,
 	}
 }
 
-func (s *TaskService) CreateTask(ctx context.Context, userID string, task *entity.Task) error {
-	err := s.repo.Create(ctx, task)
+func (s *TaskService) CreateTask(
+	ctx context.Context,
+	teamID string,
+	assignedIDs []string,
+	task *entity.Task,
+) error {
+
+	users, err := s.userRepo.GetByIDs(ctx, assignedIDs)
 	if err != nil {
 		return err
 	}
-	return nil
+
+	task.AssignedTo = users
+	task.TeamID = teamID
+	task.ID = uuid.New().String()
+
+	return s.taskRepo.Create(ctx, task)
 }
 func (s *TaskService) GetTeamTasks(ctx context.Context, teamID string) ([]*entity.Task, error) {
-	tasks, err := s.repo.GetTeamTasks(ctx, teamID)
+	tasks, err := s.taskRepo.GetTeamTasks(ctx, teamID)
 	if err != nil {
 		return nil, err
 	}
@@ -33,7 +47,7 @@ func (s *TaskService) GetTeamTasks(ctx context.Context, teamID string) ([]*entit
 }
 
 func (s *TaskService) GetUserTasks(ctx context.Context, userID string) ([]*entity.Task, error) {
-	tasks, err := s.repo.GetUserTasks(ctx, userID)
+	tasks, err := s.taskRepo.GetUserTasks(ctx, userID)
 	if err != nil {
 		return nil, err
 	}

@@ -9,7 +9,7 @@ import (
 type Service interface {
 
 	// Create task
-	CreateTask(ctx context.Context, teamID string, task *entity.Task) error
+	CreateTask(ctx context.Context, teamID string, assignedIDs []string, task *entity.Task) error
 
 	// Get all tasks from team by ID
 	GetTeamTasks(ctx context.Context, teamID string) ([]*entity.Task, error)

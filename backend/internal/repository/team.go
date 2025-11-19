@@ -9,22 +9,22 @@ import (
 	"gorm.io/gorm"
 )
 
-type Team struct {
-	ID          string `gorm:"primaryKey"`
-	Name        string `gorm:"unique;not null"`
-	Description string `gorm:"not null"`
-	Users       []User `gorm:"many2many:users_teams"`
+type TeamModel struct {
+	ID          string      `gorm:"primaryKey"`
+	Name        string      `gorm:"unique;not null"`
+	Description string      `gorm:"not null"`
+	Users       []UserModel `gorm:"many2many:users_teams"`
 }
 
-func fromDomainToTeam(team *entity.Team) *Team {
-	return &Team{
+func fromDomainToTeam(team *entity.Team) *TeamModel {
+	return &TeamModel{
 		ID:          team.ID,
 		Name:        team.Name,
 		Description: team.Description,
 	}
 }
 
-func toTeamDomain(Team *Team) *entity.Team {
+func toTeamDomain(Team *TeamModel) *entity.Team {
 	return &entity.Team{
 		ID:          Team.ID,
 		Name:        Team.Name,
@@ -56,7 +56,7 @@ func (t *TeamRepository) CreateAndAddCreator(ctx context.Context, team *entity.T
 		}
 
 		//Add creator into team
-		creatorUser := User{ID: userId}
+		creatorUser := UserModel{ID: userId}
 		err = tx.WithContext(ctx).Model(newTeam).Association("Users").Append(&creatorUser)
 		if err != nil {
 			return err
@@ -70,7 +70,7 @@ func (t *TeamRepository) CreateAndAddCreator(ctx context.Context, team *entity.T
 }
 
 func (t *TeamRepository) GetTeam(ctx context.Context, teamId string) ([]*entity.User, error) {
-	var teamModel Team
+	var teamModel TeamModel
 	err := t.db.WithContext(ctx).Preload("Users").First(&teamModel, "id = ?", teamId).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
