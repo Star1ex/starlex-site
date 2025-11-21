@@ -7,6 +7,14 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// @Summary      Search users
+// @Description  Search user by email
+// @Tags         search
+// @Accept       json
+// @Produce      json
+// @Param        email   path      string  true  "User Email"
+// @Success      200     {array}   dto.UserResponse
+// @Router       /search/{email} [get]
 func (h *Handlers) Search(ctx *fiber.Ctx) error {
 	email := ctx.Params("email")
 	if email == "" {
