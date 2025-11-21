@@ -12,6 +12,7 @@ type TaskModel struct {
 	ID          string      `gorm:"primaryKey"`
 	Task        string      `gorm:"unique;not null"`
 	Description string      `gorm:"not null"`
+	Priority    string      `gorm:"not null"`
 	Assigned    []UserModel `gorm:"many2many:task_users"`
 	TeamID      string      `gorm:"not null"`
 }
@@ -39,6 +40,7 @@ func toTaskDomain(m TaskModel) *entity.Task {
 		Description: m.Description,
 		AssignedTo:  users,
 		TeamID:      m.TeamID,
+		Priority: 	 m.Priority,
 	}
 }
 func toTaskDomains(tasks []TaskModel) []*entity.Task {
@@ -60,6 +62,7 @@ func fromTaskDomain(t *entity.Task) *TaskModel {
 		Task:        t.Task,
 		Description: t.Description,
 		Assigned:    users,
+		Priority: 	 t.Priority,
 		TeamID:      t.TeamID,
 	}
 }
@@ -93,6 +96,10 @@ func (r *TaskRepository) Update(ctx context.Context, id string, data *entity.Upd
 
 	if data.AssignedTo != nil {
 		updates["assignedTo"] = data.AssignedTo
+	}
+
+	if data.Priority != "" {
+		updates["priority"] = data.Priority
 	}
 
 	var task TaskModel

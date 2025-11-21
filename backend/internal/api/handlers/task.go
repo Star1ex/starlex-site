@@ -19,6 +19,7 @@ func (h *Handlers) CreateTask(ctx *fiber.Ctx) error {
 	entityTask := &entity.Task{
 		Task:        input.Task,
 		Description: input.Description,
+		Priority:    input.Priority,
 	}
 
 	err := h.taskService.CreateTask(ctx.Context(), teamID, input.AssignedToID, entityTask)

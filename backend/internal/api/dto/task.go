@@ -10,6 +10,7 @@ type TaskApi struct {
 	AssignedToID []string `json:"user_id" binding:"required"`
 	Task         string   `json:"task" binding:"required"`
 	Description  string   `json:"description" binding:"required"`
+	Priority 	 string   `json:"priority" binding:"required"`
 }
 
 type TaskResponse struct {
@@ -18,6 +19,7 @@ type TaskResponse struct {
 	Description string
 	AssignedTo  []string
 	TeamID      string
+	Priority 	 string
 	CreatedAt   time.Time
 }
 
@@ -34,6 +36,7 @@ func ToTaskResponse(task *entity.Task) *TaskResponse {
 		Description: task.Description,
 		AssignedTo:  assignedIDs,
 		TeamID:      task.TeamID,
+		Priority: 	 task.Priority,
 		CreatedAt:   task.CreatedAt,
 	}
 }
