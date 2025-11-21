@@ -16,4 +16,7 @@ type Service interface {
 
 	// Others
 	GetTeams(ctx context.Context, userID string) ([]*entity.Team, error)
+
+	// Search users by email
+	Search(ctx context.Context, email string) ([]*entity.User, error)
 }

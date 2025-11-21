@@ -115,3 +115,11 @@ func (r *UserRepository) GetByIDs(ctx context.Context, ids []string) ([]*entity.
 	}
 	return toUserDomains(models), nil
 }
+
+func (r *UserRepository) Search(ctx context.Context, email string) ([]*entity.User, error) {
+	var models []*UserModel
+	err := r.db.
+		Where("email ILIKE ?", email+"%").
+		Find(&models).Error
+	return toUserDomains(models), err
+}
