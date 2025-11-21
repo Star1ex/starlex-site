@@ -57,3 +57,7 @@ func (s *UserService) GetTeams(ctx context.Context, userID string) ([]*entity.Te
 	}
 	return teams, nil
 }
+
+func (s *UserService) Search(ctx context.Context, email string) ([]*entity.User, error) {
+	return s.repo.Search(ctx, email)
+}

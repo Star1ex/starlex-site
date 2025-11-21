@@ -22,6 +22,11 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 
 	}
 
+	search := api.Group("/search")
+	{
+		search.Get("/:email", handlers.Search)
+	}
+
 	// After we add a dashboard with UserIndentity by jwt
 
 	team := api.Group("/team")

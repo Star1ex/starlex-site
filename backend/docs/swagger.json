@@ -118,6 +118,41 @@
                 }
             }
         },
+        "/search/{email}": {
+            "get": {
+                "description": "Search user by email",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "search"
+                ],
+                "summary": "Search users",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "User Email",
+                        "name": "email",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/dto.UserResponse"
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/team": {
             "post": {
                 "description": "Created new team",

@@ -125,6 +125,29 @@ paths:
       summary: Register
       tags:
       - auth
+  /search/{email}:
+    get:
+      consumes:
+      - application/json
+      description: Search user by email
+      parameters:
+      - description: User Email
+        in: path
+        name: email
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.UserResponse'
+            type: array
+      summary: Search users
+      tags:
+      - search
   /team:
     post:
       consumes:
