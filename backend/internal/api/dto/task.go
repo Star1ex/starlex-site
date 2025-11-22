@@ -10,7 +10,7 @@ type TaskApi struct {
 	AssignedToID []string `json:"user_id" binding:"required"`
 	Task         string   `json:"task" binding:"required"`
 	Description  string   `json:"description" binding:"required"`
-	Priority 	 string   `json:"priority" binding:"required"`
+	Priority 	 string   `json:"priority"`
 }
 
 type TaskResponse struct {
