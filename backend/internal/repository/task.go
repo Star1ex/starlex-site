@@ -9,11 +9,11 @@ import (
 )
 
 type TaskModel struct {
-	ID          string      `gorm:"primaryKey"`
-	Task        string      `gorm:"unique;not null"`
-	Description string      `gorm:"not null"`
-	Priority    string      `gorm:"not null"`
-	Progress    string      `gorm:"not null"`
+	ID          string `gorm:"primaryKey"`
+	Task        string `gorm:"unique;not null"`
+	Description string `gorm:"not null"`
+	Priority    string `gorm:"not null"`
+	Progress    string
 	Assigned    []UserModel `gorm:"many2many:task_users"`
 	TeamID      string      `gorm:"not null"`
 }
@@ -41,8 +41,8 @@ func toTaskDomain(m TaskModel) *entity.Task {
 		Description: m.Description,
 		AssignedTo:  users,
 		TeamID:      m.TeamID,
-		Priority: 	 m.Priority,
-		Progress:	 m.Progress,
+		Priority:    m.Priority,
+		Progress:    m.Progress,
 	}
 }
 func toTaskDomains(tasks []TaskModel) []*entity.Task {
@@ -64,7 +64,7 @@ func fromTaskDomain(t *entity.Task) *TaskModel {
 		Task:        t.Task,
 		Description: t.Description,
 		Assigned:    users,
-		Priority: 	 t.Priority,
+		Priority:    t.Priority,
 		TeamID:      t.TeamID,
 	}
 }
@@ -110,7 +110,7 @@ func (r *TaskRepository) Update(ctx context.Context, id string, data *entity.Tas
 
 	var task TaskModel
 	if err := r.db.Model(&task).Where("id = ?", id).Updates(updates).Error; err != nil {
-		return err,nil
+		return err, nil
 	}
 
 	// reload full updated task

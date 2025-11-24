@@ -17,3 +17,4 @@ func (h *Handlers) GetTeams(ctx *fiber.Ctx) error {
 	response := dto.ToTeamsResponse(teams)
 	return ctx.Status(fiber.StatusOK).JSON(response)
 }
+
