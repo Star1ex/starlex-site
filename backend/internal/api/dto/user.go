@@ -5,17 +5,19 @@ import (
 )
 
 type UserApi struct {
-	Email     string `json:"email" binding:"required"`
-	Password  string `json:"password" binding:"required"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
+	Email     string  `json:"email" binding:"required"`
+	Password  string  `json:"password" binding:"required"`
+	FirstName string  `json:"first_name"`
+	LastName  string  `json:"last_name"`
+	Photo_URL *string `json:"photo_url"`
 }
 
 type UserResponse struct {
-	ID        string `json:"id"`
-	Email     string `json:"email"`
-	FirstName string `json:"first_name"`
-	LastName  string `json:"last_name"`
+	ID        string  `json:"id"`
+	Email     string  `json:"email"`
+	FirstName string  `json:"first_name"`
+	LastName  string  `json:"last_name"`
+	Photo_URL *string `json:"photo_url"`
 }
 
 func ToUserApi(u *entity.User) *UserApi {
@@ -24,6 +26,7 @@ func ToUserApi(u *entity.User) *UserApi {
 		Password:  u.Password,
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
+		Photo_URL: u.Photo_URL,
 	}
 }
 
@@ -33,6 +36,7 @@ func FromUserApi(u *UserApi) *entity.User {
 		Password:  u.Password,
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
+		Photo_URL: u.Photo_URL,
 	}
 }
 
@@ -42,5 +46,6 @@ func ToUserResponse(u *entity.User) *UserResponse {
 		Email:     u.Email,
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
+		Photo_URL: u.Photo_URL,
 	}
 }

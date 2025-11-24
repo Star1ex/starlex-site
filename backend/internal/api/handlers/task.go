@@ -59,29 +59,28 @@ func (h *Handlers) GetUserTasks(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(response)
 }
 
-
-func (h *Handlers) UpdateTaskProgress(ctx *fiber.Ctx) error{
+func (h *Handlers) UpdateTaskProgress(ctx *fiber.Ctx) error {
 	taskId := ctx.Params("id")
-    if taskId == "" {
-        return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
-    }
+	if taskId == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
+	}
 	var updates dto.UpdateDto
-	if err := ctx.BodyParser(&updates); err != nil{
+	if err := ctx.BodyParser(&updates); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad json"})
 	}
 
 	if updates.Progress == nil {
-        return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Progress field is required for this action"})
-    }
-    
-    progressValue := *updates.Progress
-	
-		if progressValue != "In progress" && progressValue != "In review" && progressValue != "Done" {
-			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad task progress"})
-		}
-	
-	updatedTask, err := h.taskService.UpdateTaskProgress(ctx.Context(),taskId,progressValue)
-	if err != nil{
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Progress field is required for this action"})
+	}
+
+	progressValue := *updates.Progress
+
+	if progressValue != "In progress" && progressValue != "In review" && progressValue != "Done" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad task progress"})
+	}
+
+	updatedTask, err := h.taskService.UpdateTaskProgress(ctx.Context(), taskId, progressValue)
+	if err != nil {
 		log.Println(err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to get task",

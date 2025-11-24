@@ -2,6 +2,7 @@ package user
 
 import (
 	"context"
+	"mime/multipart"
 
 	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
 )
@@ -19,4 +20,8 @@ type Service interface {
 
 	// Search users by email
 	Search(ctx context.Context, email string) ([]*entity.User, error)
+
+	UploadUserPhoto(ctx context.Context, username string, file *multipart.FileHeader) (string, error)
+
+	SetUserPhoto(id, photo_url string) error
 }

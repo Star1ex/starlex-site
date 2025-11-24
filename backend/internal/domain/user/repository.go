@@ -19,4 +19,6 @@ type Repository interface {
 
 	// Search by email
 	Search(ctx context.Context, email string) ([]*entity.User, error)
+
+	UpdatePhoto(username, photo_url string) error
 }

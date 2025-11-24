@@ -7,7 +7,6 @@ import (
 )
 
 func NewStorageByEnv(cfg *config.StorageConfig) (Storage, error) {
-
 	switch cfg.StorageType {
 	case "local":
 		return NewLocalStorage(
