@@ -16,4 +16,7 @@ type Service interface {
 
 	// Retrieves all tasks by ID
 	GetUserTasks(ctx context.Context, userID string) ([]*entity.Task, error)
+
+	// Update task
+	UpdateTaskProgress(ctx context.Context, taskID,progress string )(error,*entity.Task)
 }

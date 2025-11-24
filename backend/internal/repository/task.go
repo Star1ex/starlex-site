@@ -13,6 +13,7 @@ type TaskModel struct {
 	Task        string      `gorm:"unique;not null"`
 	Description string      `gorm:"not null"`
 	Priority    string      `gorm:"not null"`
+	Progress    string      `gorm:"not null"`
 	Assigned    []UserModel `gorm:"many2many:task_users"`
 	TeamID      string      `gorm:"not null"`
 }
@@ -41,6 +42,7 @@ func toTaskDomain(m TaskModel) *entity.Task {
 		AssignedTo:  users,
 		TeamID:      m.TeamID,
 		Priority: 	 m.Priority,
+		Progress:	 m.Progress,
 	}
 }
 func toTaskDomains(tasks []TaskModel) []*entity.Task {
@@ -84,7 +86,7 @@ func (r *TaskRepository) Get(ctx context.Context, id string) (*entity.Task, erro
 	return toTaskDomain(model), nil
 }
 
-func (r *TaskRepository) Update(ctx context.Context, id string, data *entity.UpdateTask) error {
+func (r *TaskRepository) Update(ctx context.Context, id string, data *entity.Task) (error, *entity.Task) {
 	updates := map[string]interface{}{}
 
 	if data.Task != "" {
@@ -102,15 +104,19 @@ func (r *TaskRepository) Update(ctx context.Context, id string, data *entity.Upd
 		updates["priority"] = data.Priority
 	}
 
+	if data.Progress != "" {
+		updates["progress"] = data.Progress
+	}
+
 	var task TaskModel
 	if err := r.db.Model(&task).Where("id = ?", id).Updates(updates).Error; err != nil {
-		return err
+		return err,nil
 	}
 
 	// reload full updated task
 	r.db.First(&task, id)
 
-	return nil
+	return nil, toTaskDomain(task)
 }
 
 func (r *TaskRepository) Delete(ctx context.Context, id string) error {
