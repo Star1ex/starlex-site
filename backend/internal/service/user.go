@@ -3,19 +3,23 @@ package service
 import (
 	"context"
 	"errors"
+	"fmt"
+	"mime/multipart"
 
 	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
 	"github.com/Team-Tracks/team-track-site/internal/domain/user"
 	"github.com/Team-Tracks/team-track-site/internal/security"
+	"github.com/Team-Tracks/team-track-site/internal/storage"
 )
 
 type UserService struct {
-	repo user.Repository
+	repo    user.Repository
+	storage storage.Storage
 }
 
-func NewUserService(repo user.Repository) *UserService {
+func NewUserService(repo user.Repository, storage storage.Storage) *UserService {
 	return &UserService{
-		repo: repo,
+		repo: repo, storage: storage,
 	}
 }
 
@@ -60,4 +64,23 @@ func (s *UserService) GetTeams(ctx context.Context, userID string) ([]*entity.Te
 
 func (s *UserService) Search(ctx context.Context, email string) ([]*entity.User, error) {
 	return s.repo.Search(ctx, email)
+}
+
+func (s *UserService) SetUserPhoto(id, photo_url string) error {
+	return s.repo.UpdatePhoto(id, photo_url)
+}
+
+func (s *UserService) UploadUserPhoto(ctx context.Context, username string, file *multipart.FileHeader) (string, error) {
+	path := fmt.Sprintf("avatars/%s/%s", username, file.Filename)
+
+	url, err := s.storage.UploadFile(ctx, file, path)
+	if err != nil {
+		return "", err
+	}
+
+	if err := s.repo.UpdatePhoto(username, url); err != nil {
+		return "", err
+	}
+
+	return url, nil
 }

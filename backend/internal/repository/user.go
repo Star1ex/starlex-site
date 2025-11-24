@@ -14,6 +14,7 @@ type UserModel struct {
 	Password  string      `gorm:"not null"`
 	FirstName string      `gorm:"not null;size:50"`
 	LastName  string      `gorm:"not null;size:50"`
+	Photo_URL *string     `gorm:"default:null"`
 	Teams     []TeamModel `gorm:"many2many:users_teams"`
 }
 
@@ -29,6 +30,7 @@ func fromDomain(u *entity.User) *UserModel {
 		Password:  u.Password,
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
+		Photo_URL: u.Photo_URL,
 	}
 }
 
@@ -40,6 +42,7 @@ func toDomain(u *UserModel) *entity.User {
 		Password:  u.Password,
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
+		Photo_URL: u.Photo_URL,
 	}
 }
 
@@ -122,4 +125,12 @@ func (r *UserRepository) Search(ctx context.Context, email string) ([]*entity.Us
 		Where("email ILIKE ?", email+"%").
 		Find(&models).Error
 	return toUserDomains(models), err
+}
+
+func (r *UserRepository) UpdatePhoto(id, photo_url string) error {
+	if photo_url == "" {
+		return errors.New("photo_url is empty")
+	}
+
+	return r.db.Model(&UserModel{}).Where("id = ?", id).Update("photo_url", photo_url).Error
 }

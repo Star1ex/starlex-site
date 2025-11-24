@@ -17,3 +17,28 @@ func (h *Handlers) GetTeams(ctx *fiber.Ctx) error {
 	response := dto.ToTeamsResponse(teams)
 	return ctx.Status(fiber.StatusOK).JSON(response)
 }
+
+func (h *Handlers) UploadPhoto(c *fiber.Ctx) error {
+	id := c.Params("id")
+	if id == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid id",
+		})
+	}
+
+	file, err := c.FormFile("photo")
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid file",
+		})
+	}
+
+	url, err := h.userService.UploadUserPhoto(c.Context(), id, file)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "error uploading photo",
+		})
+	}
+
+	return c.JSON(fiber.Map{"url": url})
+}

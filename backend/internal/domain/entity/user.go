@@ -6,6 +6,7 @@ type User struct {
 	Password  string
 	FirstName string
 	LastName  string
+	Photo_URL *string
 }
 
 func NewUser(id, email, hashedPassword, firstName, lastName string) *User {

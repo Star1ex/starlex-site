@@ -11,6 +11,7 @@ import (
 
 type Config struct {
 	DatabaseConfig DatabaseConfig
+	StorageConfig  StorageConfig
 }
 
 type DatabaseConfig struct {
@@ -21,6 +22,12 @@ type DatabaseConfig struct {
 	Password string
 	Database string
 	SSLMode  string
+}
+
+type StorageConfig struct {
+	StorageType string
+	LocalPath   string
+	LocalURL    string
 }
 
 // Loading full config with data from .env.example.example
@@ -38,6 +45,12 @@ func LoadConfig() *Config {
 			Password: os.Getenv("DB_PASSWORD"),
 			Database: os.Getenv("DB_NAME"),
 			SSLMode:  os.Getenv("DB_SSL_MODE"),
+		},
+
+		StorageConfig: StorageConfig{
+			StorageType: os.Getenv("STORAGE_TYPE"),
+			LocalPath:   os.Getenv("LOCAL_PATH"),
+			LocalURL:    os.Getenv("LOCAL_URL"),
 		},
 	}
 }

@@ -15,6 +15,11 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 
 	api := app.Group("/api")
 
+	profile := api.Group("/profile")
+	{
+		profile.Post("/:id/picture", handlers.UploadPhoto)
+	}
+
 	auth := api.Group("/auth")
 	{
 		auth.Post("/login", handlers.Login)
