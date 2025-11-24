@@ -10,7 +10,7 @@ type Repository interface {
 	// CRUD
 	Create(ctx context.Context, task *entity.Task) error
 	Get(ctx context.Context, id string) (*entity.Task, error)
-	Update(ctx context.Context, id string, updateTask *entity.UpdateTask) error
+	Update(ctx context.Context, id string, data *entity.Task) (error, *entity.Task)
 	Delete(ctx context.Context, id string) error
 
 	// Getters

@@ -53,3 +53,17 @@ func (s *TaskService) GetUserTasks(ctx context.Context, userID string) ([]*entit
 	}
 	return tasks, nil
 }
+
+
+func (s *TaskService) UpdateTaskProgress(ctx context.Context, taskID,progress string )(error,*entity.Task){
+	updatedTask:=&entity.Task{
+		Progress: progress,
+	}
+	
+	
+	err,task := s.taskRepo.Update(ctx,taskID,updatedTask)
+	if err != nil{
+		return err,nil
+	}
+	return nil,task
+}

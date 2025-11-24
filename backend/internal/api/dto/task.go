@@ -10,6 +10,7 @@ type TaskApi struct {
 	AssignedToID []string `json:"user_id" binding:"required"`
 	Task         string   `json:"task" binding:"required"`
 	Description  string   `json:"description" binding:"required"`
+	Progress     string   `json:"progress"`
 	Priority 	 string   `json:"priority"`
 }
 
@@ -19,7 +20,8 @@ type TaskResponse struct {
 	Description string
 	AssignedTo  []string
 	TeamID      string
-	Priority 	 string
+	Priority 	string
+	Progress    string
 	CreatedAt   time.Time
 }
 
@@ -37,6 +39,7 @@ func ToTaskResponse(task *entity.Task) *TaskResponse {
 		AssignedTo:  assignedIDs,
 		TeamID:      task.TeamID,
 		Priority: 	 task.Priority,
+		Progress:    task.Progress,
 		CreatedAt:   task.CreatedAt,
 	}
 }
@@ -54,4 +57,13 @@ func FromTaskApi(api *TaskApi) (*entity.Task, []string) {
 		Task:        api.Task,
 		Description: api.Description,
 	}, api.AssignedToID
+}
+
+
+type UpdateDto struct{
+	AssignedToID *[]string `json:"user_id"`
+	Task         *string   `json:"task"`
+	Description  *string   `json:"description"`
+	Progress     *string   `json:"progress"`
+	Priority 	 *string   `json:"priority"`
 }
