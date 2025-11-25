@@ -6,15 +6,17 @@ type User struct {
 	Password  string
 	FirstName string
 	LastName  string
+	Role      string
 	Photo_URL *string
 }
 
-func NewUser(id, email, hashedPassword, firstName, lastName string) *User {
+func NewUser(id, email, hashedPassword, firstName, lastName,role string) *User {
 	return &User{
 		ID:        id,
 		Email:     email,
 		Password:  hashedPassword,
 		FirstName: firstName,
 		LastName:  lastName,
+		Role: role,
 	}
 }

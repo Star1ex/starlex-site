@@ -4,13 +4,14 @@ import (
 	"context"
 	"mime/multipart"
 
+	"github.com/Team-Tracks/team-track-site/internal/api/dto"
 	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
 )
 
 type Service interface {
 
 	// CRUD
-	Create(ctx context.Context, u *entity.User) error
+	Create(ctx context.Context, u *dto.UserApi) error
 
 	// Auth
 	Login(ctx context.Context, email, password string) (*entity.User, error)

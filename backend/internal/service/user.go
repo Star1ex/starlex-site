@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"mime/multipart"
 
+	"github.com/Team-Tracks/team-track-site/internal/api/dto"
 	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
 	"github.com/Team-Tracks/team-track-site/internal/domain/user"
 	"github.com/Team-Tracks/team-track-site/internal/security"
@@ -23,13 +24,13 @@ func NewUserService(repo user.Repository, storage storage.Storage) *UserService 
 	}
 }
 
-func (s *UserService) Create(ctx context.Context, u *entity.User) error {
+func (s *UserService) Create(ctx context.Context, u *dto.UserApi) error {
 	id := security.GenerateNewID()
 	hashedPassword, err := security.HashPassword(u.Password)
 	if err != nil {
 		return err
 	}
-	newUser := entity.NewUser(id, u.Email, hashedPassword, u.FirstName, u.LastName)
+	newUser := entity.NewUser(id, u.Email, hashedPassword, u.FirstName, u.LastName,"user")
 	if err := s.repo.Create(ctx, newUser); err != nil {
 		return err
 	}
