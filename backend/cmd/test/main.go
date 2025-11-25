@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/Team-Tracks/team-track-site/internal/api/dto"
 	"github.com/Team-Tracks/team-track-site/internal/config"
 	"github.com/Team-Tracks/team-track-site/internal/db"
-	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
 	"github.com/Team-Tracks/team-track-site/internal/repository"
 	"github.com/Team-Tracks/team-track-site/internal/service"
 	"github.com/Team-Tracks/team-track-site/internal/storage"
@@ -28,7 +28,7 @@ func main() {
 	userRepo := repository.NewUserRepository(db.DB)
 	serviceUser := service.NewUserService(userRepo, storage)
 
-	u := entity.User{
+	u := dto.UserApi{
 		Email:     "eblan@gmail.com",
 		Password:  "1234",
 		FirstName: "John",

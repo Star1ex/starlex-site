@@ -10,7 +10,10 @@ import (
 
 func (h *Handlers) CreateTask(ctx *fiber.Ctx) error {
 	teamID := ctx.Params("teamID")
-
+	userInterfaceID := ctx.Locals("userID")
+	if userInterfaceID == nil{
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "user not authorized"})
+	}
 	var input dto.TaskApi
 	if err := ctx.BodyParser(&input); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad json"})
@@ -23,7 +26,11 @@ func (h *Handlers) CreateTask(ctx *fiber.Ctx) error {
 		Progress:    input.Progress,
 	}
 
-	err := h.taskService.CreateTask(ctx.Context(), teamID, input.AssignedToID, entityTask)
+	userID,ok := userInterfaceID.(string)
+	if !ok{
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{})
+	};
+	err := h.taskService.CreateTask(ctx.Context(), teamID, input.AssignedToID, entityTask,userID)
 
 	if err != nil {
 		return ctx.Status(500).JSON(fiber.Map{"error": err.Error()})
