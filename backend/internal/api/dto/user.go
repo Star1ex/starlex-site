@@ -17,6 +17,7 @@ type UserResponse struct {
 	Email     string  `json:"email"`
 	FirstName string  `json:"first_name"`
 	LastName  string  `json:"last_name"`
+	Role      string  `json:"role"`
 	Photo_URL *string `json:"photo_url"`
 }
 
@@ -46,6 +47,7 @@ func ToUserResponse(u *entity.User) *UserResponse {
 		Email:     u.Email,
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
+		Role: 	   u.Role,
 		Photo_URL: u.Photo_URL,
 	}
 }

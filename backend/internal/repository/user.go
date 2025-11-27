@@ -14,6 +14,7 @@ type UserModel struct {
 	Password  string      `gorm:"not null"`
 	FirstName string      `gorm:"not null;size:50"`
 	LastName  string      `gorm:"not null;size:50"`
+	Role      string  	  `gorm:"not null"`
 	Photo_URL *string     `gorm:"default:null"`
 	Teams     []TeamModel `gorm:"many2many:users_teams"`
 }
@@ -30,7 +31,9 @@ func fromDomain(u *entity.User) *UserModel {
 		Password:  u.Password,
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
+		Role: 	   u.Role,	
 		Photo_URL: u.Photo_URL,
+		Teams: 	   nil,	
 	}
 }
 
@@ -42,6 +45,7 @@ func toDomain(u *UserModel) *entity.User {
 		Password:  u.Password,
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
+		Role: 	   u.Role,
 		Photo_URL: u.Photo_URL,
 	}
 }
@@ -119,6 +123,18 @@ func (r *UserRepository) GetByIDs(ctx context.Context, ids []string) ([]*entity.
 	return toUserDomains(models), nil
 }
 
+func (r *UserRepository) GetByID(ctx context.Context,id string) (*entity.User,error){
+	var user UserModel
+	err := r.db.WithContext(ctx).First(&user,"id = ?",id).Error
+	if err!= nil{
+			if errors.Is(err,gorm.ErrRecordNotFound){
+			return nil,ErrUserNotFound
+		}
+		return nil,err
+	}
+	return toDomain(&user),nil
+}
+
 func (r *UserRepository) Search(ctx context.Context, email string) ([]*entity.User, error) {
 	var models []*UserModel
 	err := r.db.
@@ -133,4 +149,41 @@ func (r *UserRepository) UpdatePhoto(id, photo_url string) error {
 	}
 
 	return r.db.Model(&UserModel{}).Where("id = ?", id).Update("photo_url", photo_url).Error
+}
+
+
+func (r *UserRepository) Update(ctx context.Context, updates *entity.User,id string)(*entity.User,error){
+	updatedUser := map[string]interface{}{}
+	if updates.Email != ""{
+		updatedUser["email"] = updates.Email
+	}
+	if updates.Password != ""{
+		updatedUser["password"] = updates.Password
+	}
+	if updates.FirstName != ""{
+		updatedUser["firstName"] = updates.FirstName
+	}
+	if updates.LastName != ""{
+		updatedUser["lastName"] = updates.LastName
+	}
+	if updates.Role != ""{
+		updatedUser["role"] = updates.Role
+	}
+	if updates.Photo_URL != nil{
+		updatedUser["photo_url"] = updates.Photo_URL
+	}
+
+	var user UserModel
+	err := r.db.WithContext(ctx).Model(&user).Where("id = ?", id).Updates(updatedUser).Error
+	if err != nil{
+		return nil,err
+	}
+	err = r.db.First(&user,id).Error
+	if err != nil{
+		if errors.Is(err,gorm.ErrRecordNotFound){
+			return nil, errors.New("record not found after update")
+		}
+		return nil,err
+	}
+	return toDomain(&user),nil
 }

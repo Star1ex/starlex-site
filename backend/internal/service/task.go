@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"errors"
 
 	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
 	"github.com/Team-Tracks/team-track-site/internal/domain/task"
@@ -25,8 +26,15 @@ func (s *TaskService) CreateTask(
 	teamID string,
 	assignedIDs []string,
 	task *entity.Task,
+	userId string,
 ) error {
-
+	owner,err := s.userRepo.GetByID(ctx,userId)
+	if err != nil{
+		return err
+	}
+	if owner.Role != "owner"{
+		return errors.New("now allowed for this user")
+	}
 	users, err := s.userRepo.GetByIDs(ctx, assignedIDs)
 	if err != nil {
 		return err

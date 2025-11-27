@@ -75,17 +75,16 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 func (h *Handlers) Register(ctx *fiber.Ctx) error {
 
 	var input dto.UserApi
-
 	if err := ctx.BodyParser(&input); err != nil {
 		log.Println(err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{})
 	}
 
 	// create user with service
-	err := h.userService.Create(ctx.Context(), dto.FromUserApi(&input))
+	err := h.userService.Create(ctx.Context(), &input)
 	if err != nil {
 		log.Println(err)
-		ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+		ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to authenticate user",
 		})
 	}
