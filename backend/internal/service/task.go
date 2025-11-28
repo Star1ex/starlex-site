@@ -28,11 +28,11 @@ func (s *TaskService) CreateTask(
 	task *entity.Task,
 	userId string,
 ) error {
-	owner,err := s.userRepo.GetByID(ctx,userId)
-	if err != nil{
+	owner, err := s.userRepo.Get(ctx, userId)
+	if err != nil {
 		return err
 	}
-	if owner.Role != "owner"{
+	if owner.Role != "owner" {
 		return errors.New("now allowed for this user")
 	}
 	users, err := s.userRepo.GetByIDs(ctx, assignedIDs)
@@ -62,16 +62,14 @@ func (s *TaskService) GetUserTasks(ctx context.Context, userID string) ([]*entit
 	return tasks, nil
 }
 
-
-func (s *TaskService) UpdateTaskProgress(ctx context.Context, taskID,progress string )(error,*entity.Task){
-	updatedTask:=&entity.Task{
+func (s *TaskService) UpdateTaskProgress(ctx context.Context, taskID, progress string) (error, *entity.Task) {
+	updatedTask := &entity.Task{
 		Progress: progress,
 	}
-	
-	
-	err,task := s.taskRepo.Update(ctx,taskID,updatedTask)
-	if err != nil{
-		return err,nil
+
+	err, task := s.taskRepo.Update(ctx, taskID, updatedTask)
+	if err != nil {
+		return err, nil
 	}
-	return nil,task
+	return nil, task
 }

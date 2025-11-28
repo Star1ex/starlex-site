@@ -10,22 +10,21 @@ import (
 )
 
 type TeamService struct {
-	repo team.Repository
+	repo     team.Repository
 	userRepo user.Repository
 }
 
-func NewTeamService(repo team.Repository,userRepo user.Repository) *TeamService {
+func NewTeamService(repo team.Repository, userRepo user.Repository) *TeamService {
 	return &TeamService{repo: repo, userRepo: userRepo}
 }
 
 func (s *TeamService) CreateTeam(ctx context.Context, name, description, userID string) (*entity.Team, error) {
-	owner,err:=s.userRepo.GetByID(ctx,userID)
+	owner, err := s.userRepo.Get(ctx, userID)
 	newId := security.GenerateNewID()
 	newTeam := entity.NewTeam(newId, name, description)
 
-	
-	if err != nil{
-		return nil,err
+	if err != nil {
+		return nil, err
 	}
 	err = s.repo.CreateAndAddCreator(ctx, newTeam, userID)
 	if err != nil {
@@ -33,9 +32,9 @@ func (s *TeamService) CreateTeam(ctx context.Context, name, description, userID 
 	}
 
 	owner.Role = "owner"
-	_,err = s.userRepo.Update(ctx,owner,userID)
-	if err != nil{
-		return nil,err
+	_, err = s.userRepo.Update(ctx, owner, userID)
+	if err != nil {
+		return nil, err
 	}
 	return newTeam, nil
 }

@@ -10,13 +10,12 @@ type User struct {
 	Photo_URL *string
 }
 
-func NewUser(id, email, hashedPassword, firstName, lastName,role string) *User {
+func NewUser(id, email, hashedPassword, firstName, lastName string) *User {
 	return &User{
 		ID:        id,
 		Email:     email,
 		Password:  hashedPassword,
 		FirstName: firstName,
 		LastName:  lastName,
-		Role: role,
 	}
 }

@@ -15,7 +15,7 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 
 	api := app.Group("/api")
 
-	profile := api.Group("/profile")
+	profile := api.Group("/profile", handlers.UserIndentity)
 	{
 		profile.Post("/:id/picture", handlers.UploadPhoto)
 	}
@@ -27,14 +27,14 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 
 	}
 
-	search := api.Group("/search")
+	search := api.Group("/search", handlers.UserIndentity)
 	{
 		search.Get("/:email", handlers.Search)
 	}
 
 	// After we add a dashboard with UserIndentity by jwt
 
-	team := api.Group("/team")
+	team := api.Group("/team", handlers.UserIndentity)
 	{
 		team.Post("/", handlers.CreateTeam)
 		team.Get("/:id", handlers.GetUsers)

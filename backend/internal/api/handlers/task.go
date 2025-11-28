@@ -11,7 +11,7 @@ import (
 func (h *Handlers) CreateTask(ctx *fiber.Ctx) error {
 	teamID := ctx.Params("teamID")
 	userInterfaceID := ctx.Locals("userID")
-	if userInterfaceID == nil{
+	if userInterfaceID == nil {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "user not authorized"})
 	}
 	var input dto.TaskApi
@@ -26,11 +26,11 @@ func (h *Handlers) CreateTask(ctx *fiber.Ctx) error {
 		Progress:    input.Progress,
 	}
 
-	userID,ok := userInterfaceID.(string)
-	if !ok{
+	userID, ok := userInterfaceID.(string)
+	if !ok {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{})
-	};
-	err := h.taskService.CreateTask(ctx.Context(), teamID, input.AssignedToID, entityTask,userID)
+	}
+	err := h.taskService.CreateTask(ctx.Context(), teamID, input.AssignedToID, entityTask, userID)
 
 	if err != nil {
 		return ctx.Status(500).JSON(fiber.Map{"error": err.Error()})
