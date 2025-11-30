@@ -38,11 +38,11 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 	{
 		team.Post("/", handlers.CreateTeam)
 		team.Get("/:id", handlers.GetUsers)
-		task := team.Group("/:teamID/task")
+		tasks := team.Group("/:teamID/tasks")
 		{
-			task.Post("/new", handlers.CreateTask)
-			task.Get("/", handlers.GetTeamTasks)
-			task.Get("/assigned", handlers.GetUserTasks)
+			tasks.Post("/new", handlers.CreateTask)
+			tasks.Get("/", handlers.GetTeamTasks)
+			tasks.Get("/assigned/:user_id", handlers.GetUserTasks)
 		}
 	}
 }

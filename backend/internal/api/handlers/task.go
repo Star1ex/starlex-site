@@ -53,7 +53,7 @@ func (h *Handlers) GetTeamTasks(ctx *fiber.Ctx) error {
 }
 
 func (h *Handlers) GetUserTasks(ctx *fiber.Ctx) error {
-	var id string
+	id := ctx.Params("user_id")
 
 	tasks, err := h.taskService.GetUserTasks(ctx.Context(), id)
 	if err != nil {

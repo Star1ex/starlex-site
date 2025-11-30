@@ -9,20 +9,20 @@ import (
 type TaskApi struct {
 	AssignedToID []string `json:"user_id" binding:"required"`
 	Task         string   `json:"task" binding:"required"`
-	Description  string   `json:"description" binding:"required"`
+	Description  string   `json:"description"`
 	Progress     string   `json:"progress"`
 	Priority     string   `json:"priority"`
 }
 
 type TaskResponse struct {
-	ID          string
-	Task        string
-	Description string
-	AssignedTo  []string
-	TeamID      string
-	Priority    string
-	Progress    string
-	CreatedAt   time.Time
+	ID          string    `json:"id" binding:"required"`
+	Task        string    `json:"task" binding:"required"`
+	Description string    `json:"description"`
+	AssignedTo  []string  `json:"user_id" binding:"required"`
+	TeamID      string    `json:"team_id"`
+	Priority    string    `json:"priority"`
+	Progress    string    `json:"progress"`
+	CreatedAt   time.Time `json:"created_at"`
 }
 
 func ToTaskResponse(task *entity.Task) *TaskResponse {
