@@ -10,6 +10,10 @@ import (
 // @host localhost:3000
 // @BasePath /api
 // @schemes http
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description Type "Bearer {your_token}"
 func main() {
 	app.StartServer()
 }

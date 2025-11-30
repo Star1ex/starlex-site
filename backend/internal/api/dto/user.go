@@ -47,7 +47,7 @@ func ToUserResponse(u *entity.User) *UserResponse {
 		Email:     u.Email,
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
-		Role: 	   u.Role,
+		Role:      u.Role,
 		Photo_URL: u.Photo_URL,
 	}
 }

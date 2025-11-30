@@ -15,9 +15,10 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 
 	api := app.Group("/api")
 
-	profile := api.Group("/profile")
+	users := api.Group("/users", handlers.UserIndentity)
 	{
-		profile.Post("/:id/picture", handlers.UploadPhoto)
+		users.Post("/:id/photo", handlers.UploadPhoto)
+		users.Get("/:id", handlers.GetTeams)
 	}
 
 	auth := api.Group("/auth")
@@ -27,22 +28,22 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 
 	}
 
-	search := api.Group("/search")
+	search := api.Group("/search", handlers.UserIndentity)
 	{
 		search.Get("/:email", handlers.Search)
 	}
 
 	// After we add a dashboard with UserIndentity by jwt
 
-	team := api.Group("/team")
+	team := api.Group("/team", handlers.UserIndentity)
 	{
 		team.Post("/", handlers.CreateTeam)
 		team.Get("/:id", handlers.GetUsers)
-		task := team.Group("/:teamID/task")
+		tasks := team.Group("/:team_id/tasks")
 		{
-			task.Post("/new", handlers.CreateTask)
-			task.Get("/", handlers.GetTeamTasks)
-			task.Get("/assigned", handlers.GetUserTasks)
+			tasks.Post("/", handlers.CreateTask)
+			tasks.Get("/", handlers.GetTeamTasks)
+			tasks.Get("/assigned/:user_id", handlers.GetUserTasks)
 		}
 	}
 }

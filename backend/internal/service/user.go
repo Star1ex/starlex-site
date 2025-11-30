@@ -30,7 +30,7 @@ func (s *UserService) Create(ctx context.Context, u *dto.UserApi) error {
 	if err != nil {
 		return err
 	}
-	newUser := entity.NewUser(id, u.Email, hashedPassword, u.FirstName, u.LastName,"user")
+	newUser := entity.NewUser(id, u.Email, hashedPassword, u.FirstName, u.LastName)
 	if err := s.repo.Create(ctx, newUser); err != nil {
 		return err
 	}

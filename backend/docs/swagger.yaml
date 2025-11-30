@@ -1,5 +1,48 @@
 basePath: /api
 definitions:
+  dto.TaskApi:
+    properties:
+      description:
+        type: string
+      priority:
+        type: string
+      progress:
+        type: string
+      task:
+        type: string
+      user_id:
+        items:
+          type: string
+        type: array
+    required:
+    - task
+    - user_id
+    type: object
+  dto.TaskResponse:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      priority:
+        type: string
+      progress:
+        type: string
+      task:
+        type: string
+      team_id:
+        type: string
+      user_id:
+        items:
+          type: string
+        type: array
+    required:
+    - id
+    - task
+    - user_id
+    type: object
   dto.TeamApi:
     properties:
       description:
@@ -13,6 +56,30 @@ definitions:
     - name
     - user_id
     type: object
+  dto.TeamResponse:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      team_id:
+        type: string
+    type: object
+  dto.UpdateDto:
+    properties:
+      description:
+        type: string
+      priority:
+        type: string
+      progress:
+        type: string
+      task:
+        type: string
+      user_id:
+        items:
+          type: string
+        type: array
+    type: object
   dto.UserApi:
     properties:
       email:
@@ -22,6 +89,8 @@ definitions:
       last_name:
         type: string
       password:
+        type: string
+      photo_url:
         type: string
     required:
     - email
@@ -36,6 +105,10 @@ definitions:
       id:
         type: string
       last_name:
+        type: string
+      photo_url:
+        type: string
+      role:
         type: string
     type: object
   handlers.SignIn:
@@ -145,6 +218,8 @@ paths:
             items:
               $ref: '#/definitions/dto.UserResponse'
             type: array
+      security:
+      - BearerAuth: []
       summary: Search users
       tags:
       - search
@@ -180,9 +255,38 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Created team
       tags:
       - team
+  /team/:id:
+    get:
+      description: Returns a list of all tasks for a given team.
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: List of teams
+          schema:
+            items:
+              $ref: '#/definitions/dto.TeamResponse'
+            type: array
+        "500":
+          description: Server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get teams by user
+      tags:
+      - users
   /team/{id}:
     get:
       description: Return all users from team
@@ -205,9 +309,219 @@ paths:
             additionalProperties:
               type: string
             type: object
+      security:
+      - BearerAuth: []
       summary: Get all users from team
       tags:
       - team
+  /team/{team_id}/tasks:
+    get:
+      description: Returns a list of all tasks for a given team.
+      parameters:
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: List of tasks
+          schema:
+            items:
+              $ref: '#/definitions/dto.TaskResponse'
+            type: array
+        "500":
+          description: Server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all tasks from team
+      tags:
+      - tasks
+    post:
+      consumes:
+      - application/json
+      description: Creates a new task within the specified team. Requires JWT authentication.
+      parameters:
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: string
+      - description: Task data
+        in: body
+        name: task_data
+        required: true
+        schema:
+          $ref: '#/definitions/dto.TaskApi'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Task created successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request or invalid JSON
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: User not authorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create task
+      tags:
+      - tasks
+  /team/{team_id}/tasks/{task_id}:
+    put:
+      consumes:
+      - application/json
+      description: Updates the 'Progress' field of an existing task by ID. Requires
+        JWT authentication.
+      parameters:
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: string
+      - description: Task ID
+        in: path
+        name: task_id
+        required: true
+        type: string
+      - description: Updated progress value
+        in: body
+        name: updates
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Task progress updated successfully
+          schema:
+            $ref: '#/definitions/dto.TaskResponse'
+        "400":
+          description: Bad request, missing fields, or invalid progress value
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: User not authorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Task not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update task progress
+      tags:
+      - tasks
+  /user/{user_id}/tasks:
+    get:
+      description: Returns a list of all tasks assigned to a specific user.
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: List of user's tasks
+          schema:
+            items:
+              $ref: '#/definitions/dto.TaskResponse'
+            type: array
+        "500":
+          description: Server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get user's tasks
+      tags:
+      - tasks
+  /users/{id}/photo:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Uploads a photo file for a specific user
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Photo file
+        in: formData
+        name: photo
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Upload user photo
+      tags:
+      - users
 schemes:
 - http
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer {your_token}"
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"
