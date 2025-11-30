@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -74,4 +76,29 @@ func (h *Handlers) UserIndentity(c *fiber.Ctx) error {
 
 	// Next proccess
 	return c.Next()
+}
+
+func (h *Handlers) getAuthenticatedUserID(ctx *fiber.Ctx) (string, error) {
+	userInterfaceID := ctx.Locals("user_id")
+
+	if userInterfaceID == nil {
+		return "", ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "user not authenticated or token missing",
+		})
+	}
+
+	if userID, ok := userInterfaceID.(string); ok {
+		return userID, nil
+	}
+
+	if floatID, isFloat := userInterfaceID.(float64); isFloat {
+		userID := fmt.Sprintf("%.0f", floatID)
+
+		return userID, nil
+	}
+
+	log.Printf("ERROR: failed to assert userID from context. Type found: %T", userInterfaceID)
+	return "", ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		"error": "internal authentication error: invalid ID format",
+	})
 }

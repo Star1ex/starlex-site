@@ -15,9 +15,10 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 
 	api := app.Group("/api")
 
-	profile := api.Group("/profile", handlers.UserIndentity)
+	users := api.Group("/users", handlers.UserIndentity)
 	{
-		profile.Post("/:id/picture", handlers.UploadPhoto)
+		users.Post("/:id/photo", handlers.UploadPhoto)
+		users.Get("/:id", handlers.GetTeams)
 	}
 
 	auth := api.Group("/auth")
@@ -38,9 +39,9 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 	{
 		team.Post("/", handlers.CreateTeam)
 		team.Get("/:id", handlers.GetUsers)
-		tasks := team.Group("/:teamID/tasks")
+		tasks := team.Group("/:team_id/tasks")
 		{
-			tasks.Post("/new", handlers.CreateTask)
+			tasks.Post("/", handlers.CreateTask)
 			tasks.Get("/", handlers.GetTeamTasks)
 			tasks.Get("/assigned/:user_id", handlers.GetUserTasks)
 		}

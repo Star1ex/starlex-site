@@ -14,6 +14,7 @@ import (
 // @Produce      json
 // @Param        email   path      string  true  "User Email"
 // @Success      200     {array}   dto.UserResponse
+// @Security BearerAuth
 // @Router       /search/{email} [get]
 func (h *Handlers) Search(ctx *fiber.Ctx) error {
 	email := ctx.Params("email")
