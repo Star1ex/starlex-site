@@ -1,0 +1,1 @@
+{"root":["./src/App.tsx","./src/main.tsx","./src/pages/auth/sign-in.tsx","./src/pages/auth/sign-up.tsx","./src/shared/lib/cn.ts","./src/shared/ui/Buttons/Button.tsx","./src/shared/ui/Buttons/index.ts"],"errors":true,"version":"5.9.3"}
