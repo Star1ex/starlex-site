@@ -1,8 +1,6 @@
-# CHANGE .ENV.EXAMPLE TO .ENV IN BOTH FOLDERS BEFORE RUNNING
-
 services:
   db:
-    image: postgres:latest
+    image: postgres:16-alpine
     container_name: team-track-site-db
     restart: unless-stopped
     env_file:
@@ -12,11 +10,11 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
     ports:
-      - "${DB_PORT}:5432"
+      - "${DB_PORT}:5432" 
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -38,13 +36,13 @@ services:
 
   frontend:
     build:
-      context: ./frontend
+      context: ./react-frontend
       dockerfile: Dockerfile
     image: team-track-site-frontend-image 
     container_name: team-track-site-frontend
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "8080:80"
     depends_on:
       - backend
 
