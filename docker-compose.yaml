@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:latest
+    image: postgres:16-alpine
     container_name: team-track-site-db
     restart: unless-stopped
     env_file:
@@ -14,9 +14,9 @@ services:
       sh -c "chown -R postgres:postgres /var/lib/postgresql &&
              exec /usr/local/bin/docker-entrypoint.sh postgres"
     ports:
-      - "${DB_PORT}:5432"
+      - "${DB_PORT}:5432" 
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 10s
@@ -53,7 +53,7 @@ services:
     container_name: team-track-site-frontend
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "8080:80"
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - uploads_data:/usr/share/nginx/html/uploads:ro
