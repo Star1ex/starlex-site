@@ -18,6 +18,17 @@ export const SignInPage = () => {
   const handleSubmit = async (e: React.FormEvent)=>{
       e.preventDefault();
 
+      if (!formEmail || !formPassword) {
+        setErrorMessage('All fields must be filled in');
+        return; 
+    }
+
+    
+    if (!formEmail.includes('@')) {
+        setErrorMessage('Please enter a valid email address.');
+        return; 
+    }
+
       const data = {
         email: formEmail,
         password: formPassword
@@ -39,7 +50,7 @@ export const SignInPage = () => {
           if (data.user){
             localStorage.setItem("user", JSON.stringify(data.user))
           }
-          console.log("Успешный вход");
+          console.log("Successed login");
           
           //Редирект на dashboard в будущем
         }else{
@@ -50,8 +61,8 @@ export const SignInPage = () => {
           }
         }
       }catch (error){
-          setErrorMessage('Не удалось связаться с сервером. Проверьте подключение.');
-          console.error('Ошибка сети или сервера:', error);
+          setErrorMessage('Unable to connect to the server. Check your connection.');
+          console.error('Network or server error:', error);
       }
   }
 
