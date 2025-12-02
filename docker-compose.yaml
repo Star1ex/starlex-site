@@ -32,7 +32,7 @@ services:
     ports:
       - "${BACKEND_PORT}:3000"
     env_file:
-      - backend/.env
+      - backend/.env.example
 
   frontend:
     build:
