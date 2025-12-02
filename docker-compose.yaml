@@ -6,9 +6,9 @@ services:
     env_file:
       - backend/.env
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: team_admin
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: team_track
     ports:
       - "${DB_PORT}:5432"
     volumes:
@@ -32,7 +32,7 @@ services:
     ports:
       - "${BACKEND_PORT}:3000"
     env_file:
-      - backend/.env
+      - ./backend/.env
 
   frontend:
     build:
