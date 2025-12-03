@@ -1,20 +1,26 @@
+# CHANGE .ENV.EXAMPLE TO .ENV IN BOTH FOLDERS BEFORE RUNNING
+
 services:
   db:
     image: postgres:latest
     container_name: team-track-site-db
     restart: unless-stopped
     env_file:
-      - backend/.env
+      - backend/.env.example
     environment:
-      POSTGRES_USER: team_admin
-      POSTGRES_PASSWORD: 1234
-      POSTGRES_DB: team_track
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    user: "0:0"
+    command: >
+      sh -c "chown -R postgres:postgres /var/lib/postgresql &&
+             exec /usr/local/bin/docker-entrypoint.sh postgres"
     ports:
       - "${DB_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -32,7 +38,7 @@ services:
     ports:
       - "${BACKEND_PORT}:3000"
     env_file:
-      - backend/.env
+      - backend/.env.example
 
   frontend:
     build:
