@@ -1,13 +1,17 @@
 import React, { ChangeEvent } from "react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 // SignInPage for login
 export const SignInPage = () => {
+  const navigate = useNavigate()
   const [formEmail,setFormEmail] = useState("")
   const [formPassword,setFormPassword] = useState("")
   const [errorMessage, setErrorMessage] = useState('');
 
-
+  function handleToSignUp(){
+    navigate("/sign-up")
+  }
   function handleSetEmail(e: ChangeEvent<HTMLInputElement>){
     setFormEmail(e.target.value)
   }
@@ -15,10 +19,11 @@ export const SignInPage = () => {
     setFormPassword(e.target.value)
   }
 
-  const handleSubmit = async (e: React.FormEvent)=>{
+  const handleSubmit = async (e: React.FormEvent)=>{ 
+      setErrorMessage('')  
       e.preventDefault();
 
-      if (!formEmail || !formPassword) {
+      if (!formEmail || !formPassword ) {
         setErrorMessage('All fields must be filled in');
         return; 
     }
@@ -115,7 +120,7 @@ export const SignInPage = () => {
         </button>
 
         <p className="text-center text-sm text-gray-500 pt-4">
-          Already a member? <a href="#" className="text-[#d4a89a] hover:text-[#c69a8c] font-medium">Create account</a>
+          Already a member? <a href="#" className="text-[#d4a89a] hover:text-[#c69a8c] font-medium" onClick={handleToSignUp}>Create account</a>
         </p>
 
       </form>
