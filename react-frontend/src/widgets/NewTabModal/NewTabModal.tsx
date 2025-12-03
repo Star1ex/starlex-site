@@ -40,7 +40,7 @@ export const NewTabModal: React.FC<Props> = ({ open, onClose, onTeamCreated }) =
 
   const debouncedEmail = useDebounce(emailInput, 400);
 
- useEffect(() => {
+useEffect(() => {
   const q = debouncedEmail.trim();
   if (!q) {
     setSearchResults([]);
@@ -52,33 +52,34 @@ export const NewTabModal: React.FC<Props> = ({ open, onClose, onTeamCreated }) =
   const fetchUsers = async () => {
     try {
       setLoadingSearch(true);
+
+      const headers: Record<string, string> = {
+        Accept: 'application/json',
+        ...getAuthHeaders(),
+      };
+
       const res = await fetch(
         `http://localhost:3000/api/search/${encodeURIComponent(q)}`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            ...getAuthHeaders(),
-          },
-        }
+        { headers }
       );
 
       if (!res.ok) {
-        if (res.status === 401 || res.status === 403) {
-          // здесь можешь вызвать logout() и перекинуть на /sign-in
-          throw new Error('Unauthorized');
-        }
-        throw new Error('Search error');
+        throw new Error(`Search error: ${res.status}`);
       }
 
       const data: User[] = await res.json();
-      if (!cancelled) setSearchResults(data);
+      if (!cancelled) {
+        setSearchResults(data);
+      }
     } catch (e) {
       if (!cancelled) {
         console.error(e);
         setSearchResults([]);
       }
     } finally {
-      if (!cancelled) setLoadingSearch(false);
+      if (!cancelled) {
+        setLoadingSearch(false);
+      }
     }
   };
 
@@ -118,7 +119,7 @@ export const NewTabModal: React.FC<Props> = ({ open, onClose, onTeamCreated }) =
     setEmails(prev => prev.filter(e => e !== email));
   };
 
-  // ===== СОЗДАНИЕ КОМАНДЫ /api/team =====
+
   const canSubmit =
     name.trim().length > 0 &&
     !submitting;
@@ -150,13 +151,16 @@ export const NewTabModal: React.FC<Props> = ({ open, onClose, onTeamCreated }) =
         emails,
       };
 
-      const res = await fetch('http://localhost:3000/api/team', {
-    method: 'POST',
-    headers: {
-    'Content-Type': 'application/json',
-    ...getAuthHeaders(),
-    },
-    body: JSON.stringify({
+     const headers: Record<string, string> = {
+  'Content-Type': 'application/json',
+  Accept: 'application/json',
+  ...getAuthHeaders(),
+};
+
+const res = await fetch('http://localhost:3000/api/team', {
+  method: 'POST',
+  headers,
+  body: JSON.stringify({
     name: name.trim(),
     description: description.trim(),
     emails,
@@ -165,8 +169,8 @@ export const NewTabModal: React.FC<Props> = ({ open, onClose, onTeamCreated }) =
 
       if (!res.ok) {
         const errData = await res.json().catch(() => ({}));
-        setError(errData.message || 'Failed to create team');
-        setSubmitting(false);
+        //setError(errData.message || 'Failed to create team');
+        //setSubmitting(false);
         return;
       }
 
@@ -182,11 +186,13 @@ export const NewTabModal: React.FC<Props> = ({ open, onClose, onTeamCreated }) =
     }
   };
 
-  // закрытие по крестику: чистим состояние
   const handleClose = () => {
     resetState();
     onClose();
   };
+
+  const [userTeams, setUserTeams] = useState<Team[]>([]);
+
 
   return (
     <Modal open={open} onClose={handleClose}>

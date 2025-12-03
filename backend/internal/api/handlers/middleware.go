@@ -58,10 +58,10 @@ func (h *Handlers) UserIndentity(c *fiber.Ctx) error {
 		})
 	}
 
-	email, ok := claims["email"]
+	userID, ok := claims["user_id"]
 	if !ok {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "missing email in token",
+			"error": "missing user_id in token",
 		})
 	}
 
@@ -72,7 +72,7 @@ func (h *Handlers) UserIndentity(c *fiber.Ctx) error {
 	}
 
 	// Saved email in local storage
-	c.Locals("email", email)
+	c.Locals("user_id", userID)
 
 	// Next proccess
 	return c.Next()
@@ -80,6 +80,8 @@ func (h *Handlers) UserIndentity(c *fiber.Ctx) error {
 
 func (h *Handlers) getAuthenticatedUserID(ctx *fiber.Ctx) (string, error) {
 	userInterfaceID := ctx.Locals("user_id")
+
+	log.Printf("DEBUG user_id from Locals: %#v (%T)", userInterfaceID, userInterfaceID)
 
 	if userInterfaceID == nil {
 		return "", ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{

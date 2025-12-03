@@ -17,8 +17,11 @@ import (
 // @Security BearerAuth
 // @Router       /team/:id [get]
 func (h *Handlers) GetTeams(ctx *fiber.Ctx) error {
-	id := ctx.Params("id")
-	teams, err := h.userService.GetTeams(ctx.Context(), id)
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+	teams, err := h.userService.GetTeams(ctx.Context(), userID)
 	if err != nil {
 		log.Println(err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{})
@@ -41,8 +44,11 @@ func (h *Handlers) GetTeams(ctx *fiber.Ctx) error {
 // @Security BearerAuth
 // @Router /users/{id}/photo [post]
 func (h *Handlers) UploadPhoto(c *fiber.Ctx) error {
-	id := c.Params("id")
-	if id == "" {
+	userID, authErr := h.getAuthenticatedUserID(c)
+	if authErr != nil {
+		return authErr
+	}
+	if userID == "" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "invalid id",
 		})
@@ -55,7 +61,7 @@ func (h *Handlers) UploadPhoto(c *fiber.Ctx) error {
 		})
 	}
 
-	url, err := h.userService.UploadUserPhoto(c.Context(), id, file)
+	url, err := h.userService.UploadUserPhoto(c.Context(), userID, file)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "error uploading photo",

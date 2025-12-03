@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { TabsPanel } from '@/widgets/TabsPanel/TabsPanel.js';
 import { NewTabModal } from '@/widgets/NewTabModal/NewTabModal.js';
+import { RightSidebar } from '@/widgets/ProfilePanel/ProfilePanel.js';
 import { useModal } from '@/shared/hooks/useModal.js';
 
 type Team = {
@@ -27,7 +28,12 @@ export const Dashboard: React.FC = () => {
           onAddClick={onOpen}
         />
       </div>
-
+    <div className="flex">
+  
+  <main className="ml-[320px] mr-[80px]">
+    </main>
+  <RightSidebar />
+</div>
       <NewTabModal
         open={open}
         onClose={onClose}

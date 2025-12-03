@@ -45,8 +45,9 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 
 	// Generater new token with paramaters and add expired time 24 hours
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"email": loginInput.Email,
-		"exp":   time.Now().Add(24 * time.Hour).Unix(),
+		"email":   loginInput.Email,
+		"user_id": user.ID,
+		"exp":     time.Now().Add(24 * time.Hour).Unix(),
 	})
 
 	// Hash the token
