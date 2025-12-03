@@ -9,6 +9,10 @@ export const SignInPage = () => {
   const [formPassword,setFormPassword] = useState("")
   const [errorMessage, setErrorMessage] = useState('');
 
+  const handleDashboard = () => {
+    navigate("/dashboard");
+  };
+
   function handleToSignUp(){
     navigate("/sign-up")
   }
@@ -19,57 +23,61 @@ export const SignInPage = () => {
     setFormPassword(e.target.value)
   }
 
-  const handleSubmit = async (e: React.FormEvent)=>{ 
-      setErrorMessage('')  
-      e.preventDefault();
+ const handleSubmit = async (e: React.FormEvent) => {
+  setErrorMessage('');
+  e.preventDefault();
 
-      if (!formEmail || !formPassword ) {
-        setErrorMessage('All fields must be filled in');
-        return; 
-    }
 
-    
-    if (!formEmail.includes('@')) {
-        setErrorMessage('Please enter a valid email address.');
-        return; 
-    }
-
-      const data = {
-        email: formEmail,
-        password: formPassword
-      };
-
-      try{
-        const response = await fetch('http://localhost:3000/api/auth/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-        if (response.ok){
-          const data = await response.json();
-          if (data.token){
-            localStorage.setItem("token", data.token)
-          }
-          if (data.user){
-            localStorage.setItem("user", JSON.stringify(data.user))
-          }
-          console.log("Successed login");
-          
-          //Редирект на dashboard в будущем
-        }else{
-          if (response.status === 400){
-            setErrorMessage("Incorrect email or password")
-          }else{
-            setErrorMessage("Unknown authorization error")
-          }
-        }
-      }catch (error){
-          setErrorMessage('Unable to connect to the server. Check your connection.');
-          console.error('Network or server error:', error);
-      }
+  if (!formEmail || !formPassword) {
+    setErrorMessage('All ');
+    return;
   }
+  if (!formEmail.includes('@') || !formEmail.includes('.')) {
+    setErrorMessage('Enter correct email');
+    return;
+  }
+
+  const data = { email: formEmail, password: formPassword };
+
+  try {
+    const response = await fetch('http://localhost:3000/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+      
+      if (result.token && result.user) {
+        localStorage.setItem('token', result.token);
+        localStorage.setItem('user', JSON.stringify(result.user));
+        console.log('Successfuly auth:', result.user.email);
+        navigate('/dashboard');
+        return;
+      } else {
+        setErrorMessage('Internal server error');
+        return;
+      }
+    }
+
+    const errorData = await response.json().catch(() => ({}));
+    switch (response.status) {
+      case 400:
+      case 401:
+        setErrorMessage(errorData.message || 'Invalid email or password');
+        break;
+      case 409:
+        setErrorMessage('User already auth');
+        break;
+      default:
+        setErrorMessage('Error server auth');
+    }
+  } catch (error) {
+    setErrorMessage('Missing connect to server');
+    console.error('Network error:', error);
+  }
+};
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-[#FFD1C1]">
@@ -115,7 +123,7 @@ export const SignInPage = () => {
         <button
           type="submit"
           className="w-full py-3 mt-8 bg-[#d4a89a] text-white font-semibold rounded-md shadow-md hover:bg-[#c69a8c] transition duration-200"
-        >
+          >
           Sign In
         </button>
 

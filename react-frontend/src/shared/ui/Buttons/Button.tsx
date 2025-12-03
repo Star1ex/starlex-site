@@ -10,7 +10,7 @@ const buttonStyles = cva(
     variants: {
       variant: {
         primary: "bg-[#FF8C7B] text-white hover:bg-[#FF8C7B",
-        secondary: "bg-gray-200 text-gray-900 hover:bg-gray-300",
+        secondary: "w-full py-3 mt-8 bg-[#d4a89a] text-white font-semibold rounded-md shadow-md hover:bg-[#c69a8c] transition duration-200",
         outline: "border border-gray-300 text-gray-900 hover:bg-gray-100",
       },
       size: {
