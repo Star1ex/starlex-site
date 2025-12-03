@@ -1,6 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Button } from "@/shared/ui/Buttons/Button.js";
+import { Button } from "@/shared/ui/Button.js";
 
 // HomePage first page which user can see
 export const HomePage = () => {

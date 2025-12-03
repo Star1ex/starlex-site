@@ -1,21 +1,38 @@
-import React from 'react';
-import { useAuth } from '@/shared/hooks/useAuth.js'; 
+import React, { useState } from 'react';
+import { TabsPanel } from '@/widgets/TabsPanel/TabsPanel.js';
+import { NewTabModal } from '@/widgets/NewTabModal/NewTabModal.js';
+import { useModal } from '@/shared/hooks/useModal.js';
 
-export const Dashboard = () => {
-  const { isAuthenticated, loading } = useAuth();
+type Team = {
+  id: string;
+  name: string;
+  description: string;
+  emails: string[];
+};
 
-  if (loading) {
-    return <div className="min-h-screen flex items-center justify-center">Загрузка...</div>;
-  }
+export const Dashboard: React.FC = () => {
+  const { open, onOpen, onClose } = useModal(false);
+  const [teams, setTeams] = useState<Team[]>([]);
 
-  if (!isAuthenticated) {
-    return null; 
-  }
+  const handleTeamCreated = (team: Team) => {
+    setTeams(prev => [...prev, team]);
+  };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#FFD1C1]">
-      <h1 className="text-7xl text-[#60392f] font-serif mb-6">Dashboard</h1>
-      <p className="text-[#60392f] font-serif">TeamTrack</p>
+    <div className="min-h-screen bg-[#EED8CF]">
+      <div className="grid grid-cols-[64px_1fr_320px] h-screen">
+
+        <TabsPanel
+          tabs={teams.map(t => ({ id: t.id, name: t.name, emails: t.emails }))}
+          onAddClick={onOpen}
+        />
+      </div>
+
+      <NewTabModal
+        open={open}
+        onClose={onClose}
+        onTeamCreated={handleTeamCreated}
+      />
     </div>
   );
 };
