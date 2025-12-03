@@ -14,8 +14,6 @@ type UserModel struct {
 	Password  string      `gorm:"not null"`
 	FirstName string      `gorm:"not null;size:50"`
 	LastName  string      `gorm:"not null;size:50"`
-	Role      string      `gorm:"not null"`
-	Photo_URL *string     `gorm:"default:null"`
 	Teams     []TeamModel `gorm:"many2many:users_teams"`
 }
 
@@ -31,9 +29,6 @@ func fromDomain(u *entity.User) *UserModel {
 		Password:  u.Password,
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
-		Role:      u.Role,
-		Photo_URL: u.Photo_URL,
-		Teams:     nil,
 	}
 }
 
@@ -45,8 +40,6 @@ func toDomain(u *UserModel) *entity.User {
 		Password:  u.Password,
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
-		Role:      u.Role,
-		Photo_URL: u.Photo_URL,
 	}
 }
 
@@ -98,7 +91,7 @@ func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*entity.
 
 func (r *UserRepository) GetUserTeams(ctx context.Context, userID string) ([]*entity.Team, error) {
 	var userModel UserModel
-	err := r.db.WithContext(ctx).Preload("Teams").First(&userModel, "id = ?", userID).Error
+	err := r.db.WithContext(ctx).Preload("Teams").Find(&userModel, "id = ?", userID).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrUserNotFound
@@ -177,7 +170,7 @@ func (r *UserRepository) Update(ctx context.Context, updates *entity.User, id st
 	if err != nil {
 		return nil, err
 	}
-	err = r.db.First(&user, id).Error
+	err = r.db.WithContext(ctx).First(&user, "id = ?", id).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, errors.New("record not found after update")

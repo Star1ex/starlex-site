@@ -42,7 +42,7 @@ func NewTeamRepository(db *gorm.DB) *TeamRepository {
 	}
 }
 
-func (t *TeamRepository) CreateAndAddCreator(ctx context.Context, team *entity.Team, userId string) error {
+func (t *TeamRepository) CreateAndAddCreator(ctx context.Context, team *entity.Team, userID string) error {
 	err := t.db.Transaction(func(tx *gorm.DB) error {
 		//Creating team
 		newTeam := fromDomainToTeam(team)
@@ -56,7 +56,7 @@ func (t *TeamRepository) CreateAndAddCreator(ctx context.Context, team *entity.T
 		}
 
 		//Add creator into team
-		creatorUser := UserModel{ID: userId}
+		creatorUser := UserModel{ID: userID}
 		err = tx.WithContext(ctx).Model(newTeam).Association("Users").Append(&creatorUser)
 		if err != nil {
 			return err
