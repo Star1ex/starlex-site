@@ -5,7 +5,7 @@ type UserProfile = {
   name?: string;
   email?: string;
 };
-
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 const getToken = () => localStorage.getItem('token');
 
 export const RightSidebar: React.FC = () => {
@@ -19,7 +19,7 @@ export const RightSidebar: React.FC = () => {
         const token = getToken();
         if (!token) return;
 
-        const res = await fetch('http://localhost:3000/api/users/photo', {
+        const res = await fetch(`${API_URL}/api/users/photo`, {
           headers: { 
             Authorization: `Bearer ${token}`,
             Accept: 'application/json',

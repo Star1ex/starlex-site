@@ -2,7 +2,8 @@ import React, { ChangeEvent } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-// SignInPage for login
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+
 export const SignInPage = () => {
   const navigate = useNavigate()
   const [formEmail,setFormEmail] = useState("")
@@ -38,9 +39,8 @@ export const SignInPage = () => {
   }
 
   const data = { email: formEmail, password: formPassword };
-
   try {
-    const response = await fetch('http://localhost:3000/api/auth/login', {
+    const response = await fetch(`${API_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),

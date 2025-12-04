@@ -6,6 +6,8 @@ import { Button } from '@/shared/ui/Button.js';
 import { useDebounce } from '@/shared/hooks/useDebounce.js';
 import { getAuthHeaders } from '@/shared/lib/auth.js';
 
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+
 type User = {
   email: string;
   name?: string;
@@ -59,7 +61,7 @@ useEffect(() => {
       };
 
       const res = await fetch(
-        `http://localhost:3000/api/search/${encodeURIComponent(q)}`,
+        `${API_URL}/api/search/${encodeURIComponent(q)}`,
         { headers }
       );
 
@@ -97,7 +99,7 @@ useEffect(() => {
     const normalized = normalizeEmail(value);
     if (!normalized) return;
     if (emails.includes(normalized)) {
-      setError('Этот email уже добавлен');
+      setError('This email already used');
       return;
     }
     setEmails(prev => [...prev, normalized]);
@@ -157,7 +159,7 @@ useEffect(() => {
   ...getAuthHeaders(),
 };
 
-const res = await fetch('http://localhost:3000/api/team', {
+const res = await fetch(`${API_URL}/api/team`, {
   method: 'POST',
   headers,
   body: JSON.stringify({
