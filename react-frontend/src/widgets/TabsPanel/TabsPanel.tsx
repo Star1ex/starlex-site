@@ -14,7 +14,8 @@ type Props = {
   onAddClick: () => void;
 };
 
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+export const API_URL = import.meta.env.VITE_API_URL ?? '';
+
 const getToken = () => localStorage.getItem('token');
 
 export const TabsPanel = ({ tabs, onAddClick }: Props) => {
@@ -34,7 +35,7 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
           return;
         }
 
-        const res = await fetch(`${API_URL}/api/users/teams`, {
+        const res = await fetch(`/api/users/teams`, {
           headers: { 
             Authorization: `Bearer ${token}`,
             Accept: 'application/json',

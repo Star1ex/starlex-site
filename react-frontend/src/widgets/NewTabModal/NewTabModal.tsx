@@ -6,7 +6,8 @@ import { Button } from '@/shared/ui/Button.js';
 import { useDebounce } from '@/shared/hooks/useDebounce.js';
 import { getAuthHeaders } from '@/shared/lib/auth.js';
 
-const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
+export const API_URL = import.meta.env.VITE_API_URL ?? '';
+
 
 type User = {
   email: string;
@@ -159,7 +160,7 @@ useEffect(() => {
   ...getAuthHeaders(),
 };
 
-const res = await fetch(`${API_URL}/api/team`, {
+const res = await fetch(`/api/team`, {
   method: 'POST',
   headers,
   body: JSON.stringify({

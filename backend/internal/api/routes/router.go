@@ -28,6 +28,10 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 
 	}
 
+	app.Get("/api/health", func(c *fiber.Ctx) error {
+		return c.SendString("healthy")
+	})
+
 	search := api.Group("/search", handlers.UserIndentity)
 	{
 		search.Get("/:email", handlers.Search)
