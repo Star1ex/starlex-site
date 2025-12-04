@@ -38,8 +38,8 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 	user, err := h.userService.Login(ctx.Context(), loginInput.Email, loginInput.Password)
 	if err != nil {
 		log.Println(err)
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "failed to authenticate user",
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "invalid credentials",
 		})
 	}
 
