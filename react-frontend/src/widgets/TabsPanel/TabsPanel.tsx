@@ -1,3 +1,4 @@
+import { log } from 'console';
 import React, { useState, useEffect } from 'react';
 
 type Team = { 
@@ -13,6 +14,7 @@ type Props = {
   onAddClick: () => void;
 };
 
+const API_URL = import.meta.env.VITE_API_URL ?? "http://localhost:3000";
 const getToken = () => localStorage.getItem('token');
 
 export const TabsPanel = ({ tabs, onAddClick }: Props) => {
@@ -32,13 +34,12 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
           return;
         }
 
-        const res = await fetch('http://localhost:3000/api/users/teams', {
+        const res = await fetch(`${API_URL}/api/users/teams`, {
           headers: { 
             Authorization: `Bearer ${token}`,
             Accept: 'application/json',
           },
         });
-
         if (!res.ok) {
           throw new Error(`Error: ${res.status}`);
         }

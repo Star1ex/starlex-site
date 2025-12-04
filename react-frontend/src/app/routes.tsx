@@ -11,5 +11,5 @@ export const AppRoutes = () => (
     <Route path="/sign-in" element={<SignInPage />} />
     <Route path="/sign-up" element={<SignUpPage />} />
     <Route path="/dashboard" element={<Dashboard />} />
-  </Routes>
+  </Routes> 
 );
