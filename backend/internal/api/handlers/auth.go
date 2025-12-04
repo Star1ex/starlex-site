@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"time"
 
@@ -39,7 +40,7 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 	if err != nil {
 		log.Println(err)
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": fmt.Sprintf("Error: %v, || UserData: %s %s", err, loginInput.Email, loginInput.Password),
 		})
 	}
 
