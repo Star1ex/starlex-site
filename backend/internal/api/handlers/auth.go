@@ -39,7 +39,7 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 	if err != nil {
 		log.Println(err)
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "invalid credentials",
+			"error": err.Error(),
 		})
 	}
 
@@ -78,7 +78,9 @@ func (h *Handlers) Register(ctx *fiber.Ctx) error {
 	var input dto.UserApi
 	if err := ctx.BodyParser(&input); err != nil {
 		log.Println(err)
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{})
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
 
 	// create user with service
@@ -86,7 +88,7 @@ func (h *Handlers) Register(ctx *fiber.Ctx) error {
 	if err != nil {
 		log.Println(err)
 		ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "failed to authenticate user",
+			"error": "failed to create user",
 		})
 	}
 	return ctx.Status(fiber.StatusCreated).JSON(fiber.Map{

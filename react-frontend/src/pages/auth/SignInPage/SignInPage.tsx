@@ -40,6 +40,7 @@ export const SignInPage = () => {
     }
 
     const data = { email: formEmail, password: formPassword };
+
     try {
       const response = await fetch(`/api/auth/login`, {
         method: "POST",
@@ -146,3 +147,4 @@ export const SignInPage = () => {
     </div>
   );
 };
+ 
