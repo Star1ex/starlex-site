@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 type UserProfile = {
   avatarUrl?: string;
@@ -12,6 +13,7 @@ export const API_URL = import.meta.env.VITE_API_URL ?? '';
 const getToken = () => localStorage.getItem('token');
 
 export const RightSidebar: React.FC = () => {
+  const navigate = useNavigate()
   const [user, setUser] = useState<UserProfile>({});
   const [loading, setLoading] = useState(true);
 
@@ -44,11 +46,11 @@ export const RightSidebar: React.FC = () => {
   }, []);
 
   const handleSettings = () => {
-    window.open('/settings', '_blank');
+    navigate("/settings")
   };
 
   const handleAbout = () => {
-    window.open('/about', '_blank');
+    navigate("/about-us")
   };
 
   return (
