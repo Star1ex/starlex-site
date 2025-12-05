@@ -70,3 +70,15 @@ func (h *Handlers) UploadPhoto(c *fiber.Ctx) error {
 
 	return c.JSON(fiber.Map{"url": url})
 }
+
+func (h *Handlers) GetUserPhotoProfile(c *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(c)
+	if authErr != nil {
+		return authErr
+	}
+	if userID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid id",
+		})
+	}
+}

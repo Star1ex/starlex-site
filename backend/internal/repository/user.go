@@ -179,3 +179,19 @@ func (r *UserRepository) Update(ctx context.Context, updates *entity.User, id st
 	}
 	return toDomain(&user), nil
 }
+
+func (r *UserRepository) GetPhoto(ctx context.Context, userID string) (string, error) {
+	var photo string
+
+	err := r.db.WithContext(ctx).
+		Model(&UserModel{}).
+		Select("photo_url").
+		Where("id = ?", userID).
+		Scan(&photo).Error
+
+	if err != nil {
+		return "", err
+	}
+
+	return photo, err
+}

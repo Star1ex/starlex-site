@@ -24,4 +24,7 @@ type Repository interface {
 
 	// UpdatePhoto
 	UpdatePhoto(username, photo_url string) error
+
+	// GetPhoto
+	GetPhoto(ctx context.Context, userID string) (string, error)
 }
