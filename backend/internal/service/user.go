@@ -44,7 +44,7 @@ func (s *UserService) Login(ctx context.Context, email, password string) (*entit
 		return nil, err
 	}
 
-	ok, err := security.VerifyPassword(password, user.Password)
+	ok, err := security.VerifyPassword(user.Password, password)
 	if err != nil {
 		return nil, err
 	}
