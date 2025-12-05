@@ -62,7 +62,7 @@ useEffect(() => {
       };
 
       const res = await fetch(
-        `${API_URL}/api/search/${encodeURIComponent(q)}`,
+        `/api/search/${encodeURIComponent(q)}`,
         { headers }
       );
 
@@ -202,7 +202,6 @@ const res = await fetch(`/api/team`, {
       <h2 className="text-3xl font-serif text-[#60392f] mb-6">New Tab</h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Name */}
         <div>
           <label className="block text-xs tracking-widest text-[#9b7a6f] uppercase mb-2">
             Name
@@ -214,7 +213,6 @@ const res = await fetch(`/api/team`, {
           />
         </div>
 
-        {/* Description */}
         <div>
           <label className="block text-xs tracking-widest text-[#9b7a6f] uppercase mb-2">
             Description
@@ -226,7 +224,6 @@ const res = await fetch(`/api/team`, {
           />
         </div>
 
-        {/* Emails + поиск */}
         <div>
           <label className="block text-xs tracking-widest text-[#9b7a6f] uppercase mb-2">
             Emails
@@ -251,7 +248,6 @@ const res = await fetch(`/api/team`, {
             </button>
           </div>
 
-          {/* список найденных пользователей */}
           {debouncedEmail && (
             <div className="mt-2 bg-[#f8ece5] rounded border border-[#e0c6b7] max-h-40 overflow-y-auto">
               {loadingSearch && (
@@ -285,7 +281,6 @@ const res = await fetch(`/api/team`, {
             </div>
           )}
 
-          {/* уже добавленные email‑ы */}
           {emails.length > 0 && (
             <ul className="mt-3 space-y-1">
               {emails.map(email => (

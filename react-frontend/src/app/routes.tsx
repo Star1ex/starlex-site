@@ -4,6 +4,8 @@ import { HomePage } from "@/pages/home/HomePage.js";
 import { SignInPage } from "@/pages/auth/SignInPage/SignInPage.js";
 import { SignUpPage } from "@/pages/auth/SignUpPage/SignUpPage.js";
 import { Dashboard  } from "@/pages/dashboard/Dashboard.js";
+import { GeneralSettings } from "@/pages/settings/GeneralSettings.js";
+import AboutUs from "@/pages/about-us/AboutUs.js";
 
 export const AppRoutes = () => (
   <Routes>
@@ -11,5 +13,7 @@ export const AppRoutes = () => (
     <Route path="/sign-in" element={<SignInPage />} />
     <Route path="/sign-up" element={<SignUpPage />} />
     <Route path="/dashboard" element={<Dashboard />} />
+    <Route path="/settings" element={<GeneralSettings />} />
+    <Route path="/about-us" element={<AboutUs />} />
   </Routes> 
 );
