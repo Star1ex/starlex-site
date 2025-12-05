@@ -25,4 +25,6 @@ type Service interface {
 	UploadUserPhoto(ctx context.Context, username string, file *multipart.FileHeader) (string, error)
 
 	SetUserPhoto(id, photo_url string) error
+
+	GetPhoto(ctx context.Context, userID string) (string, error)
 }

@@ -12,7 +12,7 @@ type Handlers struct {
 	taskService task.Service
 }
 
-func NewHandlers(userService user.Service, teamService team.Service,taskService task.Service) *Handlers {
+func NewHandlers(userService user.Service, teamService team.Service, taskService task.Service) *Handlers {
 	return &Handlers{
 		userService: userService,
 		teamService: teamService,

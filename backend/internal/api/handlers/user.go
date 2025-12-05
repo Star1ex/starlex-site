@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"log"
 
 	"github.com/Team-Tracks/team-track-site/internal/api/dto"
@@ -69,4 +70,27 @@ func (h *Handlers) UploadPhoto(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(fiber.Map{"url": url})
+}
+
+func (h *Handlers) GetPhoto(c *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(c)
+	if authErr != nil {
+		return authErr
+	}
+	if userID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid id",
+		})
+	}
+
+	photoURL, err := h.userService.GetPhoto(context.Background(), userID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "photo not found",
+		})
+	}
+
+	return c.JSON(fiber.Map{
+		"url": photoURL,
+	})
 }

@@ -85,3 +85,7 @@ func (s *UserService) UploadUserPhoto(ctx context.Context, username string, file
 
 	return url, nil
 }
+
+func (s *UserService) GetPhoto(ctx context.Context, userID string) (string, error) {
+	return s.repo.GetPhoto(ctx, userID)
+}
