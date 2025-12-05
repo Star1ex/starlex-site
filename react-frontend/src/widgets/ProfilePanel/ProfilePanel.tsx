@@ -7,6 +7,9 @@ type UserProfile = {
   email?: string;
 };
 
+type UserPhoto = {
+  url: string;
+};
 
 export const API_URL = import.meta.env.VITE_API_URL ?? '';
 
@@ -17,33 +20,34 @@ export const RightSidebar: React.FC = () => {
   const [user, setUser] = useState<UserProfile>({});
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function fetchUserProfile() {
-      try {
-        setLoading(true);
-        const token = getToken();
-        if (!token) return;
+ useEffect(() => {
+  async function fetchUserProfile() {
+    try {
+      setLoading(true);
+      const token = getToken();
+      if (!token) return;
 
-        const res = await fetch(`/api/users/photo`, {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/json',
-          },
-        });
+      const res = await fetch(`/api/users/photo`, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
+      });
 
-        if (res.ok) {
-          const data: UserProfile = await res.json();
-          setUser(data);
-        }
-      } catch (err) {
-        console.error('Error loading picture:', err);
-      } finally {
-        setLoading(false);
+      if (res.ok) {
+        const data: UserPhoto = await res.json();
+        setUser(prev => ({ ...prev, avatarUrl: data.url }));
       }
+    } catch (err) {
+      console.error('Error loading picture:', err);
+    } finally {
+      setLoading(false);
     }
+  }
 
-    fetchUserProfile();
-  }, []);
+  fetchUserProfile();
+}, []);
+
 
   const handleSettings = () => {
     navigate("/settings")
@@ -58,17 +62,17 @@ export const RightSidebar: React.FC = () => {
       <div className="mb-6"></div>
       
       <div className="w-10 h-10 rounded-full overflow-hidden border border-[#d4a89a] flex items-center justify-center bg-[#ead4ca]">
-        {loading ? (
+       {loading ? (
           <div className="w-8 h-8 bg-[#d4a89a] rounded-full animate-pulse" />
         ) : user.avatarUrl ? (
-          <img 
-            src={user.avatarUrl} 
-            alt="User avatar"
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-8 h-8 bg-gradient-to-br from-[#d4a89a] to-[#c69a8c] rounded-full" />
-        )}
+       <img 
+         src={user.avatarUrl} 
+         alt="User avatar"
+         className="w-full h-full object-cover"
+         />
+          ) : (
+         <div className="w-8 h-8 bg-gradient-to-br from-[#d4a89a] to-[#c69a8c] rounded-full" />
+      )}
       </div>
 
         <div className="flex-1" />
