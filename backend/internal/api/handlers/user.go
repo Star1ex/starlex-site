@@ -87,7 +87,7 @@ func (h *Handlers) UploadPhoto(c *fiber.Ctx) error {
 	url, err := h.userService.UploadUserPhoto(c.Context(), userID, file)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "error uploading photo",
+			"error": err,
 		})
 	}
 
