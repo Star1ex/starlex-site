@@ -6,6 +6,7 @@ import { SignUpPage } from "@/pages/auth/SignUpPage/SignUpPage.js";
 import { Dashboard  } from "@/pages/dashboard/Dashboard.js";
 import { GeneralSettings } from "@/pages/settings/GeneralSettings.js";
 import AboutUs from "@/pages/about-us/AboutUs.js";
+import ProfilePage from "@/pages/profile/UserProfile.js";
 
 export const AppRoutes = () => (
   <Routes>
@@ -15,5 +16,6 @@ export const AppRoutes = () => (
     <Route path="/dashboard" element={<Dashboard />} />
     <Route path="/settings" element={<GeneralSettings />} />
     <Route path="/about-us" element={<AboutUs />} />
+    <Route path="/profile" element={<ProfilePage/> } />
   </Routes> 
 );

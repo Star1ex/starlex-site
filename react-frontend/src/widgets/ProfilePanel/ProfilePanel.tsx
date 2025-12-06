@@ -57,25 +57,32 @@ export const RightSidebar: React.FC = () => {
     navigate("/about-us")
   };
 
+  const handleAvatarClick = () => {
+    navigate('/profile');
+  };
+
   return (
     <aside className="w-[80px] border-l border-[#e7d3c8] bg-[#F3E6DE] flex flex-col items-center py-6 h-full fixed right-0 top-0">
-      <div className="mb-6"></div>
-      
-      <div className="w-10 h-10 rounded-full overflow-hidden border border-[#d4a89a] flex items-center justify-center bg-[#ead4ca]">
-       {loading ? (
+      <div className="mb-6" />
+
+      <button
+        onClick={handleAvatarClick}
+        className="w-10 h-10 rounded-full overflow-hidden border border-[#d4a89a] flex items-center justify-center bg-[#ead4ca] focus:outline-none"
+      >
+        {loading ? (
           <div className="w-8 h-8 bg-[#d4a89a] rounded-full animate-pulse" />
         ) : user.avatarUrl ? (
-       <img 
-         src={user.avatarUrl} 
-         alt="User avatar"
-         className="w-full h-full object-cover"
-         />
-          ) : (
-         <div className="w-8 h-8 bg-gradient-to-br from-[#d4a89a] to-[#c69a8c] rounded-full" />
-      )}
-      </div>
+          <img
+            src={user.avatarUrl}
+            alt="User avatar"
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-8 h-8 bg-gradient-to-br from-[#d4a89a] to-[#c69a8c] rounded-full" />
+        )}
+      </button>
 
-        <div className="flex-1" />
+      <div className="flex-1" />
 
        <div className="flex flex-col items-center space-y-3 pb-4 text-xs text-[#7b5a4f] tracking-wider font-medium">
         <button
