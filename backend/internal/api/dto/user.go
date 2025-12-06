@@ -69,3 +69,13 @@ func ToUserUpdate(u *entity.User) *UserUpdate {
 		Photo_URL: u.Photo_URL,
 	}
 }
+
+func FromUseUpdate(u *UserUpdate) *entity.User {
+	return &entity.User{
+		Email:     u.Email,
+		FirstName: u.FirstName,
+		LastName:  u.LastName,
+		Role:      u.Role,
+		Photo_URL: u.Photo_URL,
+	}
+}

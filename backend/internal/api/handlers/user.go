@@ -94,3 +94,30 @@ func (h *Handlers) GetPhoto(c *fiber.Ctx) error {
 		"url": photoURL,
 	})
 }
+
+func (h *Handlers) UserUpdate(c *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(c)
+	if authErr != nil {
+		return authErr
+	}
+	if userID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid id",
+		})
+	}
+
+	var updates dto.UserUpdate
+
+	if err := c.BodyParser(&updates); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad json"})
+	}
+
+	err := h.userService.Update(context.Background(), dto.FromUseUpdate(&updates), userID)
+	if err != nil {
+		log.Println(err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to update",
+		})
+	}
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"Status": "successfuly updated user"})
+}
