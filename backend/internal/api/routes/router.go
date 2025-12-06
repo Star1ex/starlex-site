@@ -11,6 +11,8 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 
 	// --- Swagger ---
 
+	app.Static("/uploads", "./uploads")
+
 	app.Get("/swagger/*", fiberSwagger.WrapHandler)
 
 	api := app.Group("/api")
