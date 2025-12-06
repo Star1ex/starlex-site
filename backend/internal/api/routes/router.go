@@ -20,7 +20,7 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 		users.Post("/photo", handlers.UploadPhoto)
 		users.Get("/teams", handlers.GetTeams)
 		users.Get("/photo", handlers.GetPhoto)
-		users.Post("/update", handlers.UserUpdate)
+		users.Put("/update", handlers.UserUpdate)
 		users.Get("/profile", handlers.GetUser)
 	}
 
