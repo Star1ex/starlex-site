@@ -14,6 +14,7 @@ type UserModel struct {
 	Password  string      `gorm:"not null"`
 	FirstName string      `gorm:"not null;size:50"`
 	LastName  string      `gorm:"not null;size:50"`
+	PhotoURL  string      `gorm:"default:null"`
 	Teams     []TeamModel `gorm:"many2many:users_teams"`
 }
 
@@ -29,6 +30,7 @@ func fromDomain(u *entity.User) *UserModel {
 		Password:  u.Password,
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
+		PhotoURL:  *u.Photo_URL,
 	}
 }
 
@@ -40,6 +42,7 @@ func toDomain(u *UserModel) *entity.User {
 		Password:  u.Password,
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
+		Photo_URL: &u.PhotoURL,
 	}
 }
 
