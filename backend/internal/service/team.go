@@ -32,7 +32,7 @@ func (s *TeamService) CreateTeam(ctx context.Context, name, description, userID 
 	}
 
 	owner.Role = "owner"
-	_, err = s.userRepo.Update(ctx, owner, userID)
+	err = s.userRepo.Update(ctx, owner, userID)
 	if err != nil {
 		return nil, err
 	}

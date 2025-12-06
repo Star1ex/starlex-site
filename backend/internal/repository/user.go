@@ -144,7 +144,7 @@ func (r *UserRepository) UpdatePhoto(id, photo_url string) error {
 	return r.db.Model(&UserModel{}).Where("id = ?", id).Update("photo_url", photo_url).Error
 }
 
-func (r *UserRepository) Update(ctx context.Context, updates *entity.User, id string) (*entity.User, error) {
+func (r *UserRepository) Update(ctx context.Context, updates *entity.User, id string) error {
 	updatedUser := map[string]interface{}{}
 	if updates.Email != "" {
 		updatedUser["email"] = updates.Email
@@ -168,16 +168,16 @@ func (r *UserRepository) Update(ctx context.Context, updates *entity.User, id st
 	var user UserModel
 	err := r.db.WithContext(ctx).Model(&user).Where("id = ?", id).Updates(updatedUser).Error
 	if err != nil {
-		return nil, err
+		return err
 	}
 	err = r.db.WithContext(ctx).First(&user, "id = ?", id).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("record not found after update")
+			return errors.New("record not found after update")
 		}
-		return nil, err
+		return err
 	}
-	return toDomain(&user), nil
+	return nil
 }
 
 func (r *UserRepository) GetPhoto(ctx context.Context, userID string) (string, error) {

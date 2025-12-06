@@ -12,6 +12,7 @@ type Service interface {
 
 	// CRUD
 	Create(ctx context.Context, u *dto.UserApi) error
+	Update(ctx context.Context, u *entity.User, id string) error
 
 	// Auth
 	Login(ctx context.Context, email, password string) (*entity.User, error)
