@@ -16,7 +16,6 @@ type LocalStorage struct {
 
 func NewLocalStorage(basePath, baseURL string) *LocalStorage {
 	_ = os.MkdirAll(basePath, os.ModePerm)
-
 	return &LocalStorage{
 		BasePath: basePath,
 		BaseURL:  baseURL,

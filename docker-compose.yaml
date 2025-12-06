@@ -39,6 +39,8 @@ services:
       - "${BACKEND_PORT}:3000"
     env_file:
       - backend/.env
+    volumes:
+      - ./backend/uploads:/app/uploads
 
   frontend:
     build:
