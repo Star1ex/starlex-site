@@ -38,6 +38,10 @@ func (s *UserService) Create(ctx context.Context, u *dto.UserApi) error {
 	return nil
 }
 
+func (s *UserService) Get(ctx context.Context, id string) (*entity.User, error) {
+	return s.repo.Get(ctx, id)
+}
+
 func (s *UserService) Login(ctx context.Context, email, password string) (*entity.User, error) {
 	user, err := s.repo.GetByEmail(ctx, email)
 	if err != nil {

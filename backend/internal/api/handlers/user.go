@@ -8,6 +8,28 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+func (h *Handlers) GetUser(c *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(c)
+	if authErr != nil {
+		return authErr
+	}
+
+	if userID == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid id",
+		})
+	}
+
+	user, err := h.userService.Get(context.Background(), userID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err,
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON(dto.ToUserProfile(user))
+}
+
 // GetTeams godoc
 // @Summary      Get teams by user
 // @Description  Returns a list of all tasks for a given team.

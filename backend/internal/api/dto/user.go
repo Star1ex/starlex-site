@@ -29,6 +29,14 @@ type UserUpdate struct {
 	Photo_URL *string `json:"photo_url"`
 }
 
+type UserProfile struct {
+	Email     string  `json:"email"`
+	FirstName string  `json:"first_name"`
+	LastName  string  `json:"last_name"`
+	Role      string  `json:"role"`
+	Photo_URL *string `json:"photo_url"`
+}
+
 func ToUserApi(u *entity.User) *UserApi {
 	return &UserApi{
 		Email:     u.Email,
@@ -72,6 +80,15 @@ func ToUserUpdate(u *entity.User) *UserUpdate {
 
 func FromUseUpdate(u *UserUpdate) *entity.User {
 	return &entity.User{
+		Email:     u.Email,
+		FirstName: u.FirstName,
+		LastName:  u.LastName,
+		Role:      u.Role,
+		Photo_URL: u.Photo_URL,
+	}
+}
+func ToUserProfile(u *entity.User) *UserProfile {
+	return &UserProfile{
 		Email:     u.Email,
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
