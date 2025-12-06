@@ -11,7 +11,7 @@ type Repository interface {
 	// CRUD
 	Create(ctx context.Context, u *entity.User) error
 	Get(ctx context.Context, id string) (*entity.User, error)
-	Update(ctx context.Context, updates *entity.User, id string) (*entity.User, error)
+	Update(ctx context.Context, u *entity.User, id string) error
 	Delete(ctx context.Context, id string) error
 
 	// Get user by email
