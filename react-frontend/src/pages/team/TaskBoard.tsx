@@ -68,7 +68,6 @@ export const TaskBoard: React.FC = () => {
       method: "POST",
       body: JSON.stringify(body),
     });
-M
     setTasks(prev => [...prev, created]);
 
     setShowCreate(false);
