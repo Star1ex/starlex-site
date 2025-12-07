@@ -34,9 +34,9 @@ export const TaskBoard: React.FC = () => {
         setLoading(true);
         setError("");
 
-        const tasksData: Task[] = await apiFetch(`/team/${teamId}/tasks`);
+        const tasksData: Task[] = await apiFetch(`/api/team/${teamId}/tasks`);
 
-        const usersData: User[] | { users: User[] } = await apiFetch(`/team/${teamId}`);
+        const usersData: User[] | { users: User[] } = await apiFetch(`/api/team/${teamId}`);
         let usersArray: User[] = [];
         if (Array.isArray(usersData)) {
           usersArray = usersData;
@@ -64,7 +64,7 @@ export const TaskBoard: React.FC = () => {
 
   const handleAssignUser = async (taskId: string, userId: string) => {
     try {
-      await apiFetch(`/team/${teamId}/tasks/${taskId}`, {
+      await apiFetch(`/api//team/${teamId}/tasks/${taskId}`, {
         method: "PUT",
         body: JSON.stringify({ assignedToID: [userId] }),
       });
