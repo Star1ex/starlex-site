@@ -89,7 +89,7 @@ func (h *Handlers) Register(ctx *fiber.Ctx) error {
 	if err != nil {
 		log.Println(err)
 		ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "failed to create user",
+			"error": err.Error(),
 		})
 	}
 	return ctx.Status(fiber.StatusCreated).JSON(fiber.Map{
