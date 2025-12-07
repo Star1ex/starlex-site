@@ -9,7 +9,10 @@ import (
 type Service interface {
 
 	// Create task
-	CreateTask(ctx context.Context, teamID string, assignedIDs []string, task *entity.Task,userId string) error
+	CreateTask(ctx context.Context, teamID string, assignedIDs []string, task *entity.Task, userId string) error
+
+	// Get task by ID
+	GetTaskByID(ctx context.Context, taskID string) (*entity.Task, error)
 
 	// Get all tasks from team by ID
 	GetTeamTasks(ctx context.Context, teamID string) ([]*entity.Task, error)
@@ -18,5 +21,5 @@ type Service interface {
 	GetUserTasks(ctx context.Context, userID string) ([]*entity.Task, error)
 
 	// Update task
-	UpdateTaskProgress(ctx context.Context, taskID,progress string )(error,*entity.Task)
+	UpdateTaskProgress(ctx context.Context, taskID, progress string) (error, *entity.Task)
 }

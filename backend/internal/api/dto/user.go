@@ -16,10 +16,10 @@ type UserApi struct {
 type UserResponse struct {
 	ID        string  `json:"id"`
 	Email     string  `json:"email"`
-	FirstName string  `json:"first_name"`
-	LastName  string  `json:"last_name"`
+	FirstName string  `json:"firstName"`
+	LastName  string  `json:"lastName"`
 	Role      string  `json:"role"`
-	Photo_URL *string `json:"photo_url"`
+	Photo_URL *string `json:"photo_url"` // Keep snake_case for photo_url as it's used in frontend
 }
 
 type UserUpdate struct {

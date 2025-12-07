@@ -47,7 +47,16 @@ func (h *Handlers) CreateTask(ctx *fiber.Ctx) error {
 		return ctx.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
 
-	return ctx.Status(201).JSON("Task created")
+	// Return the created task so frontend can add it to the list
+	// Fetch it back to get the full data with assigned users loaded
+	createdTask, fetchErr := h.taskService.GetTaskByID(ctx.Context(), entityTask.ID)
+	if fetchErr != nil {
+		// If fetch fails, return basic task info
+		log.Printf("Warning: Failed to fetch created task: %v", fetchErr)
+		return ctx.Status(201).JSON(dto.ToTaskResponse(entityTask))
+	}
+
+	return ctx.Status(201).JSON(dto.ToTaskResponse(createdTask))
 }
 
 // GetTeamTasks godoc
@@ -60,7 +69,7 @@ func (h *Handlers) CreateTask(ctx *fiber.Ctx) error {
 // @Security BearerAuth
 // @Router       /team/{team_id}/tasks [get]
 func (h *Handlers) GetTeamTasks(ctx *fiber.Ctx) error {
-	var teamID string = ctx.Params("teamID")
+	var teamID string = ctx.Params("team_id")
 	tasks, err := h.taskService.GetTeamTasks(ctx.Context(), teamID)
 	if err != nil {
 		log.Println(err)

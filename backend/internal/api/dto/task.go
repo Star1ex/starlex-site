@@ -18,18 +18,23 @@ type TaskResponse struct {
 	ID          string    `json:"id" binding:"required"`
 	Task        string    `json:"task" binding:"required"`
 	Description string    `json:"description"`
-	AssignedTo  []string  `json:"user_id" binding:"required"`
+	AssignedTo  []string  `json:"assignedTo"`
 	TeamID      string    `json:"team_id"`
 	Priority    string    `json:"priority"`
 	Progress    string    `json:"progress"`
-	CreatedAt   time.Time `json:"created_at"`
+	CreatedAt   time.Time `json:"created_at,omitempty"`
 }
 
 func ToTaskResponse(task *entity.Task) *TaskResponse {
-
 	assignedIDs := make([]string, len(task.AssignedTo))
 	for i, u := range task.AssignedTo {
 		assignedIDs[i] = u.ID
+	}
+
+	// Use zero time if CreatedAt is not set
+	createdAt := task.CreatedAt
+	if createdAt.IsZero() {
+		createdAt = time.Time{} // Will be omitted in JSON due to omitempty
 	}
 
 	return &TaskResponse{
@@ -40,7 +45,7 @@ func ToTaskResponse(task *entity.Task) *TaskResponse {
 		TeamID:      task.TeamID,
 		Priority:    task.Priority,
 		Progress:    task.Progress,
-		CreatedAt:   task.CreatedAt,
+		CreatedAt:   createdAt,
 	}
 }
 
