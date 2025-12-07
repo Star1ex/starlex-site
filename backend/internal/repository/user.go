@@ -25,19 +25,27 @@ type UserRepository struct {
 
 // factory from domain structure
 func fromDomain(u *entity.User) *UserModel {
-	return &UserModel{
+	model := &UserModel{
 		ID:        u.ID,
 		Email:     u.Email,
 		Password:  u.Password,
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
 		Role:      u.Role,
-		PhotoURL:  *u.Photo_URL,
 	}
+	// Handle nil pointer for Photo_URL
+	if u.Photo_URL != nil {
+		model.PhotoURL = *u.Photo_URL
+	}
+	return model
 }
 
 // factory to domain structure
 func toDomain(u *UserModel) *entity.User {
+	var photoURL *string
+	if u.PhotoURL != "" {
+		photoURL = &u.PhotoURL
+	}
 	return &entity.User{
 		ID:        u.ID,
 		Email:     u.Email,
@@ -45,7 +53,7 @@ func toDomain(u *UserModel) *entity.User {
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
 		Role:      u.Role,
-		Photo_URL: &u.PhotoURL,
+		Photo_URL: photoURL,
 	}
 }
 

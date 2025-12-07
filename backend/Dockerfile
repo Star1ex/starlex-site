@@ -15,7 +15,7 @@ RUN go build -o ./bin/app ./cmd/app
 
 FROM alpine
 
-RUN apk --no-cache add ca-certificates
+RUN apk --no-cache add ca-certificates wget
 
 COPY --from=builder /usr/local/src/bin/app /
 COPY --from=builder /usr/local/src/.env /

@@ -30,10 +30,12 @@ type StorageConfig struct {
 	LocalURL    string
 }
 
-// Loading full config with data from .env.example.example
+// Loading full config with data from .env file
+// If .env file is not found, uses environment variables (useful for Docker)
 func LoadConfig() *Config {
 	if err := godotenv.Load(); err != nil {
-		log.Fatalf("error loading .env.example.example file: %v", err)
+		log.Printf("WARNING: .env file not found, using environment variables: %v", err)
+		// Don't fail - in Docker, environment variables are set directly
 	}
 
 	return &Config{

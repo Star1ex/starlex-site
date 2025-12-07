@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/Team-Tracks/team-track-site/internal/config"
 	"github.com/Team-Tracks/team-track-site/internal/repository"
@@ -16,9 +17,24 @@ type DB struct {
 }
 
 func Must(cfg *config.DatabaseConfig) *DB {
-	db, err := setupDB(cfg)
+	var db *DB
+	var err error
+
+	// Retry connection up to 5 times with 2 second delays
+	// This helps when DB is starting up in Docker
+	for i := 0; i < 5; i++ {
+		db, err = setupDB(cfg)
+		if err == nil {
+			break
+		}
+		if i < 4 {
+			log.Printf("Failed to connect to DB, retry %d/5: %v", i+1, err)
+			time.Sleep(2 * time.Second)
+		}
+	}
+
 	if err != nil {
-		log.Fatalf("Failed to init db: %v", err)
+		log.Fatalf("Failed to init db after 5 retries: %v", err)
 	}
 
 	if err := migrate(db); err != nil {
