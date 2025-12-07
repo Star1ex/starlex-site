@@ -18,48 +18,46 @@ type User = {
   photo_url?: string;
 };
 
-type Props = {
-  teamId: string;
-};
-
-export const TaskBoard: React.FC<Props> = ({ teamId }) => {
-
-  const { id } = useParams();
+export const TaskBoard: React.FC = () => {
+  const { id: teamId } = useParams<{ id: string }>();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
- useEffect(() => {
-  async function fetchData() {
-    try {
-      setLoading(true);
-      const tasksData: Task[] = await apiFetch(`/team/${teamId}/tasks`);
+  useEffect(() => {
+    if (!teamId) return;
 
-      const usersData: User[] | { users: User[] } = await apiFetch(`/team/${teamId}`);
-      
-      let usersArray: User[] = [];
-      if (Array.isArray(usersData)) {
-        usersArray = usersData;
-      } else if ("users" in usersData && Array.isArray(usersData.users)) {
-        usersArray = usersData.users;
-      } else {
-        throw new Error("Invalid users data from API");
+    async function fetchData() {
+      try {
+        setLoading(true);
+        setError("");
+
+        const tasksData: Task[] = await apiFetch(`/team/${teamId}/tasks`);
+
+        const usersData: User[] | { users: User[] } = await apiFetch(`/team/${teamId}`);
+        let usersArray: User[] = [];
+        if (Array.isArray(usersData)) {
+          usersArray = usersData;
+        } else if ("users" in usersData && Array.isArray(usersData.users)) {
+          usersArray = usersData.users;
+        } else {
+          throw new Error("Invalid users data from API");
+        }
+
+        setTasks(tasksData);
+        setUsers(usersArray);
+      } catch (err: any) {
+        console.error(err);
+        setError("Error loading tasks or users");
+      } finally {
+        setLoading(false);
       }
-
-      setTasks(tasksData);
-      setUsers(usersArray);
-    } catch (err: any) {
-      console.error(err);
-      setError("Error loading tasks or users");
-    } finally {
-      setLoading(false);
     }
-  }
 
-  fetchData();
-}, [teamId]);
+    fetchData();
+  }, [teamId]);
 
   const handleTaskClick = (task: Task) => setSelectedTask(task);
   const handleCloseModal = () => setSelectedTask(null);
@@ -78,20 +76,21 @@ export const TaskBoard: React.FC<Props> = ({ teamId }) => {
     }
   };
 
+  if (!teamId) return <div>Team not found</div>;
   if (loading) return <div>Loading...</div>;
   if (error) return <div>{error}</div>;
 
   return (
     <div className="flex h-full">
-      <div className="flex-1 grid grid-cols-1 gap-4 p-4">
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 place-items-center">
         {tasks.map(task => (
           <div
             key={task.id}
-            className="relative p-4 bg-white rounded shadow hover:shadow-lg cursor-pointer"
+            className="relative p-4 bg-white rounded shadow hover:shadow-lg cursor-pointer w-full max-w-sm"
           >
             <div onClick={() => handleTaskClick(task)}>
               <h4 className="font-semibold">{task.task}</h4>
-              <p>{task.progress} / {task.priority}</p>
+              <p className="text-sm text-gray-500">{task.progress} / {task.priority}</p>
             </div>
             <div className="absolute top-2 right-2">
               <select
@@ -110,7 +109,6 @@ export const TaskBoard: React.FC<Props> = ({ teamId }) => {
           </div>
         ))}
       </div>
-
       <div className="w-64 border-l p-4 bg-gray-50">
         <h3 className="text-sm font-semibold mb-2">Team Users</h3>
         <ul className="space-y-2">
