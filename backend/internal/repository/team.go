@@ -3,21 +3,17 @@ package repository
 import (
 	"context"
 	"errors"
+	"log"
 
 	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
 	"gorm.io/gorm"
 )
 
 type TeamModel struct {
-	ID          string     `gorm:"primaryKey"`
-	Name        string     `gorm:"unique;not null"`
-	Description string     `gorm:"not null"`
-	Users       []UserTeam `gorm:"foreignKey:TeamID"`
-}
-type UserTeam struct {
-	UserID string `gorm:"primaryKey"`
-	TeamID string `gorm:"primaryKey"`
-	Role   string `gorm:"not null"` // "owner", "member", ...
+	ID          string      `gorm:"primaryKey"`
+	Name        string      `gorm:"unique;not null"`
+	Description string      `gorm:"not null"`
+	Users       []UserModel `gorm:"many2many:users_teams"`
 }
 
 func fromDomainToTeam(team *entity.Team) *TeamModel {
@@ -47,47 +43,45 @@ func NewTeamRepository(db *gorm.DB) *TeamRepository {
 }
 
 func (t *TeamRepository) CreateAndAddCreator(ctx context.Context, team *entity.Team, userID string) error {
-	return t.db.Transaction(func(tx *gorm.DB) error {
+	err := t.db.Transaction(func(tx *gorm.DB) error {
+		//Creating team
 		newTeam := fromDomainToTeam(team)
-		if err := tx.WithContext(ctx).Create(newTeam).Error; err != nil {
+		err := tx.WithContext(ctx).Create(newTeam).Error
+		if err != nil {
 			if errors.Is(err, gorm.ErrDuplicatedKey) {
 				return ErrTeamAlreadyExists
 			}
-			return err
-		}
-		userTeam := UserTeam{
-			UserID: userID,
-			TeamID: newTeam.ID,
-			Role:   "owner",
-		}
-		if err := tx.WithContext(ctx).Create(&userTeam).Error; err != nil {
+			log.Println(err)
 			return err
 		}
 
+		creatorUser := UserModel{ID: userID, Role: "owner"}
+		err = tx.WithContext(ctx).Model(newTeam).Association("Users").Append(&creatorUser)
+		if err != nil {
+			return err
+		}
 		return nil
 	})
-}
-func (t *TeamRepository) GetTeam(ctx context.Context, teamId string) ([]*entity.User, error) {
-	var userTeams []UserTeam
-	err := t.db.WithContext(ctx).Where("team_id = ?", teamId).Find(&userTeams).Error
 	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (t *TeamRepository) GetTeam(ctx context.Context, teamId string) ([]*entity.User, error) {
+	var teamModel TeamModel
+	err := t.db.WithContext(ctx).Preload("Users").First(&teamModel, "id = ?", teamId).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrTeamNotFound
+		}
 		return nil, err
 	}
-
-	if len(userTeams) == 0 {
-		return nil, ErrTeamNotFound
+	users := teamModel.Users
+	usersInTeam := make([]*entity.User, len(users))
+	for i, user := range users {
+		usersInTeam[i] = toDomain(&user)
 	}
-
-	usersInTeam := make([]*entity.User, len(userTeams))
-	for i, ut := range userTeams {
-		var userModel UserModel
-		if err := t.db.WithContext(ctx).First(&userModel, "id = ?", ut.UserID).Error; err != nil {
-			return nil, err
-		}
-		userDomain := toDomain(&userModel)
-		userDomain.Role = ut.Role
-		usersInTeam[i] = userDomain
-	}
-
 	return usersInTeam, nil
+
 }

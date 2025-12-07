@@ -15,6 +15,7 @@ type UserModel struct {
 	FirstName string      `gorm:"not null;size:50"`
 	LastName  string      `gorm:"not null;size:50"`
 	PhotoURL  string      `gorm:"default:null"`
+	Role      string      `gorm:"default:null"`
 	Teams     []TeamModel `gorm:"many2many:users_teams"`
 }
 
@@ -160,9 +161,6 @@ func (r *UserRepository) Update(ctx context.Context, updates *entity.User, id st
 	}
 	if updates.LastName != "" {
 		updatedUser["lastName"] = updates.LastName
-	}
-	if updates.Role != "" {
-		updatedUser["role"] = updates.Role
 	}
 	if updates.Photo_URL != nil {
 		updatedUser["photo_url"] = updates.Photo_URL
