@@ -67,9 +67,15 @@ func (t *TeamRepository) CreateAndAddCreator(ctx context.Context, team *entity.T
 		}
 
 		// Set role to "owner" for the creator
-		err = tx.WithContext(ctx).Model(&UserModel{}).Where("id = ?", userID).Update("role", "owner").Error
-		if err != nil {
-			return err
+		// Use Updates with map to ensure the update works correctly
+		result := tx.WithContext(ctx).Model(&UserModel{}).Where("id = ?", userID).Updates(map[string]interface{}{
+			"role": "owner",
+		})
+		if result.Error != nil {
+			return result.Error
+		}
+		if result.RowsAffected == 0 {
+			log.Printf("Warning: No rows updated when setting role to owner for user %s", userID)
 		}
 
 		return nil

@@ -43,10 +43,15 @@ func (s *TaskService) CreateTask(
 		return errors.New("not allowed for this user: only team owner can create tasks")
 	}
 
-	users, err := s.userRepo.GetByIDs(ctx, assignedIDs)
-	if err != nil {
-		return err
+	// Handle assigned users - can be empty array
+	var users []*entity.User
+	if len(assignedIDs) > 0 {
+		users, err = s.userRepo.GetByIDs(ctx, assignedIDs)
+		if err != nil {
+			return err
+		}
 	}
+	// If assignedIDs is empty, users will be nil/empty, which is valid
 
 	task.AssignedTo = users
 	task.TeamID = teamID
