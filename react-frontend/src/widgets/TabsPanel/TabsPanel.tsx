@@ -1,5 +1,5 @@
-import { log } from 'console';
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 type Team = { 
   id: string; 
@@ -19,6 +19,7 @@ export const API_URL = import.meta.env.VITE_API_URL ?? '';
 const getToken = () => localStorage.getItem('token');
 
 export const TabsPanel = ({ tabs, onAddClick }: Props) => {
+  const navigate = useNavigate();
   const [userTeams, setUserTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -58,6 +59,10 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
     fetchUserTeams();
   }, []);
 
+  const handleTeamClick = (teamId: string) => {
+    navigate(`/teams/${teamId}`);
+  };
+
   const allTabs = [...userTeams.map(team => ({
     id: team.id,
     name: team.name,
@@ -89,7 +94,7 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
             onClick={() => window.location.reload()} 
             className="mt-2 text-[#b68f84] underline"
           >
-            Trying
+            Try again
           </button>
         </div>
       ) : allTabs.length === 0 ? (
@@ -105,12 +110,14 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
       ) : (
         <ul className="mt-4 space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
           {allTabs.map(tab => (
-            <li 
-              key={tab.id} 
-              className="px-3 py-2 rounded hover:bg-[#ead4ca] text-[#60392f] cursor-pointer"
-              title={tab.emails.join(', ')}
-            >
-              {tab.name}
+            <li key={tab.id}>
+              <button
+                onClick={() => handleTeamClick(tab.id)}
+                className="w-full text-left px-3 py-2 rounded hover:bg-[#ead4ca] text-[#60392f]"
+                title={tab.emails.join(', ')}
+              >
+                {tab.name}
+              </button>
             </li>
           ))}
         </ul>
