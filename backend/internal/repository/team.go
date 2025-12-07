@@ -31,6 +31,7 @@ func toTeamDomain(Team *TeamModel) *entity.Team {
 		ID:          Team.ID,
 		Name:        Team.Name,
 		Description: Team.Description,
+		OwnerID:     Team.OwnerID,
 	}
 }
 
@@ -58,11 +59,19 @@ func (t *TeamRepository) CreateAndAddCreator(ctx context.Context, team *entity.T
 			return err
 		}
 
+		// Add creator to team
 		creatorUser := UserModel{ID: userID}
 		err = tx.WithContext(ctx).Model(newTeam).Association("Users").Append(&creatorUser)
 		if err != nil {
 			return err
 		}
+
+		// Set role to "owner" for the creator
+		err = tx.WithContext(ctx).Model(&UserModel{}).Where("id = ?", userID).Update("role", "owner").Error
+		if err != nil {
+			return err
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -91,5 +100,17 @@ func (t *TeamRepository) GetTeam(ctx context.Context, teamId string) ([]*entity.
 		usersInTeam[i] = toDomain(&user)
 	}
 	return usersInTeam, nil
+}
 
+// GetTeamByID returns team by ID (used to check ownership)
+func (t *TeamRepository) GetTeamByID(ctx context.Context, teamID string) (*entity.Team, error) {
+	var teamModel TeamModel
+	err := t.db.WithContext(ctx).First(&teamModel, "id = ?", teamID).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrTeamNotFound
+		}
+		return nil, err
+	}
+	return toTeamDomain(&teamModel), nil
 }

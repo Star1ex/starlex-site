@@ -6,6 +6,7 @@ import (
 
 	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
 	"github.com/Team-Tracks/team-track-site/internal/domain/task"
+	"github.com/Team-Tracks/team-track-site/internal/domain/team"
 	"github.com/Team-Tracks/team-track-site/internal/domain/user"
 	"github.com/google/uuid"
 )
@@ -13,11 +14,14 @@ import (
 type TaskService struct {
 	taskRepo task.Repository
 	userRepo user.Repository
+	teamRepo team.Repository
 }
 
-func NewTaskService(taskRepo task.Repository, userRepo user.Repository) *TaskService {
+func NewTaskService(taskRepo task.Repository, userRepo user.Repository, teamRepo team.Repository) *TaskService {
 	return &TaskService{
-		taskRepo: taskRepo, userRepo: userRepo,
+		taskRepo: taskRepo,
+		userRepo: userRepo,
+		teamRepo: teamRepo,
 	}
 }
 
@@ -28,13 +32,17 @@ func (s *TaskService) CreateTask(
 	task *entity.Task,
 	userId string,
 ) error {
-	owner, err := s.userRepo.Get(ctx, userId)
+	// Check if team exists and user is the owner of this specific team
+	team, err := s.teamRepo.GetTeamByID(ctx, teamID)
 	if err != nil {
 		return err
 	}
-	if owner.Role != "owner" {
-		return errors.New("now allowed for this user")
+
+	// Verify that the user is the owner of this team
+	if team.OwnerID != userId {
+		return errors.New("not allowed for this user: only team owner can create tasks")
 	}
+
 	users, err := s.userRepo.GetByIDs(ctx, assignedIDs)
 	if err != nil {
 		return err
