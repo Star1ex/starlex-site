@@ -15,136 +15,225 @@ type User = {
   id: string;
   firstName: string;
   lastName: string;
+  role?: string;
   photo_url?: string;
 };
 
 export const TaskBoard: React.FC = () => {
   const { id: teamId } = useParams<{ id: string }>();
+
   const [tasks, setTasks] = useState<Task[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
 
+  const [showCreate, setShowCreate] = useState(false);
+  const [newTask, setNewTask] = useState({
+    task: "",
+    description: "",
+    priority: "Medium",
+  });
+
+  const [selected, setSelected] = useState<Task | null>(null);
+
+  /** ---------------- FETCH DATA ---------------- */
   useEffect(() => {
     if (!teamId) return;
 
-    async function fetchData() {
-      try {
-        setLoading(true);
-        setError("");
+    async function load() {
+      setLoading(true);
 
-        const tasksData: Task[] = await apiFetch(`/api/team/${teamId}/tasks`);
+      const tasksData = await apiFetch(`/api/team/${teamId}/tasks`);
+      const usersData: any = await apiFetch(`/api/team/${teamId}`);
 
-        const usersData: User[] | { users: User[] } = await apiFetch(`/api/team/${teamId}`);
-        let usersArray: User[] = [];
-        if (Array.isArray(usersData)) {
-          usersArray = usersData;
-        } else if ("users" in usersData && Array.isArray(usersData.users)) {
-          usersArray = usersData.users;
-        } else {
-          throw new Error("Invalid users data from API");
-        }
-
-        setTasks(tasksData);
-        setUsers(usersArray);
-      } catch (err: any) {
-        console.error(err);
-        setError("Error loading tasks or users");
-      } finally {
-        setLoading(false);
-      }
+      setTasks(tasksData);
+      setUsers(Array.isArray(usersData) ? usersData : usersData.users);
+      setLoading(false);
     }
 
-    fetchData();
+    load();
   }, [teamId]);
 
-  const handleTaskClick = (task: Task) => setSelectedTask(task);
-  const handleCloseModal = () => setSelectedTask(null);
+  /** ---------------- CREATE TASK ---------------- */
+  async function createTask() {
+    const created = await apiFetch(`/api/team/${teamId}/tasks`, {
+      method: "POST",
+      body: JSON.stringify(newTask),
+    });
 
-  const handleAssignUser = async (taskId: string, userId: string) => {
-    try {
-      await apiFetch(`/api//team/${teamId}/tasks/${taskId}`, {
-        method: "PUT",
-        body: JSON.stringify({ assignedToID: [userId] }),
-      });
-      setTasks(prev =>
-        prev.map(t => (t.id === taskId ? { ...t, assignedTo: [userId] } : t))
-      );
-    } catch (err) {
-      console.error(err);
-    }
-  };
+    setTasks(prev => [...prev, created]);
+    setShowCreate(false);
 
-  if (!teamId) return <div>Team not found</div>;
+    setNewTask({
+      task: "",
+      description: "",
+      priority: "Medium",
+    });
+  }
+
+  /** ---------------- DELETE TASK ---------------- */
+  async function deleteTask(id: string) {
+    await apiFetch(`/api/team/${teamId}/tasks/${id}`, { method: "DELETE" });
+    setTasks(prev => prev.filter(t => t.id !== id));
+    setSelected(null);
+  }
+
   if (loading) return <div>Loading...</div>;
-  if (error) return <div>{error}</div>;
 
   return (
-    <div className="flex h-full">
-      <div className="flex-1 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4 place-items-center">
-        {tasks.map(task => (
-          <div
-            key={task.id}
-            className="relative p-4 bg-white rounded shadow hover:shadow-lg cursor-pointer w-full max-w-sm"
-          >
-            <div onClick={() => handleTaskClick(task)}>
-              <h4 className="font-semibold">{task.task}</h4>
-              <p className="text-sm text-gray-500">{task.progress} / {task.priority}</p>
-            </div>
-            <div className="absolute top-2 right-2">
-              <select
-                value={task.assignedTo[0] || ""}
-                onChange={e => handleAssignUser(task.id, e.target.value)}
-                className="border rounded px-1 py-0.5 text-xs"
-              >
-                <option value="">Assign</option>
-                {users.map(u => (
-                  <option key={u.id} value={u.id}>
-                    {u.firstName} {u.lastName}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className="w-64 border-l p-4 bg-gray-50">
-        <h3 className="text-sm font-semibold mb-2">Team Users</h3>
-        <ul className="space-y-2">
+    <div className="flex h-screen bg-[#F2E4DB] text-[#855646]">
+
+      {/* ---------------- LEFT USERS PANEL ---------------- */}
+      <div className="w-64 p-6 border-r border-[#E3CFC6]">
+        <h3 className="uppercase tracking-wide text-sm mb-4 text-[#A07463]">Users</h3>
+
+        <div className="space-y-3">
           {users.map(u => (
-            <li key={u.id} className="flex items-center space-x-2">
+            <div
+              key={u.id}
+              className="flex items-center space-x-3 py-1 px-2 rounded hover:bg-[#ECD5CC]"
+            >
               {u.photo_url ? (
-                <img src={u.photo_url} alt="" className="w-6 h-6 rounded-full" />
+                <img src={u.photo_url} className="w-8 h-8 rounded-full" />
               ) : (
-                <div className="w-6 h-6 bg-gray-300 rounded-full" />
+                <div className="w-8 h-8 bg-[#D8BEB3] rounded-full" />
               )}
-              <span>{u.firstName} {u.lastName}</span>
-            </li>
+              <div>
+                <p className="font-medium">{u.firstName} {u.lastName}</p>
+              </div>
+            </div>
           ))}
-        </ul>
+        </div>
       </div>
 
-      {selectedTask && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded p-6 w-96 relative">
-            <button
-              onClick={handleCloseModal}
-              className="absolute top-2 right-2 text-gray-500"
+      {/* ---------------- CENTER TASK BOARD ---------------- */}
+      <div className="flex-1 p-10">
+
+        {/* HEADER */}
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-xl font-semibold">Tasks</h2>
+
+          <button
+            onClick={() => setShowCreate(true)}
+            className="px-4 py-1 rounded border border-[#A07463] hover:bg-[#EBD2C9]"
+          >
+            + New Task
+          </button>
+        </div>
+
+        {/* TASK LIST */}
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {tasks.map(t => (
+            <div
+              key={t.id}
+              onClick={() => setSelected(t)}
+              className="p-4 bg-white shadow rounded cursor-pointer hover:shadow-lg border border-[#EDD7CD]"
             >
-              X
-            </button>
-            <h2 className="font-bold text-lg mb-2">{selectedTask.task}</h2>
-            <p className="mb-4">{selectedTask.description}</p>
-            <button
-              className="px-4 py-2 bg-blue-500 text-white rounded"
-              onClick={() => console.log("Edit task", selectedTask.id)}
+              <p className="font-semibold text-lg">{t.task}</p>
+              <p className="text-sm text-gray-500">{t.priority}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ---------------- RIGHT ROLE PANEL ---------------- */}
+      <div className="w-64 p-6 border-l border-[#E3CFC6]">
+        <h3 className="uppercase tracking-wide text-sm mb-4 text-[#A07463]">Roles</h3>
+
+        <div className="space-y-3">
+          {users.map(u => (
+            <div key={u.id} className="flex justify-between py-1 px-2 rounded hover:bg-[#ECD5CC]">
+              <span>{u.firstName}</span>
+              <span className="font-medium">{u.role || "Member"}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ---------------- CREATE TASK MODAL ---------------- */}
+      {showCreate && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded p-6 w-96">
+
+            <h3 className="text-lg font-semibold mb-4">Create Task</h3>
+
+            <input
+              className="border w-full p-2 mb-3"
+              placeholder="Task name"
+              value={newTask.task}
+              onChange={e => setNewTask({ ...newTask, task: e.target.value })}
+            />
+
+            <textarea
+              className="border w-full p-2 mb-3"
+              placeholder="Description"
+              value={newTask.description}
+              onChange={e =>
+                setNewTask({ ...newTask, description: e.target.value })
+              }
+            />
+
+            <select
+              className="border w-full p-2 mb-4"
+              value={newTask.priority}
+              onChange={e =>
+                setNewTask({ ...newTask, priority: e.target.value })
+              }
             >
-              Edit
-            </button>
+              <option>Low</option>
+              <option>Medium</option>
+              <option>High</option>
+            </select>
+
+            <div className="flex justify-end gap-2">
+              <button
+                onClick={() => setShowCreate(false)}
+                className="px-3 py-1 border rounded"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={createTask}
+                className="px-3 py-1 bg-[#A07463] text-white rounded"
+              >
+                Create
+              </button>
+            </div>
           </div>
         </div>
       )}
+
+      {/* ---------------- TASK DETAILS MODAL ---------------- */}
+      {selected && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded p-6 w-96 relative">
+
+            <button
+              className="absolute right-3 top-3"
+              onClick={() => setSelected(null)}
+            >
+              ✕
+            </button>
+
+            <h2 className="font-bold text-lg mb-3">{selected.task}</h2>
+            <p className="text-sm mb-4">{selected.description}</p>
+
+            <div className="flex gap-3">
+              <button className="px-3 py-1 bg-[#A07463] text-white rounded">
+                Edit
+              </button>
+
+              <button
+                onClick={() => deleteTask(selected.id)}
+                className="px-3 py-1 bg-red-500 text-white rounded"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 };
