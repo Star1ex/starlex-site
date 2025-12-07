@@ -60,7 +60,7 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
   }, []);
 
   const handleTeamClick = (teamId: string) => {
-    navigate(`/teams/${teamId}`);
+    navigate(`/team/${teamId}`);
   };
 
   const allTabs = [...userTeams.map(team => ({
