@@ -76,7 +76,10 @@ func (r *TaskRepository) Create(ctx context.Context, task *entity.Task) error {
 
 func (r *TaskRepository) Get(ctx context.Context, id string) (*entity.Task, error) {
 	var model TaskModel
-	result := r.db.WithContext(ctx).Where("id = ?", id).First(&model)
+	result := r.db.WithContext(ctx).
+		Preload("Assigned").
+		Where("id = ?", id).
+		First(&model)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, gorm.ErrRecordNotFound
@@ -127,6 +130,7 @@ func (r *TaskRepository) GetTeamTasks(ctx context.Context, teamID string) ([]*en
 	var models []TaskModel
 
 	err := r.db.WithContext(ctx).
+		Preload("Assigned").
 		Where("team_id = ?", teamID).
 		Find(&models).Error
 

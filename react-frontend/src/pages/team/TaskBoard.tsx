@@ -42,15 +42,21 @@ export const TaskBoard: React.FC = () => {
 
     async function load() {
       setLoading(true);
+      try {
+        const tasksData = await apiFetch(`/api/team/${teamId}/tasks`);
+        const teamData: any = await apiFetch(`/api/team/${teamId}`);
 
-      const tasksData = await apiFetch(`/api/team/${teamId}/tasks`);
-      const teamData: any = await apiFetch(`/api/team/${teamId}`);
+        // Ensure tasksData is an array
+        setTasks(Array.isArray(tasksData) ? tasksData : []);
 
-      setTasks(tasksData);
+        // Ensure teamData is an array (users list)
+        setUsers(Array.isArray(teamData) ? teamData : []);
 
-      setUsers(Array.isArray(teamData) ? teamData : teamData.users);
-
-      setLoading(false);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error loading data:", error);
+        setLoading(false);
+      }
     }
 
     load();
@@ -58,25 +64,33 @@ export const TaskBoard: React.FC = () => {
 
   /* ---------------- CREATE TASK ---------------- */
   async function createTask() {
-    const body = {
-      ...newTask, 
-      user_id: newTask.user_id ?? [], 
-      progress: "todo", 
-    };
+    try {
+      const body = {
+        ...newTask, 
+        user_id: newTask.user_id ?? [], 
+        progress: "todo", 
+      };
 
-    const created = await apiFetch(`/api/team/${teamId}/tasks`, {
-      method: "POST",
-      body: JSON.stringify(body),
-    });
-    setTasks(prev => [...prev, created]);
+      const created = await apiFetch(`/api/team/${teamId}/tasks`, {
+        method: "POST",
+        body: JSON.stringify(body),
+      });
+      
+      // Reload tasks to get the full list with all data
+      const tasksData = await apiFetch(`/api/team/${teamId}/tasks`);
+      setTasks(Array.isArray(tasksData) ? tasksData : []);
 
-    setShowCreate(false);
-    setNewTask({
-      task: "",
-      description: "",
-      priority: "Medium",
-      user_id: [],
-    });
+      setShowCreate(false);
+      setNewTask({
+        task: "",
+        description: "",
+        priority: "Medium",
+        user_id: [],
+      });
+    } catch (error) {
+      console.error("Error creating task:", error);
+      alert("Failed to create task");
+    }
   }
 
   /* ---------------- DELETE TASK ---------------- */

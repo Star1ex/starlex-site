@@ -59,6 +59,11 @@ func (s *TaskService) CreateTask(
 
 	return s.taskRepo.Create(ctx, task)
 }
+
+func (s *TaskService) GetTaskByID(ctx context.Context, taskID string) (*entity.Task, error) {
+	return s.taskRepo.Get(ctx, taskID)
+}
+
 func (s *TaskService) GetTeamTasks(ctx context.Context, teamID string) ([]*entity.Task, error) {
 	tasks, err := s.taskRepo.GetTeamTasks(ctx, teamID)
 	if err != nil {

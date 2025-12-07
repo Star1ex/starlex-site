@@ -44,6 +44,8 @@ func ToUsersResponse(users []*entity.User) []UserResponse {
 			Email:     user.Email,
 			FirstName: user.FirstName,
 			LastName:  user.LastName,
+			Role:      user.Role,
+			Photo_URL: user.Photo_URL,
 		}
 	}
 	return response
