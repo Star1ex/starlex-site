@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 type Team = { 
-  id: string; 
+  team_id: string; 
   name: string; 
   description?: string; 
 };
@@ -64,7 +64,7 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
   };
 
   const allTabs = [...userTeams.map(team => ({
-    id: team.id,
+    id: team.team_id,
     name: team.name,
     emails: [], 
   })), ...tabs];
