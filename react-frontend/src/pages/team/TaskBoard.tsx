@@ -59,7 +59,7 @@ export const TaskBoard: React.FC = () => {
   /* ---------------- CREATE TASK ---------------- */
   async function createTask() {
     const body = {
-      ...newTask,
+      ...newTask, 
       user_id: newTask.user_id ?? [], 
       progress: "todo", 
     };
@@ -68,7 +68,7 @@ export const TaskBoard: React.FC = () => {
       method: "POST",
       body: JSON.stringify(body),
     });
-
+M
     setTasks(prev => [...prev, created]);
 
     setShowCreate(false);
