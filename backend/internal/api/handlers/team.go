@@ -37,7 +37,7 @@ func (h *Handlers) CreateTeam(ctx *fiber.Ctx) error {
 	if err != nil {
 		log.Println(err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "failed to create team",
+			"error": err.Error(),
 		})
 	}
 
@@ -60,7 +60,9 @@ func (h *Handlers) GetUsers(ctx *fiber.Ctx) error {
 	users, err := h.teamService.GetUsers(ctx.Context(), id)
 	if err != nil {
 		log.Println(err)
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{})
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
 	}
 	response := dto.ToUsersResponse(users)
 	return ctx.Status(fiber.StatusOK).JSON(response)
