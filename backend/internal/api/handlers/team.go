@@ -57,6 +57,7 @@ func (h *Handlers) CreateTeam(ctx *fiber.Ctx) error {
 // @Router /team/{id} [get]
 func (h *Handlers) GetUsers(ctx *fiber.Ctx) error {
 	var id string = ctx.Params("id")
+
 	users, err := h.teamService.GetUsers(ctx.Context(), id)
 	if err != nil {
 		log.Println(err)

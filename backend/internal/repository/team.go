@@ -13,6 +13,7 @@ type TeamModel struct {
 	ID          string      `gorm:"primaryKey"`
 	Name        string      `gorm:"unique;not null"`
 	Description string      `gorm:"not null"`
+	OwnerID     string      `gorm:"not null"`
 	Users       []UserModel `gorm:"many2many:users_teams"`
 }
 
@@ -46,6 +47,7 @@ func (t *TeamRepository) CreateAndAddCreator(ctx context.Context, team *entity.T
 	err := t.db.Transaction(func(tx *gorm.DB) error {
 		//Creating team
 		newTeam := fromDomainToTeam(team)
+		newTeam.OwnerID = userID
 		err := tx.WithContext(ctx).Create(newTeam).Error
 		if err != nil {
 			if errors.Is(err, gorm.ErrDuplicatedKey) {
@@ -55,7 +57,7 @@ func (t *TeamRepository) CreateAndAddCreator(ctx context.Context, team *entity.T
 			return err
 		}
 
-		creatorUser := UserModel{ID: userID, Role: "owner"}
+		creatorUser := UserModel{ID: userID}
 		err = tx.WithContext(ctx).Model(newTeam).Association("Users").Append(&creatorUser)
 		if err != nil {
 			return err
@@ -80,6 +82,11 @@ func (t *TeamRepository) GetTeam(ctx context.Context, teamId string) ([]*entity.
 	users := teamModel.Users
 	usersInTeam := make([]*entity.User, len(users))
 	for i, user := range users {
+		if user.ID == teamModel.OwnerID {
+			user.Role = "owner"
+		} else {
+			user.Role = "member"
+		}
 		usersInTeam[i] = toDomain(&user)
 	}
 	return usersInTeam, nil

@@ -9,6 +9,7 @@ type UserApi struct {
 	Password  string  `json:"password" binding:"required"`
 	FirstName string  `json:"first_name"`
 	LastName  string  `json:"last_name"`
+	Role      string  `json:"role"`
 	Photo_URL *string `json:"photo_url"`
 }
 
@@ -53,6 +54,7 @@ func FromUserApi(u *UserApi) *entity.User {
 		Password:  u.Password,
 		FirstName: u.FirstName,
 		LastName:  u.LastName,
+		Role:      u.Role,
 		Photo_URL: u.Photo_URL,
 	}
 }
