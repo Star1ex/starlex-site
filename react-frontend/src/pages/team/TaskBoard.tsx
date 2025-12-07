@@ -31,11 +31,12 @@ export const TaskBoard: React.FC = () => {
     task: "",
     description: "",
     priority: "Medium",
+    user_id: [] as string[],  
   });
 
   const [selected, setSelected] = useState<Task | null>(null);
 
-  /** ---------------- FETCH DATA ---------------- */
+  /* ---------------- FETCH DATA ---------------- */
   useEffect(() => {
     if (!teamId) return;
 
@@ -43,41 +44,52 @@ export const TaskBoard: React.FC = () => {
       setLoading(true);
 
       const tasksData = await apiFetch(`/api/team/${teamId}/tasks`);
-      const usersData: any = await apiFetch(`/api/team/${teamId}`);
+      const teamData: any = await apiFetch(`/api/team/${teamId}`);
 
       setTasks(tasksData);
-      setUsers(Array.isArray(usersData) ? usersData : usersData.users);
+
+      setUsers(Array.isArray(teamData) ? teamData : teamData.users);
+
       setLoading(false);
     }
 
     load();
   }, [teamId]);
 
-  /** ---------------- CREATE TASK ---------------- */
+  /* ---------------- CREATE TASK ---------------- */
   async function createTask() {
+    const body = {
+      ...newTask,
+      user_id: newTask.user_id ?? [], 
+      progress: "todo", 
+    };
+
     const created = await apiFetch(`/api/team/${teamId}/tasks`, {
       method: "POST",
-      body: JSON.stringify(newTask),
+      body: JSON.stringify(body),
     });
 
     setTasks(prev => [...prev, created]);
-    setShowCreate(false);
 
+    setShowCreate(false);
     setNewTask({
       task: "",
       description: "",
       priority: "Medium",
+      user_id: [],
     });
   }
 
-  /** ---------------- DELETE TASK ---------------- */
+  /* ---------------- DELETE TASK ---------------- */
   async function deleteTask(id: string) {
     await apiFetch(`/api/team/${teamId}/tasks/${id}`, { method: "DELETE" });
+
     setTasks(prev => prev.filter(t => t.id !== id));
     setSelected(null);
   }
 
   if (loading) return <div>Loading...</div>;
+
 
   return (
     <div className="flex h-screen bg-[#F2E4DB] text-[#855646]">
@@ -199,7 +211,7 @@ export const TaskBoard: React.FC = () => {
                 Create
               </button>
             </div>
-          </div>
+          </div>  
         </div>
       )}
 
