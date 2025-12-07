@@ -22,6 +22,7 @@ func fromDomainToTeam(team *entity.Team) *TeamModel {
 		ID:          team.ID,
 		Name:        team.Name,
 		Description: team.Description,
+		OwnerID:     team.OwnerID,
 	}
 }
 

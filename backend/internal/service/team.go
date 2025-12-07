@@ -19,23 +19,20 @@ func NewTeamService(repo team.Repository, userRepo user.Repository) *TeamService
 }
 
 func (s *TeamService) CreateTeam(ctx context.Context, name, description, userID string) (*entity.Team, error) {
-	owner, err := s.userRepo.Get(ctx, userID)
 	newId := security.GenerateNewID()
-	newTeam := entity.NewTeam(newId, name, description)
 
-	if err != nil {
-		return nil, err
-	}
-	err = s.repo.CreateAndAddCreator(ctx, newTeam, userID)
-	if err != nil {
-		return nil, err
+	newTeam := &entity.Team{
+		ID:          newId,
+		Name:        name,
+		Description: description,
+		OwnerID:     userID,
 	}
 
-	owner.Role = "owner"
-	err = s.userRepo.Update(ctx, owner, userID)
+	err := s.repo.CreateAndAddCreator(ctx, newTeam, userID)
 	if err != nil {
 		return nil, err
 	}
+
 	return newTeam, nil
 }
 

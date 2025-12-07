@@ -15,7 +15,7 @@ type UserModel struct {
 	FirstName string      `gorm:"not null;size:50"`
 	LastName  string      `gorm:"not null;size:50"`
 	PhotoURL  string      `gorm:"default:null"`
-	Role      string      `gorm:"-"`
+	Role      string      `gorm:"not null;default:'member'"`
 	Teams     []TeamModel `gorm:"many2many:users_teams"`
 }
 
