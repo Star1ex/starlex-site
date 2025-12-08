@@ -22,4 +22,6 @@ type Service interface {
 
 	// Update task
 	UpdateTaskProgress(ctx context.Context, taskID, progress string) (error, *entity.Task)
+
+	Delete(ctx context.Context, id string) error
 }

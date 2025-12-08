@@ -91,3 +91,7 @@ func (s *TaskService) UpdateTaskProgress(ctx context.Context, taskID, progress s
 	}
 	return nil, task
 }
+
+func (s *TaskService) Delete(ctx context.Context, id string) error {
+	return s.taskRepo.Delete(ctx, id)
+}
