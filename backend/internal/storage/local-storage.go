@@ -64,6 +64,8 @@ func (s *LocalStorage) UploadFile(ctx context.Context,
 	if !strings.HasPrefix(dstAbs, baseAbs+string(filepath.Separator)) && dstAbs != baseAbs {
 		return "", errors.New("path traversal blocked")
 	}
+
+	dst := filepath.Join(s.BasePath, path)
 	if err := os.MkdirAll(filepath.Dir(dst), os.ModePerm); err != nil {
 		return "", fmt.Errorf("create dir: %w", err)
 	}
@@ -90,6 +92,7 @@ func (s *LocalStorage) UploadFile(ctx context.Context,
 	// to always end with '/' and path does not start with '/', so this
 	// produces correct results for both absolute and relative base URLs.
 	url := fmt.Sprintf("%s%s", s.BaseURL, cleanPath)
+	url := fmt.Sprintf("%s%s", s.BaseURL, path)
 	return url, nil
 }
 
