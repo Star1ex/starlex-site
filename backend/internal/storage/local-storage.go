@@ -7,6 +7,7 @@ import (
 	"mime/multipart"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type LocalStorage struct {
@@ -16,6 +17,24 @@ type LocalStorage struct {
 
 func NewLocalStorage(basePath, baseURL string) *LocalStorage {
 	_ = os.MkdirAll(basePath, os.ModePerm)
+	// Normalize BaseURL so returned URLs work both behind a proxy (nginx)
+	// and when an absolute URL is configured via env.
+	if baseURL == "" {
+		baseURL = "/uploads/"
+	} else if strings.HasPrefix(baseURL, "http://") || strings.HasPrefix(baseURL, "https://") {
+		if !strings.HasSuffix(baseURL, "/") {
+			baseURL += "/"
+		}
+	} else {
+		// treat as relative path - ensure leading and trailing slash
+		if !strings.HasPrefix(baseURL, "/") {
+			baseURL = "/" + baseURL
+		}
+		if !strings.HasSuffix(baseURL, "/") {
+			baseURL += "/"
+		}
+	}
+
 	return &LocalStorage{
 		BasePath: basePath,
 		BaseURL:  baseURL,
@@ -24,6 +43,9 @@ func NewLocalStorage(basePath, baseURL string) *LocalStorage {
 
 func (s *LocalStorage) UploadFile(ctx context.Context,
 	file *multipart.FileHeader, path string) (string, error) {
+
+	// normalize path (no leading slash)
+	path = strings.TrimPrefix(path, "/")
 
 	dst := filepath.Join(s.BasePath, path)
 	if err := os.MkdirAll(filepath.Dir(dst), os.ModePerm); err != nil {
@@ -48,6 +70,9 @@ func (s *LocalStorage) UploadFile(ctx context.Context,
 		return "", fmt.Errorf("copy: %w", err)
 	}
 
+	// Build URL by concatenating base URL and path. BaseURL is normalized
+	// to always end with '/' and path does not start with '/', so this
+	// produces correct results for both absolute and relative base URLs.
 	url := fmt.Sprintf("%s%s", s.BaseURL, path)
 	return url, nil
 }
