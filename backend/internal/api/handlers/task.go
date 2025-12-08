@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"log"
 
 	"github.com/Team-Tracks/team-track-site/internal/api/dto"
@@ -148,4 +149,20 @@ func (h *Handlers) UpdateTaskProgress(ctx *fiber.Ctx) error {
 		})
 	}
 	return ctx.Status(fiber.StatusOK).JSON(updatedTask)
+}
+
+func (h *Handlers) DeleteTask(c *fiber.Ctx) error {
+	taskID := c.Params("task_id")
+	if taskID == "nil" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
+	}
+
+	err := h.taskService.Delete(context.Background(), taskID)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed delete task",
+		})
+	}
+
+	return c.Status(fiber.StatusOK).JSON("Successfuly deleted task")
 }
