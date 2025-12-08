@@ -174,12 +174,6 @@ const ProfilePage: React.FC = () => {
             editable={editable}
             onChange={v => handleChange('email', v)}
           />
-          <ProfileField
-            label="Role"
-            value={form.role}
-            editable={editable}
-            onChange={v => handleChange('role', v)}
-          />
         </div>
 
         <div className="mt-8 flex justify-end gap-3">
