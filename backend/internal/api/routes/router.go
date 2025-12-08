@@ -54,6 +54,7 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 			tasks.Get("/", handlers.GetTeamTasks)
 			tasks.Get("/assigned/:user_id", handlers.GetUserTasks)
 			tasks.Put("/:task_id/update_progress", handlers.UpdateTaskProgress)
+			tasks.Delete("/:task_id", handlers.DeleteTask)
 		}
 	}
 }
