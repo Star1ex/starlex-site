@@ -120,3 +120,35 @@ func (t *TeamRepository) GetTeamByID(ctx context.Context, teamID string) (*entit
 	}
 	return toTeamDomain(&teamModel), nil
 }
+
+// AddUserToTeam
+func (t *TeamRepository) AddUserToTeam(ctx context.Context, teamID string, userID string) error {
+	return t.db.Transaction(func(tx *gorm.DB) error {
+		var team TeamModel
+		if err := tx.WithContext(ctx).First(&team, "id = ?", teamID).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return ErrTeamNotFound
+			}
+			return err
+		}
+
+		var user UserModel
+		if err := tx.WithContext(ctx).First(&user, "id = ?", userID).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return ErrUserNotFound
+			}
+			return err
+		}
+		var count int64
+		tx.WithContext(ctx).Model(&team).Where("id = ?", userID).Association("Users").Count()
+		if count > 0 {
+			return errors.New("user already in team")
+		}
+
+		if err := tx.WithContext(ctx).Model(&team).Association("Users").Append(&user); err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
