@@ -17,3 +17,27 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
   if (!res.ok) throw new Error(`API Error: ${res.status}`);
   return res.json();
 }
+
+
+// utils.ts - TypeScript fetch utility
+export interface FetchOptions extends RequestInit {
+  headers?: Record<string, string>;
+}
+
+export const fetchWithAuth = async (url: string, options: FetchOptions = {}): Promise<any> => {
+  const token = localStorage.getItem('authToken');
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token && { Authorization: `Bearer ${token}` }),
+      ...options.headers,
+    },
+  });
+
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+
+  return response.json();
+};
