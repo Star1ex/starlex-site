@@ -1,4 +1,4 @@
-// App.tsx - Main TaskBoard Component
+// App.tsx - COMPLETE FIXED TaskBoard Component
 import React, { useState, useEffect, useCallback } from 'react';
 import TaskCard from '@/widgets/TaskCard/TaskCard.js';
 import UserSidebar from '@/widgets/UserSideBar/UserSideBar.js';
@@ -7,12 +7,31 @@ import EditTaskModal from '@/widgets/EditTaskModal/EditTaskModal.js';
 import AddUserModal from '@/widgets/AddUserModal/AddUserModal.js';
 import { fetchWithAuth } from '@/app/api/api.js';
 import type { Task, User, TeamData } from '@/entities/types.js';
+import { useParams } from 'react-router-dom';
 
-interface TaskBoardProps {
-  teamId: string;
-}
+interface TaskBoardProps {}
 
-const TaskBoard: React.FC<TaskBoardProps> = ({ teamId }) => {
+const TaskBoard: React.FC<TaskBoardProps> = () => {
+  const { teamId } = useParams<{ teamId: string }>();
+  
+  // Guard against missing teamId
+  if (!teamId) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center p-8">
+        <div className="text-center max-w-md">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Team Not Found</h1>
+          <p className="text-gray-600 mb-8">The team ID is missing from the URL.</p>
+          <a 
+            href="/dashboard" 
+            className="px-6 py-3 bg-black text-white rounded-xl hover:bg-gray-900 transition-all duration-200 inline-block"
+          >
+            Go to Dashboard
+          </a>
+        </div>
+      </div>
+    );
+  }
+
   const [tasks, setTasks] = useState<Task[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
@@ -21,38 +40,67 @@ const TaskBoard: React.FC<TaskBoardProps> = ({ teamId }) => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showAddUserModal, setShowAddUserModal] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchTasks = useCallback(async () => {
+    if (!teamId) return;
     try {
+      setError(null);
       const data = await fetchWithAuth(`/api/team/${teamId}/tasks`) as Task[];
-      setTasks(data);
+      setTasks(data || []);
     } catch (error) {
       console.error('Failed to fetch tasks:', error);
+      setError('Failed to load tasks');
     }
   }, [teamId]);
 
   const fetchUsers = useCallback(async () => {
+    if (!teamId) return;
     try {
+      setError(null);
       const data = await fetchWithAuth(`/api/team/${teamId}`) as TeamData;
       setUsers(data.users || []);
     } catch (error) {
       console.error('Failed to fetch users:', error);
+      setError('Failed to load team members');
     }
   }, [teamId]);
 
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
+      setError(null);
       await Promise.all([fetchTasks(), fetchUsers()]);
       setLoading(false);
     };
     loadData();
-  }, [fetchTasks, fetchUsers]);
+  }, [fetchTasks, fetchUsers, teamId]);
 
   const refreshData = useCallback(() => {
     fetchTasks();
     fetchUsers();
   }, [fetchTasks, fetchUsers]);
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center p-8">
+        <div className="text-center max-w-md">
+          <div className="w-16 h-16 bg-red-50 border-4 border-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">{error}</h1>
+          <button
+            onClick={refreshData}
+            className="px-6 py-3 bg-black text-white rounded-xl hover:bg-gray-900 transition-all duration-200"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   if (loading) {
     return (
