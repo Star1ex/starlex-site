@@ -3,6 +3,7 @@ import React, { useState, useCallback, useEffect } from 'react';
 import Avatar from '@/shared/ui/Avatar.js';
 import type { Task, User, CreateTaskFormData } from '@/entities/types.js';
 import { Token } from '@/app/api/token.js';
+import { form } from 'framer-motion/client';
 
 const getToken = () => Token.get();
 
@@ -48,7 +49,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
       description: '',
       status: 'backlog',
       user_ids: [],
-    });
+      });
   }, []);
 
   useEffect(() => {
@@ -81,6 +82,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
           description: formData.description,
           status: formData.status,
           user_id: formData.user_ids,
+          priority: 'medium',
         }),
       });
 
