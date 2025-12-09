@@ -14,9 +14,9 @@ const getToken = () => Token.get();
 interface TaskBoardProps {}
 
 const TaskBoard: React.FC<TaskBoardProps> = () => {
-  const { teamId } = useParams<{ teamId: string }>();
+  const { team_id } = useParams<{ team_id: string }>();
   
-  if (!teamId) {
+  if (!team_id) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-8">
         <div className="text-center max-w-md">
@@ -47,7 +47,7 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
         return error;
      }
 
-      const res = await fetch(`/api/team/${teamId}/tasks`, {
+      const res = await fetch(`/api/team/${team_id}/tasks`, {
         headers: { 
           Authorization: `Bearer ${token}`,
           Accept: 'application/json',
@@ -64,7 +64,7 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
       console.error('Failed to fetch tasks:', err);
       setError('Failed to load tasks');
     }
-  }, [teamId]);
+  }, [team_id]);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -74,7 +74,7 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
         return error;
       }
 
-      const res = await fetch(`/api/team/${teamId}`, {
+      const res = await fetch(`/api/team/${team_id}`, {
         headers: { 
           Authorization: `Bearer ${token}`,
           Accept: 'application/json',
@@ -91,7 +91,7 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
       console.error('Failed to fetch users:', err);
       setError('Failed to load team members');
     }
-  }, [teamId]);
+  }, [team_id]);
 
   useEffect(() => {
     const loadData = async () => {
@@ -197,7 +197,7 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
                     setShowEditModal(true);
                   }}
                   onUpdate={refreshData}
-                  teamId={teamId}
+                  teamId={team_id}
                 />
               ))}
             </div>
@@ -227,7 +227,7 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
         onClose={() => setShowCreateModal(false)}
         users={users}
         onSuccess={refreshData}
-        teamId={teamId}
+        teamId={team_id}
       />
       <EditTaskModal
         isOpen={showEditModal}
@@ -238,13 +238,13 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
         task={editingTask}
         users={users}
         onSuccess={refreshData}
-        teamId={teamId}
+        teamId={team_id}
       />
       <AddUserModal
         isOpen={showAddUserModal}
         onClose={() => setShowAddUserModal(false)}
         onSuccess={refreshData}
-        teamId={teamId}
+        teamId={team_id}
       />
     </div>
   );
