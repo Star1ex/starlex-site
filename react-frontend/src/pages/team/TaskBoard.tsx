@@ -44,55 +44,69 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
       setError(null);
       const token = getToken();
       if (!token) {
-        return error;
-     }
-
+        setError('No token found');
+        return { status: 401, message: 'No token found' };
+      }
+  
       const res = await fetch(`/api/team/${team_id}/tasks`, {
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
           Accept: 'application/json',
         },
       });
-
+  
       if (res.ok) {
         const data: Task[] = await res.json();
         setTasks(data || []);
-      } else if (res.status === 401) {
-        return error;
+        return { status: res.status, message: 'Success' };
+      } else {
+        const errorData = await res.json().catch(() => null);
+        const errorMessage = errorData?.message || 'Unknown error';
+        setError(errorMessage);
+        return { status: res.status, message: errorMessage };
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch tasks:', err);
-      setError('Failed to load tasks');
+      const message = err?.message || 'Failed to load tasks';
+      setError(message);
+      return { status: 500, message };
     }
   }, [team_id]);
-
+  
   const fetchUsers = useCallback(async () => {
     try {
       setError(null);
       const token = getToken();
       if (!token) {
-        return error;
+        setError('No token found');
+        return { status: 401, message: 'No token found' };
       }
-
+  
       const res = await fetch(`/api/team/${team_id}`, {
-        headers: { 
+        headers: {
           Authorization: `Bearer ${token}`,
           Accept: 'application/json',
         },
       });
-
+  
       if (res.ok) {
         const data: TeamData = await res.json();
         setUsers(data.users || []);
-      } else if (res.status === 401) {
-        return error;
+        return { status: res.status, message: 'Success' };
+      } else {
+        const errorData = await res.json().catch(() => null);
+        const errorMessage = errorData?.message || 'Unknown error';
+        setError(errorMessage);
+        return { status: res.status, message: errorMessage };
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Failed to fetch users:', err);
-      setError('Failed to load team members');
+      const message = err?.message || 'Failed to load team members';
+      setError(message);
+      return { status: 500, message };
     }
   }, [team_id]);
-
+  
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
