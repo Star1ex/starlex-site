@@ -1,4 +1,4 @@
-// App.tsx - TaskBoard с использованием существующей авторизации Token
+// App.tsx - TaskBoard БЕЗ cookies, только JWT
 import React, { useState, useEffect, useCallback } from 'react';
 import TaskCard from '@/widgets/TaskCard/TaskCard.js';
 import UserSidebar from '@/widgets/UserSideBar/UserSideBar.js';
@@ -17,15 +17,15 @@ const fetchWithAuth = async (endpoint: string, options: RequestInit = {}): Promi
     throw new Error('No auth token');
   }
   
-  const teamId = useParams<{ teamId: string }>()?.teamId;
-  const url = `http://teamtrackwebsite.duckdns.org:8888${endpoint.replace(':team_id', teamId || '')}`;
+  const { teamId } = useParams<{ teamId: string }>();
+  const url = `http://teamtrackwebsite.duckdns.org:8888${endpoint.replace(':teamId', teamId || '')}`;
   
   const config: RequestInit = {
     ...options,
-    credentials: 'include',
+
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
+      'Authorization': `Bearer ${token}`, // ✅ Только JWT
       ...options.headers,
     },
   };
@@ -49,7 +49,6 @@ interface TaskBoardProps {}
 const TaskBoard: React.FC<TaskBoardProps> = () => {
   const { teamId } = useParams<{ teamId: string }>();
   
-  // Guard against missing teamId
   if (!teamId) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-8">
@@ -246,7 +245,7 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
         )}
       </div>
 
-      {/* Modals - все используют тот же fetchWithAuth с Token */}
+      {/* Modals */}
       <CreateTaskModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
