@@ -84,13 +84,7 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
         },
       });
 
-      if (res.ok) {
-        const data: TeamData = await res.json();
-        setUsers(data.users || []);
-      } else if (res.status === 401) {
-        Token.clear();
-        window.location.href = '/sign-in';
-      }
+  
     } catch (err) {
       console.error('Failed to fetch users:', err);
       setError('Failed to load team members');
