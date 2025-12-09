@@ -13,6 +13,7 @@
     "class-variance-authority": "^0.7.1",
     "env": "^0.0.2",
     "framer-motion": "^12.23.25",
+    "lucide-react": "^0.556.0",
     "meta": "^2.2.25",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",

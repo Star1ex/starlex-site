@@ -68,3 +68,66 @@ func (h *Handlers) GetUsers(ctx *fiber.Ctx) error {
 	response := dto.ToUsersResponse(users)
 	return ctx.Status(fiber.StatusOK).JSON(response)
 }
+
+// internal/api/handlers/team_handler.go
+
+// AddUserToTeam godoc
+// @Summary      Add user to team
+// @Description  Add user to team by email (only team owner)
+// @Tags         team
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string                    true  "Team ID"
+// @Param        user body      dto.AddUserToTeamRequest  true  "User email"
+// @Success      200  {object}  map[string]interface{}    "user added successfully"
+// @Failure      400  {object}  map[string]string         "bad request"
+// @Failure      403  {object}  map[string]string         "forbidden"
+// @Failure      404  {object}  map[string]string         "not found"
+// @Failure      500  {object}  map[string]string         "internal server error"
+// @Security     BearerAuth
+// @Router       /team/{id}/users [post]
+func (h *Handlers) AddUserToTeam(ctx *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+
+	teamID := ctx.Params("id")
+	if teamID == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "team id is required",
+		})
+	}
+
+	var input dto.AddUserToTeam
+	if err := ctx.BodyParser(&input); err != nil {
+		log.Println(err)
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request body",
+		})
+	}
+
+	err := h.teamService.AddUserToTeam(ctx.Context(), teamID, input.Email, userID)
+	if err != nil {
+		log.Println(err)
+
+		if err.Error() == "only team owner can add users" {
+			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+		if err.Error() == "user already in team" {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "user added to team successfully",
+	})
+}

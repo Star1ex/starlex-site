@@ -38,6 +38,10 @@ type UserProfile struct {
 	Photo_URL *string `json:"photo_url"`
 }
 
+type AddUserToTeam struct {
+	Email string `json:"email" validate:"required,email"`
+}
+
 func ToUserApi(u *entity.User) *UserApi {
 	return &UserApi{
 		Email:     u.Email,
