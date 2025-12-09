@@ -1,9 +1,10 @@
-// AddUserModal.tsx - FULLY FIXED
+// AddUserModal.tsx - FIXED в стиле RightSidebar
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import Avatar from '@/shared/ui/Avatar.js';
-import { fetchWithAuth } from '@/app/api/api.js';
 import type { SearchUserResult } from '@/entities/types.js';
-import { getToken } from '@/entities/user.js';
+import { Token } from '@/app/api/token.js'; 
+
+const getToken = () => Token.get();
 
 interface AddUserModalProps {
   isOpen: boolean;
@@ -18,10 +19,10 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
   onSuccess, 
   teamId 
 }) => {
-  const [email, setEmail] = useState<string>('');
+  const [email, setEmail] = useState('');
   const [searchResult, setSearchResult] = useState<SearchUserResult | null>(null);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isSearching, setIsSearching] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleSearch = useCallback(async (searchEmail: string) => {
@@ -33,8 +34,25 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
     
     setIsSearching(true);
     try {
-      const data = await fetchWithAuth(`/api/search/${encodeURIComponent(searchEmail)}`) as SearchUserResult;
-      setSearchResult(data);
+      const token = getToken();
+      if (!token) {
+        window.location.href = '/sign-in';
+        return;
+      }
+
+      const res = await fetch(`/api/search/${encodeURIComponent(searchEmail)}`, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
+      });
+
+      if (res.ok) {
+        const data: SearchUserResult = await res.json();
+        setSearchResult(data);
+      } else {
+        setSearchResult(null);
+      }
     } catch (error) {
       console.error('Search failed:', error);
       setSearchResult(null);
@@ -48,14 +66,26 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
     
     setIsLoading(true);
     try {
-      await fetchWithAuth(`/api/team/${teamId}/add`, {
+      const token = getToken();
+      if (!token) {
+        window.location.href = '/sign-in';
+        return;
+      }
+
+      const res = await fetch(`/api/team/${teamId}/add`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
         body: JSON.stringify({ email }),
-        
       });
-      onSuccess();
-      onClose();
+
+      if (res.ok) {
+        onSuccess();
+        onClose();
+      }
     } catch (error) {
       console.error('Failed to add user:', error);
     } finally {
@@ -96,15 +126,10 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
   if (!isOpen) return null;
 
   return (
-    <div 
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50" 
-      role="dialog" 
-      aria-modal="true"
-      aria-labelledby="add-user-title"
-    >
-      <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full max-h-[90vh] overflow-y-auto animate-fade-in-scale">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50" role="dialog" aria-modal="true">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full max-h-[90vh] overflow-y-auto">
         <div className="p-8 border-b border-gray-200">
-          <h2 id="add-user-title" className="text-2xl font-bold mb-2">Add Team Member</h2>
+          <h2 className="text-2xl font-bold mb-2">Add Team Member</h2>
           <p className="text-gray-600">Search for a user by email to add them to your team.</p>
         </div>
 
@@ -132,7 +157,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
           )}
 
           {searchResult && !isSearching && (
-            <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 animate-fade-in">
+            <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
               <div className="flex items-center gap-4">
                 <Avatar user={searchResult} size="md" />
                 <div className="min-w-0 flex-1">
@@ -164,7 +189,6 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
               onClick={handleAddUser}
               disabled={!searchResult || isLoading || isSearching}
               className="flex-1 px-6 py-3 bg-black text-white rounded-xl font-medium hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 min-h-[44px]"
-              aria-label={`Add ${searchResult?.firstName || ''} ${searchResult?.lastName || ''} to team`}
             >
               {isLoading ? 'Adding...' : 'Add User'}
             </button>

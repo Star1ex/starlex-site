@@ -1,8 +1,10 @@
-// CreateTaskModal.tsx - FULLY FIXED
+// CreateTaskModal.tsx - FIXED в стиле RightSidebar
 import React, { useState, useCallback, useEffect } from 'react';
 import Avatar from '@/shared/ui/Avatar.js';
-import { fetchWithAuth } from '@/app/api/api.js';
 import type { User, CreateTaskFormData } from '@/entities/types.js';
+import { Token } from '@/app/api/token.js';
+
+const getToken = () => Token.get();
 
 interface CreateTaskModalProps {
   isOpen: boolean;
@@ -25,7 +27,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     status: 'backlog' as const,
     user_ids: [],
   });
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const resetForm = useCallback(() => {
     setFormData({
@@ -48,9 +50,19 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     
     setIsLoading(true);
     try {
-      await fetchWithAuth(`/api/team/${teamId}/tasks`, {
+      const token = getToken();
+      if (!token) {
+        window.location.href = '/sign-in';
+        return;
+      }
+
+      const res = await fetch(`/api/team/${teamId}/tasks`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
         body: JSON.stringify({
           task: formData.task,
           description: formData.description,
@@ -58,8 +70,11 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
           user_id: formData.user_ids,
         }),
       });
-      onSuccess();
-      onClose();
+
+      if (res.ok) {
+        onSuccess();
+        onClose();
+      }
     } catch (error) {
       console.error('Failed to create task:', error);
     } finally {
@@ -71,7 +86,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50" role="dialog" aria-modal="true">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto animate-fade-in-scale">
+      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
         <div className="p-8 border-b border-gray-200">
           <h2 className="text-2xl font-bold mb-2">Create Task</h2>
           <p className="text-gray-600">Add a new task for your team.</p>
@@ -122,7 +137,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               })}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition-all duration-200"
               disabled={isLoading}
-              >
+            >
               <option value="backlog">Backlog</option>
               <option value="in_progress">In Progress</option>
               <option value="done">Done</option>
