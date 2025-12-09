@@ -28,7 +28,7 @@ type TaskResponse struct {
 type UpdateTask struct {
 	Task        string   `json:"task"`
 	Description string   `json:"description"`
-	AssignedTo  []string `json:"assignedTo"`
+	AssignedTo  []string `json:"user_id"`
 	Priority    string   `json:"priority"`
 }
 
