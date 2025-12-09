@@ -18,6 +18,6 @@ export const AppRoutes = () => (
     <Route path="/settings" element={<GeneralSettings />} />
     <Route path="/about-us" element={<AboutUs />} />
     <Route path="/profile" element={<ProfilePage/> } />
-    <Route path="/team/:id" element={<TaskBoard teamId="your-team-id"/> } />
+    <Route path="/team/:teamId" element={<TaskBoard />} /> 
   </Routes> 
 );
