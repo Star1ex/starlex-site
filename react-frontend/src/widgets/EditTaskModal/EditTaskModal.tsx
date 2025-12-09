@@ -69,7 +69,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
         return;
       }
 
-      const res = await fetch(`/api/team/${teamId}/tasks/${task.id}`, {
+      const res = await fetch(`/api/team/${teamId}/tasks/${task.id}/update`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
