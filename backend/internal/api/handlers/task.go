@@ -60,6 +60,41 @@ func (h *Handlers) CreateTask(ctx *fiber.Ctx) error {
 	return ctx.Status(201).JSON(dto.ToTaskResponse(createdTask))
 }
 
+func (h *Handlers) UpdateTask(c *fiber.Ctx) error {
+	taskID := c.Params("task_id")
+
+	_, authErr := h.getAuthenticatedUserID(c)
+	if authErr != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "unauthorized",
+		})
+	}
+
+	var updateTask dto.UpdateTask
+	if err := c.BodyParser(&updateTask); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid json",
+		})
+	}
+
+	taskEntity, assignedTo := dto.FromUpdateTask(&updateTask)
+
+	updatedTask, err := h.taskService.Update(
+		c.Context(),
+		taskID,
+		taskEntity,
+		assignedTo,
+	)
+
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+
+	return c.JSON(updatedTask)
+}
+
 // GetTeamTasks godoc
 // @Summary      Get all tasks from team
 // @Description  Returns a list of all tasks for a given team.

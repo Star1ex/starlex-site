@@ -25,6 +25,13 @@ type TaskResponse struct {
 	CreatedAt   time.Time `json:"created_at,omitempty"`
 }
 
+type UpdateTask struct {
+	Task        string   `json:"task"`
+	Description string   `json:"description"`
+	AssignedTo  []string `json:"assignedTo"`
+	Priority    string   `json:"priority"`
+}
+
 func ToTaskResponse(task *entity.Task) *TaskResponse {
 	assignedIDs := make([]string, len(task.AssignedTo))
 	for i, u := range task.AssignedTo {
@@ -62,6 +69,14 @@ func FromTaskApi(api *TaskApi) (*entity.Task, []string) {
 		Task:        api.Task,
 		Description: api.Description,
 	}, api.AssignedToID
+}
+
+func FromUpdateTask(updates *UpdateTask) (*entity.Task, []string) {
+	return &entity.Task{
+		Task:        updates.Task,
+		Description: updates.Description,
+		Priority:    updates.Priority,
+	}, updates.AssignedTo
 }
 
 type UpdateDto struct {

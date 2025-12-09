@@ -89,7 +89,7 @@ func (r *TaskRepository) Get(ctx context.Context, id string) (*entity.Task, erro
 	return toTaskDomain(model), nil
 }
 
-func (r *TaskRepository) Update(ctx context.Context, id string, data *entity.Task) (error, *entity.Task) {
+func (r *TaskRepository) Update(ctx context.Context, id string, data *entity.Task, assignedTo []string) (*entity.Task, error) {
 	updates := map[string]interface{}{}
 
 	if data.Task != "" {
@@ -99,8 +99,8 @@ func (r *TaskRepository) Update(ctx context.Context, id string, data *entity.Tas
 		updates["description"] = data.Description
 	}
 
-	if data.AssignedTo != nil {
-		updates["assignedTo"] = data.AssignedTo
+	if assignedTo != nil {
+		updates["assignedTo"] = assignedTo
 	}
 
 	if data.Priority != "" {
@@ -113,13 +113,13 @@ func (r *TaskRepository) Update(ctx context.Context, id string, data *entity.Tas
 
 	var task TaskModel
 	if err := r.db.Model(&task).Where("id = ?", id).Updates(updates).Error; err != nil {
-		return err, nil
+		return nil, err
 	}
 
 	// reload full updated task
 	r.db.First(&task, id)
 
-	return nil, toTaskDomain(task)
+	return toTaskDomain(task), nil
 }
 
 func (r *TaskRepository) Delete(ctx context.Context, id string) error {
