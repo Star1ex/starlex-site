@@ -10,7 +10,7 @@ import ProfilePage from "@/pages/profile/UserProfile.js";
 import TaskBoard from "@/pages/team/TaskBoard.js"; 
 
 export const AppRoutes = () => (
-  <Route>
+  <Routes>
     <Route path="/" element={<HomePage />} />
     <Route path="/sign-in" element={<SignInPage />} />
     <Route path="/sign-up" element={<SignUpPage />} />
@@ -19,5 +19,5 @@ export const AppRoutes = () => (
     <Route path="/about-us" element={<AboutUs />} />
     <Route path="/profile" element={<ProfilePage/> } />
     <Route path="/team/:team_id" element={<TaskBoard />} /> 
-  </Route> 
+  </Routes> 
 );
