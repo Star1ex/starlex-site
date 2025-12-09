@@ -1,5 +1,3 @@
-// Full updated TaskBoard component with refined warm beige/brown palette matching screenshot
-
 import React, { useEffect, useState } from "react";
 import { X, Plus, Trash2, UserPlus } from "lucide-react";
 
