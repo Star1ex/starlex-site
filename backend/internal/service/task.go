@@ -64,6 +64,10 @@ func (s *TaskService) GetTaskByID(ctx context.Context, taskID string) (*entity.T
 	return s.taskRepo.Get(ctx, taskID)
 }
 
+func (s *TaskService) Update(ctx context.Context, id string, data *entity.Task) (error, *entity.Task) {
+	return s.taskRepo.Update(ctx, id, data)
+}
+
 func (s *TaskService) GetTeamTasks(ctx context.Context, teamID string) ([]*entity.Task, error) {
 	tasks, err := s.taskRepo.GetTeamTasks(ctx, teamID)
 	if err != nil {

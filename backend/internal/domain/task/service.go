@@ -10,6 +10,7 @@ type Service interface {
 
 	// Create task
 	CreateTask(ctx context.Context, teamID string, assignedIDs []string, task *entity.Task, userId string) error
+	Update(ctx context.Context, id string, data *entity.Task) (error, *entity.Task)
 
 	// Get task by ID
 	GetTaskByID(ctx context.Context, taskID string) (*entity.Task, error)
