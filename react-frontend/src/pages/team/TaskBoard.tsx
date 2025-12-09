@@ -55,13 +55,6 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
         },
       });
 
-      if (res.ok) {
-        const data: Task[] = await res.json();
-        setTasks(data || []);
-      } else if (res.status === 401) {
-        Token.clear();
-        window.location.href = '/sign-in';
-      }
     } catch (err) {
       console.error('Failed to fetch tasks:', err);
       setError('Failed to load tasks');
