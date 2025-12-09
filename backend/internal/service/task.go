@@ -64,8 +64,8 @@ func (s *TaskService) GetTaskByID(ctx context.Context, taskID string) (*entity.T
 	return s.taskRepo.Get(ctx, taskID)
 }
 
-func (s *TaskService) Update(ctx context.Context, id string, data *entity.Task) (error, *entity.Task) {
-	return s.taskRepo.Update(ctx, id, data)
+func (s *TaskService) Update(ctx context.Context, id string, data *entity.Task, assignedTo []string) (*entity.Task, error) {
+	return s.taskRepo.Update(ctx, id, data, assignedTo)
 }
 
 func (s *TaskService) GetTeamTasks(ctx context.Context, teamID string) ([]*entity.Task, error) {
@@ -84,16 +84,17 @@ func (s *TaskService) GetUserTasks(ctx context.Context, userID string) ([]*entit
 	return tasks, nil
 }
 
-func (s *TaskService) UpdateTaskProgress(ctx context.Context, taskID, progress string) (error, *entity.Task) {
+func (s *TaskService) UpdateTaskProgress(ctx context.Context, taskID, progress string) (*entity.Task, error) {
 	updatedTask := &entity.Task{
 		Progress: progress,
 	}
 
-	err, task := s.taskRepo.Update(ctx, taskID, updatedTask)
+	var main []string
+	task, err := s.taskRepo.Update(ctx, taskID, updatedTask, main)
 	if err != nil {
-		return err, nil
+		return nil, err
 	}
-	return nil, task
+	return task, err
 }
 
 func (s *TaskService) Delete(ctx context.Context, id string) error {
