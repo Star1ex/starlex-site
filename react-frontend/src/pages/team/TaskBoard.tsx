@@ -1,4 +1,4 @@
-// App.tsx - TaskBoard БЕЗ cookies, только JWT
+// TaskBoard.tsx - РАБОЧИЙ в стиле вашего RightSidebar
 import React, { useState, useEffect, useCallback } from 'react';
 import TaskCard from '@/widgets/TaskCard/TaskCard.js';
 import UserSidebar from '@/widgets/UserSideBar/UserSideBar.js';
@@ -9,40 +9,7 @@ import type { Task, User, TeamData } from '@/entities/types.js';
 import { useParams } from 'react-router-dom';
 import { Token } from '@/app/api/token.js'; 
 
-const fetchWithAuth = async (endpoint: string, options: RequestInit = {}): Promise<any> => {
-  const token = Token.get(); 
-  
-  if (!token) {
-    window.location.href = '/sign-in';
-    throw new Error('No auth token');
-  }
-  
-  const { teamId } = useParams<{ teamId: string }>();
-  const url = `http://teamtrackwebsite.duckdns.org:8888${endpoint.replace(':teamId', teamId || '')}`;
-  
-  const config: RequestInit = {
-    ...options,
-
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`, // ✅ Только JWT
-      ...options.headers,
-    },
-  };
-
-  const response = await fetch(url, config);
-  
-  if (!response.ok) {
-    if (response.status === 401) {
-      Token.clear(); 
-      window.location.href = '/sign-in';
-      throw new Error('Unauthorized');
-    }
-    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
-  }
-  
-  return response.json();
-};
+const getToken = () => Token.get(); 
 
 interface TaskBoardProps {}
 
@@ -54,8 +21,7 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
       <div className="min-h-screen bg-white flex items-center justify-center p-8">
         <div className="text-center max-w-md">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Team Not Found</h1>
-          <p className="text-gray-600 mb-8">The team ID is missing from the URL.</p>
-          <a href="/dashboard" className="px-6 py-3 bg-black text-white rounded-xl hover:bg-gray-900 transition-all duration-200 inline-block">
+          <a href="/dashboard" className="px-6 py-3 bg-black text-white rounded-xl hover:bg-gray-900">
             Go to Dashboard
           </a>
         </div>
@@ -65,34 +31,68 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
 
   const [tasks, setTasks] = useState<Task[]>([]);
   const [users, setUsers] = useState<User[]>([]);
-  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(false);
-  const [showCreateModal, setShowCreateModal] = useState<boolean>(false);
-  const [showEditModal, setShowEditModal] = useState<boolean>(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [showAddUserModal, setShowAddUserModal] = useState<boolean>(false);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   const fetchTasks = useCallback(async () => {
-    if (!teamId) return;
     try {
       setError(null);
-      const data = await fetchWithAuth(`/api/team/${teamId}/tasks`) as Task[];
-      setTasks(data || []);
-    } catch (error: any) {
-      console.error('Failed to fetch tasks:', error);
+      const token = getToken();
+      if (!token) {
+        window.location.href = '/sign-in';
+        return;
+      }
+
+      const res = await fetch(`/api/team/${teamId}/tasks`, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
+      });
+
+      if (res.ok) {
+        const data: Task[] = await res.json();
+        setTasks(data || []);
+      } else if (res.status === 401) {
+        Token.clear();
+        window.location.href = '/sign-in';
+      }
+    } catch (err) {
+      console.error('Failed to fetch tasks:', err);
       setError('Failed to load tasks');
     }
   }, [teamId]);
 
   const fetchUsers = useCallback(async () => {
-    if (!teamId) return;
     try {
       setError(null);
-      const data = await fetchWithAuth(`/api/team/${teamId}`) as TeamData;
-      setUsers(data.users || []);
-    } catch (error: any) {
-      console.error('Failed to fetch users:', error);
+      const token = getToken();
+      if (!token) {
+        window.location.href = '/sign-in';
+        return;
+      }
+
+      const res = await fetch(`/api/team/${teamId}`, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
+      });
+
+      if (res.ok) {
+        const data: TeamData = await res.json();
+        setUsers(data.users || []);
+      } else if (res.status === 401) {
+        Token.clear();
+        window.location.href = '/sign-in';
+      }
+    } catch (err) {
+      console.error('Failed to fetch users:', err);
       setError('Failed to load team members');
     }
   }, [teamId]);
@@ -100,7 +100,6 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
-      setError(null);
       try {
         await Promise.all([fetchTasks(), fetchUsers()]);
       } catch (error) {
@@ -110,7 +109,7 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
       }
     };
     loadData();
-  }, [fetchTasks, fetchUsers, teamId]);
+  }, [fetchTasks, fetchUsers]);
 
   const refreshData = useCallback(() => {
     fetchTasks();
@@ -121,26 +120,12 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-8">
         <div className="text-center max-w-md">
-          <div className="w-16 h-16 bg-red-50 border-4 border-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-4">{error}</h1>
           <div className="space-x-3">
-            <button
-              onClick={refreshData}
-              className="px-6 py-3 bg-black text-white rounded-xl hover:bg-gray-900 transition-all duration-200"
-            >
+            <button onClick={refreshData} className="px-6 py-3 bg-black text-white rounded-xl hover:bg-gray-900">
               Try Again
             </button>
-            <button
-              onClick={() => {
-                Token.clear();
-                window.location.href = '/sign-in';
-              }}
-              className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all duration-200"
-            >
+            <button onClick={() => { Token.clear(); window.location.href = '/sign-in'; }} className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300">
               Sign In
             </button>
           </div>
@@ -164,20 +149,20 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
         <div className="flex items-center justify-between max-w-7xl mx-auto">
           <h1 className="text-2xl font-bold">Team Tasks</h1>
           <div className="flex gap-3">
-            <button
-              onClick={() => setShowCreateModal(true)}
+            <button 
+              onClick={() => setShowCreateModal(true)} 
               className="px-4 py-2 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-900 transition-all duration-200 min-h-[44px]"
             >
               Add Task
             </button>
-            <button
-              onClick={() => setShowAddUserModal(true)}
+            <button 
+              onClick={() => setShowAddUserModal(true)} 
               className="px-4 py-2 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-900 transition-all duration-200 min-h-[44px]"
             >
               Add User
             </button>
-            <button
-              className="md:hidden px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-300 transition-all duration-200 min-h-[44px]"
+            <button 
+              className="md:hidden px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-300 transition-all duration-200 min-h-[44px]" 
               onClick={() => setIsSidebarOpen(true)}
             >
               Users
@@ -187,7 +172,6 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
       </nav>
 
       <div className="flex max-w-7xl mx-auto">
-        {/* Task List - Main Content */}
         <main className="flex-1 p-6 md:p-8">
           {tasks.length === 0 ? (
             <div className="text-center py-20">
@@ -198,8 +182,8 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">No tasks yet</h3>
               <p className="text-gray-600 mb-6">Get started by creating your first task.</p>
-              <button
-                onClick={() => setShowCreateModal(true)}
+              <button 
+                onClick={() => setShowCreateModal(true)} 
                 className="px-6 py-3 bg-black text-white rounded-xl font-medium hover:bg-gray-900 transition-all duration-200 min-h-[44px]"
               >
                 Create Task
@@ -224,16 +208,13 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
           )}
         </main>
 
-        {/* Desktop User Sidebar */}
         <UserSidebar users={users} className="hidden lg:block" />
 
-        {/* Mobile Sidebar Overlay */}
         {isSidebarOpen && (
           <>
-            <div
-              className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden"
-              onClick={() => setIsSidebarOpen(false)}
-              aria-hidden="true"
+            <div 
+              className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden" 
+              onClick={() => setIsSidebarOpen(false)} 
             />
             <UserSidebar
               users={users}
@@ -245,7 +226,6 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
         )}
       </div>
 
-      {/* Modals */}
       <CreateTaskModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
