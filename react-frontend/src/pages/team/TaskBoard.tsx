@@ -1,4 +1,3 @@
-// TaskBoard.tsx - РАБОЧИЙ в стиле вашего RightSidebar
 import React, { useState, useEffect, useCallback } from 'react';
 import TaskCard from '@/widgets/TaskCard/TaskCard.js';
 import UserSidebar from '@/widgets/UserSideBar/UserSideBar.js';
