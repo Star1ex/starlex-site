@@ -1,13 +1,48 @@
-// App.tsx - COMPLETE FIXED TaskBoard Component
+// App.tsx - TaskBoard с использованием существующей авторизации Token
 import React, { useState, useEffect, useCallback } from 'react';
 import TaskCard from '@/widgets/TaskCard/TaskCard.js';
 import UserSidebar from '@/widgets/UserSideBar/UserSideBar.js';
 import CreateTaskModal from '@/widgets/CreateTaskModal/CreateTaskModal.js';
 import EditTaskModal from '@/widgets/EditTaskModal/EditTaskModal.js';
 import AddUserModal from '@/widgets/AddUserModal/AddUserModal.js';
-import { fetchWithAuth } from '@/app/api/api.js';
 import type { Task, User, TeamData } from '@/entities/types.js';
 import { useParams } from 'react-router-dom';
+import { Token } from '@/app/api/token.js'; 
+
+const fetchWithAuth = async (endpoint: string, options: RequestInit = {}): Promise<any> => {
+  const token = Token.get(); 
+  
+  if (!token) {
+    window.location.href = '/sign-in';
+    throw new Error('No auth token');
+  }
+  
+  const teamId = useParams<{ teamId: string }>()?.teamId;
+  const url = `http://teamtrackwebsite.duckdns.org:8888${endpoint.replace(':team_id', teamId || '')}`;
+  
+  const config: RequestInit = {
+    ...options,
+    credentials: 'include',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+      ...options.headers,
+    },
+  };
+
+  const response = await fetch(url, config);
+  
+  if (!response.ok) {
+    if (response.status === 401) {
+      Token.clear(); 
+      window.location.href = '/sign-in';
+      throw new Error('Unauthorized');
+    }
+    throw new Error(`HTTP ${response.status}: ${await response.text()}`);
+  }
+  
+  return response.json();
+};
 
 interface TaskBoardProps {}
 
@@ -21,10 +56,7 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
         <div className="text-center max-w-md">
           <h1 className="text-2xl font-bold text-gray-900 mb-4">Team Not Found</h1>
           <p className="text-gray-600 mb-8">The team ID is missing from the URL.</p>
-          <a 
-            href="/dashboard" 
-            className="px-6 py-3 bg-black text-white rounded-xl hover:bg-gray-900 transition-all duration-200 inline-block"
-          >
+          <a href="/dashboard" className="px-6 py-3 bg-black text-white rounded-xl hover:bg-gray-900 transition-all duration-200 inline-block">
             Go to Dashboard
           </a>
         </div>
@@ -48,7 +80,7 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
       setError(null);
       const data = await fetchWithAuth(`/api/team/${teamId}/tasks`) as Task[];
       setTasks(data || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch tasks:', error);
       setError('Failed to load tasks');
     }
@@ -60,7 +92,7 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
       setError(null);
       const data = await fetchWithAuth(`/api/team/${teamId}`) as TeamData;
       setUsers(data.users || []);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to fetch users:', error);
       setError('Failed to load team members');
     }
@@ -70,8 +102,13 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
     const loadData = async () => {
       setLoading(true);
       setError(null);
-      await Promise.all([fetchTasks(), fetchUsers()]);
-      setLoading(false);
+      try {
+        await Promise.all([fetchTasks(), fetchUsers()]);
+      } catch (error) {
+        setError('Failed to load data');
+      } finally {
+        setLoading(false);
+      }
     };
     loadData();
   }, [fetchTasks, fetchUsers, teamId]);
@@ -91,12 +128,23 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-gray-900 mb-4">{error}</h1>
-          <button
-            onClick={refreshData}
-            className="px-6 py-3 bg-black text-white rounded-xl hover:bg-gray-900 transition-all duration-200"
-          >
-            Try Again
-          </button>
+          <div className="space-x-3">
+            <button
+              onClick={refreshData}
+              className="px-6 py-3 bg-black text-white rounded-xl hover:bg-gray-900 transition-all duration-200"
+            >
+              Try Again
+            </button>
+            <button
+              onClick={() => {
+                Token.clear();
+                window.location.href = '/sign-in';
+              }}
+              className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300 transition-all duration-200"
+            >
+              Sign In
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -120,21 +168,18 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
             <button
               onClick={() => setShowCreateModal(true)}
               className="px-4 py-2 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-900 transition-all duration-200 min-h-[44px]"
-              aria-label="Add new task"
             >
               Add Task
             </button>
             <button
               onClick={() => setShowAddUserModal(true)}
               className="px-4 py-2 bg-black text-white text-sm font-medium rounded-lg hover:bg-gray-900 transition-all duration-200 min-h-[44px]"
-              aria-label="Add new user"
             >
               Add User
             </button>
             <button
               className="md:hidden px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-300 transition-all duration-200 min-h-[44px]"
               onClick={() => setIsSidebarOpen(true)}
-              aria-label="Open users sidebar"
             >
               Users
             </button>
@@ -201,7 +246,7 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
         )}
       </div>
 
-      {/* Modals */}
+      {/* Modals - все используют тот же fetchWithAuth с Token */}
       <CreateTaskModal
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
