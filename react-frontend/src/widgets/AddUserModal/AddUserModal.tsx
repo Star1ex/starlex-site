@@ -3,6 +3,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import Avatar from '@/shared/ui/Avatar.js';
 import { fetchWithAuth } from '@/app/api/api.js';
 import type { SearchUserResult } from '@/entities/types.js';
+import { getToken } from '@/entities/user.js';
 
 interface AddUserModalProps {
   isOpen: boolean;
@@ -51,6 +52,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),
+        
       });
       onSuccess();
       onClose();
