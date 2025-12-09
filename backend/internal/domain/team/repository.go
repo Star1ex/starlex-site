@@ -14,6 +14,7 @@ type Repository interface {
 	CreateAndAddCreator(ctx context.Context, team *entity.Team, email string) error
 	GetTeam(ctx context.Context, teamID string) ([]*entity.User, error)
 	GetTeamByID(ctx context.Context, teamID string) (*entity.Team, error)
+	AddUserToTeam(ctx context.Context, teamID string, userID string) error
 	//Update(ctx context.Context, teamID string, updateTeam *entity.UpdateTeam) (*entity.Team, error)
 	//Delete(ctx context.Context, teamID string) error
 }

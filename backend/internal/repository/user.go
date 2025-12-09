@@ -76,7 +76,7 @@ func (r *UserRepository) Create(ctx context.Context, u *entity.User) error {
 	if err != nil {
 		//Uniqueness check
 		if errors.Is(err, gorm.ErrDuplicatedKey) {
-			return ErrAlreadyExists
+			return ErrUserAlreadyExists
 		}
 		return err
 	}
