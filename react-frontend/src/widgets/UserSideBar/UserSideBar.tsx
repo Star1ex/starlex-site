@@ -1,4 +1,3 @@
-// UserSidebar.tsx
 import React from 'react';
 import Avatar from '@/shared/ui/Avatar.js';
 import type { User } from '@/entities/types.js';
