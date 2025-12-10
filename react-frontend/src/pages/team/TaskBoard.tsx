@@ -72,9 +72,7 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
   try {
     setError(null);
     const token = getToken();
-    if (!token) {
-      return;
-    }
+    if (!token) return;
 
     const res = await fetch(`/api/team/${teamId}`, {
       headers: { 
@@ -84,10 +82,11 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
     });
 
     if (res.ok) {
-      const data: { users: User[] } = await res.json();
-      setUsers(data.users || []); 
+      const data: User[] = await res.json(); 
+      setUsers(Array.isArray(data) ? data : []); 
     } else if (res.status === 401) {
       Token.clear();
+      window.location.href = '/sign-in';
     } else {
       setError('Failed to load team members');
     }
