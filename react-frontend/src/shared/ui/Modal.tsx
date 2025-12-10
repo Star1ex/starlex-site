@@ -18,16 +18,17 @@ export const Modal = ({ open, onClose, children }: Props) => {
   return (
     <div className="fixed inset-0 z-50">
       <div
-        className="absolute inset-0 bg-black/70"
+        className="absolute inset-0 bg-black/40 transition-opacity duration-200"
         onClick={onClose}
         aria-hidden
       />
+
       <div className="absolute inset-0 flex items-center justify-center p-4">
-        <div className="w-full max-w-xl rounded-md bg-[#F3E6DE] shadow-xl relative">
+        <div className="w-full max-w-xl rounded-md bg-white shadow-xl relative transition-transform duration-200">
           <button
             aria-label="Close"
             onClick={onClose}
-            className="absolute right-4 top-4 text-[#7b5a4f] text-xl"
+            className="absolute right-4 top-4 text-black text-xl hover:text-gray-700 transition-colors duration-200"
           >
             ×
           </button>
