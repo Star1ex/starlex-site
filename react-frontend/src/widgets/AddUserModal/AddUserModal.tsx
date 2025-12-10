@@ -109,79 +109,96 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
     };
   }, []);
 
-  if (!isOpen) return null;
+ if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50" role="dialog" aria-modal="true">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-8 border-b border-gray-200">
-          <h2 className="text-2xl font-bold mb-2">Add Team Member</h2>
-          <p className="text-gray-600">Search for a user by email to add them to your team.</p>
+return (
+  <div
+    className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black bg-opacity-50"
+    role="dialog"
+    aria-modal="true"
+  >
+    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm sm:max-w-md max-h-[90vh] overflow-y-auto">
+      {/* Header */}
+      <div className="p-6 sm:p-8 border-b border-gray-200">
+        <h2 className="text-xl sm:text-2xl font-bold mb-1 sm:mb-2">Add Team Member</h2>
+        <p className="text-gray-600 text-sm sm:text-base">
+          Search for a user by email to add them to your team.
+        </p>
+      </div>
+
+      {/* Body */}
+      <div className="p-6 sm:p-8 space-y-4 sm:space-y-6">
+        {/* Input */}
+        <div>
+          <label
+            className="block text-sm sm:text-base font-medium text-gray-700 mb-1 sm:mb-2"
+            htmlFor="user-email"
+          >
+            Enter email
+          </label>
+          <input
+            id="user-email"
+            type="email"
+            value={email}
+            onChange={handleInputChange}
+            placeholder="user@example.com"
+            disabled={isLoading}
+            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 text-sm sm:text-base transition-all duration-200"
+          />
         </div>
 
-        <div className="p-8 space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="user-email">
-              Enter email
-            </label>
-            <input
-              id="user-email"
-              type="email"
-              value={email}
-              onChange={handleInputChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition-all duration-200"
-              placeholder="user@example.com"
-              disabled={isLoading}
-            />
+        {/* Searching */}
+        {isSearching && (
+          <div className="flex items-center gap-2 text-sm sm:text-base text-gray-500 px-3 sm:px-4 py-2.5 sm:py-3 bg-gray-50 rounded-xl">
+            <div className="w-4 h-4 sm:w-5 sm:h-5 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
+            Searching for {email}...
           </div>
+        )}
 
-          {isSearching && (
-            <div className="flex items-center gap-2 text-sm text-gray-500 px-4 py-3 bg-gray-50 rounded-xl">
-              <div className="w-5 h-5 border-2 border-gray-300 border-t-transparent rounded-full animate-spin" />
-              Searching for {email}...
-            </div>
-          )}
-
-          {searchResults.length > 0 && !isSearching && (
-            <div className="space-y-2">
-              {searchResults.map(user => (
-                <div
-                  key={user.id}
-                  className="p-4 bg-gray-50 rounded-xl border border-gray-200 flex items-center gap-4 cursor-pointer hover:bg-gray-100"
-                  onClick={() => handleAddUser(user.email)}
-                >
-                  <Avatar user={user} size="md" />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-semibold text-gray-900 truncate">
-                      {`${user.firstName} ${user.lastName}`}
-                    </p>
-                    <p className="text-sm text-gray-600 truncate">{user.email}</p>
-                  </div>
+        {/* Results */}
+        {searchResults.length > 0 && !isSearching && (
+          <div className="space-y-2 max-h-60 overflow-y-auto">
+            {searchResults.map(user => (
+              <div
+                key={user.id}
+                className="p-3 sm:p-4 bg-gray-50 rounded-xl border border-gray-200 flex items-center gap-3 sm:gap-4 cursor-pointer hover:bg-gray-100"
+                onClick={() => handleAddUser(user.email)}
+              >
+                <Avatar user={user} size="md" />
+                <div className="min-w-0 flex-1">
+                  <p className="font-semibold text-gray-900 truncate text-sm sm:text-base">
+                    {`${user.firstName} ${user.lastName}`}
+                  </p>
+                  <p className="text-xs sm:text-sm text-gray-600 truncate">{user.email}</p>
                 </div>
-              ))}
-            </div>
-          )}
-
-          {!isSearching && searchResults.length === 0 && email.length >= 3 && (
-            <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 text-center text-sm text-gray-500">
-              No user found with email "{email}"
-            </div>
-          )}
-
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-medium transition-all duration-200"
-              disabled={isLoading}
-            >
-              Cancel
-            </button>
+              </div>
+            ))}
           </div>
+        )}
+
+        {/* No results */}
+        {!isSearching && searchResults.length === 0 && email.length >= 3 && (
+          <div className="p-3 sm:p-4 bg-gray-50 rounded-xl border border-gray-200 text-center text-xs sm:text-sm text-gray-500">
+            No user found with email "{email}"
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2 sm:pt-4">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isLoading}
+            className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-medium text-sm sm:text-base transition-all duration-200"
+          >
+            Cancel
+          </button>
         </div>
       </div>
     </div>
-  );
+  </div>
+);
+
 };
 
 export default AddUserModal;

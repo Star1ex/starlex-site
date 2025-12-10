@@ -74,19 +74,21 @@ export const SignUpPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-white transition-colors duration-300">
-      <div className="flex max-w-5xl w-full overflow-hidden">
+      <div className="flex flex-col md:flex-row w-full max-w-5xl overflow-hidden bg-white">
 
-        <div className="w-1/2 p-16 flex flex-col justify-center items-start">
-          <h1 className="text-7xl text-black font-serif mb-6 transition-colors duration-300">Begin</h1>
-          <div className="w-1/3 h-0.5 bg-black mb-6 transition-colors duration-300"></div>
-          <p className="text-lg text-black transition-colors duration-300">Start something new</p>
+        {/* Left panel */}
+        <div className="w-full md:w-1/2 p-8 md:p-16 flex flex-col justify-center items-start">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl text-black font-serif mb-4 md:mb-6 transition-colors duration-300">Begin</h1>
+          <div className="w-16 sm:w-24 md:w-1/3 h-0.5 bg-black mb-4 md:mb-6 transition-colors duration-300"></div>
+          <p className="text-base sm:text-lg text-black transition-colors duration-300">Start something new</p>
         </div>
 
-        <div className="w-1/2 p-16 flex flex-col justify-center">
-          <form className="space-y-7" onSubmit={handleSubmit}>
+        {/* Right panel */}
+        <div className="w-full md:w-1/2 p-8 md:p-16 flex flex-col justify-center">
+          <form className="space-y-4 sm:space-y-6" onSubmit={handleSubmit}>
 
             <div>
-              <label className="block text-sm font-medium text-black uppercase tracking-wider">First Name</label>
+              <label className="block text-sm sm:text-base font-medium text-black uppercase tracking-wider mb-1">First Name</label>
               <input
                 value={formFirstName}
                 onChange={handleSetFirstName}
@@ -97,7 +99,7 @@ export const SignUpPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-black uppercase tracking-wider">Last Name</label>
+              <label className="block text-sm sm:text-base font-medium text-black uppercase tracking-wider mb-1">Last Name</label>
               <input
                 value={formLastName}
                 onChange={handleSetLastName}
@@ -108,7 +110,7 @@ export const SignUpPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-black uppercase tracking-wider">Email</label>
+              <label className="block text-sm sm:text-base font-medium text-black uppercase tracking-wider mb-1">Email</label>
               <input
                 value={formEmail}
                 onChange={handleSetEmail}
@@ -119,7 +121,7 @@ export const SignUpPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-black uppercase tracking-wider">Password</label>
+              <label className="block text-sm sm:text-base font-medium text-black uppercase tracking-wider mb-1">Password</label>
               <input
                 value={formPassword}
                 onChange={handleSetPassword}
@@ -137,20 +139,20 @@ export const SignUpPage = () => {
 
             <button
               type="submit"
-              className="w-full py-3 mt-8 bg-black text-white font-semibold rounded-md shadow-md hover:bg-gray-800 transition-colors duration-200"
+              className="w-full py-3 mt-4 sm:mt-6 bg-black text-white font-semibold rounded-md shadow-md hover:bg-gray-800 transition-colors duration-200"
             >
               Sign Up
             </button>
 
-            <p className="text-center text-sm text-black pt-4 transition-colors duration-300">
+            <p className="text-center text-sm text-black pt-3 sm:pt-4 transition-colors duration-300">
               Have an account?{" "}
-              <a
-                href="#"
+              <button
+                type="button"
                 className="text-black font-medium hover:text-gray-700 transition-colors duration-200"
                 onClick={handleToSignIn}
               >
                 Sign-In
-              </a>
+              </button>
             </p>
 
           </form>

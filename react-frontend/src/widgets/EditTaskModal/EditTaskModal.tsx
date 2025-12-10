@@ -129,102 +129,107 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
     }
   }, [task, teamId, onSuccess, onClose]);
 
-  if (!isOpen || !task) return null;
+if (!isOpen || !task) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50" role="dialog" aria-modal="true">
-      <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
-        <div className="p-8 border-b border-gray-200">
-          <h2 className="text-2xl font-bold mb-2">Edit Task</h2>
-          <p className="text-gray-600">Update task details and assignments.</p>
+return (
+  <div
+    className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black bg-opacity-50"
+    role="dialog"
+    aria-modal="true"
+  >
+    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm sm:max-w-md max-h-[90vh] overflow-y-auto">
+      {/* Header */}
+      <div className="p-6 sm:p-8 border-b border-gray-200">
+        <h2 className="text-xl sm:text-2xl font-bold mb-1 sm:mb-2">Edit Task</h2>
+        <p className="text-gray-600 text-sm sm:text-base">Update task details and assignments.</p>
+      </div>
+
+      {/* Form */}
+      <form onSubmit={handleUpdate} className="p-6 sm:p-8 space-y-4 sm:space-y-6">
+        {/* Task Name */}
+        <div>
+          <label className="block text-sm sm:text-base font-medium text-gray-700 mb-1 sm:mb-2" htmlFor="edit-task-name">
+            Task Name *
+          </label>
+          <input
+            id="edit-task-name"
+            required
+            type="text"
+            value={formData.task}
+            onChange={(e) => setFormData({ ...formData, task: e.target.value })}
+            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 text-sm sm:text-base transition-all duration-200"
+            placeholder="Enter task name"
+            disabled={isLoading}
+          />
         </div>
 
-        <form onSubmit={handleUpdate} className="p-8 space-y-6">
-  {/* Task Name */}
-  <div>
-    <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-task-name">
-      Task Name *
-    </label>
-    <input
-      id="edit-task-name"
-      required
-      type="text"
-      value={formData.task}
-      onChange={(e) => setFormData({ ...formData, task: e.target.value })}
-      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition-all duration-200"
-      placeholder="Enter task name"
-      disabled={isLoading}
-    />
-  </div>
+        {/* Description */}
+        <div>
+          <label className="block text-sm sm:text-base font-medium text-gray-700 mb-1 sm:mb-2" htmlFor="edit-task-description">
+            Description
+          </label>
+          <textarea
+            id="edit-task-description"
+            value={formData.description}
+            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition-all duration-200 resize-vertical text-sm sm:text-base"
+            placeholder="Enter task description"
+            rows={4}
+            disabled={isLoading}
+          />
+        </div>
 
-  {/* Description */}
-  <div>
-    <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-task-description">
-      Description
-    </label>
-    <textarea
-      id="edit-task-description"
-      value={formData.description}
-      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition-all duration-200"
-      placeholder="Enter task description"
-      rows={4}
-      disabled={isLoading}
-    />
-  </div>
+        {/* Progress */}
+        <div>
+          <label className="block text-sm sm:text-base font-medium text-gray-700 mb-1 sm:mb-2" htmlFor="edit-task-progress">
+            Progress
+          </label>
+          <select
+            id="edit-task-progress"
+            value={formData.progress}
+            onChange={(e) => setFormData({ ...formData, progress: e.target.value as typeof formData.progress })}
+            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 text-sm sm:text-base transition-all duration-200"
+            disabled={isLoading}
+          >
+            <option value="not_started">Not Started</option>
+            <option value="in_progress">In Progress</option>
+            <option value="completed">Completed</option>
+          </select>
+        </div>
 
-  {/* Progress (если нужно) */}
-  <div>
-    <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="edit-task-progress">
-      Progress
-    </label>
-    <select
-      id="edit-task-progress"
-      value={formData.progress}
-      onChange={(e) => setFormData({ ...formData, progress: e.target.value as typeof formData.progress })}
-      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition-all duration-200"
-      disabled={isLoading}
-    >
-      <option value="not_started">Not Started</option>
-      <option value="in_progress">In Progress</option>
-      <option value="completed">Completed</option>
-    </select>
-  </div>
+        {/* Buttons */}
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 pt-2 sm:pt-4">
+          <button
+            type="button"
+            onClick={handleDelete}
+            className="px-4 sm:px-6 py-2.5 sm:py-3 bg-gray-100 text-gray-700 border border-gray-300 rounded-xl font-medium hover:bg-gray-200 transition-all duration-200 flex-1 sm:flex-none order-2 sm:order-1"
+            disabled={isLoading}
+          >
+            {isLoading ? 'Deleting...' : 'Delete Task'}
+          </button>
 
-  {/* Buttons */}
-  <div className="flex flex-col sm:flex-row gap-3 pt-4">
-    <button
-      type="button"
-      onClick={handleDelete}
-      className="px-6 py-3 bg-gray-100 text-gray-700 border border-gray-300 rounded-xl font-medium hover:bg-gray-200 transition-all duration-200 disabled:opacity-50 flex-1 sm:flex-none order-2 sm:order-1"
-      disabled={isLoading}
-    >
-      {isLoading ? 'Deleting...' : 'Delete Task'}
-    </button>
-    
-    <div className="flex gap-3 flex-1 sm:flex-none order-1 sm:order-2">
-      <button
-        type="button"
-        onClick={onClose}
-        className="px-6 py-3 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-all duration-200 flex-1 sm:w-auto"
-        disabled={isLoading}
-      >
-        Cancel
-      </button>
-      <button
-        type="submit"
-        disabled={isLoading || !formData.task.trim()}
-        className="px-6 py-3 bg-black text-white rounded-xl font-medium hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 flex-1 sm:w-auto min-h-[44px]"
-      >
-        {isLoading ? 'Updating...' : 'Update Task'}
-      </button>
+          <div className="flex gap-2 sm:gap-3 flex-1 sm:flex-none order-1 sm:order-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 border border-gray-300 text-gray-700 rounded-xl font-medium hover:bg-gray-50 transition-all duration-200"
+              disabled={isLoading}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={isLoading || !formData.task.trim()}
+              className="flex-1 sm:w-auto px-4 sm:px-6 py-2.5 sm:py-3 bg-black text-white rounded-xl font-medium hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 min-h-[44px]"
+            >
+              {isLoading ? 'Updating...' : 'Update Task'}
+            </button>
+          </div>
+        </div>
+      </form>
     </div>
   </div>
-</form>
-
-      </div>
-    </div>
-  );
+);
 };
 
 export default EditTaskModal;

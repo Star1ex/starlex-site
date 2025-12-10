@@ -81,22 +81,23 @@ export const SignInPage = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-white transition-colors duration-300">
-      <div className="flex max-w-5xl w-full overflow-hidden">
-
-        <div className="w-1/2 p-16 flex flex-col justify-center items-start">
-          <h1 className="text-7xl text-black font-serif mb-6 transition-colors duration-300">
+      <div className="flex flex-col md:flex-row w-full max-w-5xl overflow-hidden bg-white">
+        {/* Left panel */}
+        <div className="w-full md:w-1/2 p-8 md:p-16 flex flex-col justify-center items-start">
+          <h1 className="text-4xl sm:text-5xl md:text-7xl text-black font-serif mb-4 md:mb-6 transition-colors duration-300">
             Welcome
           </h1>
-          <div className="w-1/3 h-0.5 bg-black mb-6 transition-colors duration-300"></div>
-          <p className="text-lg text-black transition-colors duration-300">
+          <div className="w-16 sm:w-24 md:w-1/3 h-0.5 bg-black mb-4 md:mb-6 transition-colors duration-300"></div>
+          <p className="text-base sm:text-lg text-black transition-colors duration-300">
             Continue your journey
           </p>
         </div>
 
-        <div className="w-1/2 p-16 flex flex-col justify-center">
-          <form className="space-y-7" onSubmit={handleSubmit}>
+        {/* Right panel */}
+        <div className="w-full md:w-1/2 p-8 md:p-16 flex flex-col justify-center">
+          <form className="space-y-6 sm:space-y-7" onSubmit={handleSubmit}>
             <div>
-              <label className="block text-sm font-medium text-black uppercase tracking-wider">
+              <label className="block text-sm font-medium text-black uppercase tracking-wider mb-1">
                 Email
               </label>
               <input
@@ -109,7 +110,7 @@ export const SignInPage = () => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-black uppercase tracking-wider">
+              <label className="block text-sm font-medium text-black uppercase tracking-wider mb-1">
                 Password
               </label>
               <input
@@ -129,20 +130,20 @@ export const SignInPage = () => {
 
             <button
               type="submit"
-              className="w-full py-3 mt-8 bg-black text-white font-semibold rounded-md shadow-md hover:bg-gray-800 transition-colors duration-200"
+              className="w-full py-3 mt-6 sm:mt-8 bg-black text-white font-semibold rounded-md shadow-md hover:bg-gray-800 transition-colors duration-200"
             >
               Sign In
             </button>
 
             <p className="text-center text-sm text-black pt-4 transition-colors duration-300">
               Already a member?{" "}
-              <a
-                href="#"
-                className="text-black font-medium hover:text-gray-700 transition-colors duration-200"
+              <button
+                type="button"
                 onClick={handleToSignUp}
+                className="text-black font-medium hover:text-gray-700 transition-colors duration-200"
               >
                 Create account
-              </a>
+              </button>
             </p>
           </form>
         </div>
