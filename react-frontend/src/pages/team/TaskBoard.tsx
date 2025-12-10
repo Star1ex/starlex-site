@@ -1,79 +1,21 @@
+// TaskBoard.tsx - РАБОЧИЙ в стиле вашего RightSidebar
 import React, { useState, useEffect, useCallback } from 'react';
 import TaskCard from '@/widgets/TaskCard/TaskCard.js';
 import UserSidebar from '@/widgets/UserSideBar/UserSideBar.js';
 import CreateTaskModal from '@/widgets/CreateTaskModal/CreateTaskModal.js';
 import EditTaskModal from '@/widgets/EditTaskModal/EditTaskModal.js';
 import AddUserModal from '@/widgets/AddUserModal/AddUserModal.js';
-import type { Task, User } from '@/entities/types.js';
+import type { Task, User, TeamData } from '@/entities/types.js';
 import { useParams } from 'react-router-dom';
 import { Token } from '@/app/api/token.js'; 
 
 const getToken = () => Token.get(); 
 
-const TaskBoard: React.FC = () => {
+interface TaskBoardProps {}
+
+const TaskBoard: React.FC<TaskBoardProps> = () => {
   const { teamId } = useParams<{ teamId: string }>();
-  const [tasks, setTasks] = useState<Task[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [showAddUserModal, setShowAddUserModal] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-
-  const fetchTasks = useCallback(async () => {
-    try {
-      const token = getToken();
-      if (!token) return;
-
-      const res = await fetch(`/api/team/${teamId}/tasks`, {
-        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-      });
-
-      if (res.ok) {
-        const data: Task[] = await res.json();
-        setTasks(data || []);
-      } else {
-        setTasks([]);
-      }
-    } catch (err) {
-      console.error('Failed to fetch tasks:', err);
-      setTasks([]);
-    }
-  }, [teamId]);
-
-  const fetchUsers = useCallback(async () => {
-    try {
-      const token = getToken();
-      if (!token) return;
-
-      const res = await fetch(`/api/team/${teamId}`, {
-        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-      });
-
-      if (res.ok) {
-        const data: User[] = await res.json();
-        setUsers(Array.isArray(data) ? data : []);
-      } else {
-        setUsers([]);
-      }
-    } catch (err) {
-      console.error('Failed to fetch users:', err);
-      setUsers([]);
-    }
-  }, [teamId]);
-
-  const loadData = useCallback(async () => {
-    setLoading(true);
-    await Promise.all([fetchTasks(), fetchUsers()]);
-    setLoading(false);
-  }, [fetchTasks, fetchUsers]);
-
-  useEffect(() => {
-    if (teamId) loadData();
-  }, [teamId, loadData]);
-
+  
   if (!teamId) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-8">
@@ -82,6 +24,103 @@ const TaskBoard: React.FC = () => {
           <a href="/dashboard" className="px-6 py-3 bg-black text-white rounded-xl hover:bg-gray-900">
             Go to Dashboard
           </a>
+        </div>
+      </div>
+    );
+  }
+
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [showAddUserModal, setShowAddUserModal] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchTasks = useCallback(async () => {
+    try {
+      setError(null);
+      const token = getToken();
+      if (!token) {
+        window.location.href = '/sign-in';
+        return;
+      }
+
+      const res = await fetch(`/api/team/${teamId}/tasks`, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
+      });
+
+      if (res.ok) {
+        const data: Task[] = await res.json();
+        setTasks(data || []);
+      } else if (res.status === 401) {
+        Token.clear();
+        window.location.href = '/sign-in';
+      }
+    } catch (err) {
+      console.error('Failed to fetch tasks:', err);
+      setError('Failed to load tasks');
+    }
+  }, [teamId]);
+
+  const fetchUsers = useCallback(async () => {
+    try {
+      setError(null);
+      const token = getToken();
+      if (!token) {
+        window.location.href = '/sign-in';
+        return;
+      }
+
+      const res = await fetch(`/api/team/${teamId}`, {
+        headers: { 
+          Authorization: `Bearer ${token}`,
+          Accept: 'application/json',
+        },
+      });
+    } catch (err) {
+      console.error('Failed to fetch users:', err);
+      setError('Failed to load team members');
+    }
+  }, [teamId]);
+
+  useEffect(() => {
+    const loadData = async () => {
+      setLoading(true);
+      try {
+        await Promise.all([fetchTasks(), fetchUsers()]);
+      } catch (error) {
+        setError('Failed to load data');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadData();
+  }, [fetchTasks, fetchUsers]);
+
+  const refreshData = useCallback(() => {
+    fetchTasks();
+    fetchUsers();
+  }, [fetchTasks, fetchUsers]);
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center p-8">
+        <div className="text-center max-w-md">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">{error}</h1>
+          <div className="space-x-3">
+            <button onClick={refreshData} className="px-6 py-3 bg-black text-white rounded-xl hover:bg-gray-900">
+              Try Again
+            </button>
+            <button onClick={() => { Token.clear(); window.location.href = '/sign-in'; }} className="px-6 py-3 bg-gray-200 text-gray-700 rounded-xl hover:bg-gray-300">
+              Sign In
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -153,7 +192,7 @@ const TaskBoard: React.FC = () => {
                     setEditingTask(task);
                     setShowEditModal(true);
                   }}
-                  onUpdate={loadData}
+                  onUpdate={refreshData}
                   teamId={teamId}
                 />
               ))}
@@ -183,7 +222,7 @@ const TaskBoard: React.FC = () => {
         isOpen={showCreateModal}
         onClose={() => setShowCreateModal(false)}
         users={users}
-        onSuccess={loadData}
+        onSuccess={refreshData}
         teamId={teamId}
       />
       <EditTaskModal
@@ -194,13 +233,13 @@ const TaskBoard: React.FC = () => {
         }}
         task={editingTask}
         users={users}
-        onSuccess={loadData}
+        onSuccess={refreshData}
         teamId={teamId}
       />
       <AddUserModal
         isOpen={showAddUserModal}
         onClose={() => setShowAddUserModal(false)}
-        onSuccess={loadData}
+        onSuccess={refreshData}
         teamId={teamId}
       />
     </div>
