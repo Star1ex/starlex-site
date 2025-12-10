@@ -172,7 +172,7 @@ func (h *Handlers) UpdateTaskProgress(ctx *fiber.Ctx) error {
 
 	progressValue := *updates.Progress
 
-	if progressValue != "In progress" && progressValue != "In review" && progressValue != "Done" {
+	if progressValue != "not_started" && progressValue != "in_progress" && progressValue != "In review" && progressValue != "Done" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad task progress"})
 	}
 
