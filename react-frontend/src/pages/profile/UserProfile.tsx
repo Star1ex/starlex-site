@@ -107,37 +107,37 @@ const ProfilePage: React.FC = () => {
 
   if (!user || !form) {
     return (
-      <div className="flex items-center justify-center h-full bg-[#f3e6de]">
-        <div className="text-[#7b5a4f]">Loading profile...</div>
+      <div className="flex items-center justify-center h-full bg-white transition-colors duration-300">
+        <div className="text-gray-700">Loading profile...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f3e6de]">
-      <div className="bg-[#f9efe8] border border-[#e2c9bd] rounded-3xl px-10 py-8 shadow-sm max-w-xl w-full">
-        <h1 className="text-3xl font-serif text-[#5c3a32] mb-6">
+    <div className="min-h-screen flex items-center justify-center bg-white transition-colors duration-300">
+      <div className="bg-white border border-gray-300 rounded-3xl px-10 py-8 shadow-md max-w-xl w-full transition-all duration-300">
+        <h1 className="text-3xl font-serif text-black mb-6 transition-colors duration-300">
           Profile
         </h1>
 
         <div className="flex items-center gap-6 mb-8">
-          <div className="w-20 h-20 rounded-full overflow-hidden border border-[#d4a89a] bg-[#ead4ca] flex items-center justify-center">
+          <div className="w-20 h-20 rounded-full overflow-hidden border border-gray-400 bg-gray-100 flex items-center justify-center transition-all duration-300">
             {user.photo_url ? (
               <img
                 src={user.photo_url}
                 alt="Avatar"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
               />
             ) : (
-              <div className="w-16 h-16 bg-gradient-to-br from-[#d4a89a] to-[#c69a8c] rounded-full" />
+              <div className="w-16 h-16 bg-gray-300 rounded-full transition-colors duration-300" />
             )}
           </div>
 
-          <div className="flex flex-col gap-2 text-sm text-[#7b5a4f]">
+          <div className="flex flex-col gap-2 text-sm text-gray-700 transition-colors duration-300">
             <span className="font-medium">Profile photo</span>
             {editable && (
               <>
-                <label className="inline-flex items-center px-4 py-2 rounded-full bg-[#d4a89a] text-white cursor-pointer hover:bg-[#c18c7c] text-xs tracking-wide">
+                <label className="inline-flex items-center px-4 py-2 rounded-full bg-black text-white cursor-pointer hover:bg-gray-800 text-xs tracking-wide transition-colors duration-200">
                   {uploading ? 'Uploading...' : 'Upload new'}
                   <input
                     type="file"
@@ -147,7 +147,7 @@ const ProfilePage: React.FC = () => {
                     disabled={uploading}
                   />
                 </label>
-                <span className="text-[11px] text-[#9a7667]">
+                <span className="text-[11px] text-gray-500">
                   JPG/PNG, max 5MB
                 </span>
               </>
@@ -173,14 +173,14 @@ const ProfilePage: React.FC = () => {
             value={form.email}
             editable={editable}
             onChange={v => handleChange('email', v)}
-          />
+          />      
         </div>
 
         <div className="mt-8 flex justify-end gap-3">
           {!editable ? (
             <button
               onClick={() => setEditable(true)}
-              className="px-5 py-2 rounded-full bg-[#d4a89a] text-white text-xs tracking-wide hover:bg-[#c18c7c]"
+              className="px-5 py-2 rounded-full bg-black text-white text-xs tracking-wide hover:bg-gray-800 transition-colors duration-200"
             >
               Edit
             </button>
@@ -188,14 +188,14 @@ const ProfilePage: React.FC = () => {
             <>
               <button
                 onClick={handleCancel}
-                className="px-5 py-2 rounded-full border border-[#d4a89a] text-[#7b5a4f] text-xs tracking-wide bg-transparent hover:bg-[#edd9cf]"
+                className="px-5 py-2 rounded-full border border-black text-black text-xs tracking-wide bg-transparent hover:bg-gray-100 transition-colors duration-200"
               >
                 Cancel
               </button>
               <button
                 onClick={handleSave}
                 disabled={saving}
-                className="px-5 py-2 rounded-full bg-[#d4a89a] text-white text-xs tracking-wide hover:bg-[#c18c7c] disabled:opacity-60"
+                className="px-5 py-2 rounded-full bg-black text-white text-xs tracking-wide hover:bg-gray-800 disabled:opacity-60 transition-colors duration-200"
               >
                 {saving ? 'Saving...' : 'Save'}
               </button>
@@ -222,17 +222,17 @@ const ProfileField: React.FC<ProfileFieldProps> = ({
 }) => {
   return (
     <div className="flex flex-col gap-1">
-      <span className="text-xs uppercase tracking-[0.2em] text-[#b08b7c]">
+      <span className="text-xs uppercase tracking-[0.2em] text-gray-500 transition-colors duration-300">
         {label}
       </span>
       {editable ? (
         <input
-          className="w-full px-4 py-2 rounded-full bg-[#f3e1d7] border border-[#e2c9bd] text-sm text-[#5c3a32] focus:outline-none focus:ring-2 focus:ring-[#d4a89a]"
+          className="w-full px-4 py-2 rounded-full bg-gray-100 border border-gray-300 text-sm text-black focus:outline-none focus:ring-2 focus:ring-black transition-all duration-200"
           value={value}
           onChange={e => onChange(e.target.value)}
         />
       ) : (
-        <div className="w-full px-4 py-2 rounded-full bg-[#f5e6dd] border border-transparent text-sm text-[#5c3a32]">
+        <div className="w-full px-4 py-2 rounded-full bg-gray-50 border border-transparent text-sm text-black transition-colors duration-300">
           {value}
         </div>
       )}

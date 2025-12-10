@@ -70,12 +70,12 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
   })), ...tabs];
 
   return (
-    <aside className="w-[320px] border-l border-[#e7d3c8] bg-[#F3E6DE] p-4 flex flex-col">
+    <aside className="w-[320px] border-l border-black bg-white p-4 flex flex-col transition-colors duration-300">
       <div className="flex items-center justify-between px-2 py-2">
-        <h3 className="tracking-widest text-xs text-[#9b7a6f] uppercase">TEAMS</h3>
+        <h3 className="tracking-widest text-xs text-black uppercase transition-colors duration-300">TEAMS</h3>
         <button
           onClick={onAddClick}
-          className="w-7 h-7 flex items-center justify-center rounded bg-transparent border border-[#d4a89a] text-[#7b5a4f] hover:bg-[#ead4ca]"
+          className="w-7 h-7 flex items-center justify-center rounded bg-transparent border border-black text-black hover:bg-gray-200 transition-colors duration-200"
           title="New Tab"
           disabled={loading}
         >
@@ -84,25 +84,25 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
       </div>
 
       {loading ? (
-        <div className="flex-1 flex items-center justify-center text-[#9b7a6f]">
+        <div className="flex-1 flex items-center justify-center text-black transition-colors duration-300">
           Loading teams...
         </div>
       ) : error ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-center text-[#9b7a6f]">
+        <div className="flex-1 flex flex-col items-center justify-center text-center text-black transition-colors duration-300">
           <p>{error}</p>
           <button 
             onClick={() => window.location.reload()} 
-            className="mt-2 text-[#b68f84] underline"
+            className="mt-2 text-black underline hover:text-gray-700 transition-colors duration-200"
           >
             Try again
           </button>
         </div>
       ) : allTabs.length === 0 ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-center text-[#9b7a6f]">
+        <div className="flex-1 flex flex-col items-center justify-center text-center text-black transition-colors duration-300">
           <p className="mb-1">No tabs yet</p>
           <button
             onClick={onAddClick}
-            className="text-[#b68f84] hover:text-[#a57f74] underline"
+            className="text-black hover:text-gray-700 underline transition-colors duration-200"
           >
             Create your first team
           </button>
@@ -113,7 +113,7 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
             <li key={tab.id}>
               <button
                 onClick={() => handleTeamClick(tab.id)}
-                className="w-full text-left px-3 py-2 rounded hover:bg-[#ead4ca] text-[#60392f]"
+                className="w-full text-left px-3 py-2 rounded hover:bg-gray-200 text-black transition-colors duration-200"
                 title={tab.emails.join(', ')}
               >
                 {tab.name}

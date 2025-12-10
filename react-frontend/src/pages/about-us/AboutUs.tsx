@@ -3,12 +3,12 @@ import { motion } from "framer-motion";
 
 export default function AboutUs() {
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-[#f0c6b7] text-[#5a3f36] px-6 text-center">
+    <div className="min-h-screen flex flex-col justify-center items-center bg-white text-black px-6 text-center transition-colors duration-300">
       <motion.h1
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className="text-5xl font-serif mb-6"
+        className="text-5xl font-serif mb-6 transition-colors duration-300"
       >
         About Us
       </motion.h1>
@@ -17,8 +17,9 @@ export default function AboutUs() {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.2 }}
-        className="text-lg max-w-2xl leading-relaxed mb-12"
+        className="text-lg max-w-2xl leading-relaxed mb-12 transition-colors duration-300"
       >
+        Open Source minimalistic task manager. Connect with us via GitHub, Telegram or email for support.
       </motion.p>
 
       <motion.div
@@ -29,21 +30,21 @@ export default function AboutUs() {
       >
         <a
           href="https://github.com/Team-Tracks"
-          className="py-3 rounded-2xl bg-[#d4a99b] text-[#5a3f36] shadow-sm hover:opacity-80 transition duration-200 text-center"
+          className="py-3 rounded-2xl bg-black text-white shadow-sm hover:bg-gray-800 transition-colors duration-200 text-center"
           style={{ border: "none" }}
         >
           GitHub
         </a>
         <a
           href="https://t.me/teamtrack1"
-          className="py-3 rounded-2xl bg-[#d4a99b] text-[#5a3f36] shadow-sm hover:opacity-80 transition duration-200 text-center"
+          className="py-3 rounded-2xl bg-black text-white shadow-sm hover:bg-gray-800 transition-colors duration-200 text-center"
           style={{ border: "none" }}
         >
           Telegram Channel
         </a>
         <a
-          href="teamtracktech@gmail.com"
-          className="py-3 rounded-2xl bg-[#d4a99b] text-[#5a3f36] shadow-sm hover:opacity-80 transition duration-200 text-center"
+          href="mailto:teamtracktech@gmail.com"
+          className="py-3 rounded-2xl bg-black text-white shadow-sm hover:bg-gray-800 transition-colors duration-200 text-center"
           style={{ border: "none" }}
         >
           Support

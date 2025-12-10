@@ -2,16 +2,15 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/shared/lib/cn.js";
 import React, { type ButtonHTMLAttributes } from "react";
 
-// This is a component for rendering buttons with different styles and sizes.
 
 const buttonStyles = cva(
   "inline-flex items-center justify-center rounded-xl font-medium transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed",
   {
     variants: {
       variant: {
-        primary: "bg-[#FF8C7B] text-white hover:bg-[#FF8C7B",
-        secondary: "w-full py-3 mt-8 bg-[#d4a89a] text-white font-semibold rounded-md shadow-md hover:bg-[#c69a8c] transition duration-200",
-        outline: "border border-gray-300 text-gray-900 hover:bg-gray-100",
+        primary: "bg-black text-white hover:bg-gray-800",
+        secondary: "bg-black text-white shadow-md hover:bg-gray-800 w-full py-3 font-semibold rounded-md transition-colors duration-200",
+        outline: "border border-black text-black hover:bg-gray-200",
       },
       size: {
         sm: "px-3 py-1 text-sm",
