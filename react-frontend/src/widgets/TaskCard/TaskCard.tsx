@@ -21,7 +21,7 @@ const statusConfig: Record<string, { label: string; color: string }> = {
 };
 
 const TaskCard: React.FC<TaskCardProps> = ({ task, users, onEdit, onUpdate, teamId }) => {
-  const [status, setStatus] = useState(task.status);
+  const [status, setStatus] = useState(task.progress);
   const [isUpdating, setIsUpdating] = useState(false);
 
   const updateStatus = useCallback(async (newStatus: 'backlog' | 'in_progress' | 'done') => {
@@ -33,7 +33,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, users, onEdit, onUpdate, team
         return;
       }
 
-      const res = await fetch(`/api/team/${teamId}/tasks/${task.id}`, {
+      const res = await fetch(`/api/team/${teamId}/tasks/${task.id}/update_progress`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',

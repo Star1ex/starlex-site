@@ -15,7 +15,7 @@ export interface Task {
   id: string;
   task: string;
   description: string;
-  status: 'backlog' | 'in_progress' | 'done';
+  progress: 'backlog' | 'in_progress' | 'done';
   user_ids: TaskUser[];
 }
 
@@ -27,7 +27,7 @@ export interface TeamData {
 export interface CreateTaskFormData {
   task: string;
   description: string;
-  status: 'backlog' | 'in_progress' | 'done';
+  progress: 'backlog' | 'in_progress' | 'done';
   user_ids: string[];
 }
 
