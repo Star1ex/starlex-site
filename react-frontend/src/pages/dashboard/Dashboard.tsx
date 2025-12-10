@@ -20,25 +20,33 @@ export const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#EED8CF]">
+    <div className="min-h-screen bg-white transition-colors duration-300">
       <div className="grid grid-cols-[64px_1fr_320px] h-screen">
+        <div className="bg-white text-black transition-colors duration-300">
+          <TabsPanel
+            tabs={teams.map(t => ({ id: t.id, name: t.name, emails: t.emails }))}
+            onAddClick={onOpen}
+          />
+        </div>
 
-        <TabsPanel
-          tabs={teams.map(t => ({ id: t.id, name: t.name, emails: t.emails }))}
-          onAddClick={onOpen}
-        />
+        <main className="ml-[320px] mr-[80px] bg-white transition-colors duration-300">
+
+        </main>
+
+        <div className="bg-white text-black transition-colors duration-300">
+          <RightSidebar />
+        </div>
       </div>
-    <div className="flex">
-  
-  <main className="ml-[320px] mr-[80px]">
-    </main>
-  <RightSidebar />
-</div>
-      <NewTabModal
-        open={open}
-        onClose={onClose}
-        onTeamCreated={handleTeamCreated}
-      />
+
+      {open && (
+        <div className="bg-white text-black transition-colors duration-300">
+          <NewTabModal
+            open={open}
+            onClose={onClose}
+            onTeamCreated={handleTeamCreated}
+          />
+        </div>
+      )}
     </div>
   );
 };
