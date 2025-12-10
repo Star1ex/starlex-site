@@ -81,7 +81,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
           task: formData.task,
           description: formData.description,
           status: formData.status,
-          user_id: formData.user_ids,
+          user_id: formData.user_ids, 
           priority: 'medium',
         }),
       });
