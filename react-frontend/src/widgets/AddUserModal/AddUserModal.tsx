@@ -1,4 +1,3 @@
-// AddUserModal.tsx - FIXED в стиле RightSidebar
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import Avatar from '@/shared/ui/Avatar.js';
 import type { SearchUserResult } from '@/entities/types.js';
@@ -35,10 +34,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
     setIsSearching(true);
     try {
       const token = getToken();
-      if (!token) {
-        window.location.href = '/sign-in';
-        return;
-      }
+      if (!token) return;
 
       const res = await fetch(`/api/search/${encodeURIComponent(searchEmail)}`, {
         headers: { 
@@ -67,10 +63,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
     setIsLoading(true);
     try {
       const token = getToken();
-      if (!token) {
-        window.location.href = '/sign-in';
-        return;
-      }
+      if (!token) return;
 
       const res = await fetch(`/api/team/${teamId}/add`, {
         method: 'POST',
