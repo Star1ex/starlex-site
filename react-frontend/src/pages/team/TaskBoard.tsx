@@ -12,7 +12,7 @@ import { Token } from '@/app/api/token.js';
 const getToken = () => Token.get();
 
 const TaskBoard: React.FC = () => {
-  const { teamId } = useParams<{ teamId: string }>();
+  const { team_id } = useParams<{ team_id: string }>();
   const [tasks, setTasks] = useState<Task[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -28,7 +28,7 @@ const TaskBoard: React.FC = () => {
       const token = getToken();
       if (!token) return;
 
-      const res = await fetch(`/api/team/${teamId}/tasks`, {
+      const res = await fetch(`/api/team/${team_id}/tasks`, {
         headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
       });
 
@@ -42,14 +42,14 @@ const TaskBoard: React.FC = () => {
       console.error(err);
       setTasks([]);
     }
-  }, [teamId]);
+  }, [team_id]);
 
   const fetchUsers = useCallback(async () => {
     try {
       const token = getToken();
       if (!token) return;
 
-      const res = await fetch(`/api/team/${teamId}`, {
+      const res = await fetch(`/api/team/${team_id}`, {
         headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
       });
 
@@ -63,7 +63,7 @@ const TaskBoard: React.FC = () => {
       console.error(err);
       setUsers([]);
     }
-  }, [teamId]);
+  }, [team_id]);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -86,7 +86,7 @@ const TaskBoard: React.FC = () => {
     );
   }
 
-  if (!teamId) {
+  if (!team_id) {
     return (
       <div className="min-h-screen flex items-center justify-center p-8">
         <div className="text-center max-w-md">
@@ -140,7 +140,7 @@ const TaskBoard: React.FC = () => {
                     setShowEditModal(true);
                   }}
                   onUpdate={loadData}
-                  teamId={teamId}
+                  teamId={team_id}
                 />
               ))}
             </div>
@@ -162,9 +162,9 @@ const TaskBoard: React.FC = () => {
         )}
       </div>
 
-      <CreateTaskModal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} users={users} onSuccess={loadData} teamId={teamId} />
-      <EditTaskModal isOpen={showEditModal} onClose={() => { setShowEditModal(false); setEditingTask(null); }} task={editingTask} users={users} onSuccess={loadData} teamId={teamId} />
-      <AddUserModal isOpen={showAddUserModal} onClose={() => setShowAddUserModal(false)} onSuccess={loadData} teamId={teamId} />
+      <CreateTaskModal isOpen={showCreateModal} onClose={() => setShowCreateModal(false)} users={users} onSuccess={loadData} teamId={team_id} />
+      <EditTaskModal isOpen={showEditModal} onClose={() => { setShowEditModal(false); setEditingTask(null); }} task={editingTask} users={users} onSuccess={loadData} teamId={team_id} />
+      <AddUserModal isOpen={showAddUserModal} onClose={() => setShowAddUserModal(false)} onSuccess={loadData} teamId={team_id} />
     </div>
   );
 };
