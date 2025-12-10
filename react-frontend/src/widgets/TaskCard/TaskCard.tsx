@@ -44,7 +44,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, users, onEdit, onUpdate, team
           status: newStatus, 
           task: task.task,
           description: task.description,
-          user_ids: task.assignedTo.map(u => u.id)
+          user_ids: task.user_ids.map(u => u.id)
         }),
       });
 
@@ -59,7 +59,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, users, onEdit, onUpdate, team
     }
   }, [task, teamId, onUpdate]);
 
-  const assignedUsers = task.assignedTo
+  const assignedUsers = task.user_ids
     ?.map((assignedUser) => users.find((u) => u.id === assignedUser.id))  
     .filter(Boolean) as User[] || [];
 
