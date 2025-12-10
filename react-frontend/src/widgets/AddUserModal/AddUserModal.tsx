@@ -1,3 +1,4 @@
+// AddUserModal.tsx - исправлено для массива пользователей
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import Avatar from '@/shared/ui/Avatar.js';
 import type { SearchUserResult } from '@/entities/types.js';
@@ -19,18 +20,18 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
   teamId 
 }) => {
   const [email, setEmail] = useState('');
-  const [searchResult, setSearchResult] = useState<SearchUserResult | null>(null);
+  const [searchResults, setSearchResults] = useState<SearchUserResult[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleSearch = useCallback(async (searchEmail: string) => {
     if (searchEmail.length < 3) {
-      setSearchResult(null);
+      setSearchResults([]);
       setIsSearching(false);
       return;
     }
-    
+
     setIsSearching(true);
     try {
       const token = getToken();
@@ -44,22 +45,20 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
       });
 
       if (res.ok) {
-        const data: SearchUserResult = await res.json();
-        setSearchResult(data);
+        const data: SearchUserResult[] = await res.json();
+        setSearchResults(data);
       } else {
-        setSearchResult(null);
+        setSearchResults([]);
       }
     } catch (error) {
       console.error('Search failed:', error);
-      setSearchResult(null);
+      setSearchResults([]);
     } finally {
       setIsSearching(false);
     }
   }, []);
 
-  const handleAddUser = useCallback(async () => {
-    if (!searchResult) return;
-    
+  const handleAddUser = useCallback(async (userEmail: string) => {
     setIsLoading(true);
     try {
       const token = getToken();
@@ -72,7 +71,7 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
           Authorization: `Bearer ${token}`,
           Accept: 'application/json',
         },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: userEmail }),
       });
 
       if (res.ok) {
@@ -84,35 +83,29 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
     } finally {
       setIsLoading(false);
     }
-  }, [searchResult, email, teamId, onSuccess, onClose]);
+  }, [teamId, onSuccess, onClose]);
 
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setEmail(value);
-    
-    if (searchTimeoutRef.current) {
-      clearTimeout(searchTimeoutRef.current);
-    }
+
+    if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
     searchTimeoutRef.current = setTimeout(() => handleSearch(value), 300);
   }, [handleSearch]);
 
   const resetForm = useCallback(() => {
     setEmail('');
-    setSearchResult(null);
+    setSearchResults([]);
     setIsSearching(false);
   }, []);
 
   useEffect(() => {
-    if (!isOpen) {
-      resetForm();
-    }
+    if (!isOpen) resetForm();
   }, [isOpen, resetForm]);
 
   useEffect(() => {
     return () => {
-      if (searchTimeoutRef.current) {
-        clearTimeout(searchTimeoutRef.current);
-      }
+      if (searchTimeoutRef.current) clearTimeout(searchTimeoutRef.current);
     };
   }, []);
 
@@ -149,21 +142,27 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
             </div>
           )}
 
-          {searchResult && !isSearching && (
-            <div className="p-4 bg-gray-50 rounded-xl border border-gray-200">
-              <div className="flex items-center gap-4">
-                <Avatar user={searchResult} size="md" />
-                <div className="min-w-0 flex-1">
-                  <p className="font-semibold text-gray-900 truncate">
-                    {`${searchResult.firstName} ${searchResult.lastName}`}
-                  </p>
-                  <p className="text-sm text-gray-600 truncate">{searchResult.email}</p>
+          {searchResults.length > 0 && !isSearching && (
+            <div className="space-y-2">
+              {searchResults.map(user => (
+                <div
+                  key={user.id}
+                  className="p-4 bg-gray-50 rounded-xl border border-gray-200 flex items-center gap-4 cursor-pointer hover:bg-gray-100"
+                  onClick={() => handleAddUser(user.email)}
+                >
+                  <Avatar user={user} size="md" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-gray-900 truncate">
+                      {`${user.firstName} ${user.lastName}`}
+                    </p>
+                    <p className="text-sm text-gray-600 truncate">{user.email}</p>
+                  </div>
                 </div>
-              </div>
+              ))}
             </div>
           )}
 
-          {!searchResult && !isSearching && email.length >= 3 && (
+          {!isSearching && searchResults.length === 0 && email.length >= 3 && (
             <div className="p-4 bg-gray-50 rounded-xl border border-gray-200 text-center text-sm text-gray-500">
               No user found with email "{email}"
             </div>
@@ -177,13 +176,6 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
               disabled={isLoading}
             >
               Cancel
-            </button>
-            <button
-              onClick={handleAddUser}
-              disabled={!searchResult || isLoading || isSearching}
-              className="flex-1 px-6 py-3 bg-black text-white rounded-xl font-medium hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 min-h-[44px]"
-            >
-              {isLoading ? 'Adding...' : 'Add User'}
             </button>
           </div>
         </div>
