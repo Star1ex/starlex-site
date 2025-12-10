@@ -67,7 +67,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
           task: formData.task,
           description: formData.description,
           status: formData.status,
-          user_id: formData.user_ids,
+          user_ids: formData.user_ids,
         }),
       });
 

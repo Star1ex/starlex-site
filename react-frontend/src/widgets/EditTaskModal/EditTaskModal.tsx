@@ -38,7 +38,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
         task: task.task,
         description: task.description || '',
         status: task.status,
-        user_ids: task.assignedTo.map((u) => u.id),
+        user_ids: task.user_ids.map((u) => u.id),
       });
     }
   }, [task, isOpen]);

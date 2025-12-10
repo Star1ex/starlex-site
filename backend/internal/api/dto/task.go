@@ -7,7 +7,7 @@ import (
 )
 
 type TaskApi struct {
-	AssignedToID []string `json:"user_id"` // Optional: can be empty array
+	AssignedToID []string `json:"user_ids"` // Optional: can be empty array
 	Task         string   `json:"task" binding:"required"`
 	Description  string   `json:"description"`
 	Progress     string   `json:"progress"`
@@ -18,7 +18,7 @@ type TaskResponse struct {
 	ID          string    `json:"id" binding:"required"`
 	Task        string    `json:"task" binding:"required"`
 	Description string    `json:"description"`
-	AssignedTo  []string  `json:"assignedTo"`
+	AssignedTo  []string  `json:"user_ids"`
 	TeamID      string    `json:"team_id"`
 	Priority    string    `json:"priority"`
 	Progress    string    `json:"progress"`

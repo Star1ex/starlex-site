@@ -16,7 +16,7 @@ export interface Task {
   task: string;
   description: string;
   status: 'backlog' | 'in_progress' | 'done';
-  assignedTo: TaskUser[];
+  user_ids: TaskUser[];
 }
 
 export interface TeamData {
