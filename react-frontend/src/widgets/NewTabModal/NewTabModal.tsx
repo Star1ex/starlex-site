@@ -147,12 +147,14 @@ export const NewTabModal: React.FC<Props> = ({ open, onClose, onTeamCreated }) =
   const handleClose = () => { resetState(); onClose(); };
 
   return (
-    <Modal open={open} onClose={handleClose}>
-      <h2 className="text-3xl font-serif text-black mb-6">New Tab</h2>
+  <Modal open={open} onClose={handleClose}>
+    <div className="w-full max-w-sm sm:max-w-md p-4 sm:p-6 bg-white rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
+      <h2 className="text-xl sm:text-2xl font-serif text-black mb-4 sm:mb-6">New Tab</h2>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
+        {/* Name */}
         <div>
-          <label className="block text-xs tracking-widest text-black uppercase mb-2">Name</label>
+          <label className="block text-xs sm:text-sm tracking-widest text-black uppercase mb-1 sm:mb-2">Name</label>
           <Input
             placeholder="Enter name"
             value={name}
@@ -160,8 +162,9 @@ export const NewTabModal: React.FC<Props> = ({ open, onClose, onTeamCreated }) =
           />
         </div>
 
+        {/* Description */}
         <div>
-          <label className="block text-xs tracking-widest text-black uppercase mb-2">Description</label>
+          <label className="block text-xs sm:text-sm tracking-widest text-black uppercase mb-1 sm:mb-2">Description</label>
           <Input
             placeholder="Optional description"
             value={description}
@@ -169,9 +172,10 @@ export const NewTabModal: React.FC<Props> = ({ open, onClose, onTeamCreated }) =
           />
         </div>
 
+        {/* Emails */}
         <div>
-          <label className="block text-xs tracking-widest text-black uppercase mb-2">Emails</label>
-          <div className="flex items-center gap-3">
+          <label className="block text-xs sm:text-sm tracking-widest text-black uppercase mb-1 sm:mb-2">Emails</label>
+          <div className="flex gap-2 sm:gap-3 items-center">
             <Input
               ref={emailRef}
               placeholder="your@email.com"
@@ -188,36 +192,32 @@ export const NewTabModal: React.FC<Props> = ({ open, onClose, onTeamCreated }) =
             </button>
           </div>
 
+          {/* Search results dropdown */}
           {debouncedEmail && (
-            <div className="mt-2 bg-white rounded border border-black max-h-40 overflow-y-auto transition-colors duration-200">
-              {loadingSearch && (
-                <div className="px-3 py-2 text-sm text-black">Searching…</div>
-              )}
-
+            <div className="mt-2 bg-white rounded border border-black max-h-40 overflow-y-auto transition-colors duration-200 text-sm sm:text-base">
+              {loadingSearch && <div className="px-3 py-2 text-black">Searching…</div>}
               {!loadingSearch && searchResults.length === 0 && (
-                <div className="px-3 py-2 text-sm text-black">
-                  No users found, press “+” to add manually
-                </div>
+                <div className="px-3 py-2 text-black">No users found, press “+” to add manually</div>
               )}
-
               {!loadingSearch && searchResults.map(user => (
                 <button
                   key={user.email}
                   type="button"
                   onClick={() => handleSelectFromList(user)}
-                  className="w-full text-left px-3 py-2 text-sm hover:bg-gray-200 text-black transition-colors duration-200"
+                  className="w-full text-left px-3 py-2 hover:bg-gray-200 transition-colors duration-200"
                 >
                   <span className="font-medium">{user.email}</span>
-                  {user.name && <span className="ml-2 text-xs text-black">{user.name}</span>}
+                  {user.name && <span className="ml-2 text-xs">{user.name}</span>}
                 </button>
               ))}
             </div>
           )}
 
+          {/* Added emails */}
           {emails.length > 0 && (
-            <ul className="mt-3 space-y-1">
+            <ul className="mt-2 max-h-36 overflow-y-auto space-y-1 text-sm sm:text-base">
               {emails.map(email => (
-                <li key={email} className="flex items-center justify-between text-sm text-black">
+                <li key={email} className="flex items-center justify-between">
                   <span>{email}</span>
                   <button
                     type="button"
@@ -233,8 +233,10 @@ export const NewTabModal: React.FC<Props> = ({ open, onClose, onTeamCreated }) =
           )}
         </div>
 
+        {/* Error */}
         {error && <p className="text-sm text-red-500">{error}</p>}
 
+        {/* Submit */}
         <Button
           type="submit"
           disabled={!canSubmit}
@@ -243,6 +245,7 @@ export const NewTabModal: React.FC<Props> = ({ open, onClose, onTeamCreated }) =
           {submitting ? 'Creating…' : 'Add Tab'}
         </Button>
       </form>
-    </Modal>
-  );
+    </div>
+  </Modal>
+);
 };
