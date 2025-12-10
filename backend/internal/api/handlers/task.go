@@ -157,7 +157,7 @@ func (h *Handlers) GetUserTasks(ctx *fiber.Ctx) error {
 // @Security BearerAuth
 // @Router       /team/{team_id}/tasks/{task_id} [put]
 func (h *Handlers) UpdateTaskProgress(ctx *fiber.Ctx) error {
-	taskId := ctx.Params("id")
+	taskId := ctx.Params("task_id")
 	if taskId == "" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
 	}
