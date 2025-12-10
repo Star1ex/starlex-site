@@ -75,26 +75,28 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
     if (!token) return;
 
     const res = await fetch(`/api/team/${teamId}`, {
-      headers: { 
-        Authorization: `Bearer ${token}`,
-        Accept: 'application/json',
-      },
+      headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
     });
 
-    if (res.ok) {
-      const data: User[] = await res.json(); 
-      setUsers(Array.isArray(data) ? data : []); 
-    } else if (res.status === 401) {
-      Token.clear();
-      window.location.href = '/sign-in';
-    } else {
-      setError('Failed to load team members');
+    if (!res.ok) {
+      if (res.status === 401) {
+        Token.clear();
+        window.location.href = '/sign-in';
+      } else {
+        console.error('Failed to fetch users, status:', res.status);
+        setUsers([]);
+      }
+      return;
     }
+
+    const data: User[] = await res.json();
+    setUsers(Array.isArray(data) ? data : []);
   } catch (err) {
-    console.error('Failed to fetch users:', err);
-    setError('Failed to load team members');
+    console.error('Fetch users error:', err);
+    setUsers([]);
   }
 }, [teamId]);
+
 
   useEffect(() => {
     const loadData = async () => {
