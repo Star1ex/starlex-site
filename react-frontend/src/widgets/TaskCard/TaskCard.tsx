@@ -15,7 +15,7 @@ interface TaskCardProps {
 }
 
 const statusConfig: Record<string, { label: string; color: string }> = {
-  backlog: { label: 'Backlog', color: 'bg-gray-100 text-gray-700' },
+  not_started: { label: 'Not started', color: 'bg-gray-100 text-gray-700' },
   in_progress: { label: 'In Progress', color: 'bg-blue-100 text-blue-800' },
   done: { label: 'Done', color: 'bg-green-100 text-green-800' },
 };
@@ -24,7 +24,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, users, onEdit, onUpdate, team
   const [status, setStatus] = useState(task.progress);
   const [isUpdating, setIsUpdating] = useState(false);
 
-  const updateStatus = useCallback(async (newStatus: 'backlog' | 'in_progress' | 'done') => {
+  const updateStatus = useCallback(async (newStatus: 'not_started' | 'in_progress' | 'done') => {
     setIsUpdating(true);
     try {
       const token = getToken();
@@ -70,11 +70,11 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, users, onEdit, onUpdate, team
         <div className="flex gap-2 flex-shrink-0">
           <select
             value={status}
-            onChange={(e) => updateStatus(e.target.value as 'backlog' | 'in_progress' | 'done')}
+            onChange={(e) => updateStatus(e.target.value as 'not_started' | 'in_progress' | 'done')}
             disabled={isUpdating}
             className="px-3 py-1.5 bg-white border border-gray-300 rounded-lg text-sm font-medium hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-300 transition-all duration-200 disabled:opacity-50"
           >
-            <option value="backlog">Backlog</option>
+            <option value="not_started">Not started</option>
             <option value="in_progress">In Progress</option>
             <option value="done">Done</option>
           </select>

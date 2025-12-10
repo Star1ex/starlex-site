@@ -27,7 +27,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
   const [formData, setFormData] = useState<CreateTaskFormData>({
     task: '',
     description: '',
-    progress: 'backlog' as const,
+    progress: 'not_started' as const,
     user_ids: [],
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -47,7 +47,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
     setFormData({
       task: '',
       description: '',
-      progress: 'backlog',
+      progress: 'not_started' as const,
       user_ids: [],
       });
   }, []);

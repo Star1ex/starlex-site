@@ -24,7 +24,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   const [formData, setFormData] = useState<CreateTaskFormData>({
     task: '',
     description: '',
-    progress: 'backlog' as const,
+    progress: 'not_started' as const,
     user_ids: [],
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -33,7 +33,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     setFormData({
       task: '',
       description: '',
-      progress: 'backlog' as const,
+      progress: 'not_started' as const,
       user_ids: [],
     });
   }, []);
@@ -133,7 +133,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               value={formData.progress}
               onChange={(e) => setFormData({ 
                 ...formData, 
-                progress: e.target.value as 'backlog' | 'in_progress' | 'done'
+                progress: e.target.value as 'not_started' | 'in_progress' | 'done'
               })}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition-all duration-200"
               disabled={isLoading}
