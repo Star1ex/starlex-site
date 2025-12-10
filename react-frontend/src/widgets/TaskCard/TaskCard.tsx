@@ -41,7 +41,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, users, onEdit, onUpdate, team
           Accept: 'application/json',
         },
         body: JSON.stringify({ 
-          status: newStatus, 
+          progress: newStatus, 
           task: task.task,
           description: task.description,
           user_ids: task.user_ids.map(u => u.id)
