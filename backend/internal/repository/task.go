@@ -90,34 +90,44 @@ func (r *TaskRepository) Get(ctx context.Context, id string) (*entity.Task, erro
 }
 
 func (r *TaskRepository) Update(ctx context.Context, id string, data *entity.Task, assigned []string) (*entity.Task, error) {
-	updates := map[string]interface{}{}
+	var task TaskModel
+	if err := r.db.Preload("Assigned").Where("id = ?", id).First(&task).Error; err != nil {
+		return nil, err
+	}
 
+	updates := map[string]interface{}{}
 	if data.Task != "" {
 		updates["task"] = data.Task
 	}
 	if data.Description != "" {
 		updates["description"] = data.Description
 	}
-
-	if assigned != nil {
-		updates["assigned"] = assigned
-	}
-
 	if data.Priority != "" {
 		updates["priority"] = data.Priority
 	}
-
 	if data.Progress != "" {
 		updates["progress"] = data.Progress
 	}
 
-	var task TaskModel
-	if err := r.db.Model(&task).Where("id = ?", id).Updates(updates).Error; err != nil {
-		return nil, err
+	if len(updates) > 0 {
+		if err := r.db.Model(&task).Updates(updates).Error; err != nil {
+			return nil, err
+		}
 	}
 
-	// reload full updated task
-	r.db.First(&task, id)
+	if assigned != nil {
+		var users []UserModel
+		if err := r.db.Where("id IN ?", assigned).Find(&users).Error; err != nil {
+			return nil, err
+		}
+		if err := r.db.Model(&task).Association("Assigned").Replace(users); err != nil {
+			return nil, err
+		}
+	}
+
+	if err := r.db.Preload("Assigned").Where("id = ?", id).First(&task).Error; err != nil {
+		return nil, err
+	}
 
 	return toTaskDomain(task), nil
 }
