@@ -44,7 +44,7 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, users, onEdit, onUpdate, team
           status: newStatus, 
           task: task.task,
           description: task.description,
-          user_id: task.assignedTo.map(u => u.id)
+          user_ids: task.assignedTo.map(u => u.id)
         }),
       });
 
