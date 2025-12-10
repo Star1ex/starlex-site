@@ -195,7 +195,7 @@ func (h *Handlers) DeleteTask(c *fiber.Ctx) error {
 	err := h.taskService.Delete(context.Background(), taskID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "failed delete task",
+			"error": err,
 		})
 	}
 
