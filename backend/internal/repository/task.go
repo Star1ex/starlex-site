@@ -133,7 +133,15 @@ func (r *TaskRepository) Update(ctx context.Context, id string, data *entity.Tas
 }
 
 func (r *TaskRepository) Delete(ctx context.Context, id string) error {
-	return r.db.Where("id = ?", id).Delete(&TaskModel{}).Error
+	var task TaskModel
+	if err := r.db.Preload("Assigned").Where("id = ?", id).First(&task).Error; err != nil {
+		return err
+	}
+	if err := r.db.Model(&task).Association("Assigned").Clear(); err != nil {
+		return err
+	}
+
+	return r.db.Delete(&task).Error
 }
 
 func (r *TaskRepository) GetTeamTasks(ctx context.Context, teamID string) ([]*entity.Task, error) {
