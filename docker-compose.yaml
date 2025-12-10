@@ -1,3 +1,5 @@
+# CHANGE .ENV.EXAMPLE TO .ENV IN BOTH FOLDERS BEFORE RUNNING
+
 services:
   db:
     image: postgres:latest
@@ -17,6 +19,11 @@ services:
       - "${DB_PORT}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   backend:
     build:
@@ -33,7 +40,7 @@ services:
     env_file:
       - backend/.env
     volumes:
-      - ./backend/uploads:/app/uploads 
+      - uploads_data:/app/uploads
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
       interval: 10s
@@ -56,4 +63,4 @@ services:
 
 volumes:
   postgres_data:
-
+  uploads_data:
