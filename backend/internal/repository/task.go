@@ -89,7 +89,7 @@ func (r *TaskRepository) Get(ctx context.Context, id string) (*entity.Task, erro
 	return toTaskDomain(model), nil
 }
 
-func (r *TaskRepository) Update(ctx context.Context, id string, data *entity.Task, assignedTo []string) (*entity.Task, error) {
+func (r *TaskRepository) Update(ctx context.Context, id string, data *entity.Task, assigned []string) (*entity.Task, error) {
 	updates := map[string]interface{}{}
 
 	if data.Task != "" {
@@ -99,8 +99,8 @@ func (r *TaskRepository) Update(ctx context.Context, id string, data *entity.Tas
 		updates["description"] = data.Description
 	}
 
-	if assignedTo != nil {
-		updates["assignedTo"] = assignedTo
+	if assigned != nil {
+		updates["assigned"] = assigned
 	}
 
 	if data.Priority != "" {
