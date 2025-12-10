@@ -24,7 +24,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   const [formData, setFormData] = useState<CreateTaskFormData>({
     task: '',
     description: '',
-    status: 'backlog' as const,
+    progress: 'backlog' as const,
     user_ids: [],
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -33,7 +33,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     setFormData({
       task: '',
       description: '',
-      status: 'backlog' as const,
+      progress: 'backlog' as const,
       user_ids: [],
     });
   }, []);
@@ -66,7 +66,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         body: JSON.stringify({
           task: formData.task,
           description: formData.description,
-          status: formData.status,
+          progress: formData.progress,
           user_ids: formData.user_ids,
         }),
       });
@@ -130,10 +130,10 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
             </label>
             <select
               id="status" 
-              value={formData.status}
+              value={formData.progress}
               onChange={(e) => setFormData({ 
                 ...formData, 
-                status: e.target.value as 'backlog' | 'in_progress' | 'done'
+                progress: e.target.value as 'backlog' | 'in_progress' | 'done'
               })}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition-all duration-200"
               disabled={isLoading}
