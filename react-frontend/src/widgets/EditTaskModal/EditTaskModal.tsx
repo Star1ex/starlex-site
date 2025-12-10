@@ -27,7 +27,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
   const [formData, setFormData] = useState<CreateTaskFormData>({
     task: '',
     description: '',
-    status: 'backlog' as const,
+    progress: 'backlog' as const,
     user_ids: [],
   });
   const [isLoading, setIsLoading] = useState(false);
@@ -37,7 +37,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
       setFormData({
         task: task.task,
         description: task.description || '',
-        status: task.status,
+        progress: task.progress,
         user_ids: task.user_ids.map((u) => u.id),
       });
     }
@@ -47,7 +47,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
     setFormData({
       task: '',
       description: '',
-      status: 'backlog',
+      progress: 'backlog',
       user_ids: [],
       });
   }, []);
@@ -80,7 +80,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
         body: JSON.stringify({
           task: formData.task,
           description: formData.description,
-          status: formData.status,
+          progress: formData.progress,
           user_ids: formData.user_ids, 
           priority: 'medium',
         }),
