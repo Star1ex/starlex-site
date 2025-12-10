@@ -1,3 +1,4 @@
+// TaskBoard.tsx - РАБОЧИЙ в стиле вашего RightSidebar
 import React, { useState, useEffect, useCallback } from 'react';
 import TaskCard from '@/widgets/TaskCard/TaskCard.js';
 import UserSidebar from '@/widgets/UserSideBar/UserSideBar.js';
@@ -13,9 +14,9 @@ const getToken = () => Token.get();
 interface TaskBoardProps {}
 
 const TaskBoard: React.FC<TaskBoardProps> = () => {
-  const { team_id } = useParams<{ team_id: string }>();
+  const { teamId } = useParams<{ teamId: string }>();
   
-  if (!team_id) {
+  if (!teamId) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center p-8">
         <div className="text-center max-w-md">
@@ -43,69 +44,59 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
       setError(null);
       const token = getToken();
       if (!token) {
-        setError('No token found');
-        return { status: 401, message: 'No token found' };
+        window.location.href = '/sign-in';
+        return;
       }
-  
-      const res = await fetch(`/api/team/${team_id}/tasks`, {
-        headers: {
+
+      const res = await fetch(`/api/team/${teamId}/tasks`, {
+        headers: { 
           Authorization: `Bearer ${token}`,
           Accept: 'application/json',
         },
       });
-  
+
       if (res.ok) {
         const data: Task[] = await res.json();
         setTasks(data || []);
-        return { status: res.status, message: 'Success' };
-      } else {
-        const errorData = await res.json().catch(() => null);
-        const errorMessage = errorData?.message || 'Unknown error';
-        setError(errorMessage);
-        return { status: res.status, message: errorMessage };
+      } else if (res.status === 401) {
+        Token.clear();
+        window.location.href = '/sign-in';
       }
-    } catch (err: any) {
+    } catch (err) {
       console.error('Failed to fetch tasks:', err);
-      const message = err?.message || 'Failed to load tasks';
-      setError(message);
-      return { status: 500, message };
+      setError('Failed to load tasks');
     }
-  }, [team_id]);
-  
-  const fetchUsers = useCallback(async () => {
-    try {
-      setError(null);
-      const token = getToken();
-      if (!token) {
-        setError('No token found');
-        return { status: 401, message: 'No token found' };
-      }
-  
-      const res = await fetch(`/api/team/${team_id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/json',
-        },
-      });
-  
-      if (res.ok) {
-        const data: TeamData = await res.json();
-        setUsers(data.users || []);
-        return { status: res.status, message: 'Success' };
-      } else {
-        const errorData = await res.json().catch(() => null);
-        const errorMessage = errorData?.message || 'Unknown error';
-        setError(errorMessage);
-        return { status: res.status, message: errorMessage };
-      }
-    } catch (err: any) {
-      console.error('Failed to fetch users:', err);
-      const message = err?.message || 'Failed to load team members';
-      setError(message);
-      return { status: 500, message };
+  }, [teamId]);
+
+ const fetchUsers = useCallback(async () => {
+  try {
+    setError(null);
+    const token = getToken();
+    if (!token) {
+      return;
     }
-  }, [team_id]);
-  
+
+    const res = await fetch(`/api/team/${teamId}`, {
+      headers: { 
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/json',
+      },
+    });
+
+    if (res.ok) {
+      const data: { users: User[] } = await res.json();
+      setUsers(data.users || []); 
+    } else if (res.status === 401) {
+      Token.clear();
+    } else {
+      setError('Failed to load team members');
+    }
+  } catch (err) {
+    console.error('Failed to fetch users:', err);
+    setError('Failed to load team members');
+  }
+}, [teamId]);
+
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
@@ -210,7 +201,7 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
                     setShowEditModal(true);
                   }}
                   onUpdate={refreshData}
-                  teamId={team_id}
+                  teamId={teamId}
                 />
               ))}
             </div>
@@ -240,7 +231,7 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
         onClose={() => setShowCreateModal(false)}
         users={users}
         onSuccess={refreshData}
-        teamId={team_id}
+        teamId={teamId}
       />
       <EditTaskModal
         isOpen={showEditModal}
@@ -251,13 +242,13 @@ const TaskBoard: React.FC<TaskBoardProps> = () => {
         task={editingTask}
         users={users}
         onSuccess={refreshData}
-        teamId={team_id}
+        teamId={teamId}
       />
       <AddUserModal
         isOpen={showAddUserModal}
         onClose={() => setShowAddUserModal(false)}
         onSuccess={refreshData}
-        teamId={team_id}
+        teamId={teamId}
       />
     </div>
   );
