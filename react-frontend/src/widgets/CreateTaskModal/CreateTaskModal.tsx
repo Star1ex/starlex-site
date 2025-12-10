@@ -138,7 +138,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition-all duration-200"
               disabled={isLoading}
             >
-              <option value="backlog">Backlog</option>
+              <option value="not_started">Not started</option>
               <option value="in_progress">In Progress</option>
               <option value="done">Done</option>
             </select>
