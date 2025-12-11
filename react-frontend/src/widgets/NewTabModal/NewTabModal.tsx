@@ -53,7 +53,7 @@ const useDebounce = (value: string, delay: number) => {
   return debouncedValue;
 };
 
-const getAuthHeaders = () => ({ Authorization: 'Bearer mock-token' });
+const getAuthHeaders = () => ({ Authorization: 'Bearer' });
 
 export const NewTabModal: React.FC<Props> = ({ open, onClose, onTeamCreated }) => {
   const [name, setName] = useState('');
