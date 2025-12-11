@@ -6,7 +6,7 @@ import { SignUpPage } from "@/pages/auth/SignUpPage/SignUpPage.js";
 import { Dashboard  } from "@/pages/dashboard/Dashboard.js";
 import { GeneralSettings } from "@/pages/settings/GeneralSettings.js";
 import AboutUs from "@/pages/about-us/AboutUs.js";
-import ProfilePage from "@/pages/profile/UserProfile.js";
+import  ProfilePage  from "@/pages/profile/UserProfile.js";
 import TaskBoard from "@/pages/team/TaskBoard.js"; 
 
 export const AppRoutes = () => (
