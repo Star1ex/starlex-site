@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { TabsPanel } from '@/widgets/TabsPanel/TabsPanel.js';
 import { NewTabModal } from '@/widgets/NewTabModal/NewTabModal.js';
 import { RightSidebar } from '@/widgets/ProfilePanel/ProfilePanel.js'; 
 import { useModal } from '@/shared/hooks/useModal.js';
+import ReactMarkdown from 'react-markdown';
+import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
 
 type Team = {
   id: string;
@@ -11,9 +14,37 @@ type Team = {
   emails: string[];
 };
 
+const ALLOWED_USER_ID = import.meta.env.VITE_ALLOWED_USER_ID || 'YOUR_USER_ID_HERE';
+
+const getToken = () => localStorage.getItem('token');
+
+const getUserIdFromToken = (token: string): string | null => {
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return null;
+    const decoded = JSON.parse(atob(payload));
+    return decoded.userId || decoded.id || decoded.sub || null;
+  } catch (err) {
+    console.error('Error decoding token:', err);
+    return null;
+  }
+};
+
 export const Dashboard: React.FC = () => {
   const { open, onOpen, onClose } = useModal(false);
   const [teams, setTeams] = useState<Team[]>([]);
+  const [markdownText, setMarkdownText] = useState('');
+  const [canEdit, setCanEdit] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const token = getToken();
+    if (token) {
+      const userId = getUserIdFromToken(token);
+      setCanEdit(userId === ALLOWED_USER_ID);
+    }
+    setLoading(false);
+  }, []);
 
   const handleTeamCreated = (team: Team) => {
     setTeams(prev => [...prev, team]);
@@ -21,7 +52,7 @@ export const Dashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white transition-colors duration-300">
-      <div className="grid grid-cols-[64px_1fr_320px] h-screen">
+      <div className="grid grid-cols-[64px_1fr_400px] h-screen">
         <div className="bg-white text-black transition-colors duration-300">
           <TabsPanel
             tabs={teams.map(t => ({ id: t.id, name: t.name, emails: t.emails }))}
@@ -29,8 +60,35 @@ export const Dashboard: React.FC = () => {
           />
         </div>
 
-        <main className="ml-[320px] mr-[80px] bg-white transition-colors duration-300">
-
+        <main className="bg-white transition-colors duration-300 p-8 overflow-y-auto col-span-1">
+          {loading ? (
+            <div className="max-w-4xl mx-auto h-96 flex items-center justify-center">
+              <div className="text-gray-500">Loading...</div>
+            </div>
+          ) : canEdit ? (
+            <div className="max-w-4xl mx-auto">
+              <textarea
+                value={markdownText}
+                onChange={(e) => setMarkdownText(e.target.value)}
+                placeholder="Write text in format Markdown..."
+                className="w-full h-96 p-4 border border-gray-300 rounded-md font-mono text-sm resize-vertical focus:outline-none focus:ring-2 focus:ring-black"
+              />
+              <div className="mt-8 prose prose-lg max-w-none prose-headings:text-black prose-strong:text-black">
+                <ReactMarkdown 
+                  remarkPlugins={[remarkGfm]}
+                  rehypePlugins={[rehypeRaw]}
+                >
+                  {markdownText}
+                </ReactMarkdown>
+              </div>
+            </div>
+          ) : (
+            <div className="max-w-4xl mx-auto h-96 flex items-center justify-center text-gray-500">
+              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
+                {markdownText || 'Hi'}
+              </ReactMarkdown>
+            </div>
+          )}
         </main>
 
         <div className="bg-white text-black transition-colors duration-300">
@@ -39,13 +97,11 @@ export const Dashboard: React.FC = () => {
       </div>
 
       {open && (
-        <div className="bg-white text-black transition-colors duration-300">
-          <NewTabModal
-            open={open}
-            onClose={onClose}
-            onTeamCreated={handleTeamCreated}
-          />
-        </div>
+        <NewTabModal
+          open={open}
+          onClose={onClose}
+          onTeamCreated={handleTeamCreated}
+        />
       )}
     </div>
   );
