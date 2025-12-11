@@ -50,17 +50,19 @@ export const Dashboard: React.FC = () => {
     setTeams(prev => [...prev, team]);
   };
 
-  return (
+return (
     <div className="min-h-screen bg-white transition-colors duration-300">
-      <div className="grid grid-cols-[64px_1fr_400px] h-screen">
-        <div className="bg-white text-black transition-colors duration-300">
+      <div className="flex h-screen">
+        {/* Left Sidebar - TabsPanel */}
+        <div className="w-64 flex-shrink-0 bg-white text-black transition-colors duration-300 border-r border-gray-200">
           <TabsPanel
             tabs={teams.map(t => ({ id: t.id, name: t.name, emails: t.emails }))}
             onAddClick={onOpen}
           />
         </div>
 
-        <main className="bg-white transition-colors duration-300 p-8 overflow-y-auto col-span-1">
+        {/* Main Content */}
+        <main className="flex-1 bg-white transition-colors duration-300 p-8 overflow-y-auto">
           {loading ? (
             <div className="max-w-4xl mx-auto h-96 flex items-center justify-center">
               <div className="text-gray-500">Loading...</div>
@@ -70,28 +72,22 @@ export const Dashboard: React.FC = () => {
               <textarea
                 value={markdownText}
                 onChange={(e) => setMarkdownText(e.target.value)}
-                placeholder="Write text in format Markdown..."
+                placeholder="Write text in Markdown format..."
                 className="w-full h-96 p-4 border border-gray-300 rounded-md font-mono text-sm resize-vertical focus:outline-none focus:ring-2 focus:ring-black"
               />
-              <div className="mt-8 prose prose-lg max-w-none prose-headings:text-black prose-strong:text-black">
-                <ReactMarkdown 
-                  remarkPlugins={[remarkGfm]}
-                  rehypePlugins={[rehypeRaw]}
-                >
-                  {markdownText}
-                </ReactMarkdown>
+              <div className="mt-8 prose prose-lg max-w-none prose-headings:text-black prose-strong:text-black prose-p:text-gray-700">
+                <div dangerouslySetInnerHTML={{ __html: markdownText }} />
               </div>
             </div>
           ) : (
-            <div className="max-w-4xl mx-auto h-96 flex items-center justify-center text-gray-500">
-              <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>
-                {markdownText || 'Hi'}
-              </ReactMarkdown>
+            <div className="max-w-4xl mx-auto flex items-center justify-center text-gray-500 min-h-[50vh]">
+              <div dangerouslySetInnerHTML={{ __html: markdownText || '<p>Hi</p>' }} />
             </div>
           )}
         </main>
 
-        <div className="bg-white text-black transition-colors duration-300">
+        {/* Right Sidebar - Profile Panel */}
+        <div className="w-[100px] flex-shrink-0 bg-white text-black transition-colors duration-300">
           <RightSidebar />
         </div>
       </div>
