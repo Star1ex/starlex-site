@@ -14,7 +14,7 @@ type Team = {
   emails: string[];
 };
 
-const ALLOWED_USER_ID = import.meta.env.VITE_ALLOWED_USER_ID || 'YOUR_USER_ID_HERE';
+const ALLOWED_USER_ID = import.meta.env.VITE_ALLOWED_USER_ID || 'f8634233-48f0-4ae3-8924-8ca482b6fb62';
 
 const getToken = () => localStorage.getItem('token');
 
