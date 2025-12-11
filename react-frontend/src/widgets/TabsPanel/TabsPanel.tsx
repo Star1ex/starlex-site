@@ -70,7 +70,7 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
   })), ...tabs];
 
   return (
-    <aside className="w-[320px] border-l border-black bg-white p-4 flex flex-col transition-colors duration-300">
+    <aside className="w-full bg-white p-4 flex flex-col transition-colors duration-300">
       <div className="flex items-center justify-between px-2 py-2">
         <h3 className="tracking-widest text-xs text-black uppercase transition-colors duration-300">TEAMS</h3>
         <button

@@ -54,12 +54,13 @@ return (
     <div className="min-h-screen bg-white transition-colors duration-300">
       <div className="flex h-screen">
         {/* Left Sidebar - TabsPanel */}
-        <div className="w-64 flex-shrink-0 bg-white text-black transition-colors duration-300 border-r border-gray-200">
-          <TabsPanel
-            tabs={teams.map(t => ({ id: t.id, name: t.name, emails: t.emails }))}
-            onAddClick={onOpen}
+        <div className="w-[320px] flex-shrink-0 bg-white text-black transition-colors duration-300 border-r border-gray-200">
+            <TabsPanel
+              tabs={teams.map(t => ({ id: t.id, name: t.name, emails: t.emails }))}
+              onAddClick={onOpen}
           />
         </div>
+
 
         {/* Main Content */}
         <main className="flex-1 bg-white transition-colors duration-300 p-8 overflow-y-auto">
