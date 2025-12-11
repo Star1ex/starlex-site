@@ -82,7 +82,7 @@ return (
             </div>
           ) : (
             <div className="max-w-4xl mx-auto flex items-center justify-center text-gray-500 min-h-[50vh]">
-              <div dangerouslySetInnerHTML={{ __html: markdownText || '<p>Hi</p>' }} />
+              <div dangerouslySetInnerHTML={{ __html: markdownText || '<p>TeamTrack v1.0</p>' }} />
             </div>
           )}
         </main>
