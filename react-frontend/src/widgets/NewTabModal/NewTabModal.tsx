@@ -236,7 +236,6 @@ export const NewTabModal: React.FC<Props> = ({ open, onClose, onTeamCreated }) =
         {/* Error */}
         {error && <p className="text-sm text-red-500">{error}</p>}
 
-        {/* Submit */}
         <Button
           type="submit"
           disabled={!canSubmit}
