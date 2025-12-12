@@ -32,9 +32,17 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, users, onEdit, onUpdate, team
   );
   const [isUpdating, setIsUpdating] = useState(false);
   const [showAssignModal, setShowAssignModal] = useState(false);
-  const [selectedUserIds, setSelectedUserIds] = useState<string[]>(
-    task.user_ids?.map(u => u.id) || []
-  );
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+
+  // Initialize selected users from task prop
+  React.useEffect(() => {
+    // user_ids может быть массивом строк или массивом объектов
+    const ids = task.user_ids?.map(u => typeof u === 'string' ? u : u.id) || [];
+    console.log('Task user_ids:', task.user_ids);
+    console.log('Extracted IDs:', ids);
+    console.log('Available users:', users);
+    setSelectedUserIds(ids);
+  }, [task.user_ids, users]);
 
   const updateTask = useCallback(async (updates: Partial<{
     progress: string;
@@ -49,6 +57,9 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, users, onEdit, onUpdate, team
         return;
       }
 
+      const userIds = updates.user_ids !== undefined ? updates.user_ids : selectedUserIds;
+      const taskPriority = updates.priority !== undefined ? updates.priority : priority;
+
       const res = await fetch(`/api/team/${teamId}/tasks/${task.id}/update`, {
         method: 'PUT',
         headers: { 
@@ -59,15 +70,24 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, users, onEdit, onUpdate, team
         body: JSON.stringify({ 
           task: task.task,
           description: task.description,
-          user_ids: updates.user_ids !== undefined ? updates.user_ids : selectedUserIds,
-          priority: updates.priority !== undefined ? updates.priority : priority,
+          user_ids: userIds,
+          priority: taskPriority,
         }),
       });
 
       if (res.ok) {
-        if (updates.priority !== undefined) setPriority(updates.priority as 'low' | 'medium' | 'high');
-        if (updates.user_ids !== undefined) setSelectedUserIds(updates.user_ids);
+        const updatedTask = await res.json();
+        console.log('Task updated:', updatedTask);
+        
+        if (updates.priority !== undefined) {
+          setPriority(updates.priority as 'low' | 'medium' | 'high');
+        }
+        if (updates.user_ids !== undefined) {
+          setSelectedUserIds(updates.user_ids);
+        }
         onUpdate();
+      } else {
+        console.error('Update failed:', res.status);
       }
     } catch (error) {
       console.error('Failed to update task:', error);
@@ -127,6 +147,9 @@ const TaskCard: React.FC<TaskCardProps> = ({ task, users, onEdit, onUpdate, team
   const assignedUsers = selectedUserIds
     .map((id) => users.find((u) => u.id === id))  
     .filter(Boolean) as User[];
+
+  console.log('Selected User IDs:', selectedUserIds);
+  console.log('Assigned Users:', assignedUsers);
 
   return (
     <>
