@@ -27,6 +27,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
   const [formData, setFormData] = useState<CreateTaskFormData>({
     task: '',
     description: '',
+    priority: task?.priority || 'low' as const,
     progress: 'not_started' as const,
     user_ids: [],
   });
@@ -37,6 +38,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
       setFormData({
         task: task.task,
         description: task.description || '',
+        priority: task.priority,
         progress: task.progress,
         user_ids: task.user_ids.map((u) => u.id),
       });
@@ -47,6 +49,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
     setFormData({
       task: '',
       description: '',
+      priority: 'low' as const,
       progress: 'not_started' as const,
       user_ids: [],
       });

@@ -24,6 +24,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   const [formData, setFormData] = useState<CreateTaskFormData>({
     task: '',
     description: '',
+    priority: 'low' as const,
     progress: 'not_started' as const,
     user_ids: [],
   });
@@ -33,6 +34,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     setFormData({
       task: '',
       description: '',
+      priority: 'low' as const,
       progress: 'not_started' as const,
       user_ids: [],
     });
