@@ -15,6 +15,7 @@ export interface Task {
   id: string;
   task: string;
   description: string;
+  priority: 'low' | 'medium' | 'high';
   progress: 'not_started' | 'in_progress' | 'done';
   user_ids: TaskUser[];
 }
@@ -27,6 +28,7 @@ export interface TeamData {
 export interface CreateTaskFormData {
   task: string;
   description: string;
+  priority: 'low' | 'medium' | 'high';
   progress: 'not_started' | 'in_progress' | 'done';
   user_ids: string[];
 }
