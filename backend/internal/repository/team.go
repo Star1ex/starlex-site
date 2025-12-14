@@ -153,13 +153,12 @@ func (t *TeamRepository) AddUserToTeam(ctx context.Context, teamID string, userI
 	})
 }
 
-// RemoveUserFromTeam removes a user from a team
 func (t *TeamRepository) RemoveUserFromTeam(ctx context.Context, teamID string, userID string) error {
 	return t.db.Transaction(func(tx *gorm.DB) error {
 		var team TeamModel
 		if err := tx.WithContext(ctx).First(&team, "id = ?", teamID).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return ErrTeamNotFound
+				return errors.New("team not found")
 			}
 			return err
 		}
@@ -172,7 +171,7 @@ func (t *TeamRepository) RemoveUserFromTeam(ctx context.Context, teamID string, 
 		var user UserModel
 		if err := tx.WithContext(ctx).First(&user, "id = ?", userID).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return ErrUserNotFound
+				return errors.New("user not found")
 			}
 			return err
 		}
