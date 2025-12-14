@@ -67,7 +67,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
         throw new Error('Authentication required');
       }
 
-      const response = await fetch(`/api/team/${teamId}/remove-user`, {
+      const response = await fetch(`/api/team/${teamId}/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
