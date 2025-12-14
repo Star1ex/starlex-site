@@ -63,3 +63,7 @@ func (s *TeamService) AddUserToTeam(ctx context.Context, teamID string, email st
 
 	return s.teamRepo.AddUserToTeam(ctx, teamID, user.ID)
 }
+
+func (s *TeamService) RemoveUserFromTeam(ctx context.Context, teamID string, userID string) error {
+	return s.teamRepo.RemoveUserFromTeam(ctx, teamID, userID)
+}

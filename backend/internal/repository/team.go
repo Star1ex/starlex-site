@@ -152,3 +152,43 @@ func (t *TeamRepository) AddUserToTeam(ctx context.Context, teamID string, userI
 		return nil
 	})
 }
+
+// RemoveUserFromTeam removes a user from a team
+func (t *TeamRepository) RemoveUserFromTeam(ctx context.Context, teamID string, userID string) error {
+	return t.db.Transaction(func(tx *gorm.DB) error {
+		var team TeamModel
+		if err := tx.WithContext(ctx).First(&team, "id = ?", teamID).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return ErrTeamNotFound
+			}
+			return err
+		}
+
+		// Check if user is the owner
+		if team.OwnerID == userID {
+			return errors.New("cannot remove team owner from team")
+		}
+
+		var user UserModel
+		if err := tx.WithContext(ctx).First(&user, "id = ?", userID).Error; err != nil {
+			if errors.Is(err, gorm.ErrRecordNotFound) {
+				return ErrUserNotFound
+			}
+			return err
+		}
+
+		// Check if user is actually in the team
+		var count int64
+		count = tx.WithContext(ctx).Model(&team).Where("id = ?", userID).Association("Users").Count()
+		if count == 0 {
+			return errors.New("user is not in this team")
+		}
+
+		// Remove user from team
+		if err := tx.WithContext(ctx).Model(&team).Association("Users").Delete(&user); err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
