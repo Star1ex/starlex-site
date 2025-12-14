@@ -131,3 +131,88 @@ func (h *Handlers) AddUserToTeam(ctx *fiber.Ctx) error {
 		"message": "user added to team successfully",
 	})
 }
+
+// RemoveUserFromTeam godoc
+// @Summary      Remove user from team
+// @Description  Remove user from team by userId (only team owner)
+// @Tags         team
+// @Accept       json
+// @Produce      json
+// @Param        id   path      string                       true  "Team ID"
+// @Param        user body      dto.RemoveUserFromTeamRequest true  "User ID to remove"
+// @Success      200  {object}  map[string]interface{}       "user removed successfully"
+// @Failure      400  {object}  map[string]string            "bad request"
+// @Failure      403  {object}  map[string]string            "forbidden"
+// @Failure      404  {object}  map[string]string            "not found"
+// @Failure      500  {object}  map[string]string            "internal server error"
+// @Security     BearerAuth
+// @Router       /team/{id}/remove-user [post]
+func (h *Handlers) RemoveUserFromTeam(ctx *fiber.Ctx) error {
+	// Get current authenticated user
+	currentUserID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+
+	// Get team ID from URL params
+	teamID := ctx.Params("id")
+	if teamID == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "team id is required",
+		})
+	}
+
+	// Parse request body
+	var input dto.RemoveUserFromTeamRequest
+	if err := ctx.BodyParser(&input); err != nil {
+		log.Println(err)
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request body",
+		})
+	}
+
+	if input.UserID == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "userId is required",
+		})
+	}
+
+	// Call service to remove user
+	err := h.teamService.RemoveUserFromTeam(ctx.Context(), teamID, input.UserID, currentUserID)
+	if err != nil {
+		log.Println(err)
+
+		// Handle specific errors
+		switch err.Error() {
+		case "only team owner can remove users":
+			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		case "cannot remove team owner from team":
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		case "user is not in this team":
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		case "team not found":
+			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		case "user not found":
+			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		default:
+			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": err.Error(),
+			})
+		}
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"message": "user removed from team successfully",
+	})
+}

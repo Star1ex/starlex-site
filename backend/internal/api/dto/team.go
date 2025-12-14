@@ -24,6 +24,10 @@ func ToTeamResponse(team *entity.Team) *TeamResponse {
 	}
 }
 
+type RemoveUserFromTeamRequest struct {
+	UserID string `json:"userId" validate:"required"`
+}
+
 func ToTeamsResponse(teams []*entity.Team) []TeamResponse {
 	response := make([]TeamResponse, len(teams))
 	for i, team := range teams {

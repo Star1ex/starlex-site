@@ -63,3 +63,24 @@ func (s *TeamService) AddUserToTeam(ctx context.Context, teamID string, email st
 
 	return s.teamRepo.AddUserToTeam(ctx, teamID, user.ID)
 }
+
+func (s *TeamService) RemoveUserFromTeam(ctx context.Context, teamID, userIDToRemove, currentUserID string) error {
+	// Get team to check ownership
+	team, err := s.teamRepo.GetTeamByID(ctx, teamID)
+	if err != nil {
+		return err
+	}
+
+	// Check if current user is the team owner
+	if team.OwnerID != currentUserID {
+		return errors.New("only team owner can remove users")
+	}
+
+	// Remove user from team
+	err = s.teamRepo.RemoveUserFromTeam(ctx, teamID, userIDToRemove)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
