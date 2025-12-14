@@ -68,7 +68,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
       }
 
       const response = await fetch(`/api/team/${teamId}/users`, {
-        method: 'POST',
+        method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`,
