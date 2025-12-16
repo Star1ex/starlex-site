@@ -51,7 +51,6 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
       return;
     }
 
-    // Определяем позицию меню
     if (itemRef.current) {
       const rect = itemRef.current.getBoundingClientRect();
       const spaceOnRight = window.innerWidth - rect.right;
