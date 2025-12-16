@@ -25,9 +25,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
 }) => {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
-  const [menuPosition, setMenuPosition] = useState<'left' | 'right'>('left');
   const menuRef = useRef<HTMLDivElement>(null);
-  const itemRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -46,13 +44,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
   }, [activeMenu]);
 
   const handleUserClick = (userId: string) => {
-    if (activeMenu === userId) {
-      setActiveMenu(null);
-      return;
-    }
-
-    setMenuPosition('left');
-    setActiveMenu(userId);
+    setActiveMenu(activeMenu === userId ? null : userId);
   };
 
   const handleProfileClick = (userId: string) => {
@@ -121,7 +113,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
       
       <div className="p-6 flex-1 overflow-y-auto">
         <h2 className="text-lg font-bold mb-6">TEAM MEMBERS</h2>
-        <div className="space-y-3">
+        <div className="space-y-0">
           {users.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
               <p className="text-sm">No team members yet</p>
@@ -129,9 +121,8 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
             </div>
           ) : (
             users.map((user) => (
-              <div key={user.id} className="relative">
+              <div key={user.id} className="transition-all duration-300 ease-in-out">
                 <div
-                  ref={activeMenu === user.id ? itemRef : null}
                   className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors duration-200 group cursor-pointer"
                   role="listitem"
                   onClick={() => handleUserClick(user.id)}
@@ -148,24 +139,27 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
                   )}
                 </div>
 
-                {activeMenu === user.id && (
-                  <div 
-                    ref={menuRef}
-                    className="absolute top-0 right-full mr-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10 w-40"
-                  >
+                <div 
+                  ref={activeMenu === user.id ? menuRef : null}
+                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                    activeMenu === user.id ? 'max-h-32 opacity-100' : 'max-h-0 opacity-0'
+                  }`}
+                >
+                  <div className="mx-3 mb-3 bg-white border border-gray-200 rounded-lg shadow-md">
                     <button
                       onClick={() => handleProfileClick(user.id)}
-                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 rounded-t-lg transition-colors flex items-center gap-2"
+                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 rounded-t-lg"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
                       Profile
                     </button>
+                    <div className="border-t border-gray-100" />
                     <button
                       onClick={() => handleDeleteClick(user.id)}
                       disabled={deletingUserId === user.id}
-                      className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 rounded-b-lg transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-b-lg"
                     >
                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -173,7 +167,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
                       Delete
                     </button>
                   </div>
-                )}
+                </div>
               </div>
             ))
           )}
