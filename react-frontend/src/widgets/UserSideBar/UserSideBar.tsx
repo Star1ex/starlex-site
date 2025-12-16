@@ -25,7 +25,9 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
 }) => {
   const [activeMenu, setActiveMenu] = useState<string | null>(null);
   const [deletingUserId, setDeletingUserId] = useState<string | null>(null);
+  const [menuPosition, setMenuPosition] = useState<'left' | 'right'>('left');
   const menuRef = useRef<HTMLDivElement>(null);
+  const itemRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -44,7 +46,21 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
   }, [activeMenu]);
 
   const handleUserClick = (userId: string) => {
-    setActiveMenu(activeMenu === userId ? null : userId);
+    if (activeMenu === userId) {
+      setActiveMenu(null);
+      return;
+    }
+
+    // Определяем позицию меню
+    if (itemRef.current) {
+      const rect = itemRef.current.getBoundingClientRect();
+      const spaceOnRight = window.innerWidth - rect.right;
+      const menuWidth = 160;
+      
+      setMenuPosition(spaceOnRight < menuWidth ? 'left' : 'right');
+    }
+    
+    setActiveMenu(userId);
   };
 
   const handleProfileClick = (userId: string) => {
@@ -82,7 +98,6 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
         throw new Error(errorData.error || errorData.message || 'Failed to remove user from team');
       }
 
-      // Notify parent component
       if (onUserRemoved) {
         onUserRemoved(userId);
       }
@@ -124,6 +139,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
             users.map((user) => (
               <div key={user.id} className="relative">
                 <div
+                  ref={activeMenu === user.id ? itemRef : null}
                   className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors duration-200 group cursor-pointer"
                   role="listitem"
                   onClick={() => handleUserClick(user.id)}
@@ -143,7 +159,9 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
                 {activeMenu === user.id && (
                   <div 
                     ref={menuRef}
-                    className="absolute left-full top-0 ml-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10 w-40"
+                    className={`absolute top-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 w-40 ${
+                      menuPosition === 'right' ? 'left-full ml-2' : 'right-full mr-2'
+                    }`}
                   >
                     <button
                       onClick={() => handleProfileClick(user.id)}
