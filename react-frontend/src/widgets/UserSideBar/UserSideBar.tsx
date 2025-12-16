@@ -51,14 +51,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
       return;
     }
 
-    if (itemRef.current) {
-      const rect = itemRef.current.getBoundingClientRect();
-      const spaceOnRight = window.innerWidth - rect.right;
-      const menuWidth = 160;
-      
-      setMenuPosition(spaceOnRight < menuWidth ? 'left' : 'right');
-    }
-    
+    setMenuPosition('left');
     setActiveMenu(userId);
   };
 
@@ -158,9 +151,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
                 {activeMenu === user.id && (
                   <div 
                     ref={menuRef}
-                    className={`absolute top-0 bg-white border border-gray-200 rounded-lg shadow-lg z-10 w-40 ${
-                      menuPosition === 'right' ? 'left-full ml-2' : 'right-full mr-2'
-                    }`}
+                    className="absolute top-0 right-full mr-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10 w-40"
                   >
                     <button
                       onClick={() => handleProfileClick(user.id)}
