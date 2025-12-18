@@ -4,6 +4,7 @@ import { NewTabModal } from '@/widgets/NewTabModal/NewTabModal.js';
 import { RightSidebar } from '@/widgets/ProfilePanel/ProfilePanel.js'; 
 import { useModal } from '@/shared/hooks/useModal.js';
 import { Menu, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 type Team = {
   id: string;
@@ -29,6 +30,7 @@ const getUserIdFromToken = (token: string): string | null => {
 };
 
 export const Dashboard: React.FC = () => {
+  const navigate = useNavigate();
   const { open, onOpen, onClose } = useModal(false);
   const [teams, setTeams] = useState<Team[]>([]);
   const [markdownText, setMarkdownText] = useState('');
@@ -38,12 +40,15 @@ export const Dashboard: React.FC = () => {
 
   useEffect(() => {
     const token = getToken();
-    if (token) {
-      const userId = getUserIdFromToken(token);
-      setCanEdit(userId === ALLOWED_USER_ID);
+    if (!token) {
+      navigate('/sign-in');
+      return;
     }
+    
+    const userId = getUserIdFromToken(token);
+    setCanEdit(userId === ALLOWED_USER_ID);
     setLoading(false);
-  }, []);
+  }, [navigate]);
 
   const handleTeamCreated = (team: Team) => {
     setTeams(prev => [...prev, team]);
