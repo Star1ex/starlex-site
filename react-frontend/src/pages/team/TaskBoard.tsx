@@ -24,6 +24,14 @@ const TaskBoard: React.FC = () => {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
 
+  useEffect(() => {
+    const token = getToken();
+    if (!token) {
+      navigate('/sign-in');
+      return;
+    }
+  }, [navigate]);
+
   const fetchTasks = useCallback(async () => {
     try {
       const token = getToken();
