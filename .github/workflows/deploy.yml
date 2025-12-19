@@ -16,7 +16,7 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Create Backend .env.example.example File
+      - name: Create Backend .env File
         run: |
           echo "DB_USER=${{ secrets.DB_USER }}" > backend/.env
           echo "DB_HOST=${{ secrets.DB_HOST }}" >> backend/.env
@@ -31,7 +31,7 @@ jobs:
           echo "LOCAL_PATH=${{ secrets.LOCAL_PATH }}" >> backend/.env
           echo "LOCAL_URL=${{ secrets.LOCAL_URL }}" >> backend/.env
 
-      - name: Create .env.example.example File
+      - name: Create .env File
         run: |
           echo "DB_USER=${{ secrets.DB_USER }}" > .env
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
