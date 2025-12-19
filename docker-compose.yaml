@@ -36,8 +36,6 @@ services:
       - "${BACKEND_PORT}:3000"
     env_file:
       - backend/.env
-    volumes:
-      - uploads_data:/uploads
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
       interval: 30s
@@ -53,13 +51,16 @@ services:
     container_name: team-track-site-frontend
     restart: unless-stopped
     ports:
+<<<<<<< HEAD
       - "8080:80"
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - uploads_data:/usr/share/nginx/html/uploads:ro
+=======
+      - "80:80"
+>>>>>>> 78c5b60 (Reverse proxy support)
     depends_on:
       - backend
 
 volumes:
   postgres_data:
-  uploads_data:
