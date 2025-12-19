@@ -50,6 +50,7 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 		team.Get("/:id", handlers.GetUsers)
 		team.Delete("/:id/users", handlers.RemoveUserFromTeam)
 		team.Post("/:id/add", handlers.AddUserToTeam)
+		team.Delete("/delete", handlers.DeleteTeam)
 		tasks := team.Group("/:team_id/tasks")
 		{
 			tasks.Post("/", handlers.CreateTask)
