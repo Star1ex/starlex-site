@@ -108,6 +108,29 @@ func (t *TeamRepository) GetTeam(ctx context.Context, teamId string) ([]*entity.
 	return usersInTeam, nil
 }
 
+func (r *TeamRepository) Delete(ctx context.Context, teamID string) error {
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		var team TeamModel
+
+		if err := tx.Preload("Users").
+			First(&team, "id = ?", teamID).Error; err != nil {
+			return err
+		}
+
+		// delete many2many
+		if err := tx.Model(&team).
+			Association("Users").Clear(); err != nil {
+			return err
+		}
+
+		if err := tx.Delete(&team).Error; err != nil {
+			return err
+		}
+
+		return nil
+	})
+}
+
 // GetTeamByID returns team by ID (used to check ownership)
 func (t *TeamRepository) GetTeamByID(ctx context.Context, teamID string) (*entity.Team, error) {
 	var teamModel TeamModel
