@@ -28,6 +28,10 @@ type RemoveUserFromTeamRequest struct {
 	UserID string `json:"userId" validate:"required"`
 }
 
+type DeleteTeam struct {
+	TeamID string `json:"team_id" binding:"required"`
+}
+
 func ToTeamsResponse(teams []*entity.Team) []TeamResponse {
 	response := make([]TeamResponse, len(teams))
 	for i, team := range teams {

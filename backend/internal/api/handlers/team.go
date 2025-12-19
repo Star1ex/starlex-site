@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"log"
 
 	"github.com/Team-Tracks/team-track-site/internal/api/dto"
@@ -44,6 +45,27 @@ func (h *Handlers) CreateTeam(ctx *fiber.Ctx) error {
 	response := dto.ToTeamResponse(team)
 
 	return ctx.Status(fiber.StatusCreated).JSON(response)
+}
+
+func (h *Handlers) DeleteTeam(ctx *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+	var req dto.DeleteTeam
+	if err := ctx.BodyParser(&req); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "missing team_id in request",
+		})
+	}
+
+	err := h.teamService.Delete(context.Background(), req.TeamID, userID)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err,
+		})
+	}
+	return ctx.Status(fiber.StatusOK).JSON("Successfuly delete team")
 }
 
 // GetUsers godoc

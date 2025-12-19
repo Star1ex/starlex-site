@@ -37,6 +37,19 @@ func (s *TeamService) CreateTeam(ctx context.Context, name, description, userID 
 	return newTeam, nil
 }
 
+func (s TeamService) Delete(ctx context.Context, teamID, userID string) error {
+
+	team, err := s.teamRepo.GetTeamByID(ctx, teamID)
+	if err != nil {
+		return err
+	}
+	if userID != team.OwnerID {
+		return err
+	}
+
+	return s.teamRepo.Delete(ctx, teamID)
+}
+
 func (s *TeamService) GetUsers(ctx context.Context, teamId string) ([]*entity.User, error) {
 	users, err := s.teamRepo.GetTeam(ctx, teamId)
 	if err != nil {
