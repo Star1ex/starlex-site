@@ -45,10 +45,17 @@ func (c *Client) Send(text string) error {
 	if err != nil {
 		return err
 	}
-
 	req.Header.Set("Content-Type", "application/json")
 
-	_, err = c.client.Do(req)
+	resp, err := c.client.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
 
-	return err
+	if resp.StatusCode >= 300 {
+		return errors.New("telegram: bad response " + resp.Status)
+	}
+
+	return nil
 }

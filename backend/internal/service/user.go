@@ -5,10 +5,12 @@ import (
 	"errors"
 	"fmt"
 	"mime/multipart"
+	"time"
 
 	"github.com/Team-Tracks/team-track-site/internal/api/dto"
 	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
 	"github.com/Team-Tracks/team-track-site/internal/domain/user"
+	"github.com/Team-Tracks/team-track-site/internal/events"
 	"github.com/Team-Tracks/team-track-site/internal/security"
 	"github.com/Team-Tracks/team-track-site/internal/storage"
 )
@@ -16,11 +18,12 @@ import (
 type UserService struct {
 	repo    user.Repository
 	storage storage.Storage
+	bus     *events.Bus
 }
 
-func NewUserService(repo user.Repository, storage storage.Storage) *UserService {
+func NewUserService(repo user.Repository, storage storage.Storage, bus *events.Bus) *UserService {
 	return &UserService{
-		repo: repo, storage: storage,
+		repo: repo, storage: storage, bus: bus,
 	}
 }
 
@@ -34,6 +37,14 @@ func (s *UserService) Create(ctx context.Context, u *dto.UserApi) error {
 	if err := s.repo.Create(ctx, newUser); err != nil {
 		return err
 	}
+
+	s.bus.Publish(events.UserRegisteredEvent{
+		UserID:     newUser.ID,
+		Email:      newUser.Email,
+		FirstName:  newUser.FirstName,
+		LastName:   newUser.LastName,
+		OccurredAt: time.Now(),
+	})
 
 	return nil
 }

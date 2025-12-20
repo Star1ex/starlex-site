@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"log"
 
 	"github.com/Team-Tracks/team-track-site/internal/events"
 	"github.com/Team-Tracks/team-track-site/internal/notifications/telegram"
@@ -9,19 +10,27 @@ import (
 
 func UserRegisteredTelegramHandler(tg *telegram.Client) events.Handler {
 	return func(e events.Event) {
-		event := e.(events.UserRegisteredEvent)
+
+		event, ok := e.(events.UserRegisteredEvent)
+		if !ok {
+			log.Println("telegram handler: wrong event type")
+			return
+		}
 
 		msg := fmt.Sprintf(
-			"New user registered</b>\n\n"+
-				"%s\n"+
-				"%s\n"+
-				"%s\n"+
-				"%s\n",
+			"<b>New user registered</b>\n\n"+
+				"ID: %s\n"+
+				"Email: %s\n"+
+				"First name: %s\n"+
+				"Last name: %s",
 			event.UserID,
 			event.Email,
 			event.FirstName,
 			event.LastName,
 		)
-		_ = tg.Send(msg)
+
+		if err := tg.Send(msg); err != nil {
+			log.Println("telegram send error:", err)
+		}
 	}
 }

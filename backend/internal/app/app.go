@@ -7,6 +7,8 @@ import (
 	"github.com/Team-Tracks/team-track-site/internal/api/routes"
 	"github.com/Team-Tracks/team-track-site/internal/config"
 	"github.com/Team-Tracks/team-track-site/internal/db"
+	"github.com/Team-Tracks/team-track-site/internal/events"
+	"github.com/Team-Tracks/team-track-site/internal/notifications/telegram"
 	"github.com/Team-Tracks/team-track-site/internal/repository"
 	"github.com/Team-Tracks/team-track-site/internal/service"
 	"github.com/Team-Tracks/team-track-site/internal/storage"
@@ -33,14 +35,25 @@ func StartServer() {
 		AllowCredentials: false,
 	}))
 
+	bus := events.NewBus()
+
+	tg, _ := telegram.New(
+		config.TelegramNotifications.Token,
+		config.TelegramNotifications.ChatID,
+	)
+	bus.Subscribe(
+		"user.registered",
+		handlers.UserRegisteredTelegramHandler(tg),
+	)
+
 	userRepo := repository.NewUserRepository(db.DB)
 	teamRepo := repository.NewTeamRepository(db.DB)
 	taskRepo := repository.NewTaskRepository(db.DB)
-	userService := service.NewUserService(userRepo, storage)
+	userService := service.NewUserService(userRepo, storage, bus)
 	teamService := service.NewTeamService(teamRepo, userRepo)
 	taskService := service.NewTaskService(taskRepo, userRepo, teamRepo)
-	handlers := handlers.NewHandlers(userService, teamService, taskService)
-	routes.InitRoutes(app, handlers)
+	httpHandlers := handlers.NewHandlers(userService, teamService, taskService)
+	routes.InitRoutes(app, httpHandlers)
 
 	app.Listen(":3000")
 }
