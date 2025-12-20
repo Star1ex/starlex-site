@@ -10,8 +10,9 @@ import (
 )
 
 type Config struct {
-	DatabaseConfig DatabaseConfig
-	StorageConfig  StorageConfig
+	DatabaseConfig        DatabaseConfig
+	StorageConfig         StorageConfig
+	TelegramNotifications TelegramNotifications
 }
 
 type DatabaseConfig struct {
@@ -28,6 +29,11 @@ type StorageConfig struct {
 	StorageType string
 	LocalPath   string
 	LocalURL    string
+}
+
+type TelegramNotifications struct {
+	Token  string
+	ChatID string
 }
 
 // Loading full config with data from .env file
@@ -53,6 +59,11 @@ func LoadConfig() *Config {
 			StorageType: os.Getenv("STORAGE_TYPE"),
 			LocalPath:   os.Getenv("LOCAL_PATH"),
 			LocalURL:    os.Getenv("LOCAL_URL"),
+		},
+
+		TelegramNotifications: TelegramNotifications{
+			Token:  os.Getenv("TOKEN_TELEGRAM_NOTIFICATIONS"),
+			ChatID: os.Getenv("CHAT_ID_TELEGRAM_BOT_NOTIFICATIONS"),
 		},
 	}
 }
