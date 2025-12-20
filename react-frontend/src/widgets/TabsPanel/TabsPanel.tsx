@@ -14,6 +14,13 @@ type Props = {
   onAddClick: () => void;
 };
 
+type ContextMenu = {
+  x: number;
+  y: number;
+  teamId: string;
+  teamName: string;
+};
+
 export const API_URL = import.meta.env.VITE_API_URL ?? '';
 
 const getToken = () => localStorage.getItem('token');
@@ -23,6 +30,8 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
   const [userTeams, setUserTeams] = useState<Team[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null);
+  const [deleteStatus, setDeleteStatus] = useState<'idle' | 'deleting' | 'success' | 'error'>('idle');
 
   useEffect(() => {
     async function fetchUserTeams() {
@@ -59,6 +68,77 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
     fetchUserTeams();
   }, []);
 
+  useEffect(() => {
+    const handleClick = () => setContextMenu(null);
+    const handleContextMenu = (e: MouseEvent) => {
+      if (contextMenu) {
+        const target = e.target as HTMLElement;
+        if (!target.closest('.context-menu')) {
+          e.preventDefault();
+        }
+      }
+    };
+
+    document.addEventListener('click', handleClick);
+    document.addEventListener('contextmenu', handleContextMenu);
+    
+    return () => {
+      document.removeEventListener('click', handleClick);
+      document.removeEventListener('contextmenu', handleContextMenu);
+    };
+  }, [contextMenu]);
+
+  const handleContextMenu = (e: React.MouseEvent, teamId: string, teamName: string) => {
+    e.preventDefault();
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      teamId,
+      teamName
+    });
+  };
+
+  const handleDelete = async () => {
+    if (!contextMenu) return;
+
+    setDeleteStatus('deleting');
+    const token = getToken();
+
+    try {
+      const res = await fetch(`/api/team/delete`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          team_id: contextMenu.teamId
+        })
+      });
+
+      if (res.ok) {
+        setUserTeams(userTeams.filter(t => t.team_id !== contextMenu.teamId));
+        setDeleteStatus('success');
+        setTimeout(() => setDeleteStatus('idle'), 2000);
+      } else {
+        setDeleteStatus('error');
+        setTimeout(() => setDeleteStatus('idle'), 3000);
+      }
+    } catch (err) {
+      console.error('Delete error:', err);
+      setDeleteStatus('error');
+      setTimeout(() => setDeleteStatus('idle'), 3000);
+    }
+
+    setContextMenu(null);
+  };
+
+  const handleUpdate = () => {
+    console.log('Update team:', contextMenu?.teamId);
+    // TODO: Add update functionality
+    setContextMenu(null);
+  };
+
   const handleTeamClick = (teamId: string) => {
     navigate(`/team/${teamId}`);
   };
@@ -71,6 +151,50 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
 
   return (
     <>
+      {deleteStatus !== 'idle' && (
+        <div className={`fixed top-4 right-4 z-50 px-4 py-3 rounded-lg shadow-lg ${
+          deleteStatus === 'success' ? 'bg-green-500 text-white' :
+          deleteStatus === 'error' ? 'bg-red-500 text-white' :
+          'bg-blue-500 text-white'
+        }`}>
+          {deleteStatus === 'success' ? '✓ Team deleted' :
+           deleteStatus === 'error' ? '✗ Delete failed' :
+           '⟳ Deleting...'}
+        </div>
+      )}
+
+      {contextMenu && (
+        <div
+          className="context-menu fixed bg-white border border-gray-300 rounded-lg shadow-xl py-1 z-50"
+          style={{
+            left: `${contextMenu.x}px`,
+            top: `${contextMenu.y}px`,
+            minWidth: '160px'
+          }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-200">
+            {contextMenu.teamName}
+          </div>
+          
+          <button
+            onClick={handleUpdate}
+            className="w-full px-4 py-2 text-left text-black hover:bg-gray-100 transition-colors duration-150 flex items-center gap-2"
+          >
+            <span>✏️</span>
+            <span>Update</span>
+          </button>
+          
+          <button
+            onClick={handleDelete}
+            className="w-full px-4 py-2 text-left text-red-600 hover:bg-red-50 transition-colors duration-150 flex items-center gap-2"
+          >
+            <span>🗑️</span>
+            <span>Delete</span>
+          </button>
+        </div>
+      )}
+
       {/* Mobile View - Full Screen Grid */}
       <div className="md:hidden w-full min-h-screen bg-white p-4 pb-20">
         <div className="flex items-center justify-between px-2 py-4 mb-6">
@@ -115,6 +239,7 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
               <button
                 key={tab.id}
                 onClick={() => handleTeamClick(tab.id)}
+                onContextMenu={(e) => handleContextMenu(e, tab.id, tab.name)}
                 className="w-full p-6 rounded-2xl bg-white border-2 border-gray-200 hover:border-black hover:shadow-xl text-left transition-all duration-300 transform hover:scale-[1.02] animate-fadeIn"
                 style={{
                   animationDelay: `${index * 50}ms`,
@@ -194,6 +319,7 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
               <li key={tab.id}>
                 <button
                   onClick={() => handleTeamClick(tab.id)}
+                  onContextMenu={(e) => handleContextMenu(e, tab.id, tab.name)}
                   className="w-full text-left px-3 py-2 rounded hover:bg-gray-200 text-black transition-colors duration-200"
                   title={tab.emails.join(', ')}
                 >
