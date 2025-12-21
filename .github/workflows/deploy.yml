@@ -30,6 +30,8 @@ jobs:
           echo "STORAGE_TYPE=${{ secrets.STORAGE_TYPE }}" >> backend/.env
           echo "LOCAL_PATH=${{ secrets.LOCAL_PATH }}" >> backend/.env
           echo "LOCAL_URL=${{ secrets.LOCAL_URL }}" >> backend/.env
+          echo "TOKEN_TELEGRAM_NOTIFICATIONS=${{ secrets.TOKEN_TELEGRAM_NOTIFICATIONS }}" >> backend/.env
+          echo "CHAT_ID_TELEGRAM_BOT_NOTIFICATIONS=${{ secrets.CHAT_ID_TELEGRAM_BOT_NOTIFICATIONS }}" >> backend/.env
 
       - name: Create .env File
         run: |
