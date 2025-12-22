@@ -39,6 +39,8 @@ services:
       - "${BACKEND_PORT}:3000"
     env_file:
       - backend/.env
+    volumes:
+      - uploads_data:/uploads
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
       interval: 10s
@@ -55,9 +57,13 @@ services:
     restart: unless-stopped
     ports:
       - "80:80"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - uploads_data:/usr/share/nginx/html/uploads:ro
     depends_on:
       backend:
         condition: service_healthy
 
 volumes:
   postgres_data:
+  uploads_data:
