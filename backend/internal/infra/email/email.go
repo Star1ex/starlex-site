@@ -43,23 +43,22 @@ func (s *EmailService) SendVerificationCode(to, firstName, code string) error {
 		</html>	
 	`, firstName, code)
 
-	return s.
+	return s.sendEmail(to, subject, body)
 }
-
 
 func (s *EmailService) sendEmail(to, subject, body string) error {
 	from := s.config.FromEmail
 	password := s.config.SMTPPassword
 
 	msg := []byte(fmt.Sprintf(
-		"From: %s <%s>\r\n" +
-		   "To: %s\r\n" +
-		   "Subject: %s\r\n" +
-		   "MIME-Version: 1.0\r\n" +
-		   "Content-Type: text/html; charset=UTF-8\r\n" +
-		   "\r\n" +
-		   "%s\r\n",
-		   s.config.FromEmail, from, to, subject, body,
+		"From: %s <%s>\r\n"+
+			"To: %s\r\n"+
+			"Subject: %s\r\n"+
+			"MIME-Version: 1.0\r\n"+
+			"Content-Type: text/html; charset=UTF-8\r\n"+
+			"\r\n"+
+			"%s\r\n",
+		s.config.FromEmail, from, to, subject, body,
 	))
 
 	auth := smtp.PlainAuth("", s.config.SMTPUsername, password, s.config.SMTPHost)
