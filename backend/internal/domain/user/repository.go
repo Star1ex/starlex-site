@@ -27,4 +27,8 @@ type Repository interface {
 
 	// GetPhoto
 	GetPhoto(ctx context.Context, userID string) (string, error)
+
+	// verify
+	MarkIsVerified(ctx context.Context, userID string) error
+	IsVerified(ctx context.Context, userID string) (bool, error)
 }

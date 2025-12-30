@@ -9,14 +9,15 @@ import (
 )
 
 type UserModel struct {
-	ID        string      `gorm:"primaryKey"`
-	Email     string      `gorm:"unique;not null"`
-	Password  string      `gorm:"not null"`
-	FirstName string      `gorm:"not null;size:50"`
-	LastName  string      `gorm:"not null;size:50"`
-	PhotoURL  string      `gorm:"default:null"`
-	Role      string      `gorm:"default:'member'"`
-	Teams     []TeamModel `gorm:"many2many:users_teams"`
+	ID         string      `gorm:"primaryKey"`
+	Email      string      `gorm:"unique;not null"`
+	Password   string      `gorm:"not null"`
+	FirstName  string      `gorm:"not null;size:50"`
+	LastName   string      `gorm:"not null;size:50"`
+	PhotoURL   string      `gorm:"default:null"`
+	Role       string      `gorm:"default:'member'"`
+	IsVerified bool        `gorm:"default:false"`
+	Teams      []TeamModel `gorm:"many2many:users_teams"`
 }
 
 type UserRepository struct {
@@ -205,4 +206,23 @@ func (r *UserRepository) GetPhoto(ctx context.Context, userID string) (string, e
 	}
 
 	return photo, err
+}
+
+// mark is verified user
+func (r *UserRepository) MarkIsVerified(ctx context.Context, userID string) error {
+	return r.db.WithContext(ctx).
+		Model(&UserModel{}).
+		Where("id = ?", userID).
+		Update("is_verified", true).Error
+}
+
+// check is verified user
+func (r *UserRepository) IsVerified(ctx context.Context, userID string) (bool, error) {
+	var user UserModel
+	err := r.db.WithContext(ctx).Select("is_verified").Where("id = ?", userID).First(&user).Error
+	if err != nil {
+		return false, err
+	}
+
+	return user.IsVerified, nil
 }
