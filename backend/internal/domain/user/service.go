@@ -30,4 +30,6 @@ type Service interface {
 	SetUserPhoto(id, photo_url string) error
 
 	GetPhoto(ctx context.Context, userID string) (string, error)
+
+	PublishUserRegistered(user *entity.User)
 }

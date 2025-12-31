@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"github.com/Team-Tracks/team-track-site/internal/api/dto"
-	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -176,7 +175,7 @@ func (h *Handlers) VerifyEmail(ctx *fiber.Ctx) error {
 	if err != nil {
 		log.Println("Failed to get user for notification: ", err)
 	} else {
-		h.notifyUserRegistered(user)
+		h.notifyUserRegistered(dto.ToUserResponseIsVerified(user))
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
@@ -184,7 +183,7 @@ func (h *Handlers) VerifyEmail(ctx *fiber.Ctx) error {
 	})
 }
 
-func (h *Handlers) notifyUserRegistered(user *entity.User) {
+func (h *Handlers) notifyUserRegistered(user *dto.User) {
 
 	// impl needs
 }

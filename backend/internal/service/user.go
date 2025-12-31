@@ -39,14 +39,8 @@ func (s *UserService) CreateUnverified(ctx context.Context, u *dto.UserApi) (str
 	if err := s.repo.Create(ctx, newUser); err != nil {
 		return "", err
 	}
-	s.bus.Publish(events.UserRegisteredEvent{
-		UserID:    newUser.ID,
-		Email:     newUser.Email,
-		FirstName: newUser.FirstName,
-		LastName:  newUser.LastName,
 
-		OccurredAt: time.Now(),
-	})
+	s.PublishUserRegistered(newUser)
 
 	return newUser.ID, nil
 }
@@ -115,4 +109,14 @@ func (s *UserService) GetPhoto(ctx context.Context, userID string) (string, erro
 
 func (s *UserService) Update(ctx context.Context, u *entity.User, id string) error {
 	return s.repo.Update(ctx, u, id)
+}
+
+func (s *UserService) PublishUserRegistered(user *entity.User) {
+	s.bus.Publish(events.UserRegisteredEvent{
+		UserID:     user.ID,
+		Email:      user.Email,
+		FirstName:  user.FirstName,
+		LastName:   user.LastName,
+		OccurredAt: time.Now(),
+	})
 }

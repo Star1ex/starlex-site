@@ -30,6 +30,16 @@ type UserUpdate struct {
 	Photo_URL *string `json:"photo_url"`
 }
 
+type User struct {
+	ID         string  `json:"id"`
+	Email      string  `json:"email"`
+	FirstName  string  `json:"first_name"`
+	LastName   string  `json:"last_name"`
+	Role       string  `json:"role"`
+	PhotoURL   *string `json:"photo_url"`
+	IsVerified bool    `json:"is_verified"`
+}
+
 type UserProfile struct {
 	Email     string  `json:"email"`
 	FirstName string  `json:"first_name"`
@@ -60,6 +70,18 @@ func FromUserApi(u *UserApi) *entity.User {
 		LastName:  u.LastName,
 		Role:      u.Role,
 		Photo_URL: u.Photo_URL,
+	}
+}
+
+func ToUserResponseIsVerified(u *entity.User) *User {
+	return &User{
+		ID:         u.ID,
+		Email:      u.Email,
+		FirstName:  u.FirstName,
+		LastName:   u.LastName,
+		Role:       u.Role,
+		PhotoURL:   u.Photo_URL,
+		IsVerified: u.IsVerified,
 	}
 }
 

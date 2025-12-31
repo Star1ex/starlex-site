@@ -8,6 +8,7 @@ import (
 	"github.com/Team-Tracks/team-track-site/internal/config"
 	"github.com/Team-Tracks/team-track-site/internal/db"
 	"github.com/Team-Tracks/team-track-site/internal/events"
+	emailService "github.com/Team-Tracks/team-track-site/internal/infra/email"
 	"github.com/Team-Tracks/team-track-site/internal/notifications/telegram"
 	"github.com/Team-Tracks/team-track-site/internal/repository"
 	"github.com/Team-Tracks/team-track-site/internal/service"
@@ -49,10 +50,22 @@ func StartServer() {
 	userRepo := repository.NewUserRepository(db.DB)
 	teamRepo := repository.NewTeamRepository(db.DB)
 	taskRepo := repository.NewTaskRepository(db.DB)
+	verificationRepo := repository.NewVerificationRepository(db.DB)
+
+	emailService := emailService.NewEmailConfig(emailService.EmailConfig{
+		SMTPHost:     config.EmailConfig.SMTPHost,
+		SMTPPort:     config.EmailConfig.SMTPPort,
+		SMTPUsername: config.EmailConfig.SMTPUsername,
+		SMTPPassword: config.EmailConfig.SMTPPassword,
+		FromEmail:    config.EmailConfig.FromEmail,
+		FromName:     config.EmailConfig.FromName,
+	})
+
+	verificationService := service.NewVerificationService(verificationRepo, userRepo, emailService)
 	userService := service.NewUserService(userRepo, storage, bus)
 	teamService := service.NewTeamService(teamRepo, userRepo)
 	taskService := service.NewTaskService(taskRepo, userRepo, teamRepo)
-	httpHandlers := handlers.NewHandlers(userService, teamService, taskService)
+	httpHandlers := handlers.NewHandlers(userService, teamService, taskService, verificationService)
 	routes.InitRoutes(app, httpHandlers)
 
 	app.Listen(":3000")
