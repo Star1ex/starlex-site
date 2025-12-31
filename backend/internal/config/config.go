@@ -13,6 +13,16 @@ type Config struct {
 	DatabaseConfig        DatabaseConfig
 	StorageConfig         StorageConfig
 	TelegramNotifications TelegramNotifications
+	EmailConfig           EmailConfig
+}
+
+type EmailConfig struct {
+	SMTPHost     string
+	SMTPPort     string
+	SMTPUsername string
+	SMTPPassword string
+	FromEmail    string
+	FromName     string
 }
 
 type DatabaseConfig struct {
@@ -45,6 +55,15 @@ func LoadConfig() *Config {
 	}
 
 	return &Config{
+		EmailConfig: EmailConfig{
+			SMTPHost:     os.Getenv("SMTP_HOST"),
+			SMTPPort:     os.Getenv("SMTP_PORT"),
+			SMTPUsername: os.Getenv("SMTP_USERNAME"),
+			SMTPPassword: os.Getenv("SMTP_PASSWORD"),
+			FromEmail:    os.Getenv("FROM_FROM_EMAIL"),
+			FromName:     os.Getenv("FROM_FROM_NAME"),
+		},
+
 		DatabaseConfig: DatabaseConfig{
 			Host:     os.Getenv("DB_HOST"),
 			Port:     getEnvInt("DB_PORT", 5432),

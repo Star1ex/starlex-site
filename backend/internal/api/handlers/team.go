@@ -100,7 +100,7 @@ func (h *Handlers) GetUsers(ctx *fiber.Ctx) error {
 // @Accept       json
 // @Produce      json
 // @Param        id   path      string                    true  "Team ID"
-// @Param        user body      dto.AddUserToTeamRequest  true  "User email"
+// @Param        user body      dto.AddUserToTeam  true  "User email"
 // @Success      200  {object}  map[string]interface{}    "user added successfully"
 // @Failure      400  {object}  map[string]string         "bad request"
 // @Failure      403  {object}  map[string]string         "forbidden"

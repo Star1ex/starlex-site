@@ -4,6 +4,7 @@ import { HomePage } from "@/pages/home/HomePage.js";
 import { SignInPage } from "@/pages/auth/SignInPage/SignInPage.js";
 import { SignUpPage } from "@/pages/auth/SignUpPage/SignUpPage.js";
 import { Dashboard  } from "@/pages/dashboard/Dashboard.js";
+import { VerifyEmailPage } from "@/pages/verify/VerifyEmailPage.js";
 import { GeneralSettings } from "@/pages/settings/GeneralSettings.js";
 import AboutUs from "@/pages/about-us/AboutUs.js";
 import  ProfilePage  from "@/pages/profile/UserProfile.js";
@@ -19,5 +20,6 @@ export const AppRoutes = () => (
     <Route path="/about-us" element={<AboutUs />} />
     <Route path="/profile" element={<ProfilePage/> } />
     <Route path="/team/:team_id" element={<TaskBoard />} /> 
+    <Route path="/verify-email" element={<VerifyEmailPage />} />
   </Routes> 
 );

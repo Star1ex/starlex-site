@@ -2,8 +2,6 @@ import React, { ChangeEvent } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-export const API_URL = import.meta.env.VITE_API_URL ?? '';
-
 export const SignUpPage = () => {
   const navigate = useNavigate();
   const [formEmail, setFormEmail] = useState("");
@@ -11,19 +9,24 @@ export const SignUpPage = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const [formFirstName, setFirstName] = useState("");
   const [formLastName, setLastName] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   function handleToSignIn() {
     navigate("/sign-in");
   }
+  
   function handleSetEmail(e: ChangeEvent<HTMLInputElement>) {
     setFormEmail(e.target.value);
   }
+  
   function handleSetPassword(e: ChangeEvent<HTMLInputElement>) {
     setFormPassword(e.target.value);
   }
+  
   function handleSetFirstName(e: ChangeEvent<HTMLInputElement>) {
     setFirstName(e.target.value);
   }
+  
   function handleSetLastName(e: ChangeEvent<HTMLInputElement>) {
     setLastName(e.target.value);
   }
@@ -37,9 +40,14 @@ export const SignUpPage = () => {
       return; 
     }
     
-    if (!formEmail.includes('@')) {
+    if (!formEmail.includes('@') || !formEmail.includes('.')) {
       setErrorMessage('Please enter a valid email address.');
       return; 
+    }
+
+    if (formPassword.length < 6) {
+      setErrorMessage('Password must be at least 6 characters long.');
+      return;
     }
 
     const data = {
@@ -49,6 +57,8 @@ export const SignUpPage = () => {
       last_name: formLastName
     };
 
+    setIsLoading(true);
+
     try {
       const response = await fetch(`/api/auth/register`, {
         method: 'POST',
@@ -56,19 +66,30 @@ export const SignUpPage = () => {
         body: JSON.stringify(data),
       });
 
+      const result = await response.json();
+
       if (response.ok) {
-        console.log("Successed login");
-        navigate('/sign-in')
+        // Navigate to verification page with user ID and email
+        navigate('/verify-email', {
+          state: {
+            userId: result.user_id,
+            email: formEmail
+          }
+        });
       } else {
         if (response.status === 400) {
-          setErrorMessage("Incorrect email or password");
+          setErrorMessage(result.error || "Registration failed");
+        } else if (response.status === 500) {
+          setErrorMessage(result.error || "Server error. Please try again.");
         } else {
-          setErrorMessage("Unknown authorization error");
+          setErrorMessage("Unknown registration error");
         }
       }
     } catch (error) {
       setErrorMessage('Unable to connect to the server. Check your connection.');
       console.error('Network or server error:', error);
+    } finally {
+      setIsLoading(false);
     }
   }
 
@@ -93,8 +114,9 @@ export const SignUpPage = () => {
                 value={formFirstName}
                 onChange={handleSetFirstName}
                 type="text"
-                placeholder="Dil"
-                className="mt-1 w-full border-b bg-white border-black focus:border-black focus:outline-none py-2 text-black placeholder-gray-500 transition-colors duration-300"
+                placeholder="John"
+                disabled={isLoading}
+                className="mt-1 w-full border-b bg-white border-black focus:border-black focus:outline-none py-2 text-black placeholder-gray-500 transition-colors duration-300 disabled:opacity-50"
               />
             </div>
 
@@ -105,7 +127,8 @@ export const SignUpPage = () => {
                 onChange={handleSetLastName}
                 type="text"
                 placeholder="Doe"
-                className="mt-1 w-full border-b bg-white border-black focus:border-black focus:outline-none py-2 text-black placeholder-gray-500 transition-colors duration-300"
+                disabled={isLoading}
+                className="mt-1 w-full border-b bg-white border-black focus:border-black focus:outline-none py-2 text-black placeholder-gray-500 transition-colors duration-300 disabled:opacity-50"
               />
             </div>
 
@@ -116,7 +139,8 @@ export const SignUpPage = () => {
                 onChange={handleSetEmail}
                 type="email"
                 placeholder="your@email.com"
-                className="mt-1 w-full border-b bg-white border-black focus:border-black focus:outline-none py-2 text-black placeholder-gray-500 transition-colors duration-300"
+                disabled={isLoading}
+                className="mt-1 w-full border-b bg-white border-black focus:border-black focus:outline-none py-2 text-black placeholder-gray-500 transition-colors duration-300 disabled:opacity-50"
               />
             </div>
 
@@ -126,8 +150,9 @@ export const SignUpPage = () => {
                 value={formPassword}
                 onChange={handleSetPassword}
                 type="password"
-                placeholder="********"
-                className="mt-1 w-full border-b bg-white border-black focus:border-black focus:outline-none py-2 text-black placeholder-gray-500 transition-colors duration-300"
+                placeholder="Min 6 characters"
+                disabled={isLoading}
+                className="mt-1 w-full border-b bg-white border-black focus:border-black focus:outline-none py-2 text-black placeholder-gray-500 transition-colors duration-300 disabled:opacity-50"
               />
             </div>
 
@@ -139,9 +164,10 @@ export const SignUpPage = () => {
 
             <button
               type="submit"
-              className="w-full py-3 mt-4 sm:mt-6 bg-black text-white font-semibold rounded-md shadow-md hover:bg-gray-800 transition-colors duration-200"
+              disabled={isLoading}
+              className="w-full py-3 mt-4 sm:mt-6 bg-black text-white font-semibold rounded-md shadow-md hover:bg-gray-800 transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              Sign Up
+              {isLoading ? "Creating Account..." : "Sign Up"}
             </button>
 
             <p className="text-center text-sm text-black pt-3 sm:pt-4 transition-colors duration-300">
@@ -150,6 +176,7 @@ export const SignUpPage = () => {
                 type="button"
                 className="text-black font-medium hover:text-gray-700 transition-colors duration-200"
                 onClick={handleToSignIn}
+                disabled={isLoading}
               >
                 Sign-In
               </button>

@@ -30,6 +30,8 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 	{
 		auth.Post("/login", handlers.Login)
 		auth.Post("/register", handlers.Register)
+		auth.Post("/verify", handlers.VerifyEmail)
+		auth.Post("/resend-code", handlers.ResendCode)
 
 	}
 

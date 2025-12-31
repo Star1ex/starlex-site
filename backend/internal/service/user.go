@@ -27,26 +27,28 @@ func NewUserService(repo user.Repository, storage storage.Storage, bus *events.B
 	}
 }
 
-func (s *UserService) Create(ctx context.Context, u *dto.UserApi) error {
+func (s *UserService) CreateUnverified(ctx context.Context, u *dto.UserApi) (string, error) {
 	id := security.GenerateNewID()
 	hashedPassword, err := security.HashPassword(u.Password)
 	if err != nil {
-		return err
+		return "", err
 	}
 	newUser := entity.NewUser(id, u.Email, hashedPassword, u.FirstName, u.LastName)
+	// User is created as unverified (IsVerified = false by default)
+
 	if err := s.repo.Create(ctx, newUser); err != nil {
-		return err
+		return "", err
 	}
 
-	s.bus.Publish(events.UserRegisteredEvent{
-		UserID:     newUser.ID,
-		Email:      newUser.Email,
-		FirstName:  newUser.FirstName,
-		LastName:   newUser.LastName,
-		OccurredAt: time.Now(),
-	})
+	s.PublishUserRegistered(newUser)
 
-	return nil
+	return newUser.ID, nil
+}
+
+// Old Create method - keep for backward compatibility if needed, or remove
+func (s *UserService) Create(ctx context.Context, u *dto.UserApi) error {
+	_, err := s.CreateUnverified(ctx, u)
+	return err
 }
 
 func (s *UserService) Get(ctx context.Context, id string) (*entity.User, error) {
@@ -107,4 +109,14 @@ func (s *UserService) GetPhoto(ctx context.Context, userID string) (string, erro
 
 func (s *UserService) Update(ctx context.Context, u *entity.User, id string) error {
 	return s.repo.Update(ctx, u, id)
+}
+
+func (s *UserService) PublishUserRegistered(user *entity.User) {
+	s.bus.Publish(events.UserRegisteredEvent{
+		UserID:     user.ID,
+		Email:      user.Email,
+		FirstName:  user.FirstName,
+		LastName:   user.LastName,
+		OccurredAt: time.Now(),
+	})
 }

@@ -1,43 +1,54 @@
 import React, { ChangeEvent } from "react";
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
-
-export const API_URL = import.meta.env.VITE_API_URL ?? '';
+import { useState, useEffect } from "react";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export const SignInPage = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [formEmail, setFormEmail] = useState("");
   const [formPassword, setFormPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleDashboard = () => {
-    navigate("/dashboard");
-  };
+  useEffect(() => {
+    // Show success message if coming from verification page
+    if (location.state?.message) {
+      setSuccessMessage(location.state.message);
+      // Clear the message after 5 seconds
+      setTimeout(() => setSuccessMessage(""), 5000);
+    }
+  }, [location]);
 
   function handleToSignUp() {
     navigate("/sign-up");
   }
+  
   function handleSetEmail(e: ChangeEvent<HTMLInputElement>) {
     setFormEmail(e.target.value);
   }
+  
   function handleSetPassword(e: ChangeEvent<HTMLInputElement>) {
     setFormPassword(e.target.value);
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     setErrorMessage("");
+    setSuccessMessage("");
     e.preventDefault();
 
     if (!formEmail || !formPassword) {
       setErrorMessage("All fields required");
       return;
     }
+    
     if (!formEmail.includes("@") || !formEmail.includes(".")) {
       setErrorMessage("Enter correct email");
       return;
     }
 
     const data = { email: formEmail, password: formPassword };
+    setIsLoading(true);
 
     try {
       const response = await fetch(`/api/auth/login`, {
@@ -52,7 +63,7 @@ export const SignInPage = () => {
         if (result.token && result.user) {
           localStorage.setItem("token", result.token);
           localStorage.setItem("user", JSON.stringify(result.user));
-          console.log("Successfuly auth:", result.user.email);
+          console.log("Successfully authenticated:", result.user.email);
           navigate("/dashboard");
           return;
         } else {
@@ -62,20 +73,38 @@ export const SignInPage = () => {
       }
 
       const errorData = await response.json().catch(() => ({}));
+      
       switch (response.status) {
         case 400:
         case 401:
-          setErrorMessage(errorData.message || "Invalid email or password");
+          setErrorMessage(errorData.error || "Invalid email or password");
+          break;
+        case 403:
+          // Email not verified
+          setErrorMessage(errorData.message || "Please verify your email first");
+          if (errorData.user_id) {
+            // Redirect to verification page
+            setTimeout(() => {
+              navigate("/verify-email", {
+                state: {
+                  userId: errorData.user_id,
+                  email: formEmail
+                }
+              });
+            }, 2000);
+          }
           break;
         case 409:
-          setErrorMessage("User already auth");
+          setErrorMessage("User already authenticated");
           break;
         default:
-          setErrorMessage("Error server auth");
+          setErrorMessage(errorData.error || "Server authentication error");
       }
     } catch (error) {
-      setErrorMessage("Missing connect to server");
+      setErrorMessage("Missing connection to server");
       console.error("Network error:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -96,6 +125,15 @@ export const SignInPage = () => {
         {/* Right panel */}
         <div className="w-full md:w-1/2 p-8 md:p-16 flex flex-col justify-center">
           <form className="space-y-6 sm:space-y-7" onSubmit={handleSubmit}>
+            
+            {successMessage && (
+              <div className="p-3 bg-green-50 border border-green-200 rounded-md">
+                <p className="text-center text-sm text-green-700 font-medium">
+                  {successMessage}
+                </p>
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-black uppercase tracking-wider mb-1">
                 Email
@@ -105,7 +143,8 @@ export const SignInPage = () => {
                 onChange={handleSetEmail}
                 type="email"
                 placeholder="your@email.com"
-                className="mt-1 w-full border-b bg-white border-black focus:border-black focus:outline-none py-2 text-black placeholder-gray-500 transition-colors duration-300"
+                disabled={isLoading}
+                className="mt-1 w-full border-b bg-white border-black focus:border-black focus:outline-none py-2 text-black placeholder-gray-500 transition-colors duration-300 disabled:opacity-50"
               />
             </div>
 
@@ -118,7 +157,8 @@ export const SignInPage = () => {
                 onChange={handleSetPassword}
                 type="password"
                 placeholder="********"
-                className="mt-1 w-full border-b bg-white border-black focus:border-black focus:outline-none py-2 text-black placeholder-gray-500 transition-colors duration-300"
+                disabled={isLoading}
+                className="mt-1 w-full border-b bg-white border-black focus:border-black focus:outline-none py-2 text-black placeholder-gray-500 transition-colors duration-300 disabled:opacity-50"
               />
             </div>
 
@@ -130,16 +170,18 @@ export const SignInPage = () => {
 
             <button
               type="submit"
-              className="w-full py-3 mt-6 sm:mt-8 bg-black text-white font-semibold rounded-md shadow-md hover:bg-gray-800 transition-colors duration-200"
+              disabled={isLoading}
+              className="w-full py-3 mt-6 sm:mt-8 bg-black text-white font-semibold rounded-md shadow-md hover:bg-gray-800 transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              Sign In
+              {isLoading ? "Signing In..." : "Sign In"}
             </button>
 
             <p className="text-center text-sm text-black pt-4 transition-colors duration-300">
-              Already a member?{" "}
+              New to Team Track?{" "}
               <button
                 type="button"
                 onClick={handleToSignUp}
+                disabled={isLoading}
                 className="text-black font-medium hover:text-gray-700 transition-colors duration-200"
               >
                 Create account
