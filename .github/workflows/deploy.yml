@@ -32,6 +32,12 @@ jobs:
           echo "LOCAL_URL=${{ secrets.LOCAL_URL }}" >> backend/.env
           echo "TOKEN_TELEGRAM_NOTIFICATIONS=${{ secrets.TOKEN_TELEGRAM_NOTIFICATIONS }}" >> backend/.env
           echo "CHAT_ID_TELEGRAM_BOT_NOTIFICATIONS=${{ secrets.CHAT_ID_TELEGRAM_BOT_NOTIFICATIONS }}" >> backend/.env
+          echo "SMTP_HOST=${{ secrets.SMTP_HOST }}" >> backend/.env
+          echo "SMTP_PORT=${{ secrets.SMTP_PORT }}" >> backend/.env
+          echo "SMTP_USERNAME=${{ secrets.SMTP_USERNAME }}" >> backend/.env
+          echo "SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}" >> backend/.env
+          echo "SMTP_FROM_EMAIL=${{ secrets.SMTP_FROM_EMAIL }}" >> backend/.env
+          echo "SMTP_FROM_NAME=${{ secrets.SMTP_FROM_NAME }}" >> backend/.env
 
       - name: Create .env File
         run: |
