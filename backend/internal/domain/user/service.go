@@ -11,6 +11,7 @@ import (
 type Service interface {
 
 	// CRUD
+	CreateUnverified(ctx context.Context, u *dto.UserApi) (string, error)
 	Create(ctx context.Context, u *dto.UserApi) error
 	Update(ctx context.Context, u *entity.User, id string) error
 	Get(ctx context.Context, id string) (*entity.User, error)
