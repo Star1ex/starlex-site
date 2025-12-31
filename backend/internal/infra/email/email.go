@@ -18,7 +18,7 @@ type EmailService struct {
 	config EmailConfig
 }
 
-func NewEmailConfig(config EmailConfig) *EmailService {
+func NewEmailService(config EmailConfig) *EmailService {
 	return &EmailService{config: config}
 }
 
