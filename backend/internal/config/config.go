@@ -60,8 +60,8 @@ func LoadConfig() *Config {
 			SMTPPort:     os.Getenv("SMTP_PORT"),
 			SMTPUsername: os.Getenv("SMTP_USERNAME"),
 			SMTPPassword: os.Getenv("SMTP_PASSWORD"),
-			FromEmail:    os.Getenv("FROM_FROM_EMAIL"),
-			FromName:     os.Getenv("FROM_FROM_NAME"),
+			FromEmail:    os.Getenv("SMTP_FROM_EMAIL"),
+			FromName:     os.Getenv("SMTP_FROM_NAME"),
 		},
 
 		DatabaseConfig: DatabaseConfig{

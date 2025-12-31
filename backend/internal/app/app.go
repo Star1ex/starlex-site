@@ -52,7 +52,7 @@ func StartServer() {
 	taskRepo := repository.NewTaskRepository(db.DB)
 	verificationRepo := repository.NewVerificationRepository(db.DB)
 
-	emailService := emailService.NewEmailConfig(emailService.EmailConfig{
+	emailService := emailService.NewEmailService(emailService.EmailConfig{
 		SMTPHost:     config.EmailConfig.SMTPHost,
 		SMTPPort:     config.EmailConfig.SMTPPort,
 		SMTPUsername: config.EmailConfig.SMTPUsername,
