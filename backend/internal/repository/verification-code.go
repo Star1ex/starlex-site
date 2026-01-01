@@ -18,6 +18,10 @@ type VerificationCodeModel struct {
 	CreatedAt int64  `gorm:"autoCreateTime"`
 }
 
+func (VerificationCodeModel) TableName() string {
+	return "verification_code_models"
+}
+
 type VerificationRepository struct {
 	db *gorm.DB
 }
@@ -48,12 +52,10 @@ func toVerificationDomain(m *VerificationCodeModel) *entity.VerificationCode {
 	}
 }
 
-// create new code
 func (r *VerificationRepository) Create(ctx context.Context, code *entity.VerificationCode) error {
 	return r.db.WithContext(ctx).Create(fromVerificationDomain(code)).Error
 }
 
-// return code by userID
 func (r *VerificationRepository) GetByUserID(ctx context.Context, userID string) (*entity.VerificationCode, error) {
 	var model VerificationCodeModel
 	err := r.db.WithContext(ctx).
@@ -89,10 +91,9 @@ func (r *VerificationRepository) MarkAsUsed(ctx context.Context, id string) erro
 	return r.db.WithContext(ctx).
 		Model(&VerificationCodeModel{}).
 		Where("id = ?", id).
-		Update("is_used = ?", true).Error
+		Update("is_used", true).Error
 }
 
-// delete code by userID
 func (r *VerificationRepository) DeleteByUserID(ctx context.Context, userID string) error {
 	return r.db.WithContext(ctx).
 		Where("user_id = ?", userID).

@@ -62,7 +62,9 @@ func migrate(db *DB) error {
 	if err := db.AutoMigrate(
 		&repository.UserModel{},
 		&repository.TeamModel{},
-		&repository.TaskModel{}); err != nil {
+		&repository.TaskModel{},
+		&repository.VerificationCodeModel{},
+	); err != nil {
 		return fmt.Errorf("error migrating models: %v", err)
 	}
 
