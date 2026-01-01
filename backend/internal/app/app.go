@@ -61,6 +61,7 @@ func StartServer() {
 		FromName:     config.EmailConfig.FromName,
 	})
 
+	fmt.Println("Check", config.EmailConfig.SMTPHost, config.EmailConfig.SMTPPort, config.EmailConfig.SMTPUsername, config.EmailConfig.SMTPPassword, config.EmailConfig.FromEmail, config.EmailConfig.FromName)
 	verificationService := service.NewVerificationService(verificationRepo, userRepo, emailService)
 	userService := service.NewUserService(userRepo, storage, bus)
 	teamService := service.NewTeamService(teamRepo, userRepo)
