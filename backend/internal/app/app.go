@@ -46,6 +46,10 @@ func StartServer() {
 		"user.registered",
 		handlers.UserRegisteredTelegramHandler(tg),
 	)
+	bus.Subscribe(
+		"user.login",
+		handlers.UserLoginTelegramHandler(tg),
+	)
 
 	userRepo := repository.NewUserRepository(db.DB)
 	teamRepo := repository.NewTeamRepository(db.DB)
