@@ -48,13 +48,14 @@ func toDomain(u *UserModel) *entity.User {
 		photoURL = &u.PhotoURL
 	}
 	return &entity.User{
-		ID:        u.ID,
-		Email:     u.Email,
-		Password:  u.Password,
-		FirstName: u.FirstName,
-		LastName:  u.LastName,
-		Role:      u.Role,
-		Photo_URL: photoURL,
+		ID:         u.ID,
+		Email:      u.Email,
+		Password:   u.Password,
+		FirstName:  u.FirstName,
+		LastName:   u.LastName,
+		Role:       u.Role,
+		Photo_URL:  photoURL,
+		IsVerified: u.IsVerified,
 	}
 }
 
@@ -92,15 +93,18 @@ func (r *UserRepository) Delete(ctx context.Context, id string) error {
 // Retrieves user by email
 func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*entity.User, error) {
 	var model UserModel
-	//Search for a user by email
-	result := r.db.WithContext(ctx).Where("email = ?", email).First(&model)
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, ErrUserNotFound
+
+	err := r.db.WithContext(ctx).
+		Where("email = ?", email).
+		First(&model).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.New("user not found")
 		}
-		return nil, result.Error
+		return nil, err
 	}
-	//Use toDomain factory
+
 	return toDomain(&model), nil
 }
 
@@ -210,10 +214,20 @@ func (r *UserRepository) GetPhoto(ctx context.Context, userID string) (string, e
 
 // mark is verified user
 func (r *UserRepository) MarkIsVerified(ctx context.Context, userID string) error {
-	return r.db.WithContext(ctx).
+	result := r.db.WithContext(ctx).
 		Model(&UserModel{}).
 		Where("id = ?", userID).
-		Update("is_verified", true).Error
+		Update("is_verified", true)
+
+	if result.Error != nil {
+		return result.Error
+	}
+
+	if result.RowsAffected == 0 {
+		return errors.New("user not found")
+	}
+
+	return nil
 }
 
 // check is verified user
