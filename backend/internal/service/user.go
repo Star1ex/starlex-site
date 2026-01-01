@@ -69,6 +69,8 @@ func (s *UserService) Login(ctx context.Context, email, password string) (*entit
 		return nil, errors.New("invalid password")
 	}
 
+	s.PublishUserLogin(user)
+
 	return user, nil
 }
 
@@ -113,6 +115,16 @@ func (s *UserService) Update(ctx context.Context, u *entity.User, id string) err
 
 func (s *UserService) PublishUserRegistered(user *entity.User) {
 	s.bus.Publish(events.UserRegisteredEvent{
+		UserID:     user.ID,
+		Email:      user.Email,
+		FirstName:  user.FirstName,
+		LastName:   user.LastName,
+		OccurredAt: time.Now(),
+	})
+}
+
+func (s *UserService) PublishUserLogin(user *entity.User) {
+	s.bus.Publish(events.UserLoginEvent{
 		UserID:     user.ID,
 		Email:      user.Email,
 		FirstName:  user.FirstName,
