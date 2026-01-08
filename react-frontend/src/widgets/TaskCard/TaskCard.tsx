@@ -1,24 +1,28 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Avatar from '@/shared/ui/Avatar.js';
 import type { Task, User } from '@/entities/types.js';
+import { Token } from '@/app/api/token.js';
+
+const getToken = () => Token.get();
 
 interface TaskCardProps {
   task: Task;
   users: User[];
   onUpdate: () => Promise<void>;
   onClick: () => void;
+  teamId: string;
 }
 
-const statusConfig: Record<string, { label: string; color: string }> = {
-  not_started: { label: 'Not started', color: 'bg-gray-100 text-gray-600' },
-  in_progress: { label: 'In Progress', color: 'bg-blue-100 text-blue-700' },
-  done: { label: 'Done', color: 'bg-green-100 text-green-700' },
+const statusConfig: Record<string, { label: string; color: string; bgColor: string }> = {
+  not_started: { label: 'Not started', color: 'text-gray-600', bgColor: 'bg-gray-100' },
+  in_progress: { label: 'In Progress', color: 'text-blue-700', bgColor: 'bg-blue-100' },
+  done: { label: 'Done', color: 'text-green-700', bgColor: 'bg-green-100' },
 };
 
-const priorityConfig: Record<string, { label: string; color: string }> = {
-  low: { label: 'Low', color: 'bg-green-50 text-green-700' },
-  medium: { label: 'Medium', color: 'bg-yellow-50 text-yellow-700' },
-  high: { label: 'High', color: 'bg-red-50 text-red-700' },
+const priorityConfig: Record<string, { label: string; color: string; bgColor: string }> = {
+  low: { label: 'Low', color: 'text-green-700', bgColor: 'bg-green-50' },
+  medium: { label: 'Medium', color: 'text-yellow-700', bgColor: 'bg-yellow-50' },
+  high: { label: 'High', color: 'text-red-700', bgColor: 'bg-red-50' },
 };
 
 const TaskCard: React.FC<TaskCardProps> = ({
@@ -26,7 +30,17 @@ const TaskCard: React.FC<TaskCardProps> = ({
   users,
   onUpdate,
   onClick,
+  teamId,
 }) => {
+  const [isEditingAssignee, setIsEditingAssignee] = useState(false);
+  const [isEditingStatus, setIsEditingStatus] = useState(false);
+  const [isEditingPriority, setIsEditingPriority] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const assigneeRef = useRef<HTMLDivElement>(null);
+  const statusRef = useRef<HTMLDivElement>(null);
+  const priorityRef = useRef<HTMLDivElement>(null);
+
   // Handle user_ids - can be array of TaskUser objects or strings
   const userIds = React.useMemo(() => {
     if (!task.user_ids || !Array.isArray(task.user_ids)) return [];
@@ -49,54 +63,300 @@ const TaskCard: React.FC<TaskCardProps> = ({
     return (s && statusConfig[s]) ? s : 'not_started';
   }, [task.progress]);
 
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (assigneeRef.current && !assigneeRef.current.contains(event.target as Node)) {
+        setIsEditingAssignee(false);
+      }
+      if (statusRef.current && !statusRef.current.contains(event.target as Node)) {
+        setIsEditingStatus(false);
+      }
+      if (priorityRef.current && !priorityRef.current.contains(event.target as Node)) {
+        setIsEditingPriority(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const updateTaskField = async (field: 'user_ids' | 'progress' | 'priority', value: string | string[]) => {
+    setIsUpdating(true);
+    setError(null);
+    try {
+      const token = getToken();
+      if (!token) {
+        setError('Authentication required');
+        return;
+      }
+
+      if (field === 'progress') {
+        const res = await fetch(`/api/team/${teamId}/tasks/${task.id}/update_progress`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+          },
+          body: JSON.stringify({
+            progress: value,
+            task: task.task,
+            description: task.description,
+            user_ids: userIds,
+          }),
+        });
+        if (res.ok) {
+          await onUpdate();
+        }
+      } else if (field === 'priority') {
+        const res = await fetch(`/api/team/${teamId}/tasks/${task.id}/update`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+          },
+          body: JSON.stringify({
+            task: task.task,
+            description: task.description,
+            priority: value,
+            user_ids: userIds,
+          }),
+        });
+        if (res.ok) {
+          await onUpdate();
+        }
+      } else if (field === 'user_ids') {
+        const res = await fetch(`/api/team/${teamId}/tasks/${task.id}/update`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+          },
+          body: JSON.stringify({
+            task: task.task,
+            description: task.description,
+            priority: task.priority,
+            user_ids: value as string[],
+          }),
+        });
+        if (res.ok) {
+          await onUpdate();
+        } else {
+          const errorData = await res.json().catch(() => ({ error: 'Failed to update task' }));
+          setError(errorData.error || 'Failed to update task');
+        }
+      }
+    } catch (error) {
+      console.error('Failed to update task:', error);
+      setError('Network error. Please try again.');
+    } finally {
+      setIsUpdating(false);
+      setIsEditingAssignee(false);
+      setIsEditingStatus(false);
+      setIsEditingPriority(false);
+    }
+  };
+
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Don't open modal if clicking on interactive elements
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('.dropdown-menu') ||
+      target.closest('.editable-field') ||
+      target.closest('button') ||
+      target.closest('select')
+    ) {
+      return;
+    }
+    onClick();
+  };
+
   if (!task || !task.id) {
     return null;
   }
 
   return (
     <div
-      onClick={onClick}
-      className="group bg-white border border-gray-200 rounded-xl p-5 sm:p-6 cursor-pointer hover:shadow-xl hover:border-gray-300 hover:-translate-y-0.5 transition-all duration-300 ease-out"
+      onClick={handleCardClick}
+      className="group relative bg-white border-b border-gray-200 hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
     >
-      <div className="flex items-start justify-between mb-4">
-        <h3 className="text-lg sm:text-xl font-bold flex-1 pr-4 text-gray-900 group-hover:text-black transition-colors">
-          {task.task || 'Untitled Task'}
-        </h3>
-        <div className="flex items-center gap-2 flex-shrink-0">
-          <div className={`px-2.5 py-1 text-xs font-semibold rounded-md ${priorityConfig[priority].color} shadow-sm`}>
-            {priorityConfig[priority].label}
+      <div className="flex items-center gap-4 px-4 py-3 text-sm">
+        {/* Task Name */}
+        <div className="flex-1 min-w-0">
+          <div className="font-medium text-gray-900 truncate">
+            {task.task || 'Untitled Task'}
           </div>
-          <div className={`px-2.5 py-1 text-xs font-semibold rounded-md ${statusConfig[status].color} shadow-sm`}>
-            {statusConfig[status].label}
+          {task.description && (
+            <div className="text-xs text-gray-500 mt-0.5 line-clamp-1">
+              {task.description}
+            </div>
+          )}
+        </div>
+
+        {/* Assignee */}
+        <div className="w-32 flex-shrink-0" ref={assigneeRef}>
+          <div className="relative">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditingAssignee(!isEditingAssignee);
+              }}
+              className="editable-field flex items-center gap-1.5 px-2 py-1 rounded hover:bg-gray-200 transition-colors"
+            >
+              {assignedUsers.length > 0 ? (
+                <div className="flex items-center gap-1 -space-x-2">
+                  {assignedUsers.slice(0, 2).map((user) => (
+                    <Avatar key={user.id} user={user} size="sm" />
+                  ))}
+                  {assignedUsers.length > 2 && (
+                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs font-medium text-gray-600 border-2 border-white">
+                      +{assignedUsers.length - 2}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <span className="text-xs text-gray-400">Unassigned</span>
+              )}
+              <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {isEditingAssignee && (
+              <div className="dropdown-menu absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[100] p-2 min-w-[200px]">
+                <div className="max-h-48 overflow-y-auto space-y-1">
+                  {users.map((user) => {
+                    const isSelected = userIds.includes(user.id);
+                    return (
+                      <label
+                        key={user.id}
+                        className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-100 cursor-pointer"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            const newUserIds = e.target.checked
+                              ? [...userIds, user.id]
+                              : userIds.filter(id => id !== user.id);
+                            updateTaskField('user_ids', newUserIds);
+                          }}
+                          className="rounded"
+                        />
+                        <Avatar user={user} size="sm" />
+                        <span className="text-sm text-gray-700">{user.firstName} {user.lastName}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Status */}
+        <div className="w-32 flex-shrink-0" ref={statusRef}>
+          <div className="relative">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditingStatus(!isEditingStatus);
+              }}
+              className="editable-field flex items-center gap-1.5 px-2 py-1 rounded hover:bg-gray-200 transition-colors"
+            >
+              <span className={`px-2 py-0.5 text-xs font-medium rounded ${statusConfig[status].bgColor} ${statusConfig[status].color}`}>
+                {statusConfig[status].label}
+              </span>
+              <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {isEditingStatus && (
+              <div className="dropdown-menu absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[100] min-w-[140px]">
+                {Object.entries(statusConfig).map(([key, config]) => (
+                  <button
+                    key={key}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      updateTaskField('progress', key);
+                    }}
+                    className="w-full text-left px-3 py-2 hover:bg-gray-100 first:rounded-t-lg last:rounded-b-lg flex items-center gap-2"
+                  >
+                    <span className={`px-2 py-0.5 text-xs font-medium rounded ${config.bgColor} ${config.color}`}>
+                      {config.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Priority */}
+        <div className="w-28 flex-shrink-0" ref={priorityRef}>
+          <div className="relative">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setIsEditingPriority(!isEditingPriority);
+              }}
+              className="editable-field flex items-center gap-1.5 px-2 py-1 rounded hover:bg-gray-200 transition-colors"
+            >
+              <span className={`px-2 py-0.5 text-xs font-medium rounded ${priorityConfig[priority].bgColor} ${priorityConfig[priority].color}`}>
+                {priorityConfig[priority].label}
+              </span>
+              <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+
+            {isEditingPriority && (
+              <div className="dropdown-menu absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[100] min-w-[120px]">
+                {Object.entries(priorityConfig).map(([key, config]) => (
+                  <button
+                    key={key}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      updateTaskField('priority', key);
+                    }}
+                    className="w-full text-left px-3 py-2 hover:bg-gray-100 first:rounded-t-lg last:rounded-b-lg flex items-center gap-2"
+                  >
+                    <span className={`px-2 py-0.5 text-xs font-medium rounded ${config.bgColor} ${config.color}`}>
+                      {config.label}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
 
-      {task.description && (
-        <p className="text-sm text-gray-600 mb-4 line-clamp-2 leading-relaxed">
-          {task.description}
-        </p>
+      {isUpdating && (
+        <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10">
+          <div className="w-4 h-4 border-2 border-gray-300 border-t-black rounded-full animate-spin" />
+        </div>
       )}
 
-      <div className="flex items-center gap-2 pt-3 border-t border-gray-100">
-        <span className="text-xs text-gray-500 font-medium mr-1">Assigned:</span>
-        {assignedUsers.length > 0 ? (
-          <div className="flex items-center gap-2">
-            {assignedUsers.slice(0, 3).map((user) => (
-              <div key={user.id} className="transition-transform duration-200 hover:scale-110" title={`${user.firstName} ${user.lastName}`}>
-                <Avatar user={user} size="sm" />
-              </div>
-            ))}
-            {assignedUsers.length > 3 && (
-              <div className="w-8 h-8 bg-gradient-to-br from-gray-100 to-gray-200 rounded-full flex items-center justify-center text-xs font-semibold text-gray-600 border border-gray-200 shadow-sm">
-                +{assignedUsers.length - 3}
-              </div>
-            )}
-          </div>
-        ) : (
-          <span className="text-xs text-gray-400 italic">No assignees</span>
-        )}
-      </div>
+      {error && (
+        <div className="absolute top-2 right-2 bg-red-50 border border-red-200 text-red-800 px-3 py-1.5 rounded-lg text-xs z-20 shadow-md">
+          {error}
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              setError(null);
+            }}
+            className="ml-2 text-red-600 hover:text-red-800"
+          >
+            ×
+          </button>
+        </div>
+      )}
     </div>
   );
 };

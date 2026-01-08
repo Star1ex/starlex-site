@@ -30,7 +30,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   users,
   onEdit,
 }) => {
-  if (!isOpen) return null;
+  if (!isOpen || !task) return null;
 
   const userIds = task.user_ids?.map(u => typeof u === 'string' ? u : u.id) || [];
   const assignedUsers = userIds
