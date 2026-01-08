@@ -313,20 +313,20 @@ const TaskCard: React.FC<TaskCardProps> = ({
               className="editable-field flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border transition-colors cursor-pointer"
             >
               {assignedUsers.length > 0 ? (
-                <div className="flex items-center gap-1 -space-x-1">
+                <div className="flex items-center gap-0.5 -space-x-1">
                   {assignedUsers.slice(0, 3).map((user) => (
                     <div
                       key={user.id}
                       className="relative"
                       title={`${user.firstName} ${user.lastName}`}
                     >
-                      <div className="w-5 h-5 rounded-full">
-                        <Avatar user={user} size="sm" />
+                      <div className="w-4 h-4 rounded-full">
+                        <Avatar user={user} size="xs" />
                       </div>
                     </div>
                   ))}
                   {assignedUsers.length > 3 && (
-                    <div className="w-5 h-5 bg-gray-200 dark:bg-dark-border rounded-full flex items-center justify-center text-[10px] font-medium text-gray-600 dark:text-dark-text">
+                    <div className="w-4 h-4 bg-gray-200 dark:bg-dark-border rounded-full flex items-center justify-center text-[8px] font-medium text-gray-600 dark:text-dark-text">
                       +{assignedUsers.length - 3}
                     </div>
                   )}

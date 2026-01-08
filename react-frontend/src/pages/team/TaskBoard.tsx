@@ -230,12 +230,12 @@ const TaskBoard: React.FC = () => {
       <div className="flex flex-col lg:flex-row max-w-[1600px] mx-auto px-4 sm:px-6 py-4 sm:py-6 gap-4 sm:gap-6">
         <UserSidebar 
           users={users} 
-          className="hidden lg:block w-48 flex-shrink-0 order-2 lg:order-1"
+          className="hidden lg:block w-48 flex-shrink-0"
           teamId={team_id}
           onUserRemoved={handleUserRemoved}
           onViewProfile={handleViewProfile}
         />
-        <main className="flex-1 min-w-0 order-1 lg:order-2">
+        <main className="flex-1 min-w-0">
           {tasks.length === 0 ? (
             <div className="text-center py-12 sm:py-24">
               <div className="max-w-md mx-auto px-4">
@@ -270,14 +270,6 @@ const TaskBoard: React.FC = () => {
             </div>
           )}
         </main>
-
-        <UserSidebar 
-          users={users} 
-          className="hidden lg:block w-48 flex-shrink-0"
-          teamId={team_id}
-          onUserRemoved={handleUserRemoved}
-          onViewProfile={handleViewProfile}
-        />
 
         {isSidebarOpen && (
           <>

@@ -4,11 +4,12 @@ import type { User } from '@/entities/types.js';
 
 interface AvatarProps {
   user: User;
-  size: 'sm' | 'md' | 'lg'; 
+  size: 'xs' | 'sm' | 'md' | 'lg'; 
   className?: string;
 }
 
 const sizeClasses: Record<AvatarProps['size'], string> = {
+  xs: 'w-4 h-4',
   sm: 'w-10 h-10',
   md: 'w-12 h-12', 
   lg: 'w-16 h-16',
@@ -21,8 +22,10 @@ const Avatar: React.FC<AvatarProps> = ({
 }) => {
   if (!user) {
     return (
-      <div className={`${sizeClasses[size]} rounded-full bg-gray-200 flex items-center justify-center`}>
-        <span className="font-semibold text-xs text-gray-600">U</span>
+      <div className={`${sizeClasses[size]} rounded-full bg-gray-200 dark:bg-dark-border flex items-center justify-center`}>
+        <span className={`font-semibold text-gray-600 dark:text-dark-text-muted ${
+          size === 'xs' ? 'text-[8px]' : size === 'sm' ? 'text-xs' : size === 'md' ? 'text-sm' : 'text-base'
+        }`}>U</span>
       </div>
     );
   }
@@ -78,7 +81,9 @@ const Avatar: React.FC<AvatarProps> = ({
         />
       ) : (
         <span 
-          className="font-semibold text-xs sm:text-sm leading-none tracking-tight text-gray-700 dark:text-dark-text select-none"
+          className={`font-semibold leading-none tracking-tight text-gray-700 dark:text-dark-text select-none ${
+            size === 'xs' ? 'text-[8px]' : size === 'sm' ? 'text-xs' : size === 'md' ? 'text-sm' : 'text-base'
+          }`}
           aria-hidden="true"
         >
           {initials}
