@@ -77,10 +77,12 @@ const TaskCard: React.FC<TaskCardProps> = ({
   const [assigneeDropdownUp, setAssigneeDropdownUp] = useState(false);
   const [statusDropdownUp, setStatusDropdownUp] = useState(false);
   const [priorityDropdownUp, setPriorityDropdownUp] = useState(false);
+  const [assigneeSearchQuery, setAssigneeSearchQuery] = useState('');
   const assigneeRef = useRef<HTMLDivElement>(null);
   const statusRef = useRef<HTMLDivElement>(null);
   const priorityRef = useRef<HTMLDivElement>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
+  const assigneeSearchRef = useRef<HTMLInputElement>(null);
 
   // Handle user_ids - can be array of TaskUser objects or strings
   const userIds = React.useMemo(() => {
@@ -93,6 +95,16 @@ const TaskCard: React.FC<TaskCardProps> = ({
       .map((id) => users.find((u) => u.id === id))
       .filter(Boolean) as User[];
   }, [userIds, users]);
+
+  // Filter users for assignee dropdown
+  const filteredUsersForAssignee = React.useMemo(() => {
+    if (!assigneeSearchQuery.trim()) return users;
+    const query = assigneeSearchQuery.toLowerCase().trim();
+    return users.filter(user => 
+      `${user.firstName} ${user.lastName}`.toLowerCase().includes(query) ||
+      user.email?.toLowerCase().includes(query)
+    );
+  }, [users, assigneeSearchQuery]);
 
   const priority = React.useMemo(() => {
     const p = task.priority as 'low' | 'medium' | 'high';
@@ -132,18 +144,35 @@ const TaskCard: React.FC<TaskCardProps> = ({
     }
   }, [isEditingPriority]);
 
+  // Reset search query when dropdown closes
+  useEffect(() => {
+    if (!isEditingAssignee) {
+      setAssigneeSearchQuery('');
+    }
+  }, [isEditingAssignee]);
+
+  // Focus search input when dropdown opens
+  useEffect(() => {
+    if (isEditingAssignee && assigneeSearchRef.current) {
+      setTimeout(() => {
+        assigneeSearchRef.current?.focus();
+      }, 100);
+    }
+  }, [isEditingAssignee]);
+
   // Close dropdowns when clicking outside (desktop and mobile)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       const target = event.target as Node;
+      const dropdown = (event.target as HTMLElement)?.closest('.dropdown-menu');
       
-      if (isEditingAssignee && assigneeRef.current && !assigneeRef.current.contains(target)) {
+      if (isEditingAssignee && assigneeRef.current && !assigneeRef.current.contains(target) && !dropdown) {
         setIsEditingAssignee(false);
       }
-      if (isEditingStatus && statusRef.current && !statusRef.current.contains(target)) {
+      if (isEditingStatus && statusRef.current && !statusRef.current.contains(target) && !dropdown) {
         setIsEditingStatus(false);
       }
-      if (isEditingPriority && priorityRef.current && !priorityRef.current.contains(target)) {
+      if (isEditingPriority && priorityRef.current && !priorityRef.current.contains(target) && !dropdown) {
         setIsEditingPriority(false);
       }
       if (showContextMenu && contextMenuRef.current && !contextMenuRef.current.contains(target)) {
@@ -312,7 +341,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
         </div>
 
         {/* Assignee */}
-        <div className="flex-shrink-0 min-w-[60px] sm:min-w-[80px]" ref={assigneeRef}>
+        <div className="flex-shrink-0 min-w-[80px] sm:min-w-[100px]" ref={assigneeRef}>
           <div className="relative">
             <div
               onClick={(e) => {
@@ -322,20 +351,20 @@ const TaskCard: React.FC<TaskCardProps> = ({
               className="editable-field flex items-center justify-center gap-1 px-1.5 sm:px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border transition-colors cursor-pointer"
             >
               {assignedUsers.length > 0 ? (
-                <div className="flex items-center gap-0.5 -space-x-1">
+                <div className="flex items-center gap-1 -space-x-1.5">
                   {assignedUsers.slice(0, 3).map((user) => (
                     <div
                       key={user.id}
                       className="relative"
                       title={`${user.firstName} ${user.lastName}`}
                     >
-                      <div className="w-4 h-4 rounded-full">
-                        <Avatar user={user} size="xs" />
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full ring-2 ring-white dark:ring-dark-surface">
+                        <Avatar user={user} size="sm" />
                       </div>
                     </div>
                   ))}
                   {assignedUsers.length > 3 && (
-                    <div className="w-4 h-4 bg-gray-200 dark:bg-dark-border rounded-full flex items-center justify-center text-[8px] font-medium text-gray-600 dark:text-dark-text">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-200 dark:bg-dark-border rounded-full flex items-center justify-center text-[10px] sm:text-xs font-medium text-gray-600 dark:text-dark-text ring-2 ring-white dark:ring-dark-surface">
                       +{assignedUsers.length - 3}
                     </div>
                   )}
@@ -347,40 +376,72 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
             {isEditingAssignee && (
               <div 
-                className={`dropdown-menu fixed sm:absolute ${assigneeDropdownUp ? 'bottom-auto top-0' : 'top-auto bottom-0'} sm:${assigneeDropdownUp ? 'bottom-full mb-2' : 'top-full mt-2'} left-0 right-0 sm:left-auto sm:right-0 sm:w-auto w-full sm:min-w-[240px] bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-2xl z-[100] p-2 max-h-[50vh] sm:max-h-[320px] overflow-y-auto`}
+                className={`dropdown-menu fixed sm:absolute ${assigneeDropdownUp ? 'bottom-auto top-0' : 'top-auto bottom-0'} sm:${assigneeDropdownUp ? 'bottom-full mb-2' : 'top-full mt-2'} left-0 right-0 sm:left-auto sm:right-0 sm:w-auto w-full sm:min-w-[280px] bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-2xl z-[100] overflow-hidden max-h-[60vh] sm:max-h-[400px] flex flex-col`}
+                onClick={(e) => e.stopPropagation()}
               >
-                <div className="space-y-1">
-                  {users.map((user) => {
-                    const isSelected = userIds.includes(user.id);
-                    return (
-                      <button
-                        key={user.id}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleUserAssignment(user.id);
-                        }}
-                        className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
-                          isSelected 
-                            ? 'bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/40' 
-                            : 'hover:bg-gray-100 dark:hover:bg-dark-border'
-                        }`}
-                      >
-                        <div className="relative">
-                          <Avatar user={user} size="sm" />
-                          {isSelected && (
-                            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-blue-600 dark:bg-blue-500 rounded-full border-2 border-white dark:border-dark-surface flex items-center justify-center">
-                              <svg className="w-1.5 h-1.5 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                              </svg>
+                {/* Search Input */}
+                <div className="p-2 border-b border-gray-200 dark:border-dark-border sticky top-0 bg-white dark:bg-dark-surface">
+                  <input
+                    ref={assigneeSearchRef}
+                    type="text"
+                    placeholder="Search users..."
+                    value={assigneeSearchQuery}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      setAssigneeSearchQuery(e.target.value);
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                    className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-dark-border rounded-lg bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text placeholder-gray-400 dark:placeholder-dark-text-muted focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
+                    autoFocus
+                  />
+                </div>
+                
+                {/* Users List */}
+                <div className="overflow-y-auto p-2 space-y-1">
+                  {filteredUsersForAssignee.length === 0 ? (
+                    <div className="px-3 py-4 text-center text-sm text-gray-500 dark:text-dark-text-muted">
+                      {assigneeSearchQuery ? 'No users found' : 'No users available'}
+                    </div>
+                  ) : (
+                    filteredUsersForAssignee.map((user) => {
+                      const isSelected = userIds.includes(user.id);
+                      return (
+                        <button
+                          key={user.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleUserAssignment(user.id);
+                          }}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all ${
+                            isSelected 
+                              ? 'bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/40 border border-blue-200 dark:border-blue-800' 
+                              : 'hover:bg-gray-100 dark:hover:bg-dark-border border border-transparent'
+                          }`}
+                        >
+                          <div className="relative flex-shrink-0">
+                            <Avatar user={user} size="sm" />
+                            {isSelected && (
+                              <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-blue-600 dark:bg-blue-500 rounded-full border-2 border-white dark:border-dark-surface flex items-center justify-center">
+                                <svg className="w-2.5 h-2.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                  <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0 text-left">
+                            <div className={`text-sm font-medium ${isSelected ? 'text-blue-900 dark:text-blue-300' : 'text-gray-900 dark:text-dark-text'}`}>
+                              {user.firstName} {user.lastName}
                             </div>
-                          )}
-                        </div>
-                        <span className={`text-sm ${isSelected ? 'text-blue-900 dark:text-blue-300 font-medium' : 'text-gray-700 dark:text-dark-text-muted'}`}>
-                          {user.firstName} {user.lastName}
-                        </span>
-                      </button>
-                    );
-                  })}
+                            {user.email && (
+                              <div className="text-xs text-gray-500 dark:text-dark-text-muted truncate">
+                                {user.email}
+                              </div>
+                            )}
+                          </div>
+                        </button>
+                      );
+                    })
+                  )}
                 </div>
               </div>
             )}

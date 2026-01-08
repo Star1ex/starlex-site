@@ -4,7 +4,7 @@ import Avatar from '@/shared/ui/Avatar.js';
 import { Token } from '@/app/api/token.js';
 import type { User } from '@/entities/types.js';
 
-const getToken = () => Token.get();
+import { getAuthToken, getAuthUser } from '@/shared/lib/authManager.js';
 
 type Props = {
   isMobile?: boolean;
@@ -35,11 +35,20 @@ export const RightSidebar: React.FC<Props> = ({ isMobile = false, onClose }) => 
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const token = getToken();
+    const token = getAuthToken();
     if (!token) return;
 
-    const info = getUserIdFromToken(token);
-    setUserInfo(info);
+    // Try to get user info from stored data first
+    const storedUser = getAuthUser();
+    if (storedUser && (storedUser.firstName || storedUser.first_name)) {
+      const firstName = storedUser.firstName || storedUser.first_name || '';
+      const lastName = storedUser.lastName || storedUser.last_name || '';
+      const email = storedUser.email || '';
+      setUserInfo({ firstName, lastName, email });
+    } else {
+      const info = getUserIdFromToken(token);
+      setUserInfo(info);
+    }
 
     const fetchUser = async () => {
       try {
@@ -50,8 +59,15 @@ export const RightSidebar: React.FC<Props> = ({ isMobile = false, onClose }) => 
           },
         });
         if (res.ok) {
-          const data: User = await res.json();
-          setUser(data);
+          const data: any = await res.json();
+          setUser(data as User);
+          // Update user info from API response
+          const firstName = data.firstName || data.first_name || '';
+          const lastName = data.lastName || data.last_name || '';
+          const email = data.email || '';
+          if (firstName || lastName) {
+            setUserInfo({ firstName, lastName, email });
+          }
         }
       } catch (err) {
         console.error('Error loading profile:', err);
@@ -74,13 +90,16 @@ export const RightSidebar: React.FC<Props> = ({ isMobile = false, onClose }) => 
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-    };
+  };
   }, [showMenu]);
 
-  const displayName = userInfo 
-    ? `${userInfo.firstName || ''}${userInfo.lastName ? ` ${userInfo.lastName}` : ''}`.trim() || 'User'
-    : 'User';
-  const displayEmail = user?.email || userInfo?.email || '';
+  // Prioritize user data from API over token
+  const displayName = user 
+    ? `${(user as any).firstName || (user as any).first_name || ''}${((user as any).lastName || (user as any).last_name) ? ` ${(user as any).lastName || (user as any).last_name}` : ''}`.trim() || 'User'
+    : (userInfo 
+      ? `${userInfo.firstName || ''}${userInfo.lastName ? ` ${userInfo.lastName}` : ''}`.trim() || 'User'
+      : 'User');
+  const displayEmail = (user as any)?.email || userInfo?.email || '';
 
   // Mobile View
   if (isMobile) {
@@ -179,11 +198,11 @@ export const RightSidebar: React.FC<Props> = ({ isMobile = false, onClose }) => 
   return (
     <aside className="w-full bg-white flex flex-col h-full">
       <div className="flex-1" />
-      
+
       {/* Profile Card */}
       <div className="p-4 border-t border-gray-100">
         <div className="relative" ref={menuRef}>
-          <button
+      <button
             onClick={() => setShowMenu(!showMenu)}
             className="w-full flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-200"
           >
@@ -209,7 +228,7 @@ export const RightSidebar: React.FC<Props> = ({ isMobile = false, onClose }) => 
             <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
             </svg>
-          </button>
+      </button>
 
           {showMenu && (
             <div className="absolute bottom-full left-0 mb-2 w-48 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden">
@@ -223,24 +242,24 @@ export const RightSidebar: React.FC<Props> = ({ isMobile = false, onClose }) => 
                 Profile
               </button>
               <div className="border-t border-gray-100" />
-              <button
+        <button
                 onClick={() => {
                   navigate('/settings');
                   setShowMenu(false);
                 }}
                 className="w-full text-left px-4 py-2.5 hover:bg-gray-100 transition-colors text-sm text-gray-700"
-              >
-                Settings
-              </button>
-              <button
+        >
+          Settings
+        </button>
+        <button
                 onClick={() => {
                   navigate('/about-us');
                   setShowMenu(false);
                 }}
                 className="w-full text-left px-4 py-2.5 hover:bg-gray-100 transition-colors text-sm text-gray-700"
-              >
+        >
                 About Us
-              </button>
+        </button>
             </div>
           )}
         </div>

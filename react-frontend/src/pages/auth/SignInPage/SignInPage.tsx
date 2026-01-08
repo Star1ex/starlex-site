@@ -1,7 +1,7 @@
 import React, { ChangeEvent } from "react";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { setAuthToken, isAuthenticated } from "@/shared/lib/authManager.js";
+import { setAuthToken, setAuthUser, isAuthenticated } from "@/shared/lib/authManager.js";
 
 export const SignInPage = () => {
   const navigate = useNavigate();
@@ -70,7 +70,7 @@ export const SignInPage = () => {
         if (result.token && result.user) {
           // Use centralized auth manager
           setAuthToken(result.token);
-          localStorage.setItem("user", JSON.stringify(result.user));
+          setAuthUser(result.user);
           console.log("Successfully authenticated:", result.user.email);
           
           // Redirect to dashboard or saved redirect path

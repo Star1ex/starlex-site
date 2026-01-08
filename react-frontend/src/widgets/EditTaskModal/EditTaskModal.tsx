@@ -1,9 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import Avatar from '@/shared/ui/Avatar.js';
 import type { Task, User } from '@/entities/types.js';
-import { Token } from '@/app/api/token.js';
-
-const getToken = () => Token.get();
+import { getAuthToken } from '@/shared/lib/authManager.js';
 
 interface EditTaskModalProps {
   isOpen: boolean;
@@ -52,7 +50,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
 
       setIsLoading(true);
       try {
-        const token = getToken();
+        const token = getAuthToken();
         if (!token) {
           window.location.href = '/sign-in';
           return;
@@ -108,7 +106,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
 
     setIsDeleting(true);
     try {
-      const token = getToken();
+      const token = getAuthToken();
       if (!token) {
         window.location.href = '/sign-in';
         return;
