@@ -1,9 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Avatar from '@/shared/ui/Avatar.js';
 import type { Task, User } from '@/entities/types.js';
-import { Token } from '@/app/api/token.js';
-
-const getToken = () => Token.get();
+import { getAuthToken } from '@/shared/lib/authManager.js';
 
 interface TaskCardProps {
   task: Task;
@@ -131,7 +129,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
     setError(null);
     
     try {
-      const token = getToken();
+      const token = getAuthToken();
       if (!token) {
         setError('Authentication required');
         // Rollback
@@ -258,25 +256,25 @@ const TaskCard: React.FC<TaskCardProps> = ({
   return (
     <div
       onClick={handleCardClick}
-      className="group relative bg-white hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
+      className="group relative bg-white dark:bg-dark-surface hover:bg-gray-50 dark:hover:bg-dark-border transition-colors duration-150 cursor-pointer"
     >
-      <div className="flex items-center gap-4 px-4 py-2.5">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 px-3 sm:px-4 py-2 sm:py-2.5">
         {/* Task Name */}
-        <div className="flex-1 min-w-0">
-          <div className="font-medium text-gray-900 text-sm">
+        <div className="flex-1 min-w-0 w-full sm:w-auto">
+          <div className="font-medium text-gray-900 dark:text-dark-text text-sm">
             {task.task || 'Untitled Task'}
           </div>
         </div>
 
         {/* Assignee */}
-        <div className="w-36 flex-shrink-0" ref={assigneeRef}>
+        <div className="w-full sm:w-36 flex-shrink-0" ref={assigneeRef}>
           <div className="relative">
             <div
               onClick={(e) => {
                 e.stopPropagation();
                 setIsEditingAssignee(!isEditingAssignee);
               }}
-              className="editable-field flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+              className="editable-field flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border transition-colors cursor-pointer"
             >
               {assignedUsers.length > 0 ? (
                 <div className="flex items-center gap-1 -space-x-1">
@@ -286,19 +284,19 @@ const TaskCard: React.FC<TaskCardProps> = ({
                       className="relative"
                       title={`${user.firstName} ${user.lastName}`}
                     >
-                      <div className="w-7 h-7 rounded-full ring-2 ring-white">
+                      <div className="w-7 h-7 rounded-full ring-2 ring-white dark:ring-dark-surface">
                         <Avatar user={user} size="sm" />
                       </div>
                     </div>
                   ))}
                   {assignedUsers.length > 3 && (
-                    <div className="w-7 h-7 bg-gray-200 rounded-full flex items-center justify-center text-xs font-medium text-gray-600 border-2 border-white">
+                    <div className="w-7 h-7 bg-gray-200 dark:bg-dark-border rounded-full flex items-center justify-center text-xs font-medium text-gray-600 dark:text-dark-text border-2 border-white dark:border-dark-surface">
                       +{assignedUsers.length - 3}
                     </div>
                   )}
                 </div>
               ) : (
-                <span className="text-xs text-gray-400">Unassigned</span>
+                <span className="text-xs text-gray-400 dark:text-dark-text-muted">Unassigned</span>
               )}
             </div>
 

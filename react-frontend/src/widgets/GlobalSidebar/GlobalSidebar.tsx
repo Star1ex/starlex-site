@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Avatar from '@/shared/ui/Avatar.js';
-import { Token } from '@/app/api/token.js';
+import { getAuthToken } from '@/shared/lib/authManager.js';
 import type { User } from '@/entities/types.js';
-
-const getToken = () => Token.get();
 
 interface GlobalSidebarProps {
   className?: string;
@@ -37,7 +35,7 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const token = getToken();
+    const token = getAuthToken();
     if (!token) {
       navigate('/sign-in');
       return;
@@ -120,19 +118,19 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
   const displayEmail = user?.email || userInfo?.email || '';
 
   return (
-    <aside className={`bg-white border-r border-gray-100 w-64 flex flex-col h-full ${className}`}>
+    <aside className={`bg-white dark:bg-dark-surface border-r border-gray-100 dark:border-dark-border w-64 flex flex-col h-full transition-colors ${className}`}>
       {/* User Workspace Header */}
-      <div className="px-3 py-2.5 border-b border-gray-100">
+      <div className="px-3 py-2.5 border-b border-gray-100 dark:border-dark-border">
         <div className="flex items-center justify-between">
-          <span className="text-sm font-medium text-gray-900 truncate">{displayName}'s</span>
+          <span className="text-sm font-medium text-gray-900 dark:text-dark-text truncate">{displayName}'s</span>
           <div className="flex items-center gap-1">
-            <button className="p-1 hover:bg-gray-100 rounded transition-colors">
-              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button className="p-1 hover:bg-gray-100 dark:hover:bg-dark-border rounded transition-colors">
+              <svg className="w-4 h-4 text-gray-600 dark:text-dark-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
               </svg>
             </button>
-            <button className="p-1 hover:bg-gray-100 rounded transition-colors">
-              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <button className="p-1 hover:bg-gray-100 dark:hover:bg-dark-border rounded transition-colors">
+              <svg className="w-4 h-4 text-gray-600 dark:text-dark-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
               </svg>
             </button>
@@ -146,8 +144,8 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
           onClick={() => navigate('/dashboard')}
           className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors ${
             location.pathname === '/dashboard' 
-              ? 'bg-gray-100 text-gray-900' 
-              : 'text-gray-700 hover:bg-gray-100'
+              ? 'bg-gray-100 dark:bg-dark-border text-gray-900 dark:text-dark-text' 
+              : 'text-gray-700 dark:text-dark-text-muted hover:bg-gray-100 dark:hover:bg-dark-border'
           }`}
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -160,25 +158,25 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
       {/* Teams Section */}
       <div className="px-3 py-2 flex-1 overflow-y-auto">
         <div className="flex items-center justify-between mb-1">
-          <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Teams</span>
+          <span className="text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">Teams</span>
           <button
             onClick={() => {
               const event = new CustomEvent('openNewTeamModal');
               window.dispatchEvent(event);
             }}
-            className="p-0.5 hover:bg-gray-100 rounded transition-colors"
+            className="p-0.5 hover:bg-gray-100 dark:hover:bg-dark-border rounded transition-colors"
             title="Add new"
           >
-            <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-3 h-3 text-gray-500 dark:text-dark-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
           </button>
         </div>
         <div className="space-y-0.5 mt-1">
           {loading ? (
-            <div className="px-2 py-1.5 text-xs text-gray-500">Loading...</div>
+            <div className="px-2 py-1.5 text-xs text-gray-500 dark:text-dark-text-muted">Loading...</div>
           ) : teams.length === 0 ? (
-            <div className="px-2 py-1.5 text-xs text-gray-500">No teams yet</div>
+            <div className="px-2 py-1.5 text-xs text-gray-500 dark:text-dark-text-muted">No teams yet</div>
           ) : (
             teams.map(team => (
               <button
@@ -186,8 +184,8 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
                 onClick={() => navigate(`/team/${team.id}`)}
                 className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left ${
                   location.pathname === `/team/${team.id}`
-                    ? 'bg-gray-100 text-gray-900'
-                    : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-gray-100 dark:bg-dark-border text-gray-900 dark:text-dark-text'
+                    : 'text-gray-700 dark:text-dark-text-muted hover:bg-gray-100 dark:hover:bg-dark-border'
                 }`}
               >
                 <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,7 +200,7 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
               const event = new CustomEvent('openNewTeamModal');
               window.dispatchEvent(event);
             }}
-            className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-100 text-sm text-gray-500 transition-colors"
+            className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-dark-border text-sm text-gray-500 dark:text-dark-text-muted transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -213,11 +211,11 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
       </div>
 
       {/* Profile Card */}
-      <div className="border-t border-gray-100 p-3">
+      <div className="border-t border-gray-100 dark:border-dark-border p-3">
         <div className="relative" ref={profileMenuRef}>
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+            className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-border transition-colors"
           >
             <div className="flex-shrink-0">
               {user && user.photo_url ? (
@@ -225,42 +223,42 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
                   <Avatar user={user} size="sm" />
                 </div>
               ) : (
-                <div className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center">
-                  <span className="text-gray-600 text-sm font-medium">
+                <div className="w-10 h-10 rounded-lg bg-gray-200 dark:bg-dark-surface flex items-center justify-center">
+                  <span className="text-gray-600 dark:text-dark-text text-sm font-medium">
                     {(displayName && displayName.length > 0) ? displayName.charAt(0).toUpperCase() : 'U'}
                   </span>
                 </div>
               )}
             </div>
             <div className="flex-1 min-w-0 text-left">
-              <div className="text-sm font-medium text-gray-900 truncate">{displayName}</div>
+              <div className="text-sm font-medium text-gray-900 dark:text-dark-text truncate">{displayName}</div>
               {displayEmail && (
-                <div className="text-xs text-gray-500 truncate">{displayEmail}</div>
+                <div className="text-xs text-gray-500 dark:text-dark-text-muted truncate">{displayEmail}</div>
               )}
             </div>
-            <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-gray-400 dark:text-dark-text-muted flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
             </svg>
           </button>
 
           {showProfileMenu && (
-            <div className="absolute bottom-full left-0 mb-2 w-48 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden">
+            <div className="absolute bottom-full left-0 mb-2 w-48 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-xl z-50 overflow-hidden">
               <button
                 onClick={() => {
                   navigate('/profile');
                   setShowProfileMenu(false);
                 }}
-                className="w-full text-left px-4 py-2.5 hover:bg-gray-100 transition-colors text-sm text-gray-700"
+                className="w-full text-left px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-dark-border transition-colors text-sm text-gray-700 dark:text-dark-text"
               >
                 Profile
               </button>
-              <div className="border-t border-gray-100" />
+              <div className="border-t border-gray-100 dark:border-dark-border" />
               <button
                 onClick={() => {
                   navigate('/settings');
                   setShowProfileMenu(false);
                 }}
-                className="w-full text-left px-4 py-2.5 hover:bg-gray-100 transition-colors text-sm text-gray-700"
+                className="w-full text-left px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-dark-border transition-colors text-sm text-gray-700 dark:text-dark-text"
               >
                 Settings
               </button>
@@ -269,7 +267,7 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
                   navigate('/about-us');
                   setShowProfileMenu(false);
                 }}
-                className="w-full text-left px-4 py-2.5 hover:bg-gray-100 transition-colors text-sm text-gray-700"
+                className="w-full text-left px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-dark-border transition-colors text-sm text-gray-700 dark:text-dark-text"
               >
                 About Us
               </button>

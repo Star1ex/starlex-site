@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { isAuthenticated as checkAuth } from '@/shared/lib/authManager.js';
 
 export const useAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -8,10 +9,10 @@ export const useAuth = () => {
   const location = useLocation();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
+    const authenticated = checkAuth();
     const user = localStorage.getItem('user');
 
-    if (token && user) {
+    if (authenticated && user) {
       setIsAuthenticated(true);
     } else {
       localStorage.setItem('redirectPath', location.pathname);

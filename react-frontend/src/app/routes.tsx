@@ -9,6 +9,7 @@ import { VerifyEmailPage } from "@/pages/verify/VerifyEmailPage.js";
 import { GeneralSettings } from "@/pages/settings/GeneralSettings.js";
 import AboutUs from "@/pages/about-us/AboutUs.js";
 import  ProfilePage  from "@/pages/profile/UserProfile.js";
+import { UserProfilePage } from "@/pages/profile/UserProfilePage.js";
 import TaskBoard from "@/pages/team/TaskBoard.js"; 
 
 export const AppRoutes = () => (
@@ -23,6 +24,7 @@ export const AppRoutes = () => (
     <Route path="/settings" element={<Layout><GeneralSettings /></Layout>} />
     <Route path="/about-us" element={<Layout><AboutUs /></Layout>} />
     <Route path="/profile" element={<Layout><ProfilePage /></Layout>} />
+    <Route path="/profile/:userId" element={<Layout><UserProfilePage /></Layout>} />
     <Route path="/team/:team_id" element={<Layout><TaskBoard /></Layout>} /> 
   </Routes> 
 );

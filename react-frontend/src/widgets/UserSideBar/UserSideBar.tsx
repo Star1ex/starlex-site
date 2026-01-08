@@ -1,9 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Avatar from '@/shared/ui/Avatar.js';
 import type { User } from '@/entities/types.js';
-import { Token } from '@/app/api/token.js';
-
-const getToken = () => Token.get();
+import { getAuthToken } from '@/shared/lib/authManager.js';
 
 interface UserSidebarProps {
   users: User[];
@@ -62,7 +60,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
     setDeletingUserId(userId);
     
     try {
-      const token = getToken();
+      const token = getAuthToken();
       if (!token) {
         throw new Error('Authentication required');
       }
@@ -95,47 +93,47 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
   };
 
   return (
-    <aside className={`bg-white border-l border-gray-100 w-64 flex flex-col ${className}`}>
+    <aside className={`bg-white dark:bg-dark-surface border-l border-gray-100 dark:border-dark-border w-64 flex flex-col transition-colors ${className}`}>
       {onClose && (
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-dark-border">
           <button
             onClick={onClose}
-            className="flex items-center gap-2 text-gray-500 hover:text-black transition-colors"
+            className="flex items-center gap-2 text-gray-500 dark:text-dark-text-muted hover:text-black dark:hover:text-dark-text transition-colors"
             aria-label="Close sidebar"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
-            Close
+            <span className="text-sm font-medium">Close</span>
           </button>
         </div>
       )}
       
-      <div className="p-5 flex-1 overflow-y-auto">
-        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Team Members</h2>
+      <div className="p-4 sm:p-5 flex-1 overflow-y-auto">
+        <h2 className="text-xs sm:text-sm font-semibold text-gray-500 dark:text-dark-text-muted uppercase tracking-wider mb-4">Team Members</h2>
         <div className="space-y-0">
           {users.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              <p className="text-sm">No team members yet</p>
+            <div className="text-center py-8 sm:py-12 text-gray-500 dark:text-dark-text-muted">
+              <p className="text-xs sm:text-sm">No team members yet</p>
               <p className="text-xs mt-1">Add members to get started</p>
             </div>
           ) : (
             users.map((user) => (
               <div key={user.id} className="transition-all duration-300 ease-in-out">
                 <div
-                  className="flex items-center gap-4 p-3 rounded-xl hover:bg-gray-50 transition-colors duration-200 group cursor-pointer"
+                  className="flex items-center gap-3 sm:gap-4 p-2 sm:p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-dark-border transition-colors duration-200 group cursor-pointer"
                   role="listitem"
                   onClick={() => handleUserClick(user.id)}
                 >
                   <Avatar user={user} size="md" />
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium text-gray-900 truncate">
+                    <p className="font-medium text-gray-900 dark:text-dark-text truncate text-sm sm:text-base">
                       {`${user.firstName} ${user.lastName}`}
                     </p>
-                    <p className="text-xs text-gray-500">Team Member</p>
+                    <p className="text-xs text-gray-500 dark:text-dark-text-muted">Team Member</p>
                   </div>
                   {deletingUserId === user.id && (
-                    <div className="w-4 h-4 border-2 border-gray-300 border-t-gray-600 rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-gray-300 dark:border-gray-600 border-t-gray-600 dark:border-t-gray-400 rounded-full animate-spin flex-shrink-0" />
                   )}
                 </div>
 
@@ -145,26 +143,26 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
                     activeMenu === user.id ? 'max-h-32 opacity-100' : 'max-h-0 opacity-0'
                   }`}
                 >
-                  <div className="mx-3 mb-3 bg-white border border-gray-200 rounded-lg shadow-md">
+                  <div className="mx-2 sm:mx-3 mb-2 sm:mb-3 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-md">
                     <button
                       onClick={() => handleProfileClick(user.id)}
-                      className="w-full px-4 py-2.5 text-left text-sm text-gray-700 hover:bg-gray-50 transition-colors flex items-center gap-2 rounded-t-lg"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-left text-xs sm:text-sm text-gray-700 dark:text-dark-text hover:bg-gray-50 dark:hover:bg-dark-border transition-colors flex items-center gap-2 rounded-t-lg"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                       </svg>
-                      Profile
+                      <span>Profile</span>
                     </button>
-                    <div className="border-t border-gray-100" />
+                    <div className="border-t border-gray-100 dark:border-dark-border" />
                     <button
                       onClick={() => handleDeleteClick(user.id)}
                       disabled={deletingUserId === user.id}
-                      className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-b-lg"
+                      className="w-full px-3 sm:px-4 py-2 sm:py-2.5 text-left text-xs sm:text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed rounded-b-lg"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
-                      Delete
+                      <span>Delete</span>
                     </button>
                   </div>
                 </div>
