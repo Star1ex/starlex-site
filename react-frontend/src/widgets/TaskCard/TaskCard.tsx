@@ -79,6 +79,8 @@ const TaskCard: React.FC<TaskCardProps> = ({
   const [statusDropdownUp, setStatusDropdownUp] = useState(false);
   const [priorityDropdownUp, setPriorityDropdownUp] = useState(false);
   const [assigneeDropdownPosition, setAssigneeDropdownPosition] = useState<{ top: number; left: number } | null>(null);
+  const [statusDropdownPosition, setStatusDropdownPosition] = useState<{ top: number; left: number } | null>(null);
+  const [priorityDropdownPosition, setPriorityDropdownPosition] = useState<{ top: number; left: number } | null>(null);
   const assigneeRef = useRef<HTMLDivElement>(null);
   const statusRef = useRef<HTMLDivElement>(null);
   const priorityRef = useRef<HTMLDivElement>(null);
@@ -108,7 +110,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
     return (s && statusConfig[s]) ? s : 'not_started';
   }, [task.progress]);
 
-  // Calculate dropdown position for portal rendering
+  // Calculate dropdown position - anchor to task card, prefer opening downward
   useEffect(() => {
     if (isEditingAssignee && assigneeRef.current) {
       const rect = assigneeRef.current.getBoundingClientRect();
@@ -117,18 +119,26 @@ const TaskCard: React.FC<TaskCardProps> = ({
       const dropdownHeight = 400;
       const dropdownWidth = 280;
       
+      // Prefer opening downward, only flip up if absolutely necessary
       let top = rect.bottom + 8;
       let left = rect.left;
       
-      // Check if dropdown would overflow bottom
-      if (rect.bottom + dropdownHeight + 8 > viewportHeight) {
+      // Only flip upward if there's not enough space below AND there's more space above
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      
+      if (spaceBelow < dropdownHeight + 8 && spaceAbove > spaceBelow) {
         top = rect.top - dropdownHeight - 8;
         setAssigneeDropdownUp(true);
       } else {
         setAssigneeDropdownUp(false);
+        // Ensure dropdown doesn't overflow bottom
+        if (top + dropdownHeight > viewportHeight - 16) {
+          top = viewportHeight - dropdownHeight - 16;
+        }
       }
       
-      // Ensure dropdown stays within viewport horizontally
+      // Align to left edge of trigger, ensure it stays within viewport
       if (left + dropdownWidth > viewportWidth - 16) {
         left = viewportWidth - dropdownWidth - 16;
       }
@@ -142,48 +152,94 @@ const TaskCard: React.FC<TaskCardProps> = ({
     }
   }, [isEditingAssignee]);
 
+  // Calculate status dropdown position
   useEffect(() => {
     if (isEditingStatus && statusRef.current) {
       const rect = statusRef.current.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
       const dropdownHeight = 150;
-      setStatusDropdownUp(rect.bottom + dropdownHeight > viewportHeight);
+      const dropdownWidth = 140;
+      
+      let top = rect.bottom + 8;
+      let left = rect.left;
+      
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      
+      if (spaceBelow < dropdownHeight + 8 && spaceAbove > spaceBelow) {
+        top = rect.top - dropdownHeight - 8;
+        setStatusDropdownUp(true);
+      } else {
+        setStatusDropdownUp(false);
+        if (top + dropdownHeight > viewportHeight - 16) {
+          top = viewportHeight - dropdownHeight - 16;
+        }
+      }
+      
+      if (left + dropdownWidth > viewportWidth - 16) {
+        left = viewportWidth - dropdownWidth - 16;
+      }
+      if (left < 16) {
+        left = 16;
+      }
+      
+      setStatusDropdownPosition({ top, left });
+    } else {
+      setStatusDropdownPosition(null);
     }
   }, [isEditingStatus]);
 
+  // Calculate priority dropdown position
   useEffect(() => {
     if (isEditingPriority && priorityRef.current) {
       const rect = priorityRef.current.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
+      const viewportWidth = window.innerWidth;
       const dropdownHeight = 120;
-      setPriorityDropdownUp(rect.bottom + dropdownHeight > viewportHeight);
+      const dropdownWidth = 120;
+      
+      let top = rect.bottom + 8;
+      let left = rect.left;
+      
+      const spaceBelow = viewportHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      
+      if (spaceBelow < dropdownHeight + 8 && spaceAbove > spaceBelow) {
+        top = rect.top - dropdownHeight - 8;
+        setPriorityDropdownUp(true);
+      } else {
+        setPriorityDropdownUp(false);
+        if (top + dropdownHeight > viewportHeight - 16) {
+          top = viewportHeight - dropdownHeight - 16;
+        }
+      }
+      
+      if (left + dropdownWidth > viewportWidth - 16) {
+        left = viewportWidth - dropdownWidth - 16;
+      }
+      if (left < 16) {
+        left = 16;
+      }
+      
+      setPriorityDropdownPosition({ top, left });
+    } else {
+      setPriorityDropdownPosition(null);
     }
   }, [isEditingPriority]);
 
 
-  // Close dropdowns when clicking outside (desktop and mobile)
+  // Close context menu when clicking outside (backdrop handles other dropdowns)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       const target = event.target as Node;
       
-      if (isEditingAssignee) {
-        const clickedInsideAssignee = assigneeRef.current?.contains(target) || assigneeDropdownRef.current?.contains(target);
-        if (!clickedInsideAssignee) {
-          setIsEditingAssignee(false);
-        }
-      }
-      if (isEditingStatus && statusRef.current && !statusRef.current.contains(target)) {
-        setIsEditingStatus(false);
-      }
-      if (isEditingPriority && priorityRef.current && !priorityRef.current.contains(target)) {
-        setIsEditingPriority(false);
-      }
       if (showContextMenu && contextMenuRef.current && !contextMenuRef.current.contains(target)) {
         setShowContextMenu(false);
       }
     };
 
-    if (isEditingAssignee || isEditingStatus || isEditingPriority || showContextMenu) {
+    if (showContextMenu) {
       document.addEventListener('mousedown', handleClickOutside);
       document.addEventListener('touchstart', handleClickOutside);
     }
@@ -192,7 +248,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('touchstart', handleClickOutside);
     };
-  }, [isEditingAssignee, isEditingStatus, isEditingPriority, showContextMenu]);
+  }, [showContextMenu]);
 
   const updateTaskField = async (field: 'user_ids' | 'progress' | 'priority', value: string | string[]) => {
     // Optimistic update - update local state immediately
@@ -378,17 +434,27 @@ const TaskCard: React.FC<TaskCardProps> = ({
             </div>
 
             {isEditingAssignee && assigneeDropdownPosition && createPortal(
-              <div 
-                ref={assigneeDropdownRef}
-                className="fixed bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-2xl z-[9999] overflow-hidden w-[280px] max-h-[400px] flex flex-col"
-                style={{
-                  top: `${assigneeDropdownPosition.top}px`,
-                  left: `${assigneeDropdownPosition.left}px`,
-                }}
-                onClick={(e) => e.stopPropagation()}
-              >
-                {/* Users List */}
-                <div className="overflow-y-auto p-2 space-y-1">
+              <>
+                {/* Backdrop overlay */}
+                <div 
+                  className="fixed inset-0 bg-black/10 dark:bg-black/30 z-[9998] backdrop-blur-sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsEditingAssignee(false);
+                  }}
+                />
+                {/* Dropdown menu */}
+                <div 
+                  ref={assigneeDropdownRef}
+                  className="fixed bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-2xl z-[9999] overflow-hidden w-[280px] max-h-[400px] flex flex-col"
+                  style={{
+                    top: `${assigneeDropdownPosition.top}px`,
+                    left: `${assigneeDropdownPosition.left}px`,
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {/* Users List */}
+                  <div className="overflow-y-auto p-2 space-y-1">
                   {users.length === 0 ? (
                     <div className="px-3 py-4 text-center text-sm text-gray-500 dark:text-dark-text-muted">
                       No users available
@@ -433,8 +499,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
                       );
                     })
                   )}
+                  </div>
                 </div>
-              </div>,
+              </>,
               document.body
             )}
           </div>
@@ -455,25 +522,42 @@ const TaskCard: React.FC<TaskCardProps> = ({
               </span>
             </div>
 
-            {isEditingStatus && (
-              <div 
-                className={`dropdown-menu fixed sm:absolute ${statusDropdownUp ? 'bottom-auto top-0' : 'top-auto bottom-0'} sm:${statusDropdownUp ? 'bottom-full mb-2' : 'top-full mt-2'} left-0 right-0 sm:left-0 sm:right-auto sm:w-auto w-full sm:min-w-[140px] bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-2xl z-[100]`}
-              >
-                {Object.entries(statusConfig).map(([key, config]) => (
-                  <button
-                    key={key}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      updateTaskField('progress', key);
-                    }}
-                    className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-dark-border first:rounded-t-lg last:rounded-b-lg flex items-center gap-2"
-                  >
-                    <span className={`px-2.5 py-1 text-xs font-medium rounded-md ${config.bgColor} dark:${config.darkBgColor} ${config.color} dark:${config.darkColor}`}>
-                      {config.label}
-                    </span>
-                  </button>
-                ))}
-              </div>
+            {isEditingStatus && statusDropdownPosition && createPortal(
+              <>
+                {/* Backdrop overlay */}
+                <div 
+                  className="fixed inset-0 bg-black/10 dark:bg-black/30 z-[9998] backdrop-blur-sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsEditingStatus(false);
+                  }}
+                />
+                {/* Dropdown menu */}
+                <div 
+                  className="fixed bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-2xl z-[9999] min-w-[140px]"
+                  style={{
+                    top: `${statusDropdownPosition.top}px`,
+                    left: `${statusDropdownPosition.left}px`,
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {Object.entries(statusConfig).map(([key, config]) => (
+                    <button
+                      key={key}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateTaskField('progress', key);
+                      }}
+                      className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-dark-border first:rounded-t-lg last:rounded-b-lg flex items-center gap-2"
+                    >
+                      <span className={`px-2.5 py-1 text-xs font-medium rounded-md ${config.bgColor} dark:${config.darkBgColor} ${config.color} dark:${config.darkColor}`}>
+                        {config.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </>,
+              document.body
             )}
           </div>
         </div>
@@ -493,25 +577,42 @@ const TaskCard: React.FC<TaskCardProps> = ({
               </span>
             </div>
 
-            {isEditingPriority && (
-              <div 
-                className={`dropdown-menu fixed sm:absolute ${priorityDropdownUp ? 'bottom-auto top-0' : 'top-auto bottom-0'} sm:${priorityDropdownUp ? 'bottom-full mb-2' : 'top-full mt-2'} left-0 right-0 sm:left-0 sm:right-auto sm:w-auto w-full sm:min-w-[120px] bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-2xl z-[100]`}
-              >
-                {Object.entries(priorityConfig).map(([key, config]) => (
-                  <button
-                    key={key}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      updateTaskField('priority', key);
-                    }}
-                    className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-dark-border first:rounded-t-lg last:rounded-b-lg flex items-center gap-2"
-                  >
-                    <span className={`px-2.5 py-1 text-xs font-medium rounded-md ${config.bgColor} dark:${config.darkBgColor} ${config.color} dark:${config.darkColor}`}>
-                      {config.label}
-                    </span>
-                  </button>
-                ))}
-              </div>
+            {isEditingPriority && priorityDropdownPosition && createPortal(
+              <>
+                {/* Backdrop overlay */}
+                <div 
+                  className="fixed inset-0 bg-black/10 dark:bg-black/30 z-[9998] backdrop-blur-sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setIsEditingPriority(false);
+                  }}
+                />
+                {/* Dropdown menu */}
+                <div 
+                  className="fixed bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-2xl z-[9999] min-w-[120px]"
+                  style={{
+                    top: `${priorityDropdownPosition.top}px`,
+                    left: `${priorityDropdownPosition.left}px`,
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {Object.entries(priorityConfig).map(([key, config]) => (
+                    <button
+                      key={key}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        updateTaskField('priority', key);
+                      }}
+                      className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-dark-border first:rounded-t-lg last:rounded-b-lg flex items-center gap-2"
+                    >
+                      <span className={`px-2.5 py-1 text-xs font-medium rounded-md ${config.bgColor} dark:${config.darkBgColor} ${config.color} dark:${config.darkColor}`}>
+                        {config.label}
+                      </span>
+                    </button>
+                  ))}
+                </div>
+              </>,
+              document.body
             )}
           </div>
         </div>
