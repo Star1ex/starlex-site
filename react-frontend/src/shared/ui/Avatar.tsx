@@ -19,8 +19,24 @@ const Avatar: React.FC<AvatarProps> = ({
   size = 'md', 
   className = '' 
 }) => {
+  if (!user) {
+    return (
+      <div className={`${sizeClasses[size]} rounded-full bg-gray-200 flex items-center justify-center`}>
+        <span className="font-semibold text-xs text-gray-600">U</span>
+      </div>
+    );
+  }
+
   const avatarSize = sizeClasses[size];
-  const initials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
+  const firstName = user?.firstName || '';
+  const lastName = user?.lastName || '';
+  const initials = (firstName && firstName.length > 0 && lastName && lastName.length > 0)
+    ? `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
+    : (firstName && firstName.length > 0)
+      ? firstName.charAt(0).toUpperCase()
+      : (lastName && lastName.length > 0)
+        ? lastName.charAt(0).toUpperCase()
+        : 'U';
   
   // Fallback image error handler
   const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
@@ -46,13 +62,13 @@ const Avatar: React.FC<AvatarProps> = ({
         ${className}
       `}
       role="img"
-      aria-label={`${user.firstName} ${user.lastName} avatar`}
-      title={`${user.firstName} ${user.lastName}`}
+      aria-label={`${firstName} ${lastName} avatar`}
+      title={`${firstName} ${lastName}`}
     >
-      {user.photo_url ? (
+      {user?.photo_url ? (
         <img
           src={user.photo_url}
-          alt={`${user.firstName} ${user.lastName}`}
+          alt={`${firstName} ${lastName}`}
           className="w-full h-full object-cover"
           onError={handleImageError}
           loading="lazy"

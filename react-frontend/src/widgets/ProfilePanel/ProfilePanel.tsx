@@ -77,7 +77,9 @@ export const RightSidebar: React.FC<Props> = ({ isMobile = false, onClose }) => 
     };
   }, [showMenu]);
 
-  const displayName = userInfo ? `${userInfo.firstName}${userInfo.lastName ? ` ${userInfo.lastName}` : ''}` : 'User';
+  const displayName = userInfo 
+    ? `${userInfo.firstName || ''}${userInfo.lastName ? ` ${userInfo.lastName}` : ''}`.trim() || 'User'
+    : 'User';
   const displayEmail = user?.email || userInfo?.email || '';
 
   // Mobile View
@@ -98,7 +100,7 @@ export const RightSidebar: React.FC<Props> = ({ isMobile = false, onClose }) => 
           ) : (
             <div className="w-20 h-20 bg-black rounded-full flex items-center justify-center">
               <span className="text-white text-xl font-medium">
-                {displayName.charAt(0).toUpperCase()}
+                {(displayName && displayName.length > 0) ? displayName.charAt(0).toUpperCase() : 'U'}
               </span>
             </div>
           )}
@@ -193,7 +195,7 @@ export const RightSidebar: React.FC<Props> = ({ isMobile = false, onClose }) => 
               ) : (
                 <div className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center">
                   <span className="text-gray-600 text-sm font-medium">
-                    {displayName.charAt(0).toUpperCase()}
+                    {(displayName && displayName.length > 0) ? displayName.charAt(0).toUpperCase() : 'U'}
                   </span>
                 </div>
               )}
