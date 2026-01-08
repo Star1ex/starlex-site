@@ -227,7 +227,7 @@ const TaskBoard: React.FC = () => {
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row max-w-[1600px] mx-auto px-4 sm:px-6 py-4 sm:py-6 gap-4 sm:gap-6">
+      <div className="flex flex-col lg:flex-row max-w-[1600px] mx-auto px-2 sm:px-4 lg:px-6 py-4 sm:py-6 gap-4 sm:gap-6">
         <UserSidebar 
           users={users} 
           className="hidden lg:block w-48 flex-shrink-0"
@@ -256,17 +256,28 @@ const TaskBoard: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-px">
-              {tasks.map((task) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  users={users}
-                  onUpdate={handleTaskUpdate}
-                  onClick={() => handleTaskClick(task)}
-                  onDelete={() => handleTaskDelete(task.id)}
-                  teamId={team_id}
-                />
-              ))}
+              <div className="hidden sm:flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-500 dark:text-dark-text-muted border-b border-gray-200 dark:border-dark-border mb-1 sticky top-[73px] bg-white dark:bg-dark-bg z-10">
+                <div className="flex-1 min-w-[120px] sm:min-w-[200px]">Task</div>
+                <div className="flex-shrink-0 min-w-[60px] sm:min-w-[80px] text-center">Assignee</div>
+                <div className="flex-shrink-0 min-w-[90px] sm:min-w-[100px] text-center">Status</div>
+                <div className="flex-shrink-0 min-w-[70px] sm:min-w-[80px] text-center">Priority</div>
+                <div className="flex-shrink-0 min-w-[28px] sm:min-w-[32px]"></div>
+              </div>
+              <div className="overflow-x-auto -mx-2 sm:mx-0 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
+                <div className="inline-block min-w-full align-middle">
+                  {tasks.map((task) => (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      users={users}
+                      onUpdate={handleTaskUpdate}
+                      onClick={() => handleTaskClick(task)}
+                      onDelete={() => handleTaskDelete(task.id)}
+                      teamId={team_id}
+                    />
+                  ))}
+                </div>
+              </div>
             </div>
           )}
         </main>

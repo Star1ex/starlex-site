@@ -132,26 +132,35 @@ const TaskCard: React.FC<TaskCardProps> = ({
     }
   }, [isEditingPriority]);
 
-  // Close dropdowns when clicking outside
+  // Close dropdowns when clicking outside (desktop and mobile)
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (assigneeRef.current && !assigneeRef.current.contains(event.target as Node)) {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      const target = event.target as Node;
+      
+      if (isEditingAssignee && assigneeRef.current && !assigneeRef.current.contains(target)) {
         setIsEditingAssignee(false);
       }
-      if (statusRef.current && !statusRef.current.contains(event.target as Node)) {
+      if (isEditingStatus && statusRef.current && !statusRef.current.contains(target)) {
         setIsEditingStatus(false);
       }
-      if (priorityRef.current && !priorityRef.current.contains(event.target as Node)) {
+      if (isEditingPriority && priorityRef.current && !priorityRef.current.contains(target)) {
         setIsEditingPriority(false);
       }
-      if (contextMenuRef.current && !contextMenuRef.current.contains(event.target as Node)) {
+      if (showContextMenu && contextMenuRef.current && !contextMenuRef.current.contains(target)) {
         setShowContextMenu(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
+    if (isEditingAssignee || isEditingStatus || isEditingPriority || showContextMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isEditingAssignee, isEditingStatus, isEditingPriority, showContextMenu]);
 
   const updateTaskField = async (field: 'user_ids' | 'progress' | 'priority', value: string | string[]) => {
     // Optimistic update - update local state immediately
@@ -294,23 +303,23 @@ const TaskCard: React.FC<TaskCardProps> = ({
       onClick={handleCardClick}
       className="group relative bg-transparent dark:bg-transparent hover:bg-gray-50/50 dark:hover:bg-dark-border/30 transition-colors duration-150 cursor-pointer"
     >
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 px-3 sm:px-4 py-1.5 sm:py-2">
+      <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 min-w-[600px] sm:min-w-0">
         {/* Task Name */}
-        <div className="flex-1 min-w-0 w-full sm:w-auto">
-          <div className="font-medium text-gray-900 dark:text-dark-text text-sm leading-tight">
+        <div className="flex-1 min-w-[120px] sm:min-w-[200px] max-w-[200px] sm:max-w-none">
+          <div className="font-medium text-gray-900 dark:text-dark-text text-xs sm:text-sm leading-tight truncate" title={task.task || 'Untitled Task'}>
             {task.task || 'Untitled Task'}
           </div>
         </div>
 
         {/* Assignee */}
-        <div className="w-full sm:w-auto flex-shrink-0" ref={assigneeRef}>
+        <div className="flex-shrink-0 min-w-[60px] sm:min-w-[80px]" ref={assigneeRef}>
           <div className="relative">
             <div
               onClick={(e) => {
                 e.stopPropagation();
                 setIsEditingAssignee(!isEditingAssignee);
               }}
-              className="editable-field flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border transition-colors cursor-pointer"
+              className="editable-field flex items-center justify-center gap-1 px-1.5 sm:px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border transition-colors cursor-pointer"
             >
               {assignedUsers.length > 0 ? (
                 <div className="flex items-center gap-0.5 -space-x-1">
@@ -332,13 +341,13 @@ const TaskCard: React.FC<TaskCardProps> = ({
                   )}
                 </div>
               ) : (
-                <span className="text-xs text-gray-400 dark:text-dark-text-muted">Unassigned</span>
+                <span className="text-[10px] sm:text-xs text-gray-400 dark:text-dark-text-muted whitespace-nowrap">—</span>
               )}
             </div>
 
             {isEditingAssignee && (
               <div 
-                className={`dropdown-menu absolute ${assigneeDropdownUp ? 'bottom-full mb-2' : 'top-full mt-2'} right-0 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-2xl z-[100] p-2 min-w-[240px] max-h-[320px] overflow-y-auto`}
+                className={`dropdown-menu fixed sm:absolute ${assigneeDropdownUp ? 'bottom-auto top-0' : 'top-auto bottom-0'} sm:${assigneeDropdownUp ? 'bottom-full mb-2' : 'top-full mt-2'} left-0 right-0 sm:left-auto sm:right-0 sm:w-auto w-full sm:min-w-[240px] bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-2xl z-[100] p-2 max-h-[50vh] sm:max-h-[320px] overflow-y-auto`}
               >
                 <div className="space-y-1">
                   {users.map((user) => {
@@ -379,23 +388,23 @@ const TaskCard: React.FC<TaskCardProps> = ({
         </div>
 
         {/* Status */}
-        <div className="w-28 flex-shrink-0" ref={statusRef}>
+        <div className="flex-shrink-0 min-w-[90px] sm:min-w-[100px]" ref={statusRef}>
           <div className="relative">
             <div
               onClick={(e) => {
                 e.stopPropagation();
                 setIsEditingStatus(!isEditingStatus);
               }}
-              className="editable-field inline-block px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border transition-colors cursor-pointer"
+              className="editable-field inline-block px-1 sm:px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border transition-colors cursor-pointer"
             >
-              <span className={`px-2.5 py-1 text-xs font-medium rounded-md ${statusConfig[status].bgColor} dark:${statusConfig[status].darkBgColor} ${statusConfig[status].color} dark:${statusConfig[status].darkColor}`}>
+              <span className={`px-1.5 sm:px-2.5 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium rounded-md whitespace-nowrap ${statusConfig[status].bgColor} dark:${statusConfig[status].darkBgColor} ${statusConfig[status].color} dark:${statusConfig[status].darkColor}`}>
                 {statusConfig[status].label}
               </span>
             </div>
 
             {isEditingStatus && (
               <div 
-                className={`dropdown-menu absolute ${statusDropdownUp ? 'bottom-full mb-2' : 'top-full mt-2'} left-0 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-2xl z-[100] min-w-[140px]`}
+                className={`dropdown-menu fixed sm:absolute ${statusDropdownUp ? 'bottom-auto top-0' : 'top-auto bottom-0'} sm:${statusDropdownUp ? 'bottom-full mb-2' : 'top-full mt-2'} left-0 right-0 sm:left-0 sm:right-auto sm:w-auto w-full sm:min-w-[140px] bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-2xl z-[100]`}
               >
                 {Object.entries(statusConfig).map(([key, config]) => (
                   <button
@@ -417,23 +426,23 @@ const TaskCard: React.FC<TaskCardProps> = ({
         </div>
 
         {/* Priority */}
-        <div className="w-24 flex-shrink-0" ref={priorityRef}>
+        <div className="flex-shrink-0 min-w-[70px] sm:min-w-[80px]" ref={priorityRef}>
           <div className="relative">
             <div
               onClick={(e) => {
                 e.stopPropagation();
                 setIsEditingPriority(!isEditingPriority);
               }}
-              className="editable-field inline-block px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border transition-colors cursor-pointer"
+              className="editable-field inline-block px-1 sm:px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border transition-colors cursor-pointer"
             >
-              <span className={`px-2.5 py-1 text-xs font-medium rounded-md ${priorityConfig[priority].bgColor} dark:${priorityConfig[priority].darkBgColor} ${priorityConfig[priority].color} dark:${priorityConfig[priority].darkColor}`}>
+              <span className={`px-1.5 sm:px-2.5 py-0.5 sm:py-1 text-[10px] sm:text-xs font-medium rounded-md whitespace-nowrap ${priorityConfig[priority].bgColor} dark:${priorityConfig[priority].darkBgColor} ${priorityConfig[priority].color} dark:${priorityConfig[priority].darkColor}`}>
                 {priorityConfig[priority].label}
               </span>
             </div>
 
             {isEditingPriority && (
               <div 
-                className={`dropdown-menu absolute ${priorityDropdownUp ? 'bottom-full mb-2' : 'top-full mt-2'} left-0 bg-white border border-gray-200 rounded-xl shadow-2xl z-[100] min-w-[120px]`}
+                className={`dropdown-menu fixed sm:absolute ${priorityDropdownUp ? 'bottom-auto top-0' : 'top-auto bottom-0'} sm:${priorityDropdownUp ? 'bottom-full mb-2' : 'top-full mt-2'} left-0 right-0 sm:left-0 sm:right-auto sm:w-auto w-full sm:min-w-[120px] bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-2xl z-[100]`}
               >
                 {Object.entries(priorityConfig).map(([key, config]) => (
                   <button
@@ -455,18 +464,19 @@ const TaskCard: React.FC<TaskCardProps> = ({
         </div>
 
         {/* Context Menu Button */}
-        <div className="w-8 flex-shrink-0 relative" ref={contextMenuRef}>
+        <div className="flex-shrink-0 min-w-[28px] sm:min-w-[32px] relative" ref={contextMenuRef}>
           <button
             onClick={handleContextMenuClick}
-            className="context-menu p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border transition-colors opacity-0 group-hover:opacity-100"
+            className="context-menu p-1 sm:p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
           >
-            <svg className="w-5 h-5 text-gray-400 dark:text-dark-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400 dark:text-dark-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
             </svg>
           </button>
 
           {showContextMenu && (
-            <div className="context-menu absolute top-full right-0 mt-2 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-2xl z-[100] min-w-[140px] overflow-hidden">
+            <div className="context-menu fixed sm:absolute top-auto bottom-0 sm:top-full sm:bottom-auto right-0 sm:right-0 mt-0 sm:mt-2 mb-2 sm:mb-0 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-2xl z-[100] w-full sm:w-auto sm:min-w-[140px] overflow-hidden"
+            >
               <button
                 onClick={handleOpenClick}
                 className="w-full text-left px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-dark-border transition-colors flex items-center gap-2 text-sm text-gray-700 dark:text-dark-text"
