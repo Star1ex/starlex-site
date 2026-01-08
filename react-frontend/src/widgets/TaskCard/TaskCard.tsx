@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import Avatar from '@/shared/ui/Avatar.js';
 import type { Task, User } from '@/entities/types.js';
 import { getAuthToken } from '@/shared/lib/authManager.js';
@@ -77,12 +78,12 @@ const TaskCard: React.FC<TaskCardProps> = ({
   const [assigneeDropdownUp, setAssigneeDropdownUp] = useState(false);
   const [statusDropdownUp, setStatusDropdownUp] = useState(false);
   const [priorityDropdownUp, setPriorityDropdownUp] = useState(false);
-  const [assigneeSearchQuery, setAssigneeSearchQuery] = useState('');
+  const [assigneeDropdownPosition, setAssigneeDropdownPosition] = useState<{ top: number; left: number } | null>(null);
   const assigneeRef = useRef<HTMLDivElement>(null);
   const statusRef = useRef<HTMLDivElement>(null);
   const priorityRef = useRef<HTMLDivElement>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
-  const assigneeSearchRef = useRef<HTMLInputElement>(null);
+  const assigneeDropdownRef = useRef<HTMLDivElement>(null);
 
   // Handle user_ids - can be array of TaskUser objects or strings
   const userIds = React.useMemo(() => {
@@ -96,15 +97,6 @@ const TaskCard: React.FC<TaskCardProps> = ({
       .filter(Boolean) as User[];
   }, [userIds, users]);
 
-  // Filter users for assignee dropdown
-  const filteredUsersForAssignee = React.useMemo(() => {
-    if (!assigneeSearchQuery.trim()) return users;
-    const query = assigneeSearchQuery.toLowerCase().trim();
-    return users.filter(user => 
-      `${user.firstName} ${user.lastName}`.toLowerCase().includes(query) ||
-      user.email?.toLowerCase().includes(query)
-    );
-  }, [users, assigneeSearchQuery]);
 
   const priority = React.useMemo(() => {
     const p = task.priority as 'low' | 'medium' | 'high';
@@ -116,13 +108,37 @@ const TaskCard: React.FC<TaskCardProps> = ({
     return (s && statusConfig[s]) ? s : 'not_started';
   }, [task.progress]);
 
-  // Calculate dropdown positions when opened
+  // Calculate dropdown position for portal rendering
   useEffect(() => {
     if (isEditingAssignee && assigneeRef.current) {
       const rect = assigneeRef.current.getBoundingClientRect();
       const viewportHeight = window.innerHeight;
-      const dropdownHeight = 320;
-      setAssigneeDropdownUp(rect.bottom + dropdownHeight > viewportHeight);
+      const viewportWidth = window.innerWidth;
+      const dropdownHeight = 400;
+      const dropdownWidth = 280;
+      
+      let top = rect.bottom + 8;
+      let left = rect.left;
+      
+      // Check if dropdown would overflow bottom
+      if (rect.bottom + dropdownHeight + 8 > viewportHeight) {
+        top = rect.top - dropdownHeight - 8;
+        setAssigneeDropdownUp(true);
+      } else {
+        setAssigneeDropdownUp(false);
+      }
+      
+      // Ensure dropdown stays within viewport horizontally
+      if (left + dropdownWidth > viewportWidth - 16) {
+        left = viewportWidth - dropdownWidth - 16;
+      }
+      if (left < 16) {
+        left = 16;
+      }
+      
+      setAssigneeDropdownPosition({ top, left });
+    } else {
+      setAssigneeDropdownPosition(null);
     }
   }, [isEditingAssignee]);
 
@@ -144,35 +160,22 @@ const TaskCard: React.FC<TaskCardProps> = ({
     }
   }, [isEditingPriority]);
 
-  // Reset search query when dropdown closes
-  useEffect(() => {
-    if (!isEditingAssignee) {
-      setAssigneeSearchQuery('');
-    }
-  }, [isEditingAssignee]);
-
-  // Focus search input when dropdown opens
-  useEffect(() => {
-    if (isEditingAssignee && assigneeSearchRef.current) {
-      setTimeout(() => {
-        assigneeSearchRef.current?.focus();
-      }, 100);
-    }
-  }, [isEditingAssignee]);
 
   // Close dropdowns when clicking outside (desktop and mobile)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       const target = event.target as Node;
-      const dropdown = (event.target as HTMLElement)?.closest('.dropdown-menu');
       
-      if (isEditingAssignee && assigneeRef.current && !assigneeRef.current.contains(target) && !dropdown) {
-        setIsEditingAssignee(false);
+      if (isEditingAssignee) {
+        const clickedInsideAssignee = assigneeRef.current?.contains(target) || assigneeDropdownRef.current?.contains(target);
+        if (!clickedInsideAssignee) {
+          setIsEditingAssignee(false);
+        }
       }
-      if (isEditingStatus && statusRef.current && !statusRef.current.contains(target) && !dropdown) {
+      if (isEditingStatus && statusRef.current && !statusRef.current.contains(target)) {
         setIsEditingStatus(false);
       }
-      if (isEditingPriority && priorityRef.current && !priorityRef.current.contains(target) && !dropdown) {
+      if (isEditingPriority && priorityRef.current && !priorityRef.current.contains(target)) {
         setIsEditingPriority(false);
       }
       if (showContextMenu && contextMenuRef.current && !contextMenuRef.current.contains(target)) {
@@ -374,36 +377,24 @@ const TaskCard: React.FC<TaskCardProps> = ({
               )}
             </div>
 
-            {isEditingAssignee && (
+            {isEditingAssignee && assigneeDropdownPosition && createPortal(
               <div 
-                className={`dropdown-menu fixed sm:absolute ${assigneeDropdownUp ? 'bottom-auto top-0' : 'top-auto bottom-0'} sm:${assigneeDropdownUp ? 'bottom-full mb-2' : 'top-full mt-2'} left-0 right-0 sm:left-auto sm:right-0 sm:w-auto w-full sm:min-w-[280px] bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-2xl z-[100] overflow-hidden max-h-[60vh] sm:max-h-[400px] flex flex-col`}
+                ref={assigneeDropdownRef}
+                className="fixed bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-2xl z-[9999] overflow-hidden w-[280px] max-h-[400px] flex flex-col"
+                style={{
+                  top: `${assigneeDropdownPosition.top}px`,
+                  left: `${assigneeDropdownPosition.left}px`,
+                }}
                 onClick={(e) => e.stopPropagation()}
               >
-                {/* Search Input */}
-                <div className="p-2 border-b border-gray-200 dark:border-dark-border sticky top-0 bg-white dark:bg-dark-surface">
-                  <input
-                    ref={assigneeSearchRef}
-                    type="text"
-                    placeholder="Search users..."
-                    value={assigneeSearchQuery}
-                    onChange={(e) => {
-                      e.stopPropagation();
-                      setAssigneeSearchQuery(e.target.value);
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="w-full px-3 py-2 text-sm border border-gray-200 dark:border-dark-border rounded-lg bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text placeholder-gray-400 dark:placeholder-dark-text-muted focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 focus:border-transparent"
-                    autoFocus
-                  />
-                </div>
-                
                 {/* Users List */}
                 <div className="overflow-y-auto p-2 space-y-1">
-                  {filteredUsersForAssignee.length === 0 ? (
+                  {users.length === 0 ? (
                     <div className="px-3 py-4 text-center text-sm text-gray-500 dark:text-dark-text-muted">
-                      {assigneeSearchQuery ? 'No users found' : 'No users available'}
+                      No users available
                     </div>
                   ) : (
-                    filteredUsersForAssignee.map((user) => {
+                    users.map((user) => {
                       const isSelected = userIds.includes(user.id);
                       return (
                         <button
@@ -443,7 +434,8 @@ const TaskCard: React.FC<TaskCardProps> = ({
                     })
                   )}
                 </div>
-              </div>
+              </div>,
+              document.body
             )}
           </div>
         </div>

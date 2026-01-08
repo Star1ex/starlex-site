@@ -95,7 +95,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
   };
 
   return (
-    <aside className={`bg-transparent dark:bg-transparent ${onClose ? 'border-l border-gray-100 dark:border-dark-border' : ''} flex flex-col transition-colors ${className}`}>
+    <aside className={`bg-white dark:bg-dark-surface ${onClose ? 'border-l border-gray-100 dark:border-dark-border' : ''} flex flex-col transition-colors ${className}`}>
       {onClose && (
         <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-dark-border">
           <button

@@ -173,8 +173,8 @@ export const UserProfilePage: React.FC = () => {
           <div className="p-6 sm:p-8">
             <div className="flex flex-col sm:flex-row gap-6 sm:gap-8">
               {/* Avatar */}
-              <div className="flex-shrink-0">
-                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden border-4 border-gray-200 dark:border-dark-border">
+              <div className="flex-shrink-0 flex items-center justify-center">
+                <div className="w-24 h-24 sm:w-32 sm:h-32 rounded-full overflow-hidden border-4 border-gray-200 dark:border-dark-border flex items-center justify-center">
                   <Avatar user={user} size="lg" />
                 </div>
               </div>
