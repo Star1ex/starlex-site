@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Avatar from '@/shared/ui/Avatar.js';
-import { getAuthToken } from '@/shared/lib/authManager.js';
+import { getAuthToken, getAuthUser } from '@/shared/lib/authManager.js';
 import { useTheme } from '@/shared/contexts/ThemeContext.js';
 import type { User } from '@/entities/types.js';
 
@@ -43,8 +43,17 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
       return;
     }
 
-    const info = getUserIdFromToken(token);
-    setUserInfo(info);
+    // Try to get user info from stored data first
+    const storedUser = getAuthUser();
+    if (storedUser && (storedUser.firstName || storedUser.first_name)) {
+      const firstName = storedUser.firstName || storedUser.first_name || '';
+      const lastName = storedUser.lastName || storedUser.last_name || '';
+      const email = storedUser.email || '';
+      setUserInfo({ firstName, lastName, email });
+    } else {
+      const info = getUserIdFromToken(token);
+      setUserInfo(info);
+    }
 
     // Fetch user profile
     const fetchUser = async () => {
@@ -56,8 +65,15 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
           },
         });
         if (res.ok) {
-          const data: User = await res.json();
-          setUser(data);
+          const data: any = await res.json();
+          setUser(data as User);
+          // Update user info from API response
+          const firstName = data.firstName || data.first_name || '';
+          const lastName = data.lastName || data.last_name || '';
+          const email = data.email || '';
+          if (firstName || lastName) {
+            setUserInfo({ firstName, lastName, email });
+          }
         }
       } catch (err) {
         console.error('Error fetching user:', err);
@@ -114,10 +130,13 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
     };
   }, [showProfileMenu]);
 
-  const displayName = userInfo 
-    ? `${userInfo.firstName || ''}${userInfo.lastName ? ` ${userInfo.lastName}` : ''}`.trim() || 'User'
-    : 'User';
-  const displayEmail = user?.email || userInfo?.email || '';
+  // Prioritize user data from API over token
+  const displayName = user 
+    ? `${(user as any).firstName || (user as any).first_name || ''}${((user as any).lastName || (user as any).last_name) ? ` ${(user as any).lastName || (user as any).last_name}` : ''}`.trim() || 'User'
+    : (userInfo 
+      ? `${userInfo.firstName || ''}${userInfo.lastName ? ` ${userInfo.lastName}` : ''}`.trim() || 'User'
+      : 'User');
+  const displayEmail = (user as any)?.email || userInfo?.email || '';
 
   return (
     <aside className={`bg-white dark:bg-dark-surface border-r border-gray-100 dark:border-dark-border w-64 flex flex-col h-full transition-colors ${className}`}>

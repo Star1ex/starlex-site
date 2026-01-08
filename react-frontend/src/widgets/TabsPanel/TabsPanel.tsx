@@ -100,8 +100,8 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
     };
 
     if (contextMenu) {
-      document.addEventListener('click', handleClick);
-      document.addEventListener('contextmenu', handleContextMenu);
+    document.addEventListener('click', handleClick);
+    document.addEventListener('contextmenu', handleContextMenu);
     }
     
     return () => {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Avatar from '@/shared/ui/Avatar.js';
 import { getAuthToken } from '@/shared/lib/authManager.js';
 import type { User } from '@/entities/types.js';
@@ -7,11 +7,14 @@ import type { User } from '@/entities/types.js';
 interface PublicUserProfile extends User {
   email?: string;
   role?: string;
+  first_name?: string;
+  last_name?: string;
 }
 
 export const UserProfilePage: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState<PublicUserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,32 +37,86 @@ export const UserProfilePage: React.FC = () => {
         setLoading(true);
         setError(null);
 
-        // Fetch user profile - adjust endpoint as needed
-        const res = await fetch(`/api/users/${userId}`, {
+        // Check if user data was passed via location state (from team members)
+        const userFromState = location.state?.user as any;
+        if (userFromState && (userFromState.id === userId || !userFromState.id)) {
+          const normalizedUser: PublicUserProfile = {
+            id: userFromState.id || userId,
+            firstName: userFromState.firstName || userFromState.first_name || '',
+            lastName: userFromState.lastName || userFromState.last_name || '',
+            email: userFromState.email || '',
+            photo_url: userFromState.photo_url || null,
+            role: userFromState.role,
+          };
+          setUser(normalizedUser);
+          setLoading(false);
+          return;
+        }
+
+        // Strategy: Try multiple endpoints in order
+        // 1. Public profile endpoint
+        let res = await fetch(`/api/users/${userId}/profile`, {
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: 'application/json',
           },
         });
+        
+        // 2. Fallback to basic user endpoint
+        if (!res.ok && res.status === 404) {
+          res = await fetch(`/api/users/${userId}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: 'application/json',
+            },
+          });
+        }
+        
+        // 3. Try search by ID (if ID looks like email)
+        if (!res.ok && res.status === 404 && userId.includes('@')) {
+          res = await fetch(`/api/search/${encodeURIComponent(userId)}`, {
+            headers: {
+              Authorization: `Bearer ${token}`,
+              Accept: 'application/json',
+            },
+          });
+        }
 
         if (res.ok) {
-          const data: PublicUserProfile = await res.json();
-          setUser(data);
+          const data: any = await res.json();
+          // Handle array response (from search)
+          const userData = Array.isArray(data) ? data[0] : data;
+          
+          if (userData) {
+            // Normalize user data structure
+            const normalizedUser: PublicUserProfile = {
+              id: userData.id || userId,
+              firstName: userData.firstName || userData.first_name || '',
+              lastName: userData.lastName || userData.last_name || '',
+              email: userData.email || '',
+              photo_url: userData.photo_url || null,
+              role: userData.role,
+            };
+            setUser(normalizedUser);
+          } else {
+            setError('User profile not found');
+          }
         } else if (res.status === 404) {
-          setError('User not found');
+          setError('User profile not found. The user may not exist or you may not have permission to view their profile.');
         } else {
-          setError('Failed to load user profile');
+          const errorData = await res.json().catch(() => ({ message: 'Failed to load user profile' }));
+          setError(errorData.message || errorData.error || 'Failed to load user profile');
         }
       } catch (err) {
         console.error('Error fetching user profile:', err);
-        setError('Failed to load user profile. Please try again.');
+        setError(err instanceof Error ? err.message : 'Failed to load user profile. Please try again.');
       } finally {
         setLoading(false);
       }
     };
 
     fetchUserProfile();
-  }, [userId, navigate]);
+  }, [userId, navigate, location.state]);
 
   if (loading) {
     return (
@@ -125,7 +182,7 @@ export const UserProfilePage: React.FC = () => {
               {/* User Info */}
               <div className="flex-1 min-w-0">
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-dark-text mb-2">
-                  {user.firstName} {user.lastName}
+                  {user.firstName || user.first_name || ''} {user.lastName || user.last_name || ''}
                 </h2>
                 
                 {user.email && (

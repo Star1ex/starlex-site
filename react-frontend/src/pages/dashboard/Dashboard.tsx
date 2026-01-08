@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NewTabModal } from '@/widgets/NewTabModal/NewTabModal.js';
 import { useModal } from '@/shared/hooks/useModal.js';
 import { useNavigate } from 'react-router-dom';
-import { getAuthToken } from '@/shared/lib/authManager.js';
+import { getAuthToken, getAuthUser } from '@/shared/lib/authManager.js';
 
 type Team = {
   id: string;
@@ -56,8 +56,41 @@ export const Dashboard: React.FC = () => {
     
     const userId = getUserIdFromToken(token);
     setCanEdit(userId === ALLOWED_USER_ID);
-    setUserName(getUserNameFromToken(token));
-    setLoading(false);
+    
+    // Try to get user name from stored user data first
+    const storedUser = getAuthUser();
+    if (storedUser && (storedUser.firstName || storedUser.first_name)) {
+      const firstName = storedUser.firstName || storedUser.first_name || '';
+      const lastName = storedUser.lastName || storedUser.last_name || '';
+      setUserName(`${firstName} ${lastName}`.trim() || 'User');
+    } else {
+      // Fallback to token
+      setUserName(getUserNameFromToken(token));
+    }
+    
+    // Fetch fresh user data
+    const fetchUser = async () => {
+      try {
+        const res = await fetch('/api/users/profile', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+          },
+        });
+        if (res.ok) {
+          const userData = await res.json();
+          const firstName = userData.firstName || userData.first_name || '';
+          const lastName = userData.lastName || userData.last_name || '';
+          setUserName(`${firstName} ${lastName}`.trim() || 'User');
+        }
+      } catch (err) {
+        console.error('Error fetching user:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchUser();
   }, [navigate]);
 
   const handleTeamCreated = (team: Team) => {

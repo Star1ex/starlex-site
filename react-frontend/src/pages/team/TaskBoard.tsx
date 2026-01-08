@@ -101,9 +101,13 @@ const TaskBoard: React.FC = () => {
     setUsers(prevUsers => prevUsers.filter(u => u.id !== userId));
   }, []);
 
-  const handleViewProfile = useCallback((userId: string) => {
-    navigate(`/profile/${userId}`);
-  }, [navigate]);
+  const handleViewProfile = useCallback((userId: string, userData?: User) => {
+    // Use passed user data or find in team members
+    const userFromTeam = userData || users.find(u => u.id === userId);
+    navigate(`/profile/${userId}`, { 
+      state: userFromTeam ? { user: userFromTeam } : undefined 
+    });
+  }, [navigate, users]);
 
   const handleTaskClick = useCallback((task: Task) => {
     setSelectedTask(task);
@@ -233,7 +237,7 @@ const TaskBoard: React.FC = () => {
           className="hidden lg:block w-48 flex-shrink-0"
           teamId={team_id}
           onUserRemoved={handleUserRemoved}
-          onViewProfile={handleViewProfile}
+          onViewProfile={(userId: string, user?: User) => handleViewProfile(userId, user)}
         />
         <main className="flex-1 min-w-0">
           {tasks.length === 0 ? (
@@ -295,7 +299,7 @@ const TaskBoard: React.FC = () => {
               onClose={() => setIsSidebarOpen(false)}
               teamId={team_id}
               onUserRemoved={handleUserRemoved}
-              onViewProfile={handleViewProfile}
+              onViewProfile={(userId: string, user?: User) => handleViewProfile(userId, user)}
             />
           </>
         )}

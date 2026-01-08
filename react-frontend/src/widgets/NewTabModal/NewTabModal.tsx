@@ -53,16 +53,8 @@ const useDebounce = (value: string, delay: number) => {
   return debouncedValue;
 };
 
-import { getAuthToken } from '@/shared/lib/authManager.js';
+import { getAuthHeaders } from '@/shared/lib/authManager.js';
 
-const getAuthHeaders = (): Record<string, string> => {
-  const token = getAuthToken();
-  if (!token) {
-    window.location.href = '/sign-in';
-    throw new Error('No token');
-  }
-  return { Authorization: `Bearer ${token}` };
-};
 
 export const NewTabModal: React.FC<Props> = ({ open, onClose, onTeamCreated }) => {
   const [name, setName] = useState('');

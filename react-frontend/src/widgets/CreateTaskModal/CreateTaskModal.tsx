@@ -2,9 +2,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import Avatar from '@/shared/ui/Avatar.js';
 import type { User, CreateTaskFormData } from '@/entities/types.js';
-import { Token } from '@/app/api/token.js';
-
-const getToken = () => Token.get();
+import { getAuthToken } from '@/shared/lib/authManager.js';
 
 interface CreateTaskModalProps {
   isOpen: boolean;
@@ -52,7 +50,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     
     setIsLoading(true);
     try {
-      const token = getToken();
+      const token = getAuthToken();
       if (!token) {
         window.location.href = '/sign-in';
         return;

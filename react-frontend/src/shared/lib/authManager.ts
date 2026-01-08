@@ -63,6 +63,31 @@ export const setAuthToken = (token: string): void => authStorage.setToken(token)
 export const clearAuthToken = (): void => authStorage.clearToken();
 export const isAuthenticated = (): boolean => authStorage.isAuthenticated();
 
+// User storage functions
+const USER_KEY = 'user';
+
+export const setAuthUser = (user: any): void => {
+  try {
+    localStorage.setItem(USER_KEY, JSON.stringify(user));
+  } catch (err) {
+    console.error('Failed to save user to localStorage:', err);
+  }
+};
+
+export const getAuthUser = (): any | null => {
+  try {
+    const userStr = localStorage.getItem(USER_KEY);
+    return userStr ? JSON.parse(userStr) : null;
+  } catch (err) {
+    console.error('Failed to read user from localStorage:', err);
+    return null;
+  }
+};
+
+export const clearAuthUser = (): void => {
+  localStorage.removeItem(USER_KEY);
+};
+
 // Get auth headers for API calls
 export const getAuthHeaders = (): Record<string, string> => {
   const token = getAuthToken();

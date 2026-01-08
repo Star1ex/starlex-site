@@ -10,7 +10,7 @@ interface UserSidebarProps {
   style?: React.CSSProperties;
   teamId: string;
   onUserRemoved?: (userId: string) => void;
-  onViewProfile?: (userId: string) => void;
+  onViewProfile?: (userId: string, userData?: User) => void;
 }
 
 const UserSidebar: React.FC<UserSidebarProps> = ({ 
@@ -47,7 +47,9 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
 
   const handleProfileClick = (userId: string) => {
     if (onViewProfile) {
-      onViewProfile(userId);
+      // Pass user data if available
+      const userFromList = users.find(u => u.id === userId);
+      onViewProfile(userId, userFromList);
     }
     setActiveMenu(null);
   };
