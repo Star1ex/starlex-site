@@ -12,7 +12,14 @@ const sizeClasses: Record<AvatarProps['size'], string> = {
   xs: 'w-4 h-4',
   sm: 'w-10 h-10',
   md: 'w-12 h-12', 
-  lg: 'w-16 h-16',
+  lg: 'w-28 h-28 sm:w-36 sm:h-36',
+};
+
+const sizeTextClasses: Record<AvatarProps['size'], string> = {
+  xs: 'text-[8px]',
+  sm: 'text-xs',
+  md: 'text-sm',
+  lg: 'text-lg sm:text-xl',
 };
 
 const Avatar: React.FC<AvatarProps> = ({ 
@@ -23,9 +30,7 @@ const Avatar: React.FC<AvatarProps> = ({
   if (!user) {
     return (
       <div className={`${sizeClasses[size]} rounded-full bg-gray-200 dark:bg-dark-border flex items-center justify-center`}>
-        <span className={`font-semibold text-gray-600 dark:text-dark-text-muted ${
-          size === 'xs' ? 'text-[8px]' : size === 'sm' ? 'text-xs' : size === 'md' ? 'text-sm' : 'text-base'
-        }`}>U</span>
+        <span className={`font-semibold text-gray-600 dark:text-dark-text-muted ${sizeTextClasses[size]}`}>U</span>
       </div>
     );
   }
@@ -81,9 +86,7 @@ const Avatar: React.FC<AvatarProps> = ({
         />
       ) : (
         <span 
-          className={`font-semibold leading-none tracking-tight text-gray-700 dark:text-dark-text select-none ${
-            size === 'xs' ? 'text-[8px]' : size === 'sm' ? 'text-xs' : size === 'md' ? 'text-sm' : 'text-base'
-          }`}
+          className={`font-semibold leading-none tracking-tight text-gray-700 dark:text-dark-text select-none ${sizeTextClasses[size]}`}
           aria-hidden="true"
         >
           {initials}
