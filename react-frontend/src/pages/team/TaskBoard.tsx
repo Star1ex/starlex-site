@@ -212,21 +212,37 @@ const TaskBoard: React.FC = () => {
               </div>
             </div>
           ) : (
-            <div className="space-y-3 sm:space-y-4">
-              <div className="flex items-center justify-between mb-2">
-                <h2 className="text-lg font-semibold text-gray-700">
-                  {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}
-                </h2>
+            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+              {/* Table Header */}
+              <div className="bg-gray-50 border-b border-gray-200 px-4 py-3">
+                <div className="flex items-center gap-4 text-xs font-semibold text-gray-600 uppercase tracking-wider">
+                  <div className="flex-1">Name</div>
+                  <div className="w-32 flex-shrink-0">Assignee</div>
+                  <div className="w-32 flex-shrink-0">Status</div>
+                  <div className="w-28 flex-shrink-0">Priority</div>
+                </div>
               </div>
-              {tasks.map((task) => (
-                <TaskCard
-                  key={task.id}
-                  task={task}
-                  users={users}
-                  onUpdate={loadData}
-                  onClick={() => handleTaskClick(task)}
-                />
-              ))}
+
+              {/* Table Body */}
+              <div className="divide-y divide-gray-200">
+                {tasks.map((task) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    users={users}
+                    onUpdate={loadData}
+                    onClick={() => handleTaskClick(task)}
+                    teamId={team_id}
+                  />
+                ))}
+              </div>
+
+              {/* Footer with count */}
+              <div className="bg-gray-50 border-t border-gray-200 px-4 py-2">
+                <div className="text-xs text-gray-500">
+                  {tasks.length} {tasks.length === 1 ? 'task' : 'tasks'}
+                </div>
+              </div>
             </div>
           )}
         </main>
@@ -278,18 +294,16 @@ const TaskBoard: React.FC = () => {
         teamId={team_id}
       />
       
-      {selectedTask && (
-        <TaskDetailModal
-          isOpen={showDetailModal}
-          onClose={() => {
-            setShowDetailModal(false);
-            setSelectedTask(null);
-          }}
-          task={selectedTask}
-          users={users}
-          onEdit={handleEditFromDetail}
-        />
-      )}
+      <TaskDetailModal
+        isOpen={showDetailModal && selectedTask !== null}
+        onClose={() => {
+          setShowDetailModal(false);
+          setSelectedTask(null);
+        }}
+        task={selectedTask!}
+        users={users}
+        onEdit={handleEditFromDetail}
+      />
       
       <AddUserModal
         isOpen={showAddUserModal}
