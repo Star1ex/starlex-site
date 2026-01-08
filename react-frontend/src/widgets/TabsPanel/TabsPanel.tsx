@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Token } from '@/app/api/token.js';
+
+const getToken = () => Token.get();
 
 type Team = { 
   team_id: string; 
@@ -21,9 +24,20 @@ type ContextMenu = {
   teamName: string;
 };
 
-export const API_URL = import.meta.env.VITE_API_URL ?? '';
-
-const getToken = () => localStorage.getItem('token');
+const getUserIdFromToken = (token: string): { firstName: string; lastName: string } | null => {
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return null;
+    const decoded = JSON.parse(atob(payload));
+    return {
+      firstName: decoded.firstName || decoded.first_name || 'User',
+      lastName: decoded.lastName || decoded.last_name || '',
+    };
+  } catch (err) {
+    console.error('Error decoding token:', err);
+    return null;
+  }
+};
 
 export const TabsPanel = ({ tabs, onAddClick }: Props) => {
   const navigate = useNavigate();
@@ -32,6 +46,7 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
   const [error, setError] = useState('');
   const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null);
   const [deleteStatus, setDeleteStatus] = useState<'idle' | 'deleting' | 'success' | 'error'>('idle');
+  const [userName, setUserName] = useState<{ firstName: string; lastName: string } | null>(null);
 
   useEffect(() => {
     async function fetchUserTeams() {
@@ -41,9 +56,13 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
         
         const token = getToken();
         if (!token) {
-          setError('Not auth');
+          setError('Not authenticated');
+          setLoading(false);
           return;
         }
+
+        const userInfo = getUserIdFromToken(token);
+        setUserName(userInfo);
 
         const res = await fetch(`/api/users/teams`, {
           headers: { 
@@ -51,14 +70,15 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
             Accept: 'application/json',
           },
         });
+        
         if (!res.ok) {
           throw new Error(`Error: ${res.status}`);
         }
 
         const data: Team[] = await res.json();
-        setUserTeams(data);
+        setUserTeams(Array.isArray(data) ? data : []);
       } catch (err) {
-        console.error(err);
+        console.error('Error fetching teams:', err);
         setError('Error loading teams');
       } finally {
         setLoading(false);
@@ -79,8 +99,10 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
       }
     };
 
-    document.addEventListener('click', handleClick);
-    document.addEventListener('contextmenu', handleContextMenu);
+    if (contextMenu) {
+      document.addEventListener('click', handleClick);
+      document.addEventListener('contextmenu', handleContextMenu);
+    }
     
     return () => {
       document.removeEventListener('click', handleClick);
@@ -133,12 +155,6 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
     setContextMenu(null);
   };
 
-  const handleUpdate = () => {
-    console.log('Update team:', contextMenu?.teamId);
-    // TODO: Add update functionality
-    setContextMenu(null);
-  };
-
   const handleTeamClick = (teamId: string) => {
     navigate(`/team/${teamId}`);
   };
@@ -148,6 +164,8 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
     name: team.name,
     emails: [], 
   })), ...tabs];
+
+  const displayName = userName ? `${userName.firstName}${userName.lastName ? ` ${userName.lastName}` : ''}'s` : 'My';
 
   return (
     <>
@@ -176,14 +194,6 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
           <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-200">
             {contextMenu.teamName}
           </div>
-          
-          <button
-            onClick={handleUpdate}
-            className="w-full px-4 py-2 text-left text-black hover:bg-gray-100 transition-colors duration-150 flex items-center gap-2"
-          >
-            <span>✏️</span>
-            <span>Update</span>
-          </button>
           
           <button
             onClick={handleDelete}
@@ -275,60 +285,116 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
         `}</style>
       </div>
 
-      {/* Desktop View - Sidebar */}
-      <aside className="hidden md:flex w-full bg-white p-4 flex-col transition-colors duration-300">
-        <div className="flex items-center justify-between px-2 py-2">
-          <h3 className="tracking-widest text-xs text-black uppercase transition-colors duration-300">TEAMS</h3>
-          <button
-            onClick={onAddClick}
-            className="w-7 h-7 flex items-center justify-center rounded bg-transparent border border-black text-black hover:bg-gray-200 transition-colors duration-200"
-            title="New Tab"
-            disabled={loading}
-          >
-            +
+      {/* Desktop View - Notion-like Sidebar */}
+      <aside className="hidden md:flex w-full bg-[#F7F6F3] flex-col h-full overflow-hidden">
+        {/* User Workspace Header */}
+        <div className="px-3 py-2.5 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-900 truncate">{displayName}</span>
+            <div className="flex items-center gap-1">
+              <button className="p-1 hover:bg-gray-200 rounded transition-colors">
+                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </button>
+              <button className="p-1 hover:bg-gray-200 rounded transition-colors">
+                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation Items */}
+        <div className="px-2 py-2 space-y-0.5">
+          <button className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-200 text-sm text-gray-700 transition-colors">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <span>Search</span>
+          </button>
+          <button className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-200 text-sm text-gray-700 transition-colors">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+            <span>Home</span>
+          </button>
+          <button className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-200 text-sm text-gray-700 transition-colors">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+            </svg>
+            <span>Meetings</span>
+          </button>
+          <button className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-200 text-sm text-gray-700 transition-colors">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+            </svg>
+            <span>TeamTrack AI</span>
+          </button>
+          <button className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-200 text-sm text-gray-700 transition-colors">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+            </svg>
+            <span>Inbox</span>
           </button>
         </div>
 
-        {loading ? (
-          <div className="flex-1 flex items-center justify-center text-black transition-colors duration-300">
-            Loading teams...
-          </div>
-        ) : error ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center text-black transition-colors duration-300">
-            <p>{error}</p>
-            <button 
-              onClick={() => window.location.reload()} 
-              className="mt-2 text-black underline hover:text-gray-700 transition-colors duration-200"
-            >
-              Try again
-            </button>
-          </div>
-        ) : allTabs.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center text-center text-black transition-colors duration-300">
-            <p className="mb-1">No tabs yet</p>
+        {/* Private Section */}
+        <div className="px-3 py-2 mt-2">
+          <div className="flex items-center justify-between mb-1">
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Private</span>
             <button
               onClick={onAddClick}
-              className="text-black hover:text-gray-700 underline transition-colors duration-200"
+              className="p-0.5 hover:bg-gray-200 rounded transition-colors opacity-0 group-hover:opacity-100"
+              title="Add new"
             >
-              Create your first team
+              <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
             </button>
           </div>
-        ) : (
-          <ul className="mt-4 space-y-2 max-h-[calc(100vh-200px)] overflow-y-auto">
-            {allTabs.map(tab => (
-              <li key={tab.id}>
+          <div className="space-y-0.5">
+            {loading ? (
+              <div className="px-2 py-1.5 text-xs text-gray-500">Loading...</div>
+            ) : error ? (
+              <div className="px-2 py-1.5 text-xs text-red-600">{error}</div>
+            ) : allTabs.length === 0 ? (
+              <div className="px-2 py-1.5 text-xs text-gray-500">No teams yet</div>
+            ) : (
+              allTabs.map(tab => (
                 <button
+                  key={tab.id}
                   onClick={() => handleTeamClick(tab.id)}
                   onContextMenu={(e) => handleContextMenu(e, tab.id, tab.name)}
-                  className="w-full text-left px-3 py-2 rounded hover:bg-gray-200 text-black transition-colors duration-200"
-                  title={tab.emails.join(', ')}
+                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-200 text-sm text-gray-700 transition-colors text-left group"
                 >
-                  {tab.name}
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span className="truncate flex-1">{tab.name}</span>
                 </button>
-              </li>
-            ))}
-          </ul>
-        )}
+              ))
+            )}
+            <button
+              onClick={onAddClick}
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-200 text-sm text-gray-500 transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              <span>Add new</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Shared Section - Placeholder */}
+        <div className="px-3 py-2 mt-2">
+          <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Shared</span>
+          <div className="mt-1 space-y-0.5">
+            <div className="px-2 py-1.5 text-xs text-gray-400 italic">No shared teams</div>
+          </div>
+        </div>
       </aside>
     </>
   );
