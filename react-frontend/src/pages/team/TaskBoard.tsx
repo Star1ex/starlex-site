@@ -113,9 +113,16 @@ const TaskBoard: React.FC = () => {
   }, []);
 
   const handleTaskDelete = useCallback(async (taskId: string) => {
+    // Optimistic update - remove from UI immediately
+    setTasks(prevTasks => prevTasks.filter(t => t.id !== taskId));
+    
     try {
       const token = getToken();
-      if (!token) return;
+      if (!token) {
+        // Rollback on error
+        await loadData();
+        return;
+      }
 
       const res = await fetch(`/api/team/${team_id}/tasks/${taskId}`, {
         method: 'DELETE',
@@ -125,13 +132,23 @@ const TaskBoard: React.FC = () => {
         },
       });
 
-      if (res.ok) {
+      if (!res.ok) {
+        // Rollback on error
         await loadData();
       }
     } catch (error) {
       console.error('Failed to delete task:', error);
+      // Rollback on error
+      await loadData();
     }
   }, [team_id, loadData]);
+
+  const handleTaskUpdate = useCallback((updatedTask: Task) => {
+    // Optimistic update - update task in list immediately
+    setTasks(prevTasks => 
+      prevTasks.map(t => t.id === updatedTask.id ? updatedTask : t)
+    );
+  }, []);
 
   const handleEditFromDetail = useCallback(() => {
     if (selectedTask) {
@@ -141,6 +158,7 @@ const TaskBoard: React.FC = () => {
     }
   }, [selectedTask]);
 
+  // Defensive checks to prevent white screen
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -154,10 +172,11 @@ const TaskBoard: React.FC = () => {
 
   if (!team_id) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-8">
+      <div className="min-h-screen flex items-center justify-center p-8 bg-white">
         <div className="text-center max-w-md">
-          <h1 className="text-2xl font-bold mb-4">Team Not Found</h1>
-          <a href="/dashboard" className="px-6 py-3 bg-black text-white rounded-xl hover:bg-gray-900 transition-all duration-200">
+          <h1 className="text-2xl font-bold mb-4 text-gray-900">Team Not Found</h1>
+          <p className="text-gray-600 mb-6">The team you're looking for doesn't exist or you don't have access to it.</p>
+          <a href="/dashboard" className="px-6 py-3 bg-black text-white rounded-xl hover:bg-gray-900 transition-all duration-200 inline-block">
             Go to Dashboard
           </a>
         </div>
@@ -238,7 +257,7 @@ const TaskBoard: React.FC = () => {
                     key={task.id}
                     task={task}
                     users={users}
-                    onUpdate={loadData}
+                    onUpdate={handleTaskUpdate}
                     onClick={() => handleTaskClick(task)}
                     onDelete={() => handleTaskDelete(task.id)}
                     teamId={team_id}

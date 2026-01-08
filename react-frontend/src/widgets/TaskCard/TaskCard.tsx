@@ -8,7 +8,7 @@ const getToken = () => Token.get();
 interface TaskCardProps {
   task: Task;
   users: User[];
-  onUpdate: () => Promise<void>;
+  onUpdate: (updatedTask: Task) => void;
   onClick: () => void;
   onDelete: () => void;
   teamId: string;
@@ -40,6 +40,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [assigneeDropdownUp, setAssigneeDropdownUp] = useState(false);
+  const [statusDropdownUp, setStatusDropdownUp] = useState(false);
+  const [priorityDropdownUp, setPriorityDropdownUp] = useState(false);
   const assigneeRef = useRef<HTMLDivElement>(null);
   const statusRef = useRef<HTMLDivElement>(null);
   const priorityRef = useRef<HTMLDivElement>(null);
@@ -67,6 +70,34 @@ const TaskCard: React.FC<TaskCardProps> = ({
     return (s && statusConfig[s]) ? s : 'not_started';
   }, [task.progress]);
 
+  // Calculate dropdown positions when opened
+  useEffect(() => {
+    if (isEditingAssignee && assigneeRef.current) {
+      const rect = assigneeRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const dropdownHeight = 320;
+      setAssigneeDropdownUp(rect.bottom + dropdownHeight > viewportHeight);
+    }
+  }, [isEditingAssignee]);
+
+  useEffect(() => {
+    if (isEditingStatus && statusRef.current) {
+      const rect = statusRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const dropdownHeight = 150;
+      setStatusDropdownUp(rect.bottom + dropdownHeight > viewportHeight);
+    }
+  }, [isEditingStatus]);
+
+  useEffect(() => {
+    if (isEditingPriority && priorityRef.current) {
+      const rect = priorityRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const dropdownHeight = 120;
+      setPriorityDropdownUp(rect.bottom + dropdownHeight > viewportHeight);
+    }
+  }, [isEditingPriority]);
+
   // Close dropdowns when clicking outside
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -89,17 +120,29 @@ const TaskCard: React.FC<TaskCardProps> = ({
   }, []);
 
   const updateTaskField = async (field: 'user_ids' | 'progress' | 'priority', value: string | string[]) => {
+    // Optimistic update - update local state immediately
+    const optimisticTask: Task = {
+      ...task,
+      [field === 'progress' ? 'progress' : field === 'priority' ? 'priority' : 'user_ids']: value as any,
+    };
+    onUpdate(optimisticTask);
+
     setIsUpdating(true);
     setError(null);
+    
     try {
       const token = getToken();
       if (!token) {
         setError('Authentication required');
+        // Rollback
+        onUpdate(task);
         return;
       }
 
+      let res: Response;
+      
       if (field === 'progress') {
-        const res = await fetch(`/api/team/${teamId}/tasks/${task.id}/update_progress`, {
+        res = await fetch(`/api/team/${teamId}/tasks/${task.id}/update_progress`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -113,14 +156,8 @@ const TaskCard: React.FC<TaskCardProps> = ({
             user_ids: userIds,
           }),
         });
-        if (res.ok) {
-          await onUpdate();
-        } else {
-          const errorData = await res.json().catch(() => ({ error: 'Failed to update task' }));
-          setError(errorData.error || 'Failed to update task');
-        }
       } else if (field === 'priority') {
-        const res = await fetch(`/api/team/${teamId}/tasks/${task.id}/update`, {
+        res = await fetch(`/api/team/${teamId}/tasks/${task.id}/update`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -134,14 +171,8 @@ const TaskCard: React.FC<TaskCardProps> = ({
             user_ids: userIds,
           }),
         });
-        if (res.ok) {
-          await onUpdate();
-        } else {
-          const errorData = await res.json().catch(() => ({ error: 'Failed to update task' }));
-          setError(errorData.error || 'Failed to update task');
-        }
-      } else if (field === 'user_ids') {
-        const res = await fetch(`/api/team/${teamId}/tasks/${task.id}/update`, {
+      } else {
+        res = await fetch(`/api/team/${teamId}/tasks/${task.id}/update`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -155,16 +186,23 @@ const TaskCard: React.FC<TaskCardProps> = ({
             user_ids: value as string[],
           }),
         });
-        if (res.ok) {
-          await onUpdate();
-        } else {
-          const errorData = await res.json().catch(() => ({ error: 'Failed to update task' }));
-          setError(errorData.error || 'Failed to update task');
-        }
+      }
+
+      if (res.ok) {
+        // Optionally fetch updated task from server to ensure consistency
+        const updatedTask = await res.json().catch(() => optimisticTask);
+        onUpdate(updatedTask);
+      } else {
+        const errorData = await res.json().catch(() => ({ error: 'Failed to update task' }));
+        setError(errorData.error || 'Failed to update task');
+        // Rollback on error
+        onUpdate(task);
       }
     } catch (error) {
       console.error('Failed to update task:', error);
       setError('Network error. Please try again.');
+      // Rollback on error
+      onUpdate(task);
     } finally {
       setIsUpdating(false);
       setIsEditingAssignee(false);
@@ -222,14 +260,14 @@ const TaskCard: React.FC<TaskCardProps> = ({
       onClick={handleCardClick}
       className="group relative bg-white hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
     >
-      <div className="flex items-center gap-6 px-6 py-4">
+      <div className="flex items-center gap-4 px-4 py-2.5">
         {/* Task Name */}
         <div className="flex-1 min-w-0">
-          <div className="font-medium text-gray-900 text-base">
+          <div className="font-medium text-gray-900 text-sm">
             {task.task || 'Untitled Task'}
           </div>
           {task.description && (
-            <div className="text-sm text-gray-500 mt-1 line-clamp-1">
+            <div className="text-xs text-gray-500 mt-0.5 line-clamp-1">
               {task.description}
             </div>
           )}
@@ -270,7 +308,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
             </div>
 
             {isEditingAssignee && (
-              <div className="dropdown-menu absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-[100] p-2 min-w-[240px] max-h-[320px] overflow-y-auto">
+              <div 
+                className={`dropdown-menu absolute ${assigneeDropdownUp ? 'bottom-full mb-2' : 'top-full mt-2'} right-0 bg-white border border-gray-200 rounded-xl shadow-2xl z-[100] p-2 min-w-[240px] max-h-[320px] overflow-y-auto`}
+              >
                 <div className="space-y-1">
                   {users.map((user) => {
                     const isSelected = userIds.includes(user.id);
@@ -325,7 +365,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
             </div>
 
             {isEditingStatus && (
-              <div className="dropdown-menu absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-[100] min-w-[140px]">
+              <div 
+                className={`dropdown-menu absolute ${statusDropdownUp ? 'bottom-full mb-2' : 'top-full mt-2'} left-0 bg-white border border-gray-200 rounded-xl shadow-2xl z-[100] min-w-[140px]`}
+              >
                 {Object.entries(statusConfig).map(([key, config]) => (
                   <button
                     key={key}
@@ -361,7 +403,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
             </div>
 
             {isEditingPriority && (
-              <div className="dropdown-menu absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-[100] min-w-[120px]">
+              <div 
+                className={`dropdown-menu absolute ${priorityDropdownUp ? 'bottom-full mb-2' : 'top-full mt-2'} left-0 bg-white border border-gray-200 rounded-xl shadow-2xl z-[100] min-w-[120px]`}
+              >
                 {Object.entries(priorityConfig).map(([key, config]) => (
                   <button
                     key={key}

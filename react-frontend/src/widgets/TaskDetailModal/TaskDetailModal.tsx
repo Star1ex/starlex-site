@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import ReactMarkdown from 'react-markdown';
 import Avatar from '@/shared/ui/Avatar.js';
 import type { Task, User } from '@/entities/types.js';
@@ -30,14 +30,66 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   users,
   onEdit,
 }) => {
-  if (!isOpen || !task) return null;
+  // Defensive checks to prevent white screen
+  if (!isOpen) return null;
+  
+  if (!task || !task.id) {
+    console.error('TaskDetailModal: Invalid task provided', task);
+    return (
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
+        onClick={onClose}
+      >
+        <div
+          className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl p-6"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <div className="text-center py-8">
+            <p className="text-red-600 mb-4">Error: Invalid task data</p>
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-100 rounded-lg hover:bg-gray-200"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
-  const userIds = task.user_ids?.map(u => typeof u === 'string' ? u : u.id) || [];
-  const assignedUsers = userIds
-    .map((id) => users.find((u) => u.id === id))
-    .filter(Boolean) as User[];
+  // Safe extraction with fallbacks
+  const userIds = React.useMemo(() => {
+    if (!task.user_ids || !Array.isArray(task.user_ids)) return [];
+    try {
+      return task.user_ids.map(u => typeof u === 'string' ? u : (u?.id || '')).filter(Boolean);
+    } catch (err) {
+      console.error('Error processing user_ids:', err);
+      return [];
+    }
+  }, [task.user_ids]);
 
-  const priority = (task.priority as 'low' | 'medium' | 'high') || 'medium';
+  const assignedUsers = React.useMemo(() => {
+    if (!Array.isArray(users) || !Array.isArray(userIds)) return [];
+    try {
+      return userIds
+        .map((id) => users.find((u) => u?.id === id))
+        .filter(Boolean) as User[];
+    } catch (err) {
+      console.error('Error processing assigned users:', err);
+      return [];
+    }
+  }, [userIds, users]);
+
+  const priority = React.useMemo(() => {
+    const p = task.priority as 'low' | 'medium' | 'high';
+    return (p && ['low', 'medium', 'high'].includes(p)) ? p : 'medium';
+  }, [task.priority]);
+
+  const status = React.useMemo(() => {
+    const s = task.progress as 'not_started' | 'in_progress' | 'done';
+    return (s && ['not_started', 'in_progress', 'done'].includes(s)) ? s : 'not_started';
+  }, [task.progress]);
 
   return (
     <div
@@ -72,8 +124,8 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
 
               <div>
                 <div className="text-xs text-gray-500 mb-1">Status</div>
-                <div className={`px-3 py-1.5 text-sm font-medium rounded-lg ${statusConfig[task.progress].color} transition-all duration-200`}>
-                  {statusConfig[task.progress].label}
+                <div className={`px-3 py-1.5 text-sm font-medium rounded-lg ${statusConfig[status]?.color || statusConfig.not_started.color} transition-all duration-200`}>
+                  {statusConfig[status]?.label || 'Not started'}
                 </div>
               </div>
 

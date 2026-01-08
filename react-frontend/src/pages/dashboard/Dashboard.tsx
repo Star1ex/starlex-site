@@ -54,8 +54,19 @@ export const Dashboard: React.FC = () => {
     setTeams(prev => [...prev, team]);
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F7F6F3]">
+        <div className="text-center">
+          <div className="w-12 h-12 border-3 border-gray-300 border-t-black rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-600 font-medium">Loading dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-white transition-colors duration-300">
+    <div className="min-h-screen bg-[#F7F6F3] transition-colors duration-300">
       {/* Mobile Menu Button (Right Sidebar Toggle) */}
       <button
         onClick={() => setRightSidebarOpen(true)}
@@ -66,7 +77,7 @@ export const Dashboard: React.FC = () => {
 
       <div className="flex h-screen">
         {/* Left Sidebar - TabsPanel - Desktop: sidebar, Mobile: full screen with teams grid */}
-        <div className="w-full md:w-[320px] md:flex-shrink-0 bg-white text-black transition-colors duration-300 md:border-r md:border-gray-200">
+        <div className="w-full md:w-[280px] md:flex-shrink-0 bg-[#F7F6F3] text-black transition-colors duration-300 md:border-r md:border-gray-200">
           <TabsPanel
             tabs={teams.map(t => ({ id: t.id, name: t.name, emails: t.emails }))}
             onAddClick={onOpen}
@@ -75,11 +86,7 @@ export const Dashboard: React.FC = () => {
 
         {/* Main Content - Hidden on mobile, shown on desktop */}
         <main className="hidden md:block flex-1 bg-white transition-colors duration-300 p-8 overflow-y-auto">
-          {loading ? (
-            <div className="max-w-4xl mx-auto h-96 flex items-center justify-center">
-              <div className="text-gray-500">Loading...</div>
-            </div>
-          ) : canEdit ? (
+          {canEdit ? (
             <div className="max-w-4xl mx-auto">
               <textarea
                 value={markdownText}
@@ -99,7 +106,7 @@ export const Dashboard: React.FC = () => {
         </main>
 
         {/* Right Sidebar - Desktop only */}
-        <div className="hidden md:block w-[100px] flex-shrink-0 bg-white text-black transition-colors duration-300">
+        <div className="hidden md:block w-[280px] flex-shrink-0 bg-white text-black transition-colors duration-300 border-l border-gray-200">
           <RightSidebar />
         </div>
 
