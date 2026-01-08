@@ -114,7 +114,9 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
     };
   }, [showProfileMenu]);
 
-  const displayName = userInfo ? `${userInfo.firstName}${userInfo.lastName ? ` ${userInfo.lastName}` : ''}` : 'User';
+  const displayName = userInfo 
+    ? `${userInfo.firstName || ''}${userInfo.lastName ? ` ${userInfo.lastName}` : ''}`.trim() || 'User'
+    : 'User';
   const displayEmail = user?.email || userInfo?.email || '';
 
   return (
@@ -225,7 +227,7 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
               ) : (
                 <div className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center">
                   <span className="text-gray-600 text-sm font-medium">
-                    {displayName.charAt(0).toUpperCase()}
+                    {(displayName && displayName.length > 0) ? displayName.charAt(0).toUpperCase() : 'U'}
                   </span>
                 </div>
               )}
