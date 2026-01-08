@@ -11,16 +11,16 @@ interface TaskDetailModalProps {
   onEdit: () => void;
 }
 
-const statusConfig: Record<string, { label: string; color: string }> = {
-  not_started: { label: 'Not started', color: 'bg-gray-100 text-gray-600' },
-  in_progress: { label: 'In Progress', color: 'bg-blue-100 text-blue-700' },
-  done: { label: 'Done', color: 'bg-green-100 text-green-700' },
+const statusConfig: Record<string, { label: string; color: string; darkColor: string }> = {
+  not_started: { label: 'Not started', color: 'bg-gray-100 text-gray-600', darkColor: 'dark:bg-gray-700/30 dark:text-gray-400' },
+  in_progress: { label: 'In Progress', color: 'bg-blue-100 text-blue-700', darkColor: 'dark:bg-blue-800/30 dark:text-blue-400' },
+  done: { label: 'Done', color: 'bg-green-100 text-green-700', darkColor: 'dark:bg-green-800/30 dark:text-green-400' },
 };
 
-const priorityConfig: Record<string, { label: string; color: string }> = {
-  low: { label: 'Low', color: 'bg-green-50 text-green-700' },
-  medium: { label: 'Medium', color: 'bg-yellow-50 text-yellow-700' },
-  high: { label: 'High', color: 'bg-red-50 text-red-700' },
+const priorityConfig: Record<string, { label: string; color: string; darkColor: string }> = {
+  low: { label: 'Low', color: 'bg-green-50 text-green-700', darkColor: 'dark:bg-green-800/30 dark:text-green-400' },
+  medium: { label: 'Medium', color: 'bg-yellow-50 text-yellow-700', darkColor: 'dark:bg-yellow-800/30 dark:text-yellow-400' },
+  high: { label: 'High', color: 'bg-red-50 text-red-700', darkColor: 'dark:bg-red-800/30 dark:text-red-400' },
 };
 
 const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
@@ -97,15 +97,15 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto animate-slideUp"
+        className="bg-white dark:bg-dark-surface rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto animate-slideUp"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="p-6 sm:p-8">
           <div className="flex items-start justify-between mb-6">
-            <h2 className="text-2xl sm:text-3xl font-bold flex-1 pr-4">{task.task}</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold flex-1 pr-4 text-gray-900 dark:text-dark-text">{task.task}</h2>
             <button
               onClick={onClose}
-              className="flex-shrink-0 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200"
+              className="flex-shrink-0 p-2 text-gray-400 dark:text-dark-text-muted hover:text-gray-600 dark:hover:text-dark-text hover:bg-gray-100 dark:hover:bg-dark-border rounded-lg transition-all duration-200"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -116,21 +116,21 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
           <div className="space-y-6">
             <div className="flex flex-wrap gap-3">
               <div>
-                <div className="text-xs text-gray-500 mb-1">Priority</div>
-                <div className={`px-3 py-1.5 text-sm font-medium rounded-lg ${priorityConfig[priority].color} transition-all duration-200`}>
+                <div className="text-xs text-gray-500 dark:text-dark-text-muted mb-1">Priority</div>
+                <div className={`px-3 py-1.5 text-sm font-medium rounded-lg ${priorityConfig[priority].color} ${priorityConfig[priority].darkColor} transition-all duration-200`}>
                   {priorityConfig[priority].label}
                 </div>
               </div>
 
               <div>
-                <div className="text-xs text-gray-500 mb-1">Status</div>
-                <div className={`px-3 py-1.5 text-sm font-medium rounded-lg ${statusConfig[status]?.color || statusConfig.not_started.color} transition-all duration-200`}>
+                <div className="text-xs text-gray-500 dark:text-dark-text-muted mb-1">Status</div>
+                <div className={`px-3 py-1.5 text-sm font-medium rounded-lg ${statusConfig[status]?.color || statusConfig.not_started.color} ${statusConfig[status]?.darkColor || statusConfig.not_started.darkColor} transition-all duration-200`}>
                   {statusConfig[status]?.label || 'Not started'}
                 </div>
               </div>
 
               <div>
-                <div className="text-xs text-gray-500 mb-1">Assigned to</div>
+                <div className="text-xs text-gray-500 dark:text-dark-text-muted mb-1">Assigned to</div>
                 <div className="flex items-center gap-2">
                   {assignedUsers.length > 0 ? (
                     <>
@@ -140,33 +140,33 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
                         </div>
                       ))}
                       {assignedUsers.length > 3 && (
-                        <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs font-medium text-gray-600">
+                        <div className="w-8 h-8 bg-gray-200 dark:bg-dark-border rounded-full flex items-center justify-center text-xs font-medium text-gray-600 dark:text-dark-text">
                           +{assignedUsers.length - 3}
                         </div>
                       )}
                     </>
                   ) : (
-                    <span className="text-sm text-gray-400">No assignees</span>
+                    <span className="text-sm text-gray-400 dark:text-dark-text-muted">No assignees</span>
                   )}
                 </div>
               </div>
             </div>
 
-            <div className="border-t border-gray-200 pt-6">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">Description</h3>
+            <div className="pt-6">
+              <h3 className="text-sm font-semibold text-gray-900 dark:text-dark-text mb-4">Description</h3>
               {task.description ? (
-                <div className="prose prose-sm max-w-none text-gray-700">
+                <div className="prose prose-sm dark:prose-invert max-w-none text-gray-700 dark:text-dark-text-muted leading-relaxed">
                   <ReactMarkdown>{task.description}</ReactMarkdown>
                 </div>
               ) : (
-                <p className="text-sm text-gray-400 italic">No description provided</p>
+                <p className="text-sm text-gray-400 dark:text-dark-text-muted italic">No description provided</p>
               )}
             </div>
 
-            <div className="border-t border-gray-200 pt-4">
+            <div className="pt-4">
               <button
                 onClick={onEdit}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-all duration-200 hover:scale-105"
+                className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-dark-text bg-gray-100 dark:bg-dark-border hover:bg-gray-200 dark:hover:bg-dark-surface rounded-lg transition-all duration-200 hover:scale-105"
               >
                 Edit Task
               </button>
@@ -223,6 +223,21 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
         }
         .prose li {
           margin-bottom: 0.3em;
+        }
+        .dark .prose code {
+          background-color: #1e293b;
+          color: #f1f5f9;
+        }
+        .dark .prose pre {
+          background-color: #1e293b;
+          color: #f1f5f9;
+        }
+        .dark .prose blockquote {
+          border-left-color: #475569;
+          color: #cbd5e1;
+        }
+        .dark .prose a {
+          color: #60a5fa;
         }
         .prose code {
           background-color: #f3f4f6;

@@ -12,16 +12,52 @@ interface TaskCardProps {
   teamId: string;
 }
 
-const statusConfig: Record<string, { label: string; color: string; bgColor: string }> = {
-  not_started: { label: 'Not started', color: 'text-gray-600', bgColor: 'bg-gray-100' },
-  in_progress: { label: 'In Progress', color: 'text-blue-700', bgColor: 'bg-blue-100' },
-  done: { label: 'Done', color: 'text-green-700', bgColor: 'bg-green-100' },
+const statusConfig: Record<string, { label: string; color: string; bgColor: string; darkColor: string; darkBgColor: string }> = {
+  not_started: { 
+    label: 'Not started', 
+    color: 'text-gray-600', 
+    bgColor: 'bg-gray-100',
+    darkColor: 'text-gray-400',
+    darkBgColor: 'bg-gray-700/30'
+  },
+  in_progress: { 
+    label: 'In Progress', 
+    color: 'text-blue-700', 
+    bgColor: 'bg-blue-100',
+    darkColor: 'text-blue-400',
+    darkBgColor: 'bg-blue-800/30'
+  },
+  done: { 
+    label: 'Done', 
+    color: 'text-green-700', 
+    bgColor: 'bg-green-100',
+    darkColor: 'text-green-400',
+    darkBgColor: 'bg-green-800/30'
+  },
 };
 
-const priorityConfig: Record<string, { label: string; color: string; bgColor: string }> = {
-  low: { label: 'Low', color: 'text-green-700', bgColor: 'bg-green-50' },
-  medium: { label: 'Medium', color: 'text-yellow-700', bgColor: 'bg-yellow-50' },
-  high: { label: 'High', color: 'text-red-700', bgColor: 'bg-red-50' },
+const priorityConfig: Record<string, { label: string; color: string; bgColor: string; darkColor: string; darkBgColor: string }> = {
+  low: { 
+    label: 'Low', 
+    color: 'text-green-700', 
+    bgColor: 'bg-green-50',
+    darkColor: 'text-green-400',
+    darkBgColor: 'bg-green-800/30'
+  },
+  medium: { 
+    label: 'Medium', 
+    color: 'text-yellow-700', 
+    bgColor: 'bg-yellow-50',
+    darkColor: 'text-yellow-400',
+    darkBgColor: 'bg-yellow-800/30'
+  },
+  high: { 
+    label: 'High', 
+    color: 'text-red-700', 
+    bgColor: 'bg-red-50',
+    darkColor: 'text-red-400',
+    darkBgColor: 'bg-red-800/30'
+  },
 };
 
 const TaskCard: React.FC<TaskCardProps> = ({
@@ -256,25 +292,25 @@ const TaskCard: React.FC<TaskCardProps> = ({
   return (
     <div
       onClick={handleCardClick}
-      className="group relative bg-white dark:bg-dark-surface hover:bg-gray-50 dark:hover:bg-dark-border transition-colors duration-150 cursor-pointer"
+      className="group relative bg-transparent dark:bg-transparent hover:bg-gray-50/50 dark:hover:bg-dark-border/30 transition-colors duration-150 cursor-pointer"
     >
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 px-3 sm:px-4 py-2 sm:py-2.5">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3 px-3 sm:px-4 py-1.5 sm:py-2">
         {/* Task Name */}
         <div className="flex-1 min-w-0 w-full sm:w-auto">
-          <div className="font-medium text-gray-900 dark:text-dark-text text-sm">
+          <div className="font-medium text-gray-900 dark:text-dark-text text-sm leading-tight">
             {task.task || 'Untitled Task'}
           </div>
         </div>
 
         {/* Assignee */}
-        <div className="w-full sm:w-36 flex-shrink-0" ref={assigneeRef}>
+        <div className="w-full sm:w-auto flex-shrink-0" ref={assigneeRef}>
           <div className="relative">
             <div
               onClick={(e) => {
                 e.stopPropagation();
                 setIsEditingAssignee(!isEditingAssignee);
               }}
-              className="editable-field flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border transition-colors cursor-pointer"
+              className="editable-field flex items-center gap-1.5 px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border transition-colors cursor-pointer"
             >
               {assignedUsers.length > 0 ? (
                 <div className="flex items-center gap-1 -space-x-1">
@@ -284,13 +320,13 @@ const TaskCard: React.FC<TaskCardProps> = ({
                       className="relative"
                       title={`${user.firstName} ${user.lastName}`}
                     >
-                      <div className="w-7 h-7 rounded-full ring-2 ring-white dark:ring-dark-surface">
+                      <div className="w-5 h-5 rounded-full">
                         <Avatar user={user} size="sm" />
                       </div>
                     </div>
                   ))}
                   {assignedUsers.length > 3 && (
-                    <div className="w-7 h-7 bg-gray-200 dark:bg-dark-border rounded-full flex items-center justify-center text-xs font-medium text-gray-600 dark:text-dark-text border-2 border-white dark:border-dark-surface">
+                    <div className="w-5 h-5 bg-gray-200 dark:bg-dark-border rounded-full flex items-center justify-center text-[10px] font-medium text-gray-600 dark:text-dark-text">
                       +{assignedUsers.length - 3}
                     </div>
                   )}
@@ -302,7 +338,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
             {isEditingAssignee && (
               <div 
-                className={`dropdown-menu absolute ${assigneeDropdownUp ? 'bottom-full mb-2' : 'top-full mt-2'} right-0 bg-white border border-gray-200 rounded-xl shadow-2xl z-[100] p-2 min-w-[240px] max-h-[320px] overflow-y-auto`}
+                className={`dropdown-menu absolute ${assigneeDropdownUp ? 'bottom-full mb-2' : 'top-full mt-2'} right-0 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-2xl z-[100] p-2 min-w-[240px] max-h-[320px] overflow-y-auto`}
               >
                 <div className="space-y-1">
                   {users.map((user) => {
@@ -316,21 +352,21 @@ const TaskCard: React.FC<TaskCardProps> = ({
                         }}
                         className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                           isSelected 
-                            ? 'bg-blue-50 hover:bg-blue-100' 
-                            : 'hover:bg-gray-100'
+                            ? 'bg-blue-50 dark:bg-blue-900/30 hover:bg-blue-100 dark:hover:bg-blue-900/40' 
+                            : 'hover:bg-gray-100 dark:hover:bg-dark-border'
                         }`}
                       >
                         <div className="relative">
                           <Avatar user={user} size="sm" />
                           {isSelected && (
-                            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-blue-600 rounded-full border-2 border-white flex items-center justify-center">
+                            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-blue-600 dark:bg-blue-500 rounded-full border-2 border-white dark:border-dark-surface flex items-center justify-center">
                               <svg className="w-1.5 h-1.5 text-white" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                               </svg>
                             </div>
                           )}
                         </div>
-                        <span className={`text-sm ${isSelected ? 'text-blue-900 font-medium' : 'text-gray-700'}`}>
+                        <span className={`text-sm ${isSelected ? 'text-blue-900 dark:text-blue-300 font-medium' : 'text-gray-700 dark:text-dark-text-muted'}`}>
                           {user.firstName} {user.lastName}
                         </span>
                       </button>
@@ -350,16 +386,16 @@ const TaskCard: React.FC<TaskCardProps> = ({
                 e.stopPropagation();
                 setIsEditingStatus(!isEditingStatus);
               }}
-              className="editable-field inline-block px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+              className="editable-field inline-block px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border transition-colors cursor-pointer"
             >
-              <span className={`px-2.5 py-1 text-xs font-medium rounded-md ${statusConfig[status].bgColor} ${statusConfig[status].color}`}>
+              <span className={`px-2.5 py-1 text-xs font-medium rounded-md ${statusConfig[status].bgColor} dark:${statusConfig[status].darkBgColor} ${statusConfig[status].color} dark:${statusConfig[status].darkColor}`}>
                 {statusConfig[status].label}
               </span>
             </div>
 
             {isEditingStatus && (
               <div 
-                className={`dropdown-menu absolute ${statusDropdownUp ? 'bottom-full mb-2' : 'top-full mt-2'} left-0 bg-white border border-gray-200 rounded-xl shadow-2xl z-[100] min-w-[140px]`}
+                className={`dropdown-menu absolute ${statusDropdownUp ? 'bottom-full mb-2' : 'top-full mt-2'} left-0 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-2xl z-[100] min-w-[140px]`}
               >
                 {Object.entries(statusConfig).map(([key, config]) => (
                   <button
@@ -368,9 +404,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
                       e.stopPropagation();
                       updateTaskField('progress', key);
                     }}
-                    className="w-full text-left px-3 py-2 hover:bg-gray-100 first:rounded-t-xl last:rounded-b-xl flex items-center gap-2"
+                    className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-dark-border first:rounded-t-lg last:rounded-b-lg flex items-center gap-2"
                   >
-                    <span className={`px-2.5 py-1 text-xs font-medium rounded-md ${config.bgColor} ${config.color}`}>
+                    <span className={`px-2.5 py-1 text-xs font-medium rounded-md ${config.bgColor} dark:${config.darkBgColor} ${config.color} dark:${config.darkColor}`}>
                       {config.label}
                     </span>
                   </button>
@@ -388,9 +424,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
                 e.stopPropagation();
                 setIsEditingPriority(!isEditingPriority);
               }}
-              className="editable-field inline-block px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+              className="editable-field inline-block px-2 py-1 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border transition-colors cursor-pointer"
             >
-              <span className={`px-2.5 py-1 text-xs font-medium rounded-md ${priorityConfig[priority].bgColor} ${priorityConfig[priority].color}`}>
+              <span className={`px-2.5 py-1 text-xs font-medium rounded-md ${priorityConfig[priority].bgColor} dark:${priorityConfig[priority].darkBgColor} ${priorityConfig[priority].color} dark:${priorityConfig[priority].darkColor}`}>
                 {priorityConfig[priority].label}
               </span>
             </div>
@@ -406,9 +442,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
                       e.stopPropagation();
                       updateTaskField('priority', key);
                     }}
-                    className="w-full text-left px-3 py-2 hover:bg-gray-100 first:rounded-t-xl last:rounded-b-xl flex items-center gap-2"
+                    className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-dark-border first:rounded-t-lg last:rounded-b-lg flex items-center gap-2"
                   >
-                    <span className={`px-2.5 py-1 text-xs font-medium rounded-md ${config.bgColor} ${config.color}`}>
+                    <span className={`px-2.5 py-1 text-xs font-medium rounded-md ${config.bgColor} dark:${config.darkBgColor} ${config.color} dark:${config.darkColor}`}>
                       {config.label}
                     </span>
                   </button>
@@ -422,18 +458,18 @@ const TaskCard: React.FC<TaskCardProps> = ({
         <div className="w-8 flex-shrink-0 relative" ref={contextMenuRef}>
           <button
             onClick={handleContextMenuClick}
-            className="context-menu p-1.5 rounded-lg hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100"
+            className="context-menu p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border transition-colors opacity-0 group-hover:opacity-100"
           >
-            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-gray-400 dark:text-dark-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
             </svg>
           </button>
 
           {showContextMenu && (
-            <div className="context-menu absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-[100] min-w-[140px] overflow-hidden">
+            <div className="context-menu absolute top-full right-0 mt-2 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-2xl z-[100] min-w-[140px] overflow-hidden">
               <button
                 onClick={handleOpenClick}
-                className="w-full text-left px-4 py-2.5 hover:bg-gray-100 transition-colors flex items-center gap-2 text-sm text-gray-700"
+                className="w-full text-left px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-dark-border transition-colors flex items-center gap-2 text-sm text-gray-700 dark:text-dark-text"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -441,10 +477,10 @@ const TaskCard: React.FC<TaskCardProps> = ({
                 </svg>
                 Open
               </button>
-              <div className="border-t border-gray-100" />
+              <div className="border-t border-gray-100 dark:border-dark-border" />
               <button
                 onClick={handleDeleteClick}
-                className="w-full text-left px-4 py-2.5 hover:bg-red-50 transition-colors flex items-center gap-2 text-sm text-red-600"
+                className="w-full text-left px-4 py-2.5 hover:bg-red-50 dark:hover:bg-red-900/30 transition-colors flex items-center gap-2 text-sm text-red-600 dark:text-red-400"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -457,20 +493,20 @@ const TaskCard: React.FC<TaskCardProps> = ({
       </div>
 
       {isUpdating && (
-        <div className="absolute inset-0 bg-white/80 flex items-center justify-center z-10">
-          <div className="w-4 h-4 border-2 border-gray-300 border-t-black rounded-full animate-spin" />
+        <div className="absolute inset-0 bg-white/80 dark:bg-dark-bg/80 flex items-center justify-center z-10">
+          <div className="w-4 h-4 border-2 border-gray-300 dark:border-gray-600 border-t-black dark:border-t-white rounded-full animate-spin" />
         </div>
       )}
 
       {error && (
-        <div className="absolute top-2 right-2 bg-red-50 border border-red-200 text-red-800 px-3 py-1.5 rounded-lg text-xs z-20 shadow-md">
+        <div className="absolute top-2 right-2 bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-400 px-3 py-1.5 rounded-lg text-xs z-20 shadow-md">
           {error}
           <button
             onClick={(e) => {
               e.stopPropagation();
               setError(null);
             }}
-            className="ml-2 text-red-600 hover:text-red-800"
+            className="ml-2 text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
           >
             ×
           </button>
