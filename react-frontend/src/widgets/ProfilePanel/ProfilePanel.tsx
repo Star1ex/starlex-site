@@ -1,72 +1,84 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import Avatar from '@/shared/ui/Avatar.js';
+import { Token } from '@/app/api/token.js';
+import type { User } from '@/entities/types.js';
 
-type UserProfile = {
-  avatarUrl?: string;
-  name?: string;
-  email?: string;
-};
-
-type UserPhoto = {
-  url: string;
-};
+const getToken = () => Token.get();
 
 type Props = {
   isMobile?: boolean;
   onClose?: () => void;
 };
 
-export const API_URL = '';
-
-const getToken = () => localStorage.getItem('token');
+const getUserIdFromToken = (token: string): { firstName: string; lastName: string; email?: string } | null => {
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return null;
+    const decoded = JSON.parse(atob(payload));
+    return {
+      firstName: decoded.firstName || decoded.first_name || 'User',
+      lastName: decoded.lastName || decoded.last_name || '',
+      email: decoded.email || '',
+    };
+  } catch (err) {
+    console.error('Error decoding token:', err);
+    return null;
+  }
+};
 
 export const RightSidebar: React.FC<Props> = ({ isMobile = false, onClose }) => {
   const navigate = useNavigate();
-  const [user, setUser] = useState<UserProfile>({});
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState<User | null>(null);
+  const [userInfo, setUserInfo] = useState<{ firstName: string; lastName: string; email?: string } | null>(null);
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    async function fetchUserProfile() {
-      try {
-        setLoading(true);
-        const token = getToken();
-        if (!token) return;
+    const token = getToken();
+    if (!token) return;
 
-        const res = await fetch(`/api/users/photo`, {
+    const info = getUserIdFromToken(token);
+    setUserInfo(info);
+
+    const fetchUser = async () => {
+      try {
+        const res = await fetch(`/api/users/profile`, {
           headers: { 
             Authorization: `Bearer ${token}`,
             Accept: 'application/json',
           },
         });
-
         if (res.ok) {
-          const data: UserPhoto = await res.json();
-          setUser(prev => ({ ...prev, avatarUrl: data.url }));
+          const data: User = await res.json();
+          setUser(data);
         }
       } catch (err) {
-        console.error('Error loading picture:', err);
-      } finally {
-        setLoading(false);
+        console.error('Error loading profile:', err);
       }
-    }
+    };
 
-    fetchUserProfile();
+    fetchUser();
   }, []);
 
-  const handleSettings = () => { 
-    navigate("/settings");
-    onClose?.();
-  };
-  
-  const handleAbout = () => { 
-    navigate("/about-us");
-    onClose?.();
-  };
-  
-  const handleAvatarClick = () => { 
-    navigate('/profile');
-    onClose?.();
-  };
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showMenu]);
+
+  const displayName = userInfo ? `${userInfo.firstName}${userInfo.lastName ? ` ${userInfo.lastName}` : ''}` : 'User';
+  const displayEmail = user?.email || userInfo?.email || '';
 
   // Mobile View
   if (isMobile) {
@@ -75,19 +87,20 @@ export const RightSidebar: React.FC<Props> = ({ isMobile = false, onClose }) => 
         <div className="mb-8" />
 
         <button
-          onClick={handleAvatarClick}
+          onClick={() => {
+            navigate('/profile');
+            onClose?.();
+          }}
           className="w-24 h-24 rounded-full overflow-hidden border-4 border-black flex items-center justify-center bg-white focus:outline-none hover:border-gray-700 transition-all duration-300 shadow-lg animate-scaleIn"
         >
-          {loading ? (
-            <div className="w-20 h-20 bg-black rounded-full animate-pulse" />
-          ) : user.avatarUrl ? (
-            <img
-              src={user.avatarUrl}
-              alt="User avatar"
-              className="w-full h-full object-cover"
-            />
+          {user ? (
+            <Avatar user={user} size="lg" />
           ) : (
-            <div className="w-20 h-20 bg-black rounded-full" />
+            <div className="w-20 h-20 bg-black rounded-full flex items-center justify-center">
+              <span className="text-white text-xl font-medium">
+                {displayName.charAt(0).toUpperCase()}
+              </span>
+            </div>
           )}
         </button>
 
@@ -95,21 +108,30 @@ export const RightSidebar: React.FC<Props> = ({ isMobile = false, onClose }) => 
 
         <div className="w-full flex flex-col space-y-4 animate-fadeInUp">
           <button
-            onClick={handleAvatarClick}
+            onClick={() => {
+              navigate('/profile');
+              onClose?.();
+            }}
             className="w-full py-4 px-6 bg-black text-white rounded-xl hover:bg-gray-800 transition-all duration-200 font-semibold text-lg shadow-md hover:shadow-lg transform hover:scale-[1.02]"
           >
             Profile
           </button>
           
           <button
-            onClick={handleSettings}
+            onClick={() => {
+              navigate('/settings');
+              onClose?.();
+            }}
             className="w-full py-4 px-6 bg-white border-2 border-black text-black rounded-xl hover:bg-gray-100 transition-all duration-200 font-semibold text-lg transform hover:scale-[1.02]"
           >
             Settings
           </button>
           
           <button
-            onClick={handleAbout}
+            onClick={() => {
+              navigate('/about-us');
+              onClose?.();
+            }}
             className="w-full py-4 px-6 bg-white border-2 border-black text-black rounded-xl hover:bg-gray-100 transition-all duration-200 font-semibold text-lg transform hover:scale-[1.02]"
           >
             About Us
@@ -151,43 +173,75 @@ export const RightSidebar: React.FC<Props> = ({ isMobile = false, onClose }) => 
     );
   }
 
-  // Desktop View
+  // Desktop View - Profile Card
   return (
-    <aside className="w-[100px] bg-white flex flex-col items-center py-6 h-full fixed right-0 top-0">
-      <div className="mb-6" />
-
-      <button
-        onClick={handleAvatarClick}
-        className="w-14 h-14 rounded-full overflow-hidden border-2 border-black flex items-center justify-center bg-white focus:outline-none hover:bg-gray-200 transition-colors duration-200"
-      >
-        {loading ? (
-          <div className="w-12 h-12 bg-black rounded-full animate-pulse" />
-        ) : user.avatarUrl ? (
-          <img
-            src={user.avatarUrl}
-            alt="User avatar"
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-12 h-12 bg-black rounded-full" />
-        )}
-      </button>
-
+    <aside className="w-full bg-white flex flex-col h-full">
       <div className="flex-1" />
+      
+      {/* Profile Card */}
+      <div className="p-4 border-t border-gray-100">
+        <div className="relative" ref={menuRef}>
+          <button
+            onClick={() => setShowMenu(!showMenu)}
+            className="w-full flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-200"
+          >
+            <div className="flex-shrink-0">
+              {user && user.photo_url ? (
+                <div className="w-10 h-10 rounded-lg overflow-hidden">
+                  <Avatar user={user} size="sm" />
+                </div>
+              ) : (
+                <div className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center">
+                  <span className="text-gray-600 text-sm font-medium">
+                    {displayName.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <div className="text-sm font-semibold text-gray-900 truncate">{displayName}</div>
+              {displayEmail && (
+                <div className="text-xs text-gray-500 truncate">{displayEmail}</div>
+              )}
+            </div>
+            <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+            </svg>
+          </button>
 
-      <div className="flex flex-col items-center space-y-4 pb-4 text-sm text-black tracking-wider font-semibold">
-        <button
-          onClick={handleSettings}
-          className="hover:text-gray-600 px-0 py-0 bg-transparent transition-colors duration-200"
-        >
-          Settings
-        </button>
-        <button
-          onClick={handleAbout}
-          className="hover:text-gray-600 px-0 py-0 bg-transparent transition-colors duration-200"
-        >
-          About us
-        </button>
+          {showMenu && (
+            <div className="absolute bottom-full left-0 mb-2 w-48 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden">
+              <button
+                onClick={() => {
+                  navigate('/profile');
+                  setShowMenu(false);
+                }}
+                className="w-full text-left px-4 py-2.5 hover:bg-gray-100 transition-colors text-sm text-gray-700"
+              >
+                Profile
+              </button>
+              <div className="border-t border-gray-100" />
+              <button
+                onClick={() => {
+                  navigate('/settings');
+                  setShowMenu(false);
+                }}
+                className="w-full text-left px-4 py-2.5 hover:bg-gray-100 transition-colors text-sm text-gray-700"
+              >
+                Settings
+              </button>
+              <button
+                onClick={() => {
+                  navigate('/about-us');
+                  setShowMenu(false);
+                }}
+                className="w-full text-left px-4 py-2.5 hover:bg-gray-100 transition-colors text-sm text-gray-700"
+              >
+                About Us
+              </button>
+            </div>
+          )}
+        </div>
       </div>
     </aside>
   );

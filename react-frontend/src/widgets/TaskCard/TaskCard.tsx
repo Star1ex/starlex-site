@@ -266,11 +266,6 @@ const TaskCard: React.FC<TaskCardProps> = ({
           <div className="font-medium text-gray-900 text-sm">
             {task.task || 'Untitled Task'}
           </div>
-          {task.description && (
-            <div className="text-xs text-gray-500 mt-0.5 line-clamp-1">
-              {task.description}
-            </div>
-          )}
         </div>
 
         {/* Assignee */}

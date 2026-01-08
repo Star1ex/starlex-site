@@ -1,0 +1,281 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import Avatar from '@/shared/ui/Avatar.js';
+import { Token } from '@/app/api/token.js';
+import type { User } from '@/entities/types.js';
+
+const getToken = () => Token.get();
+
+interface GlobalSidebarProps {
+  className?: string;
+}
+
+const getUserIdFromToken = (token: string): { firstName: string; lastName: string; email?: string } | null => {
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return null;
+    const decoded = JSON.parse(atob(payload));
+    return {
+      firstName: decoded.firstName || decoded.first_name || 'User',
+      lastName: decoded.lastName || decoded.last_name || '',
+      email: decoded.email || '',
+    };
+  } catch (err) {
+    console.error('Error decoding token:', err);
+    return null;
+  }
+};
+
+export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [user, setUser] = useState<User | null>(null);
+  const [userInfo, setUserInfo] = useState<{ firstName: string; lastName: string; email?: string } | null>(null);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [teams, setTeams] = useState<Array<{ id: string; name: string }>>([]);
+  const [loading, setLoading] = useState(true);
+  const profileMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const token = getToken();
+    if (!token) {
+      navigate('/sign-in');
+      return;
+    }
+
+    const info = getUserIdFromToken(token);
+    setUserInfo(info);
+
+    // Fetch user profile
+    const fetchUser = async () => {
+      try {
+        const res = await fetch(`/api/users/profile`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+          },
+        });
+        if (res.ok) {
+          const data: User = await res.json();
+          setUser(data);
+        }
+      } catch (err) {
+        console.error('Error fetching user:', err);
+      }
+    };
+
+    // Fetch teams
+    const fetchTeams = async () => {
+      try {
+        const res = await fetch(`/api/users/teams`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: 'application/json',
+          },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setTeams(Array.isArray(data) ? data.map((t: any) => ({ id: t.team_id || t.id, name: t.name })) : []);
+        }
+      } catch (err) {
+        console.error('Error fetching teams:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUser();
+    fetchTeams();
+
+    // Listen for team creation events to refresh teams list
+    const handleTeamCreated = () => {
+      fetchTeams();
+    };
+    window.addEventListener('teamCreated', handleTeamCreated);
+    
+    return () => {
+      window.removeEventListener('teamCreated', handleTeamCreated);
+    };
+  }, [navigate]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setShowProfileMenu(false);
+      }
+    };
+
+    if (showProfileMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showProfileMenu]);
+
+  const displayName = userInfo ? `${userInfo.firstName}${userInfo.lastName ? ` ${userInfo.lastName}` : ''}` : 'User';
+  const displayEmail = user?.email || userInfo?.email || '';
+
+  return (
+    <aside className={`bg-white border-r border-gray-100 w-64 flex flex-col h-full ${className}`}>
+      {/* User Workspace Header */}
+      <div className="px-3 py-2.5 border-b border-gray-100">
+        <div className="flex items-center justify-between">
+          <span className="text-sm font-medium text-gray-900 truncate">{displayName}'s</span>
+          <div className="flex items-center gap-1">
+            <button className="p-1 hover:bg-gray-100 rounded transition-colors">
+              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </button>
+            <button className="p-1 hover:bg-gray-100 rounded transition-colors">
+              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Navigation Items */}
+      <div className="px-2 py-2">
+        <button
+          onClick={() => navigate('/dashboard')}
+          className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors ${
+            location.pathname === '/dashboard' 
+              ? 'bg-gray-100 text-gray-900' 
+              : 'text-gray-700 hover:bg-gray-100'
+          }`}
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
+          <span>Home</span>
+        </button>
+      </div>
+
+      {/* Teams Section */}
+      <div className="px-3 py-2 flex-1 overflow-y-auto">
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Teams</span>
+          <button
+            onClick={() => {
+              const event = new CustomEvent('openNewTeamModal');
+              window.dispatchEvent(event);
+            }}
+            className="p-0.5 hover:bg-gray-100 rounded transition-colors"
+            title="Add new"
+          >
+            <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+          </button>
+        </div>
+        <div className="space-y-0.5 mt-1">
+          {loading ? (
+            <div className="px-2 py-1.5 text-xs text-gray-500">Loading...</div>
+          ) : teams.length === 0 ? (
+            <div className="px-2 py-1.5 text-xs text-gray-500">No teams yet</div>
+          ) : (
+            teams.map(team => (
+              <button
+                key={team.id}
+                onClick={() => navigate(`/team/${team.id}`)}
+                className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left ${
+                  location.pathname === `/team/${team.id}`
+                    ? 'bg-gray-100 text-gray-900'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <span className="truncate flex-1">{team.name}</span>
+              </button>
+            ))
+          )}
+          <button
+            onClick={() => {
+              const event = new CustomEvent('openNewTeamModal');
+              window.dispatchEvent(event);
+            }}
+            className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-100 text-sm text-gray-500 transition-colors"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Add new</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Profile Card */}
+      <div className="border-t border-gray-100 p-3">
+        <div className="relative" ref={profileMenuRef}>
+          <button
+            onClick={() => setShowProfileMenu(!showProfileMenu)}
+            className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 transition-colors"
+          >
+            <div className="flex-shrink-0">
+              {user && user.photo_url ? (
+                <div className="w-10 h-10 rounded-lg overflow-hidden">
+                  <Avatar user={user} size="sm" />
+                </div>
+              ) : (
+                <div className="w-10 h-10 rounded-lg bg-gray-200 flex items-center justify-center">
+                  <span className="text-gray-600 text-sm font-medium">
+                    {displayName.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0 text-left">
+              <div className="text-sm font-medium text-gray-900 truncate">{displayName}</div>
+              {displayEmail && (
+                <div className="text-xs text-gray-500 truncate">{displayEmail}</div>
+              )}
+            </div>
+            <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+            </svg>
+          </button>
+
+          {showProfileMenu && (
+            <div className="absolute bottom-full left-0 mb-2 w-48 bg-white border border-gray-200 rounded-lg shadow-xl z-50 overflow-hidden">
+              <button
+                onClick={() => {
+                  navigate('/profile');
+                  setShowProfileMenu(false);
+                }}
+                className="w-full text-left px-4 py-2.5 hover:bg-gray-100 transition-colors text-sm text-gray-700"
+              >
+                Profile
+              </button>
+              <div className="border-t border-gray-100" />
+              <button
+                onClick={() => {
+                  navigate('/settings');
+                  setShowProfileMenu(false);
+                }}
+                className="w-full text-left px-4 py-2.5 hover:bg-gray-100 transition-colors text-sm text-gray-700"
+              >
+                Settings
+              </button>
+              <button
+                onClick={() => {
+                  navigate('/about-us');
+                  setShowProfileMenu(false);
+                }}
+                className="w-full text-left px-4 py-2.5 hover:bg-gray-100 transition-colors text-sm text-gray-700"
+              >
+                About Us
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    </aside>
+  );
+};
+
