@@ -123,7 +123,7 @@ const ProfilePage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white transition-colors duration-300 px-4 sm:px-6">
+    <div className="min-h-full flex items-center justify-center bg-white transition-colors duration-300 px-4 sm:px-6 py-12">
       <div className="bg-white border border-gray-300 rounded-3xl px-6 sm:px-10 py-6 sm:py-8 shadow-md w-full max-w-md sm:max-w-xl transition-all duration-300">
         <h1 className="text-2xl sm:text-3xl font-serif text-black mb-4 sm:mb-6 text-center sm:text-left transition-colors duration-300">
           Profile

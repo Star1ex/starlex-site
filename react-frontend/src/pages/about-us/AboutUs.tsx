@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 
 export default function AboutUs() {
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center bg-white text-black px-6 text-center transition-colors duration-300">
+    <div className="min-h-full flex flex-col justify-center items-center bg-white text-black px-6 text-center transition-colors duration-300 py-12">
       <motion.h1
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

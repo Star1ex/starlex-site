@@ -185,7 +185,7 @@ const TaskBoard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-white text-black font-sans">
+    <div className="min-h-full bg-white text-black font-sans">
       <nav className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 px-6 py-4 z-20">
         <div className="flex justify-between max-w-[1600px] mx-auto items-center">
           <h1 className="text-2xl font-semibold text-gray-900">Team Tasks</h1>
@@ -229,8 +229,8 @@ const TaskBoard: React.FC = () => {
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row max-w-[1600px] mx-auto">
-        <main className="flex-1 px-6 py-6">
+      <div className="flex flex-col lg:flex-row max-w-[1600px] mx-auto px-6 py-6">
+        <main className="flex-1">
           {tasks.length === 0 ? (
             <div className="text-center py-24">
               <div className="max-w-md mx-auto">

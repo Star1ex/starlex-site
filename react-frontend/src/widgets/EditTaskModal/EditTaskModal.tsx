@@ -141,15 +141,27 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
       role="dialog"
       aria-modal="true"
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm sm:max-w-md max-h-[90vh] overflow-y-auto animate-slideUp">
-        <div className="p-6 sm:p-8 border-b border-gray-200">
-          <h2 className="text-xl sm:text-2xl font-bold mb-1 sm:mb-2">Edit Task</h2>
-          <p className="text-gray-600 text-sm sm:text-base">Update task details.</p>
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl sm:max-w-3xl max-h-[90vh] overflow-y-auto animate-slideUp">
+        <div className="p-6 sm:p-8 border-b border-gray-100">
+          <div className="flex items-start justify-between">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-bold mb-1 text-gray-900">Edit Task</h2>
+              <p className="text-gray-500 text-sm">Update task details and description</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="flex-shrink-0 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-4 sm:space-y-6">
+        <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6">
           <div>
-            <label className="block text-sm sm:text-base font-medium text-gray-700 mb-1 sm:mb-2" htmlFor="task-name">
+            <label className="block text-sm font-semibold text-gray-900 mb-2" htmlFor="task-name">
               Task Name *
             </label>
             <input
@@ -158,38 +170,38 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
               type="text"
               value={formData.task}
               onChange={(e) => setFormData({ ...formData, task: e.target.value })}
-              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 text-sm sm:text-base transition-all duration-200"
+              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-base transition-all duration-200"
               placeholder="Enter task name"
               disabled={isLoading}
             />
           </div>
 
           <div>
-            <label className="block text-sm sm:text-base font-medium text-gray-700 mb-1 sm:mb-2" htmlFor="description">
+            <label className="block text-sm font-semibold text-gray-900 mb-2" htmlFor="description">
               Description
             </label>
             <textarea
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={4}
-              className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition-all duration-200 resize-vertical text-sm sm:text-base"
-              placeholder="Task description (supports Markdown)..."
+              rows={12}
+              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-200 resize-y text-base leading-relaxed font-mono"
+              placeholder="Write a detailed description for this task...&#10;&#10;Supports Markdown formatting:&#10;• **bold**&#10;• *italic*&#10;• Lists&#10;• Code blocks"
               disabled={isLoading}
             />
-            <p className="text-xs text-gray-500 mt-1">Supports Markdown formatting</p>
+            <p className="text-xs text-gray-500 mt-2">Supports Markdown formatting for rich text</p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm sm:text-base font-medium text-gray-700 mb-1 sm:mb-2" htmlFor="priority">
+              <label className="block text-sm font-semibold text-gray-900 mb-2" htmlFor="priority">
                 Priority
               </label>
               <select
                 id="priority"
                 value={formData.priority}
                 onChange={(e) => setFormData({ ...formData, priority: e.target.value as 'low' | 'medium' | 'high' })}
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 text-sm sm:text-base transition-all duration-200"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-base transition-all duration-200"
                 disabled={isLoading}
               >
                 <option value="low">Low</option>
@@ -199,7 +211,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm sm:text-base font-medium text-gray-700 mb-1 sm:mb-2" htmlFor="status">
+              <label className="block text-sm font-semibold text-gray-900 mb-2" htmlFor="status">
                 Status
               </label>
               <select
@@ -211,7 +223,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
                     progress: e.target.value as 'not_started' | 'in_progress' | 'done',
                   })
                 }
-                className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 text-sm sm:text-base transition-all duration-200"
+                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-base transition-all duration-200"
                 disabled={isLoading}
               >
                 <option value="not_started">Not started</option>
@@ -222,14 +234,16 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm sm:text-base font-medium text-gray-700 mb-1 sm:mb-2">Assign Users</label>
-            <div className="space-y-2 max-h-48 sm:max-h-60 overflow-y-auto border border-gray-200 rounded-xl p-2 sm:p-3">
+            <label className="block text-sm font-semibold text-gray-900 mb-2">Assign Users</label>
+            <div className="space-y-2 max-h-64 overflow-y-auto border border-gray-200 rounded-lg p-4 bg-gray-50">
               {users.map((user) => {
                 const isSelected = formData.user_ids.includes(user.id);
                 return (
                   <label
                     key={user.id}
-                    className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-lg hover:bg-gray-50 cursor-pointer transition-all duration-200"
+                    className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 ${
+                      isSelected ? 'bg-white border-2 border-gray-300 shadow-sm' : 'hover:bg-white'
+                    }`}
                   >
                     <input
                       type="checkbox"
@@ -240,40 +254,40 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
                           : formData.user_ids.filter((id) => id !== user.id);
                         setFormData({ ...formData, user_ids: userIds });
                       }}
-                      className="w-4 h-4 sm:w-5 sm:h-5 text-black border-gray-300 rounded focus:ring-gray-300 transition-all duration-200"
+                      className="w-5 h-5 text-black border-gray-300 rounded focus:ring-black transition-all duration-200"
                       disabled={isLoading}
                     />
                     <Avatar user={user} size="sm" />
-                    <span className="font-medium text-sm sm:text-base">{`${user.firstName} ${user.lastName}`}</span>
+                    <span className="font-medium text-base text-gray-900">{`${user.firstName} ${user.lastName}`}</span>
                   </label>
                 );
               })}
             </div>
           </div>
 
-          <div className="flex flex-col gap-3 pt-2 sm:pt-4 border-t border-gray-200">
+          <div className="flex items-center justify-between pt-6 border-t border-gray-200">
             <button
               type="button"
               onClick={handleDelete}
               disabled={isDeleting || isLoading}
-              className="w-full px-4 sm:px-6 py-2.5 sm:py-3 bg-red-600 text-white rounded-xl font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105 text-sm sm:text-base"
+              className="px-5 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 text-sm"
             >
               {isDeleting ? 'Deleting...' : 'Delete Task'}
             </button>
 
-            <div className="flex gap-2 sm:gap-3">
+            <div className="flex gap-3">
               <button
                 type="button"
                 onClick={onClose}
                 disabled={isLoading}
-                className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-medium text-sm sm:text-base transition-all duration-200"
+                className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-base transition-all duration-200"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isLoading || !formData.task.trim()}
-                className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-black text-white rounded-xl font-medium hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 min-h-[44px] text-sm sm:text-base hover:scale-105"
+                className="px-8 py-2.5 bg-black text-white rounded-lg font-semibold hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 min-h-[44px] text-base"
               >
                 {isLoading ? 'Saving...' : 'Save Changes'}
               </button>

@@ -285,19 +285,19 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
         `}</style>
       </div>
 
-      {/* Desktop View - Notion-like Sidebar */}
-      <aside className="hidden md:flex w-full bg-[#F7F6F3] flex-col h-full overflow-hidden">
+      {/* Desktop View - White Sidebar */}
+      <aside className="hidden md:flex w-full bg-white flex-col h-full overflow-hidden border-r border-gray-100">
         {/* User Workspace Header */}
-        <div className="px-3 py-2.5 border-b border-gray-200">
+        <div className="px-3 py-2.5 border-b border-gray-100">
           <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-gray-900 truncate">{displayName}</span>
+            <span className="text-sm font-medium text-gray-900 truncate">{displayName}'s</span>
             <div className="flex items-center gap-1">
-              <button className="p-1 hover:bg-gray-200 rounded transition-colors">
+              <button className="p-1 hover:bg-gray-100 rounded transition-colors">
                 <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
                 </svg>
               </button>
-              <button className="p-1 hover:bg-gray-200 rounded transition-colors">
+              <button className="p-1 hover:bg-gray-100 rounded transition-colors">
                 <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                 </svg>
@@ -306,47 +306,26 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
           </div>
         </div>
 
-        {/* Navigation Items */}
-        <div className="px-2 py-2 space-y-0.5">
-          <button className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-200 text-sm text-gray-700 transition-colors">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-            </svg>
-            <span>Search</span>
-          </button>
-          <button className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-200 text-sm text-gray-700 transition-colors">
+        {/* Home Button */}
+        <div className="px-2 py-2">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-100 text-sm text-gray-700 transition-colors"
+          >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
             </svg>
             <span>Home</span>
           </button>
-          <button className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-200 text-sm text-gray-700 transition-colors">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
-            </svg>
-            <span>Meetings</span>
-          </button>
-          <button className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-200 text-sm text-gray-700 transition-colors">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-            </svg>
-            <span>TeamTrack AI</span>
-          </button>
-          <button className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-200 text-sm text-gray-700 transition-colors">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-            </svg>
-            <span>Inbox</span>
-          </button>
         </div>
 
-        {/* Private Section */}
-        <div className="px-3 py-2 mt-2">
+        {/* Teams Section */}
+        <div className="px-3 py-2 flex-1 overflow-y-auto">
           <div className="flex items-center justify-between mb-1">
-            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Private</span>
+            <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Teams</span>
             <button
               onClick={onAddClick}
-              className="p-0.5 hover:bg-gray-200 rounded transition-colors opacity-0 group-hover:opacity-100"
+              className="p-0.5 hover:bg-gray-100 rounded transition-colors"
               title="Add new"
             >
               <svg className="w-3 h-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -354,7 +333,7 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
               </svg>
             </button>
           </div>
-          <div className="space-y-0.5">
+          <div className="space-y-0.5 mt-1">
             {loading ? (
               <div className="px-2 py-1.5 text-xs text-gray-500">Loading...</div>
             ) : error ? (
@@ -367,7 +346,7 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
                   key={tab.id}
                   onClick={() => handleTeamClick(tab.id)}
                   onContextMenu={(e) => handleContextMenu(e, tab.id, tab.name)}
-                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-200 text-sm text-gray-700 transition-colors text-left group"
+                  className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-100 text-sm text-gray-700 transition-colors text-left"
                 >
                   <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -378,21 +357,13 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
             )}
             <button
               onClick={onAddClick}
-              className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-200 text-sm text-gray-500 transition-colors"
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-100 text-sm text-gray-500 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
               <span>Add new</span>
             </button>
-          </div>
-        </div>
-
-        {/* Shared Section - Placeholder */}
-        <div className="px-3 py-2 mt-2">
-          <span className="text-xs font-medium text-gray-500 uppercase tracking-wider">Shared</span>
-          <div className="mt-1 space-y-0.5">
-            <div className="px-2 py-1.5 text-xs text-gray-400 italic">No shared teams</div>
           </div>
         </div>
       </aside>
