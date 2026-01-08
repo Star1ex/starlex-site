@@ -1,6 +1,7 @@
 import React, { ChangeEvent } from "react";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { setAuthToken, isAuthenticated } from "@/shared/lib/authManager.js";
 
 export const SignInPage = () => {
   const navigate = useNavigate();
@@ -12,13 +13,19 @@ export const SignInPage = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
+    // If user is already authenticated, redirect to dashboard
+    if (isAuthenticated()) {
+      navigate('/dashboard', { replace: true });
+      return;
+    }
+
     // Show success message if coming from verification page
     if (location.state?.message) {
       setSuccessMessage(location.state.message);
       // Clear the message after 5 seconds
       setTimeout(() => setSuccessMessage(""), 5000);
     }
-  }, [location]);
+  }, [location, navigate]);
 
   function handleToSignUp() {
     navigate("/sign-up");
@@ -61,10 +68,15 @@ export const SignInPage = () => {
         const result = await response.json();
 
         if (result.token && result.user) {
-          localStorage.setItem("token", result.token);
+          // Use centralized auth manager
+          setAuthToken(result.token);
           localStorage.setItem("user", JSON.stringify(result.user));
           console.log("Successfully authenticated:", result.user.email);
-          navigate("/dashboard");
+          
+          // Redirect to dashboard or saved redirect path
+          const redirectPath = localStorage.getItem('redirectPath') || '/dashboard';
+          localStorage.removeItem('redirectPath');
+          navigate(redirectPath, { replace: true });
           return;
         } else {
           setErrorMessage("Internal server error");

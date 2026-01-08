@@ -31,11 +31,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   return (
-    <div className="flex h-screen bg-white">
+    <div className="flex h-screen bg-white dark:bg-dark-bg transition-colors">
       {/* Mobile Menu Button */}
       <button
         onClick={() => setMobileSidebarOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-40 w-10 h-10 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-700 shadow-lg hover:bg-gray-50 transition-all duration-200"
+        className="lg:hidden fixed top-4 left-4 z-40 w-10 h-10 flex items-center justify-center rounded-lg bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border text-gray-700 dark:text-dark-text shadow-lg hover:bg-gray-50 dark:hover:bg-dark-border transition-all duration-200"
+        aria-label="Open menu"
       >
         <Menu size={20} />
       </button>
@@ -54,7 +55,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             <GlobalSidebar className="w-64" />
             <button
               onClick={() => setMobileSidebarOpen(false)}
-              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-700 hover:bg-gray-50"
+              className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border text-gray-700 dark:text-dark-text hover:bg-gray-50 dark:hover:bg-dark-border"
+              aria-label="Close menu"
             >
               <X size={20} />
             </button>

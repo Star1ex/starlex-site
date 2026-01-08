@@ -7,9 +7,7 @@ import TaskDetailModal from '@/widgets/TaskDetailModal/TaskDetailModal.js';
 import AddUserModal from '@/widgets/AddUserModal/AddUserModal.js';
 import type { Task, User } from '@/entities/types.js';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Token } from '@/app/api/token.js';
-
-const getToken = () => Token.get();
+import { getAuthToken } from '@/shared/lib/authManager.js';
 
 const TaskBoard: React.FC = () => {
   const { team_id } = useParams<{ team_id: string }>();
@@ -27,7 +25,7 @@ const TaskBoard: React.FC = () => {
   const [showAddUserModal, setShowAddUserModal] = useState(false);
 
   useEffect(() => {
-    const token = getToken();
+    const token = getAuthToken();
     if (!token) {
       navigate('/sign-in');
       return;
@@ -36,7 +34,7 @@ const TaskBoard: React.FC = () => {
 
   const fetchTasks = useCallback(async () => {
     try {
-      const token = getToken();
+      const token = getAuthToken();
       if (!token) {
         setError('Authentication required');
         return;
@@ -63,7 +61,7 @@ const TaskBoard: React.FC = () => {
 
   const fetchUsers = useCallback(async () => {
     try {
-      const token = getToken();
+      const token = getAuthToken();
       if (!token) return;
 
       const res = await fetch(`/api/team/${team_id}`, {
@@ -117,7 +115,7 @@ const TaskBoard: React.FC = () => {
     setTasks(prevTasks => prevTasks.filter(t => t.id !== taskId));
     
     try {
-      const token = getToken();
+      const token = getAuthToken();
       if (!token) {
         // Rollback on error
         await loadData();
@@ -161,10 +159,10 @@ const TaskBoard: React.FC = () => {
   // Defensive checks to prevent white screen
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-bg transition-colors">
         <div className="text-center">
-          <div className="w-12 h-12 border-3 border-gray-300 border-t-black rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 font-medium">Loading tasks...</p>
+          <div className="w-12 h-12 border-3 border-gray-300 dark:border-gray-600 border-t-black dark:border-t-white rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-600 dark:text-dark-text-muted font-medium">Loading tasks...</p>
         </div>
       </div>
     );
@@ -172,11 +170,11 @@ const TaskBoard: React.FC = () => {
 
   if (!team_id) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-8 bg-white">
+      <div className="min-h-screen flex items-center justify-center p-8 bg-white dark:bg-dark-bg transition-colors">
         <div className="text-center max-w-md">
-          <h1 className="text-2xl font-bold mb-4 text-gray-900">Team Not Found</h1>
-          <p className="text-gray-600 mb-6">The team you're looking for doesn't exist or you don't have access to it.</p>
-          <a href="/dashboard" className="px-6 py-3 bg-black text-white rounded-xl hover:bg-gray-900 transition-all duration-200 inline-block">
+          <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-dark-text">Team Not Found</h1>
+          <p className="text-gray-600 dark:text-dark-text-muted mb-6">The team you're looking for doesn't exist or you don't have access to it.</p>
+          <a href="/dashboard" className="px-6 py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl hover:bg-gray-900 dark:hover:bg-gray-200 transition-all duration-200 inline-block">
             Go to Dashboard
           </a>
         </div>
@@ -185,25 +183,25 @@ const TaskBoard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-full bg-white text-black font-sans">
-      <nav className="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-gray-100 px-6 py-4 z-20">
-        <div className="flex justify-between max-w-[1600px] mx-auto items-center">
-          <h1 className="text-2xl font-semibold text-gray-900">Team Tasks</h1>
-          <div className="flex gap-3 items-center">
+    <div className="min-h-full bg-white dark:bg-dark-bg text-black dark:text-dark-text font-sans transition-colors">
+      <nav className="sticky top-0 bg-white/95 dark:bg-dark-surface/95 backdrop-blur-sm border-b border-gray-100 dark:border-dark-border px-4 sm:px-6 py-3 sm:py-4 z-20">
+        <div className="flex justify-between max-w-[1600px] mx-auto items-center gap-3">
+          <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-dark-text truncate">Team Tasks</h1>
+          <div className="flex gap-2 sm:gap-3 items-center flex-shrink-0">
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-5 py-2.5 bg-black text-white rounded-lg text-sm hover:bg-gray-900 transition-all duration-200 font-medium"
+              className="px-3 sm:px-5 py-2 sm:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-lg text-xs sm:text-sm hover:bg-gray-900 dark:hover:bg-gray-200 transition-all duration-200 font-medium whitespace-nowrap"
             >
               + Add Task
             </button>
             <button
               onClick={() => setShowAddUserModal(true)}
-              className="px-5 py-2.5 bg-gray-100 text-gray-900 rounded-lg text-sm hover:bg-gray-200 transition-all duration-200 font-medium"
+              className="hidden sm:block px-3 sm:px-5 py-2 sm:py-2.5 bg-gray-100 dark:bg-dark-surface text-gray-900 dark:text-dark-text rounded-lg text-xs sm:text-sm hover:bg-gray-200 dark:hover:bg-dark-border transition-all duration-200 font-medium whitespace-nowrap"
             >
               + Add User
             </button>
             <button
-              className="lg:hidden px-3 py-2 bg-gray-200 rounded-lg hover:bg-gray-300 transition-all duration-200"
+              className="lg:hidden px-3 py-2 bg-gray-200 dark:bg-dark-surface text-gray-900 dark:text-dark-text rounded-lg hover:bg-gray-300 dark:hover:bg-dark-border transition-all duration-200 text-xs sm:text-sm whitespace-nowrap"
               onClick={() => setIsSidebarOpen(true)}
             >
               Users
@@ -213,15 +211,15 @@ const TaskBoard: React.FC = () => {
       </nav>
 
       {error && (
-        <div className="max-w-[1600px] mx-auto px-6 pt-4">
-          <div className="bg-red-50 border border-red-200 text-red-800 px-4 py-3 rounded-lg flex items-center justify-between">
+        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 pt-4">
+          <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-400 px-4 py-3 rounded-lg flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <span className="text-sm font-medium">{error}</span>
             <button
               onClick={() => {
                 setError(null);
                 loadData();
               }}
-              className="text-red-600 hover:text-red-800 font-semibold text-sm ml-4"
+              className="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300 font-semibold text-sm"
             >
               Retry
             </button>
@@ -229,29 +227,29 @@ const TaskBoard: React.FC = () => {
         </div>
       )}
 
-      <div className="flex flex-col lg:flex-row max-w-[1600px] mx-auto px-6 py-6">
-        <main className="flex-1">
+      <div className="flex flex-col lg:flex-row max-w-[1600px] mx-auto px-4 sm:px-6 py-4 sm:py-6 gap-4 sm:gap-6">
+        <main className="flex-1 min-w-0">
           {tasks.length === 0 ? (
-            <div className="text-center py-24">
-              <div className="max-w-md mx-auto">
-                <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div className="text-center py-12 sm:py-24">
+              <div className="max-w-md mx-auto px-4">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gray-100 dark:bg-dark-surface rounded-full flex items-center justify-center mx-auto mb-4 sm:mb-6">
+                  <svg className="w-8 h-8 sm:w-10 sm:h-10 text-gray-400 dark:text-dark-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                   </svg>
                 </div>
-                <h3 className="text-2xl font-bold mb-3 text-gray-900">No tasks yet</h3>
-                <p className="text-gray-600 mb-6">Get started by creating your first task for the team.</p>
+                <h3 className="text-xl sm:text-2xl font-bold mb-2 sm:mb-3 text-gray-900 dark:text-dark-text">No tasks yet</h3>
+                <p className="text-gray-600 dark:text-dark-text-muted mb-4 sm:mb-6 text-sm sm:text-base">Get started by creating your first task for the team.</p>
                 <button
                   onClick={() => setShowCreateModal(true)}
-                  className="px-6 py-3 bg-black text-white rounded-xl text-base hover:bg-gray-900 transition-all duration-200 font-medium"
+                  className="px-4 sm:px-6 py-2 sm:py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl text-sm sm:text-base hover:bg-gray-900 dark:hover:bg-gray-200 transition-all duration-200 font-medium"
                 >
                   Create Your First Task
                 </button>
               </div>
             </div>
           ) : (
-            <div className="bg-white rounded-xl overflow-hidden">
-              <div className="divide-y divide-gray-100">
+            <div className="bg-white dark:bg-dark-surface rounded-xl overflow-hidden border border-gray-200 dark:border-dark-border">
+              <div className="divide-y divide-gray-100 dark:divide-dark-border">
                 {tasks.map((task) => (
                   <TaskCard
                     key={task.id}
@@ -284,7 +282,7 @@ const TaskBoard: React.FC = () => {
             />
             <UserSidebar
               users={users}
-              className="fixed right-0 top-0 h-full w-64 z-40 lg:hidden bg-white shadow-lg transition-transform duration-300"
+              className="fixed right-0 top-0 h-full w-64 z-40 lg:hidden bg-white dark:bg-dark-surface shadow-lg transition-transform duration-300"
               style={{ transform: isSidebarOpen ? 'translateX(0)' : 'translateX(100%)' }}
               onClose={() => setIsSidebarOpen(false)}
               teamId={team_id}
