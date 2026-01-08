@@ -108,6 +108,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
         });
         if (res.ok) {
           await onUpdate();
+        } else {
+          const errorData = await res.json().catch(() => ({ error: 'Failed to update task' }));
+          setError(errorData.error || 'Failed to update task');
         }
       } else if (field === 'priority') {
         const res = await fetch(`/api/team/${teamId}/tasks/${task.id}/update`, {
@@ -126,6 +129,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
         });
         if (res.ok) {
           await onUpdate();
+        } else {
+          const errorData = await res.json().catch(() => ({ error: 'Failed to update task' }));
+          setError(errorData.error || 'Failed to update task');
         }
       } else if (field === 'user_ids') {
         const res = await fetch(`/api/team/${teamId}/tasks/${task.id}/update`, {
@@ -174,6 +180,13 @@ const TaskCard: React.FC<TaskCardProps> = ({
     onClick();
   };
 
+  const toggleUserAssignment = (userId: string) => {
+    const newUserIds = userIds.includes(userId)
+      ? userIds.filter(id => id !== userId)
+      : [...userIds, userId];
+    updateTaskField('user_ids', newUserIds);
+  };
+
   if (!task || !task.id) {
     return null;
   }
@@ -181,7 +194,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
   return (
     <div
       onClick={handleCardClick}
-      className="group relative bg-white border-b border-gray-200 hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
+      className="group relative bg-white border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
     >
       <div className="flex items-center gap-4 px-4 py-3 text-sm">
         {/* Task Name */}
@@ -197,59 +210,71 @@ const TaskCard: React.FC<TaskCardProps> = ({
         </div>
 
         {/* Assignee */}
-        <div className="w-32 flex-shrink-0" ref={assigneeRef}>
+        <div className="w-40 flex-shrink-0" ref={assigneeRef}>
           <div className="relative">
-            <button
+            <div
               onClick={(e) => {
                 e.stopPropagation();
                 setIsEditingAssignee(!isEditingAssignee);
               }}
-              className="editable-field flex items-center gap-1.5 px-2 py-1 rounded hover:bg-gray-200 transition-colors"
+              className="editable-field flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 transition-colors cursor-pointer"
             >
               {assignedUsers.length > 0 ? (
-                <div className="flex items-center gap-1 -space-x-2">
-                  {assignedUsers.slice(0, 2).map((user) => (
-                    <Avatar key={user.id} user={user} size="sm" />
+                <div className="flex items-center gap-1.5 -space-x-1 flex-wrap">
+                  {assignedUsers.slice(0, 4).map((user) => (
+                    <div
+                      key={user.id}
+                      className="relative"
+                      title={`${user.firstName} ${user.lastName}`}
+                    >
+                      <div className="w-8 h-8 rounded-full ring-2 ring-white">
+                        <Avatar user={user} size="sm" />
+                      </div>
+                    </div>
                   ))}
-                  {assignedUsers.length > 2 && (
+                  {assignedUsers.length > 4 && (
                     <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs font-medium text-gray-600 border-2 border-white">
-                      +{assignedUsers.length - 2}
+                      +{assignedUsers.length - 4}
                     </div>
                   )}
                 </div>
               ) : (
                 <span className="text-xs text-gray-400">Unassigned</span>
               )}
-              <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
+            </div>
 
             {isEditingAssignee && (
-              <div className="dropdown-menu absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[100] p-2 min-w-[200px]">
-                <div className="max-h-48 overflow-y-auto space-y-1">
+              <div className="dropdown-menu absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-[100] p-2 min-w-[240px] max-h-[320px] overflow-y-auto">
+                <div className="space-y-1">
                   {users.map((user) => {
                     const isSelected = userIds.includes(user.id);
                     return (
-                      <label
+                      <button
                         key={user.id}
-                        className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-100 cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleUserAssignment(user.id);
+                        }}
+                        className={`w-full flex items-center gap-2 px-2 py-2 rounded transition-colors ${
+                          isSelected 
+                            ? 'bg-blue-50 hover:bg-blue-100' 
+                            : 'hover:bg-gray-100'
+                        }`}
                       >
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={(e) => {
-                            e.stopPropagation();
-                            const newUserIds = e.target.checked
-                              ? [...userIds, user.id]
-                              : userIds.filter(id => id !== user.id);
-                            updateTaskField('user_ids', newUserIds);
-                          }}
-                          className="rounded"
-                        />
-                        <Avatar user={user} size="sm" />
-                        <span className="text-sm text-gray-700">{user.firstName} {user.lastName}</span>
-                      </label>
+                        <div className="relative">
+                          <Avatar user={user} size="sm" />
+                          {isSelected && (
+                            <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-blue-600 rounded-full border-2 border-white flex items-center justify-center">
+                              <svg className="w-1.5 h-1.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                              </svg>
+                            </div>
+                          )}
+                        </div>
+                        <span className={`text-sm ${isSelected ? 'text-blue-900 font-medium' : 'text-gray-700'}`}>
+                          {user.firstName} {user.lastName}
+                        </span>
+                      </button>
                     );
                   })}
                 </div>
@@ -261,23 +286,20 @@ const TaskCard: React.FC<TaskCardProps> = ({
         {/* Status */}
         <div className="w-32 flex-shrink-0" ref={statusRef}>
           <div className="relative">
-            <button
+            <div
               onClick={(e) => {
                 e.stopPropagation();
                 setIsEditingStatus(!isEditingStatus);
               }}
-              className="editable-field flex items-center gap-1.5 px-2 py-1 rounded hover:bg-gray-200 transition-colors"
+              className="editable-field inline-block px-2 py-1 rounded hover:bg-gray-100 transition-colors cursor-pointer"
             >
               <span className={`px-2 py-0.5 text-xs font-medium rounded ${statusConfig[status].bgColor} ${statusConfig[status].color}`}>
                 {statusConfig[status].label}
               </span>
-              <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
+            </div>
 
             {isEditingStatus && (
-              <div className="dropdown-menu absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[100] min-w-[140px]">
+              <div className="dropdown-menu absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-[100] min-w-[140px]">
                 {Object.entries(statusConfig).map(([key, config]) => (
                   <button
                     key={key}
@@ -300,23 +322,20 @@ const TaskCard: React.FC<TaskCardProps> = ({
         {/* Priority */}
         <div className="w-28 flex-shrink-0" ref={priorityRef}>
           <div className="relative">
-            <button
+            <div
               onClick={(e) => {
                 e.stopPropagation();
                 setIsEditingPriority(!isEditingPriority);
               }}
-              className="editable-field flex items-center gap-1.5 px-2 py-1 rounded hover:bg-gray-200 transition-colors"
+              className="editable-field inline-block px-2 py-1 rounded hover:bg-gray-100 transition-colors cursor-pointer"
             >
               <span className={`px-2 py-0.5 text-xs font-medium rounded ${priorityConfig[priority].bgColor} ${priorityConfig[priority].color}`}>
                 {priorityConfig[priority].label}
               </span>
-              <svg className="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
+            </div>
 
             {isEditingPriority && (
-              <div className="dropdown-menu absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-[100] min-w-[120px]">
+              <div className="dropdown-menu absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-[100] min-w-[120px]">
                 {Object.entries(priorityConfig).map(([key, config]) => (
                   <button
                     key={key}
