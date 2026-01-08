@@ -92,18 +92,18 @@ return (
     role="dialog"
     aria-modal="true"
   >
-    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm sm:max-w-md max-h-[90vh] overflow-y-auto">
+    <div className="bg-white dark:bg-dark-surface rounded-2xl shadow-2xl w-full max-w-sm sm:max-w-md max-h-[90vh] overflow-y-auto">
       {/* Header */}
-      <div className="p-6 sm:p-8 border-b border-gray-200">
-        <h2 className="text-xl sm:text-2xl font-bold mb-1 sm:mb-2">Create Task</h2>
-        <p className="text-gray-600 text-sm sm:text-base">Add a new task for your team.</p>
+      <div className="p-6 sm:p-8">
+        <h2 className="text-xl sm:text-2xl font-bold mb-1 sm:mb-2 text-gray-900 dark:text-dark-text">Create Task</h2>
+        <p className="text-gray-600 dark:text-dark-text-muted text-sm sm:text-base">Add a new task for your team.</p>
       </div>
 
       {/* Form */}
-      <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-4 sm:space-y-6">
+      <form onSubmit={handleSubmit} className="px-6 sm:px-8 pb-6 sm:pb-8 space-y-4 sm:space-y-6">
         {/* Task Name */}
         <div>
-          <label className="block text-sm sm:text-base font-medium text-gray-700 mb-1 sm:mb-2" htmlFor="task-name">
+          <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-dark-text mb-1 sm:mb-2" htmlFor="task-name">
             Task Name *
           </label>
           <input
@@ -112,7 +112,7 @@ return (
             type="text"
             value={formData.task}
             onChange={(e) => setFormData({ ...formData, task: e.target.value })}
-            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 text-sm sm:text-base transition-all duration-200"
+            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent text-sm sm:text-base bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text transition-all duration-200"
             placeholder="Enter task name"
             disabled={isLoading}
           />
@@ -120,15 +120,15 @@ return (
 
         {/* Description */}
         <div>
-          <label className="block text-sm sm:text-base font-medium text-gray-700 mb-1 sm:mb-2" htmlFor="description">
+          <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-dark-text mb-1 sm:mb-2" htmlFor="description">
             Description
           </label>
           <textarea
             id="description"
             value={formData.description}
             onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            rows={3}
-            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 transition-all duration-200 resize-vertical text-sm sm:text-base"
+            rows={4}
+            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all duration-200 resize-vertical text-sm sm:text-base bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text"
             placeholder="Optional description..."
             disabled={isLoading}
           />
@@ -136,7 +136,7 @@ return (
 
         {/* Status */}
         <div>
-          <label className="block text-sm sm:text-base font-medium text-gray-700 mb-1 sm:mb-2" htmlFor="status">
+          <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-dark-text mb-1 sm:mb-2" htmlFor="status">
             Status
           </label>
           <select
@@ -145,7 +145,7 @@ return (
             onChange={(e) =>
               setFormData({ ...formData, progress: e.target.value as 'not_started' | 'in_progress' | 'done' })
             }
-            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gray-300 focus:border-gray-400 text-sm sm:text-base transition-all duration-200"
+            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent text-sm sm:text-base bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text transition-all duration-200"
             disabled={isLoading}
           >
             <option value="not_started">Not started</option>
@@ -156,14 +156,14 @@ return (
 
         {/* Assign Users */}
         <div>
-          <label className="block text-sm sm:text-base font-medium text-gray-700 mb-1 sm:mb-2">Assign Users</label>
-          <div className="space-y-2 max-h-48 sm:max-h-60 overflow-y-auto border border-gray-200 rounded-xl p-2 sm:p-3">
+          <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-dark-text mb-1 sm:mb-2">Assign Users</label>
+          <div className="space-y-2 max-h-48 sm:max-h-60 overflow-y-auto border border-gray-200 dark:border-dark-border rounded-xl p-2 sm:p-3 bg-gray-50 dark:bg-dark-border/30">
             {users.map((user) => {
               const isSelected = formData.user_ids.includes(user.id);
               return (
                 <label
                   key={user.id}
-                  className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors"
+                  className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-lg hover:bg-white dark:hover:bg-dark-surface cursor-pointer transition-colors"
                 >
                   <input
                     type="checkbox"
@@ -174,11 +174,11 @@ return (
                         : formData.user_ids.filter((id) => id !== user.id);
                       setFormData({ ...formData, user_ids: userIds });
                     }}
-                    className="w-4 h-4 sm:w-5 sm:h-5 text-black border-gray-300 rounded focus:ring-gray-300"
+                    className="w-4 h-4 sm:w-5 sm:h-5 text-black dark:text-white border-gray-300 dark:border-dark-border rounded focus:ring-black dark:focus:ring-white"
                     disabled={isLoading}
                   />
                   <Avatar user={user} size="sm" />
-                  <span className="font-medium text-sm sm:text-base">{`${user.firstName} ${user.lastName}`}</span>
+                  <span className="font-medium text-sm sm:text-base text-gray-900 dark:text-dark-text">{`${user.firstName} ${user.lastName}`}</span>
                 </label>
               );
             })}
@@ -191,14 +191,14 @@ return (
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 font-medium text-sm sm:text-base transition-all duration-200"
+            className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 border border-gray-300 dark:border-dark-border text-gray-700 dark:text-dark-text rounded-xl hover:bg-gray-50 dark:hover:bg-dark-border font-medium text-sm sm:text-base transition-all duration-200"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={isLoading || !formData.task.trim()}
-            className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-black text-white rounded-xl font-medium hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 min-h-[44px] text-sm sm:text-base"
+            className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 bg-black dark:bg-white text-white dark:text-black rounded-xl font-medium hover:bg-gray-900 dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 min-h-[44px] text-sm sm:text-base"
           >
             {isLoading ? 'Creating...' : 'Create Task'}
           </button>

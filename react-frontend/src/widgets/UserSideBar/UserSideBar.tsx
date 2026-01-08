@@ -93,7 +93,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
   };
 
   return (
-    <aside className={`bg-white dark:bg-dark-surface border-l border-gray-100 dark:border-dark-border w-64 flex flex-col transition-colors ${className}`}>
+    <aside className={`bg-transparent dark:bg-transparent ${onClose ? 'border-l border-gray-100 dark:border-dark-border' : ''} flex flex-col transition-colors ${className}`}>
       {onClose && (
         <div className="p-4 sm:p-6 border-b border-gray-200 dark:border-dark-border">
           <button
@@ -109,31 +109,29 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
         </div>
       )}
       
-      <div className="p-4 sm:p-5 flex-1 overflow-y-auto">
-        <h2 className="text-xs sm:text-sm font-semibold text-gray-500 dark:text-dark-text-muted uppercase tracking-wider mb-4">Team Members</h2>
-        <div className="space-y-0">
+      <div className="p-2 sm:p-3 flex-1 overflow-y-auto">
+        <h2 className="text-xs font-semibold text-gray-500 dark:text-dark-text-muted uppercase tracking-wider mb-2 px-2">Members</h2>
+        <div className="space-y-0.5">
           {users.length === 0 ? (
-            <div className="text-center py-8 sm:py-12 text-gray-500 dark:text-dark-text-muted">
-              <p className="text-xs sm:text-sm">No team members yet</p>
-              <p className="text-xs mt-1">Add members to get started</p>
+            <div className="text-center py-6 text-gray-500 dark:text-dark-text-muted px-2">
+              <p className="text-xs">No members</p>
             </div>
           ) : (
             users.map((user) => (
               <div key={user.id} className="transition-all duration-300 ease-in-out">
                 <div
-                  className="flex items-center gap-3 sm:gap-4 p-2 sm:p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-dark-border transition-colors duration-200 group cursor-pointer"
+                  className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-border transition-colors duration-200 group cursor-pointer"
                   role="listitem"
                   onClick={() => handleUserClick(user.id)}
                 >
-                  <Avatar user={user} size="md" />
+                  <Avatar user={user} size="sm" />
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium text-gray-900 dark:text-dark-text truncate text-sm sm:text-base">
+                    <p className="font-medium text-gray-900 dark:text-dark-text truncate text-xs">
                       {`${user.firstName} ${user.lastName}`}
                     </p>
-                    <p className="text-xs text-gray-500 dark:text-dark-text-muted">Team Member</p>
                   </div>
                   {deletingUserId === user.id && (
-                    <div className="w-4 h-4 border-2 border-gray-300 dark:border-gray-600 border-t-gray-600 dark:border-t-gray-400 rounded-full animate-spin flex-shrink-0" />
+                    <div className="w-3 h-3 border-2 border-gray-300 dark:border-gray-600 border-t-gray-600 dark:border-t-gray-400 rounded-full animate-spin flex-shrink-0" />
                   )}
                 </div>
 

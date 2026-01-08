@@ -53,12 +53,14 @@ const Avatar: React.FC<AvatarProps> = ({
         items-center 
         justify-center 
         flex-shrink-0 
-        shadow-sm 
         border 
         border-gray-200
+        dark:border-dark-border
         bg-gradient-to-br 
         from-gray-200 
         to-gray-300
+        dark:from-dark-border
+        dark:to-dark-surface
         ${className}
       `}
       role="img"
@@ -76,7 +78,7 @@ const Avatar: React.FC<AvatarProps> = ({
         />
       ) : (
         <span 
-          className="font-semibold text-xs sm:text-sm leading-none tracking-tight text-gray-700 select-none"
+          className="font-semibold text-xs sm:text-sm leading-none tracking-tight text-gray-700 dark:text-dark-text select-none"
           aria-hidden="true"
         >
           {initials}

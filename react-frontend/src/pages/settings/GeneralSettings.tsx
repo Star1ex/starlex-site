@@ -108,12 +108,12 @@ export const GeneralSettings: React.FC = () => {
 
         <div className="space-y-6 sm:space-y-8">
           {/* Theme Settings */}
-          <div className="bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-xl shadow-sm overflow-hidden">
-            <div className="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-dark-bg">
-              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-dark-text">Appearance</h2>
-              <p className="text-sm text-gray-600 dark:text-dark-text-muted mt-1">Customize the application theme</p>
+          <div className="bg-white dark:bg-dark-surface rounded-xl overflow-hidden">
+            <div className="px-4 sm:px-6 py-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-dark-text mb-1">Appearance</h2>
+              <p className="text-sm text-gray-600 dark:text-dark-text-muted">Customize the application theme</p>
             </div>
-            <div className="p-4 sm:p-6">
+            <div className="px-4 sm:px-6 pb-4 sm:pb-6">
               <div className="flex items-center justify-between py-3">
                 <div className="flex-1">
                   <h3 className="font-medium text-gray-900 dark:text-dark-text">Dark Theme</h3>
@@ -142,30 +142,30 @@ export const GeneralSettings: React.FC = () => {
           </div>
 
           {/* Contributing Section */}
-          <div className="bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-xl shadow-sm overflow-hidden">
-            <div className="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-dark-bg">
-              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-dark-text">Contributing Guidelines</h2>
-              <p className="text-sm text-gray-600 dark:text-dark-text-muted mt-1">Information for developers contributing to TeamTrack</p>
+          <div className="bg-white dark:bg-dark-surface rounded-xl overflow-hidden">
+            <div className="px-4 sm:px-6 py-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-dark-text mb-1">Contributing Guidelines</h2>
+              <p className="text-sm text-gray-600 dark:text-dark-text-muted">Information for developers contributing to TeamTrack</p>
             </div>
-            <div className="p-4 sm:p-6 overflow-x-auto">
-              <div className="prose prose-sm dark:prose-invert max-w-none">
+            <div className="px-4 sm:px-6 pb-4 sm:pb-6 overflow-x-auto">
+              <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:mt-6 prose-headings:mb-3 prose-p:my-3 prose-ul:my-3 prose-ol:my-3">
                 <ReactMarkdown>{CONTRIBUTING_CONTENT}</ReactMarkdown>
               </div>
             </div>
           </div>
 
           {/* Additional Settings Sections */}
-          <div className="bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-xl shadow-sm overflow-hidden">
-            <div className="px-4 sm:px-6 py-4 border-b border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-dark-bg">
-              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-dark-text">Application Settings</h2>
+          <div className="bg-white dark:bg-dark-surface rounded-xl overflow-hidden">
+            <div className="px-4 sm:px-6 py-4">
+              <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-dark-text mb-1">Application Settings</h2>
             </div>
-            <div className="p-4 sm:p-6 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-3 border-b border-gray-100 dark:border-dark-border last:border-0 gap-2">
+            <div className="px-4 sm:px-6 pb-4 sm:pb-6 space-y-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between py-3 gap-2">
                 <div className="flex-1">
                   <h3 className="font-medium text-gray-900 dark:text-dark-text">Notifications</h3>
                   <p className="text-sm text-gray-600 dark:text-dark-text-muted">Manage notification preferences</p>
                 </div>
-                <button className="px-4 py-2 bg-gray-100 dark:bg-dark-surface text-gray-900 dark:text-dark-text rounded-lg hover:bg-gray-200 dark:hover:bg-dark-border transition-colors text-sm whitespace-nowrap">
+                <button className="px-4 py-2 bg-gray-100 dark:bg-dark-border text-gray-900 dark:text-dark-text rounded-lg hover:bg-gray-200 dark:hover:bg-dark-surface transition-colors text-sm whitespace-nowrap">
                   Configure
                 </button>
               </div>
@@ -175,30 +175,96 @@ export const GeneralSettings: React.FC = () => {
       </div>
 
       <style>{`
-        .prose.dark h1, .dark .prose h1 {
+        .prose h1 {
+          font-size: 1.875rem;
+          font-weight: 700;
+          margin-top: 0;
+          margin-bottom: 0.75rem;
+          line-height: 1.2;
+        }
+        .prose h2 {
+          font-size: 1.5rem;
+          font-weight: 600;
+          margin-top: 1.5rem;
+          margin-bottom: 0.5rem;
+          line-height: 1.3;
+        }
+        .prose h3 {
+          font-size: 1.25rem;
+          font-weight: 600;
+          margin-top: 1.25rem;
+          margin-bottom: 0.5rem;
+          line-height: 1.4;
+        }
+        .prose p {
+          margin-bottom: 0.75rem;
+          line-height: 1.6;
+        }
+        .prose ul, .prose ol {
+          margin-left: 1.5rem;
+          margin-bottom: 0.75rem;
+        }
+        .prose li {
+          margin-bottom: 0.375rem;
+        }
+        .prose code {
+          background-color: #f3f4f6;
+          padding: 0.125rem 0.375rem;
+          border-radius: 0.25rem;
+          font-size: 0.875em;
+          font-family: 'Monaco', 'Courier New', monospace;
+        }
+        .prose pre {
+          background-color: #f3f4f6;
+          padding: 1rem;
+          border-radius: 0.5rem;
+          overflow-x: auto;
+          margin-bottom: 0.75rem;
+        }
+        .prose pre code {
+          background-color: transparent;
+          padding: 0;
+        }
+        .prose blockquote {
+          border-left: 4px solid #e5e7eb;
+          padding-left: 1em;
+          margin-left: 0;
+          color: #6b7280;
+        }
+        .prose strong {
+          font-weight: 600;
+        }
+        .dark .prose h1, .prose.dark h1 {
           color: #f1f5f9;
         }
-        .prose.dark h2, .dark .prose h2 {
+        .dark .prose h2, .prose.dark h2 {
           color: #f1f5f9;
         }
-        .prose.dark h3, .dark .prose h3 {
+        .dark .prose h3, .prose.dark h3 {
           color: #f1f5f9;
         }
-        .prose.dark p, .dark .prose p {
+        .dark .prose p, .prose.dark p {
           color: #cbd5e1;
         }
-        .prose.dark li, .dark .prose li {
+        .dark .prose li, .prose.dark li {
           color: #cbd5e1;
         }
-        .prose.dark code, .dark .prose code {
+        .dark .prose code, .prose.dark code {
           background-color: #1e293b;
           color: #f1f5f9;
         }
-        .prose.dark pre, .dark .prose pre {
+        .dark .prose pre, .prose.dark pre {
           background-color: #1e293b;
         }
-        .prose.dark strong, .dark .prose strong {
+        .dark .prose blockquote, .prose.dark blockquote {
+          border-left-color: #475569;
+          color: #cbd5e1;
+        }
+        .dark .prose strong, .prose.dark strong {
           color: #f1f5f9;
+        }
+        .dark .prose a, .prose.dark a {
+          color: #60a5fa;
         }
       `}</style>
     </div>

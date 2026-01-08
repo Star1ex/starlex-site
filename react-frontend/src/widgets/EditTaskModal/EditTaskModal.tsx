@@ -141,16 +141,16 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
       role="dialog"
       aria-modal="true"
     >
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl sm:max-w-3xl max-h-[90vh] overflow-y-auto animate-slideUp">
-        <div className="p-6 sm:p-8 border-b border-gray-100">
-          <div className="flex items-start justify-between">
+      <div className="bg-white dark:bg-dark-surface rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto animate-slideUp">
+        <div className="p-6 sm:p-8">
+          <div className="flex items-start justify-between mb-6">
             <div>
-              <h2 className="text-2xl sm:text-3xl font-bold mb-1 text-gray-900">Edit Task</h2>
-              <p className="text-gray-500 text-sm">Update task details and description</p>
+              <h2 className="text-2xl sm:text-3xl font-bold mb-1 text-gray-900 dark:text-dark-text">Edit Task</h2>
+              <p className="text-gray-500 dark:text-dark-text-muted text-sm">Update task details and description</p>
             </div>
             <button
               onClick={onClose}
-              className="flex-shrink-0 p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-all duration-200"
+              className="flex-shrink-0 p-2 text-gray-400 dark:text-dark-text-muted hover:text-gray-600 dark:hover:text-dark-text hover:bg-gray-100 dark:hover:bg-dark-border rounded-lg transition-all duration-200"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -159,9 +159,9 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 sm:p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="px-6 sm:px-8 pb-6 sm:pb-8 space-y-6">
           <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2" htmlFor="task-name">
+            <label className="block text-sm font-semibold text-gray-900 dark:text-dark-text mb-2" htmlFor="task-name">
               Task Name *
             </label>
             <input
@@ -170,38 +170,38 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
               type="text"
               value={formData.task}
               onChange={(e) => setFormData({ ...formData, task: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-base transition-all duration-200"
+              className="w-full px-4 py-3 border border-gray-200 dark:border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent text-base bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text transition-all duration-200"
               placeholder="Enter task name"
               disabled={isLoading}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2" htmlFor="description">
+            <label className="block text-sm font-semibold text-gray-900 dark:text-dark-text mb-2" htmlFor="description">
               Description
             </label>
             <textarea
               id="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={12}
-              className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent transition-all duration-200 resize-y text-base leading-relaxed font-mono"
+              rows={20}
+              className="w-full px-4 py-3 border border-gray-200 dark:border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all duration-200 resize-y text-sm leading-relaxed font-mono bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text"
               placeholder="Write a detailed description for this task...&#10;&#10;Supports Markdown formatting:&#10;• **bold**&#10;• *italic*&#10;• Lists&#10;• Code blocks"
               disabled={isLoading}
             />
-            <p className="text-xs text-gray-500 mt-2">Supports Markdown formatting for rich text</p>
+            <p className="text-xs text-gray-500 dark:text-dark-text-muted mt-2">Supports Markdown formatting for rich text</p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2" htmlFor="priority">
+              <label className="block text-sm font-semibold text-gray-900 dark:text-dark-text mb-2" htmlFor="priority">
                 Priority
               </label>
               <select
                 id="priority"
                 value={formData.priority}
                 onChange={(e) => setFormData({ ...formData, priority: e.target.value as 'low' | 'medium' | 'high' })}
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-base transition-all duration-200"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent text-base bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text transition-all duration-200"
                 disabled={isLoading}
               >
                 <option value="low">Low</option>
@@ -211,7 +211,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-900 mb-2" htmlFor="status">
+              <label className="block text-sm font-semibold text-gray-900 dark:text-dark-text mb-2" htmlFor="status">
                 Status
               </label>
               <select
@@ -223,7 +223,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
                     progress: e.target.value as 'not_started' | 'in_progress' | 'done',
                   })
                 }
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent text-base transition-all duration-200"
+                className="w-full px-4 py-3 border border-gray-200 dark:border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent text-base bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text transition-all duration-200"
                 disabled={isLoading}
               >
                 <option value="not_started">Not started</option>
@@ -234,15 +234,15 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-900 mb-2">Assign Users</label>
-            <div className="space-y-2 max-h-64 overflow-y-auto border border-gray-200 rounded-lg p-4 bg-gray-50">
+            <label className="block text-sm font-semibold text-gray-900 dark:text-dark-text mb-2">Assign Users</label>
+            <div className="space-y-2 max-h-64 overflow-y-auto border border-gray-200 dark:border-dark-border rounded-lg p-4 bg-gray-50 dark:bg-dark-border/30">
               {users.map((user) => {
                 const isSelected = formData.user_ids.includes(user.id);
                 return (
                   <label
                     key={user.id}
                     className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 ${
-                      isSelected ? 'bg-white border-2 border-gray-300 shadow-sm' : 'hover:bg-white'
+                      isSelected ? 'bg-white dark:bg-dark-surface border-2 border-gray-300 dark:border-dark-border shadow-sm' : 'hover:bg-white dark:hover:bg-dark-surface'
                     }`}
                   >
                     <input
@@ -254,23 +254,23 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
                           : formData.user_ids.filter((id) => id !== user.id);
                         setFormData({ ...formData, user_ids: userIds });
                       }}
-                      className="w-5 h-5 text-black border-gray-300 rounded focus:ring-black transition-all duration-200"
+                      className="w-5 h-5 text-black dark:text-white border-gray-300 dark:border-dark-border rounded focus:ring-black dark:focus:ring-white transition-all duration-200"
                       disabled={isLoading}
                     />
                     <Avatar user={user} size="sm" />
-                    <span className="font-medium text-base text-gray-900">{`${user.firstName} ${user.lastName}`}</span>
+                    <span className="font-medium text-base text-gray-900 dark:text-dark-text">{`${user.firstName} ${user.lastName}`}</span>
                   </label>
                 );
               })}
             </div>
           </div>
 
-          <div className="flex items-center justify-between pt-6 border-t border-gray-200">
+          <div className="flex items-center justify-between pt-6">
             <button
               type="button"
               onClick={handleDelete}
               disabled={isDeleting || isLoading}
-              className="px-5 py-2.5 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 text-sm"
+              className="px-5 py-2.5 border border-gray-300 dark:border-dark-border text-red-600 dark:text-red-400 rounded-lg font-medium hover:bg-red-50 dark:hover:bg-red-900/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 text-sm"
             >
               {isDeleting ? 'Deleting...' : 'Delete Task'}
             </button>
@@ -280,14 +280,14 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
                 type="button"
                 onClick={onClose}
                 disabled={isLoading}
-                className="px-6 py-2.5 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium text-base transition-all duration-200"
+                className="px-6 py-2.5 border border-gray-300 dark:border-dark-border text-gray-700 dark:text-dark-text rounded-lg hover:bg-gray-50 dark:hover:bg-dark-border font-medium text-base transition-all duration-200"
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 disabled={isLoading || !formData.task.trim()}
-                className="px-8 py-2.5 bg-black text-white rounded-lg font-semibold hover:bg-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 min-h-[44px] text-base"
+                className="px-8 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-lg font-semibold hover:bg-gray-900 dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 min-h-[44px] text-base"
               >
                 {isLoading ? 'Saving...' : 'Save Changes'}
               </button>
