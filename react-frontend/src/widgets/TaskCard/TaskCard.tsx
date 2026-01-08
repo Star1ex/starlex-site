@@ -10,6 +10,7 @@ interface TaskCardProps {
   users: User[];
   onUpdate: () => Promise<void>;
   onClick: () => void;
+  onDelete: () => void;
   teamId: string;
 }
 
@@ -30,16 +31,19 @@ const TaskCard: React.FC<TaskCardProps> = ({
   users,
   onUpdate,
   onClick,
+  onDelete,
   teamId,
 }) => {
   const [isEditingAssignee, setIsEditingAssignee] = useState(false);
   const [isEditingStatus, setIsEditingStatus] = useState(false);
   const [isEditingPriority, setIsEditingPriority] = useState(false);
+  const [showContextMenu, setShowContextMenu] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const assigneeRef = useRef<HTMLDivElement>(null);
   const statusRef = useRef<HTMLDivElement>(null);
   const priorityRef = useRef<HTMLDivElement>(null);
+  const contextMenuRef = useRef<HTMLDivElement>(null);
 
   // Handle user_ids - can be array of TaskUser objects or strings
   const userIds = React.useMemo(() => {
@@ -74,6 +78,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
       }
       if (priorityRef.current && !priorityRef.current.contains(event.target as Node)) {
         setIsEditingPriority(false);
+      }
+      if (contextMenuRef.current && !contextMenuRef.current.contains(event.target as Node)) {
+        setShowContextMenu(false);
       }
     };
 
@@ -167,17 +174,36 @@ const TaskCard: React.FC<TaskCardProps> = ({
   };
 
   const handleCardClick = (e: React.MouseEvent) => {
-    // Don't open modal if clicking on interactive elements
     const target = e.target as HTMLElement;
     if (
       target.closest('.dropdown-menu') ||
       target.closest('.editable-field') ||
+      target.closest('.context-menu') ||
       target.closest('button') ||
       target.closest('select')
     ) {
       return;
     }
     onClick();
+  };
+
+  const handleContextMenuClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowContextMenu(!showContextMenu);
+  };
+
+  const handleOpenClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowContextMenu(false);
+    onClick();
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setShowContextMenu(false);
+    if (confirm('Are you sure you want to delete this task?')) {
+      onDelete();
+    }
   };
 
   const toggleUserAssignment = (userId: string) => {
@@ -194,47 +220,47 @@ const TaskCard: React.FC<TaskCardProps> = ({
   return (
     <div
       onClick={handleCardClick}
-      className="group relative bg-white border-b border-gray-100 hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
+      className="group relative bg-white hover:bg-gray-50 transition-colors duration-150 cursor-pointer"
     >
-      <div className="flex items-center gap-4 px-4 py-3 text-sm">
+      <div className="flex items-center gap-6 px-6 py-4">
         {/* Task Name */}
         <div className="flex-1 min-w-0">
-          <div className="font-medium text-gray-900 truncate">
+          <div className="font-medium text-gray-900 text-base">
             {task.task || 'Untitled Task'}
           </div>
           {task.description && (
-            <div className="text-xs text-gray-500 mt-0.5 line-clamp-1">
+            <div className="text-sm text-gray-500 mt-1 line-clamp-1">
               {task.description}
             </div>
           )}
         </div>
 
         {/* Assignee */}
-        <div className="w-40 flex-shrink-0" ref={assigneeRef}>
+        <div className="w-36 flex-shrink-0" ref={assigneeRef}>
           <div className="relative">
             <div
               onClick={(e) => {
                 e.stopPropagation();
                 setIsEditingAssignee(!isEditingAssignee);
               }}
-              className="editable-field flex items-center gap-2 px-2 py-1 rounded hover:bg-gray-100 transition-colors cursor-pointer"
+              className="editable-field flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
             >
               {assignedUsers.length > 0 ? (
-                <div className="flex items-center gap-1.5 -space-x-1 flex-wrap">
-                  {assignedUsers.slice(0, 4).map((user) => (
+                <div className="flex items-center gap-1 -space-x-1">
+                  {assignedUsers.slice(0, 3).map((user) => (
                     <div
                       key={user.id}
                       className="relative"
                       title={`${user.firstName} ${user.lastName}`}
                     >
-                      <div className="w-8 h-8 rounded-full ring-2 ring-white">
+                      <div className="w-7 h-7 rounded-full ring-2 ring-white">
                         <Avatar user={user} size="sm" />
                       </div>
                     </div>
                   ))}
-                  {assignedUsers.length > 4 && (
-                    <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs font-medium text-gray-600 border-2 border-white">
-                      +{assignedUsers.length - 4}
+                  {assignedUsers.length > 3 && (
+                    <div className="w-7 h-7 bg-gray-200 rounded-full flex items-center justify-center text-xs font-medium text-gray-600 border-2 border-white">
+                      +{assignedUsers.length - 3}
                     </div>
                   )}
                 </div>
@@ -244,7 +270,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
             </div>
 
             {isEditingAssignee && (
-              <div className="dropdown-menu absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-[100] p-2 min-w-[240px] max-h-[320px] overflow-y-auto">
+              <div className="dropdown-menu absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-[100] p-2 min-w-[240px] max-h-[320px] overflow-y-auto">
                 <div className="space-y-1">
                   {users.map((user) => {
                     const isSelected = userIds.includes(user.id);
@@ -255,7 +281,7 @@ const TaskCard: React.FC<TaskCardProps> = ({
                           e.stopPropagation();
                           toggleUserAssignment(user.id);
                         }}
-                        className={`w-full flex items-center gap-2 px-2 py-2 rounded transition-colors ${
+                        className={`w-full flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
                           isSelected 
                             ? 'bg-blue-50 hover:bg-blue-100' 
                             : 'hover:bg-gray-100'
@@ -284,22 +310,22 @@ const TaskCard: React.FC<TaskCardProps> = ({
         </div>
 
         {/* Status */}
-        <div className="w-32 flex-shrink-0" ref={statusRef}>
+        <div className="w-28 flex-shrink-0" ref={statusRef}>
           <div className="relative">
             <div
               onClick={(e) => {
                 e.stopPropagation();
                 setIsEditingStatus(!isEditingStatus);
               }}
-              className="editable-field inline-block px-2 py-1 rounded hover:bg-gray-100 transition-colors cursor-pointer"
+              className="editable-field inline-block px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
             >
-              <span className={`px-2 py-0.5 text-xs font-medium rounded ${statusConfig[status].bgColor} ${statusConfig[status].color}`}>
+              <span className={`px-2.5 py-1 text-xs font-medium rounded-md ${statusConfig[status].bgColor} ${statusConfig[status].color}`}>
                 {statusConfig[status].label}
               </span>
             </div>
 
             {isEditingStatus && (
-              <div className="dropdown-menu absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-[100] min-w-[140px]">
+              <div className="dropdown-menu absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-[100] min-w-[140px]">
                 {Object.entries(statusConfig).map(([key, config]) => (
                   <button
                     key={key}
@@ -307,9 +333,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
                       e.stopPropagation();
                       updateTaskField('progress', key);
                     }}
-                    className="w-full text-left px-3 py-2 hover:bg-gray-100 first:rounded-t-lg last:rounded-b-lg flex items-center gap-2"
+                    className="w-full text-left px-3 py-2 hover:bg-gray-100 first:rounded-t-xl last:rounded-b-xl flex items-center gap-2"
                   >
-                    <span className={`px-2 py-0.5 text-xs font-medium rounded ${config.bgColor} ${config.color}`}>
+                    <span className={`px-2.5 py-1 text-xs font-medium rounded-md ${config.bgColor} ${config.color}`}>
                       {config.label}
                     </span>
                   </button>
@@ -320,22 +346,22 @@ const TaskCard: React.FC<TaskCardProps> = ({
         </div>
 
         {/* Priority */}
-        <div className="w-28 flex-shrink-0" ref={priorityRef}>
+        <div className="w-24 flex-shrink-0" ref={priorityRef}>
           <div className="relative">
             <div
               onClick={(e) => {
                 e.stopPropagation();
                 setIsEditingPriority(!isEditingPriority);
               }}
-              className="editable-field inline-block px-2 py-1 rounded hover:bg-gray-100 transition-colors cursor-pointer"
+              className="editable-field inline-block px-2 py-1 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
             >
-              <span className={`px-2 py-0.5 text-xs font-medium rounded ${priorityConfig[priority].bgColor} ${priorityConfig[priority].color}`}>
+              <span className={`px-2.5 py-1 text-xs font-medium rounded-md ${priorityConfig[priority].bgColor} ${priorityConfig[priority].color}`}>
                 {priorityConfig[priority].label}
               </span>
             </div>
 
             {isEditingPriority && (
-              <div className="dropdown-menu absolute top-full left-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl z-[100] min-w-[120px]">
+              <div className="dropdown-menu absolute top-full left-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-[100] min-w-[120px]">
                 {Object.entries(priorityConfig).map(([key, config]) => (
                   <button
                     key={key}
@@ -343,9 +369,9 @@ const TaskCard: React.FC<TaskCardProps> = ({
                       e.stopPropagation();
                       updateTaskField('priority', key);
                     }}
-                    className="w-full text-left px-3 py-2 hover:bg-gray-100 first:rounded-t-lg last:rounded-b-lg flex items-center gap-2"
+                    className="w-full text-left px-3 py-2 hover:bg-gray-100 first:rounded-t-xl last:rounded-b-xl flex items-center gap-2"
                   >
-                    <span className={`px-2 py-0.5 text-xs font-medium rounded ${config.bgColor} ${config.color}`}>
+                    <span className={`px-2.5 py-1 text-xs font-medium rounded-md ${config.bgColor} ${config.color}`}>
                       {config.label}
                     </span>
                   </button>
@@ -353,6 +379,43 @@ const TaskCard: React.FC<TaskCardProps> = ({
               </div>
             )}
           </div>
+        </div>
+
+        {/* Context Menu Button */}
+        <div className="w-8 flex-shrink-0 relative" ref={contextMenuRef}>
+          <button
+            onClick={handleContextMenuClick}
+            className="context-menu p-1.5 rounded-lg hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100"
+          >
+            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+            </svg>
+          </button>
+
+          {showContextMenu && (
+            <div className="context-menu absolute top-full right-0 mt-2 bg-white border border-gray-200 rounded-xl shadow-2xl z-[100] min-w-[140px] overflow-hidden">
+              <button
+                onClick={handleOpenClick}
+                className="w-full text-left px-4 py-2.5 hover:bg-gray-100 transition-colors flex items-center gap-2 text-sm text-gray-700"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                </svg>
+                Open
+              </button>
+              <div className="border-t border-gray-100" />
+              <button
+                onClick={handleDeleteClick}
+                className="w-full text-left px-4 py-2.5 hover:bg-red-50 transition-colors flex items-center gap-2 text-sm text-red-600"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                Delete
+              </button>
+            </div>
+          )}
         </div>
       </div>
 

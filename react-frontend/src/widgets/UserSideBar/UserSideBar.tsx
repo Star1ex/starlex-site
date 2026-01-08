@@ -95,7 +95,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
   };
 
   return (
-    <aside className={`bg-white border-l border-gray-200 w-80 lg:w-80 flex flex-col ${className}`}>
+    <aside className={`bg-white border-l border-gray-100 w-64 flex flex-col ${className}`}>
       {onClose && (
         <div className="p-6 border-b border-gray-200">
           <button
@@ -111,8 +111,8 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
         </div>
       )}
       
-      <div className="p-6 flex-1 overflow-y-auto">
-        <h2 className="text-lg font-bold mb-6">TEAM MEMBERS</h2>
+      <div className="p-5 flex-1 overflow-y-auto">
+        <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Team Members</h2>
         <div className="space-y-0">
           {users.length === 0 ? (
             <div className="text-center py-12 text-gray-500">
