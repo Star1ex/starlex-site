@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Avatar from '@/shared/ui/Avatar.js';
 import { getAuthToken } from '@/shared/lib/authManager.js';
+import { useTheme } from '@/shared/contexts/ThemeContext.js';
 import type { User } from '@/entities/types.js';
 
 interface GlobalSidebarProps {
@@ -27,6 +28,7 @@ const getUserIdFromToken = (token: string): { firstName: string; lastName: strin
 export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { theme, toggleTheme } = useTheme();
   const [user, setUser] = useState<User | null>(null);
   const [userInfo, setUserInfo] = useState<{ firstName: string; lastName: string; email?: string } | null>(null);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
@@ -210,9 +212,61 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
         </div>
       </div>
 
-      {/* Profile Card */}
-      <div className="border-t border-gray-100 dark:border-dark-border p-3">
-        <div className="relative" ref={profileMenuRef}>
+      {/* Theme Toggle & Menu */}
+      <div className="border-t border-gray-100 dark:border-dark-border p-3 space-y-2">
+        {/* Theme Toggle Button */}
+        <button
+          onClick={toggleTheme}
+          className="w-full flex items-center gap-3 px-2 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-border transition-all duration-300 group"
+          aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} theme`}
+        >
+          <div className="relative w-10 h-6 rounded-full bg-gray-200 dark:bg-gray-700 transition-all duration-500 ease-in-out">
+            <div
+              className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white dark:bg-yellow-400 shadow-md transform transition-transform duration-500 ease-in-out ${
+                theme === 'dark' ? 'translate-x-4' : 'translate-x-0'
+              }`}
+            >
+              {theme === 'dark' ? (
+                <svg className="w-full h-full p-1 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+                </svg>
+              ) : (
+                <svg className="w-full h-full p-1 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+                </svg>
+              )}
+            </div>
+          </div>
+          <span className="text-sm font-medium text-gray-700 dark:text-dark-text">
+            {theme === 'dark' ? 'Dark' : 'Light'} Mode
+          </span>
+        </button>
+
+        {/* Settings Button */}
+        <button
+          onClick={() => navigate('/settings')}
+          className="w-full flex items-center gap-3 px-2 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-border transition-colors text-left"
+        >
+          <svg className="w-5 h-5 text-gray-500 dark:text-dark-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span className="text-sm font-medium text-gray-700 dark:text-dark-text">Settings</span>
+        </button>
+
+        {/* About Us Button */}
+        <button
+          onClick={() => navigate('/about-us')}
+          className="w-full flex items-center gap-3 px-2 py-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-border transition-colors text-left"
+        >
+          <svg className="w-5 h-5 text-gray-500 dark:text-dark-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span className="text-sm font-medium text-gray-700 dark:text-dark-text">About Us</span>
+        </button>
+
+        {/* Profile Button - Always at bottom */}
+        <div className="relative pt-2 border-t border-gray-100 dark:border-dark-border" ref={profileMenuRef}>
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
             className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-border transition-colors"
@@ -251,25 +305,6 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
                 className="w-full text-left px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-dark-border transition-colors text-sm text-gray-700 dark:text-dark-text"
               >
                 Profile
-              </button>
-              <div className="border-t border-gray-100 dark:border-dark-border" />
-              <button
-                onClick={() => {
-                  navigate('/settings');
-                  setShowProfileMenu(false);
-                }}
-                className="w-full text-left px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-dark-border transition-colors text-sm text-gray-700 dark:text-dark-text"
-              >
-                Settings
-              </button>
-              <button
-                onClick={() => {
-                  navigate('/about-us');
-                  setShowProfileMenu(false);
-                }}
-                className="w-full text-left px-4 py-2.5 hover:bg-gray-100 dark:hover:bg-dark-border transition-colors text-sm text-gray-700 dark:text-dark-text"
-              >
-                About Us
               </button>
             </div>
           )}
