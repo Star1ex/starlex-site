@@ -32,7 +32,7 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 		auth.Post("/register", handlers.Register)
 		auth.Post("/verify", handlers.VerifyEmail)
 		auth.Post("/resend-code", handlers.ResendCode)
-
+		auth.Post("/refresh", handlers.Refresh)
 	}
 
 	app.Get("/api/health", func(c *fiber.Ctx) error {

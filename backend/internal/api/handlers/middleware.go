@@ -15,8 +15,9 @@ const (
 	jwtSecret  = "super_secret_key_123"
 )
 
-// UserIdentity for indentiry user by jwt token session
-// Session saves 24 hours
+// UserIndentity for indentiry user by jwt token session
+// Validates access token (1 hour expiration)
+// For token refresh, use /auth/refresh endpoint with refresh token
 func (h *Handlers) UserIndentity(c *fiber.Ctx) error {
 	header := c.Get(authHeader)
 
@@ -55,6 +56,14 @@ func (h *Handlers) UserIndentity(c *fiber.Ctx) error {
 	if !ok {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "invalid token claims",
+		})
+	}
+
+	// Verify token type - should be "access" token
+	tokenType, ok := claims["type"].(string)
+	if !ok || tokenType != "access" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "invalid token type - access token required",
 		})
 	}
 
