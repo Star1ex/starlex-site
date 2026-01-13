@@ -3,6 +3,7 @@ import { NewTabModal } from '@/widgets/NewTabModal/NewTabModal.js';
 import { useModal } from '@/shared/hooks/useModal.js';
 import { useNavigate } from 'react-router-dom';
 import { getAuthToken, getAuthUser } from '@/shared/lib/authManager.js';
+import { apiGet } from '@/shared/lib/apiClient.js';
 
 type Team = {
   id: string;
@@ -68,20 +69,18 @@ export const Dashboard: React.FC = () => {
       setUserName(getUserNameFromToken(token));
     }
     
-    // Fetch fresh user data
+    // Fetch fresh user data with auto-refresh on 401
     const fetchUser = async () => {
       try {
-        const res = await fetch('/api/users/profile', {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/json',
-          },
-        });
+        const res = await apiGet('/api/users/profile');
         if (res.ok) {
           const userData = await res.json();
           const firstName = userData.firstName || userData.first_name || '';
           const lastName = userData.lastName || userData.last_name || '';
           setUserName(`${firstName} ${lastName}`.trim() || 'User');
+        } else if (res.status === 401) {
+          // Token invalid, redirect to login
+          navigate('/sign-in');
         }
       } catch (err) {
         console.error('Error fetching user:', err);

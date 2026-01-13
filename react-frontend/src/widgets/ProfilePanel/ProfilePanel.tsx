@@ -5,6 +5,7 @@ import { Token } from '@/app/api/token.js';
 import type { User } from '@/entities/types.js';
 
 import { getAuthToken, getAuthUser } from '@/shared/lib/authManager.js';
+import { apiGet } from '@/shared/lib/apiClient.js';
 
 type Props = {
   isMobile?: boolean;
@@ -52,12 +53,7 @@ export const RightSidebar: React.FC<Props> = ({ isMobile = false, onClose }) => 
 
     const fetchUser = async () => {
       try {
-        const res = await fetch(`/api/users/profile`, {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/json',
-          },
-        });
+        const res = await apiGet(`/api/users/profile`);
         if (res.ok) {
           const data: any = await res.json();
           setUser(data as User);
@@ -68,6 +64,8 @@ export const RightSidebar: React.FC<Props> = ({ isMobile = false, onClose }) => 
           if (firstName || lastName) {
             setUserInfo({ firstName, lastName, email });
           }
+        } else if (res.status === 401) {
+          navigate('/sign-in');
         }
       } catch (err) {
         console.error('Error loading profile:', err);

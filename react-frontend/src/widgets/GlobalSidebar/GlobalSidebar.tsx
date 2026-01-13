@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Avatar from '@/shared/ui/Avatar.js';
 import { getAuthToken, getAuthUser } from '@/shared/lib/authManager.js';
+import { apiGet } from '@/shared/lib/apiClient.js';
 import { useTheme } from '@/shared/contexts/ThemeContext.js';
 import type { User } from '@/entities/types.js';
 
@@ -55,15 +56,10 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
       setUserInfo(info);
     }
 
-    // Fetch user profile
+    // Fetch user profile with auto-refresh on 401
     const fetchUser = async () => {
       try {
-        const res = await fetch(`/api/users/profile`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/json',
-          },
-        });
+        const res = await apiGet(`/api/users/profile`);
         if (res.ok) {
           const data: any = await res.json();
           setUser(data as User);
@@ -74,24 +70,25 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
           if (firstName || lastName) {
             setUserInfo({ firstName, lastName, email });
           }
+        } else if (res.status === 401) {
+          // Token invalid, redirect to login
+          navigate('/sign-in');
         }
       } catch (err) {
         console.error('Error fetching user:', err);
       }
     };
 
-    // Fetch teams
+    // Fetch teams with auto-refresh on 401
     const fetchTeams = async () => {
       try {
-        const res = await fetch(`/api/users/teams`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/json',
-          },
-        });
+        const res = await apiGet(`/api/users/teams`);
         if (res.ok) {
           const data = await res.json();
           setTeams(Array.isArray(data) ? data.map((t: any) => ({ id: t.team_id || t.id, name: t.name })) : []);
+        } else if (res.status === 401) {
+          // Token invalid, redirect to login
+          navigate('/sign-in');
         }
       } catch (err) {
         console.error('Error fetching teams:', err);

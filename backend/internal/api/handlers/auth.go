@@ -15,6 +15,10 @@ type SignIn struct {
 	Password string `json:"password" binding:"required"`
 }
 
+type RefreshTokenRequest struct {
+	RefreshToken string `json:"refresh_token" binding:"required"`
+}
+
 type VerifyEmailRequest struct {
 	UserID string `json:"user_id" binding:"required"`
 	Code   string `json:"code" binding:"required"`
@@ -65,23 +69,139 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 		})
 	}
 
-	// Generater new token with paramaters and add expired time 24 hours
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+	// Generate access token - short-lived (1 hour)
+	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"email":   loginInput.Email,
 		"user_id": user.ID,
-		"exp":     time.Now().Add(24 * time.Hour).Unix(),
+		"type":    "access",
+		"exp":     time.Now().Add(1 * time.Hour).Unix(),
 	})
 
-	// Hash the token
-	tokenStr, err := token.SignedString([]byte(jwtSecret))
+	accessTokenStr, err := accessToken.SignedString([]byte(jwtSecret))
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "failed to generate token")
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to generate access token")
 	}
 
-	// Return token, user
+	// Generate refresh token - long-lived (7 days)
+	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"email":   loginInput.Email,
+		"user_id": user.ID,
+		"type":    "refresh",
+		"exp":     time.Now().Add(7 * 24 * time.Hour).Unix(),
+	})
+
+	refreshTokenStr, err := refreshToken.SignedString([]byte(jwtSecret))
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to generate refresh token")
+	}
+
+	// Set refresh token in httpOnly cookie (secure and httpOnly for production)
+	ctx.Cookie(&fiber.Cookie{
+		Name:     "refreshToken",
+		Value:    refreshTokenStr,
+		Expires:  time.Now().Add(7 * 24 * time.Hour),
+		HTTPOnly: true,
+		Secure:   false, // Set to true in production with HTTPS
+		SameSite: "Lax",
+		Path:     "/",
+	})
+
+	// Return access token and user data
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"token": tokenStr,
-		"user":  dto.ToUserResponse(user),
+		"access_token": accessTokenStr,
+		"token":        accessTokenStr, // For backward compatibility
+		"user":         dto.ToUserResponse(user),
+	})
+}
+
+// Refresh godoc:
+// @Summary      Refresh Access Token
+// @Description  Refresh access token using refresh token
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        request         body      RefreshTokenRequest  true  "Refresh token data"
+// @Success      200  {object}   map[string]string    "access token refreshed successfully"
+// @Failure      400  {object}   map[string]string    "bad request"
+// @Failure      401  {object}   map[string]string    "invalid or expired refresh token"
+// @Router       /auth/refresh [post]
+func (h *Handlers) Refresh(ctx *fiber.Ctx) error {
+	// Try to get refresh token from cookie first, then from request body
+	refreshTokenStr := ctx.Cookies("refreshToken")
+
+	if refreshTokenStr == "" {
+		var req RefreshTokenRequest
+		if err := ctx.BodyParser(&req); err == nil && req.RefreshToken != "" {
+			refreshTokenStr = req.RefreshToken
+		}
+	}
+
+	if refreshTokenStr == "" {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "missing refresh token",
+		})
+	}
+
+	// Parse and validate refresh token
+	token, err := jwt.Parse(refreshTokenStr, func(t *jwt.Token) (any, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fiber.NewError(fiber.StatusUnauthorized, "invalid token signing method")
+		}
+		return []byte(jwtSecret), nil
+	})
+
+	if err != nil || !token.Valid {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "invalid or expired refresh token",
+		})
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "invalid token claims",
+		})
+	}
+
+	// Verify token type
+	tokenType, ok := claims["type"].(string)
+	if !ok || tokenType != "refresh" {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "invalid token type",
+		})
+	}
+
+	// Check expiration
+	if exp, ok := claims["exp"].(float64); ok && int64(exp) < time.Now().Unix() {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "refresh token expired",
+		})
+	}
+
+	userID, ok := claims["user_id"]
+	if !ok {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "missing user_id in token",
+		})
+	}
+
+	email, _ := claims["email"].(string)
+
+	// Generate new access token
+	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"email":   email,
+		"user_id": userID,
+		"type":    "access",
+		"exp":     time.Now().Add(1 * time.Hour).Unix(),
+	})
+
+	accessTokenStr, err := accessToken.SignedString([]byte(jwtSecret))
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to generate access token")
+	}
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"access_token": accessTokenStr,
 	})
 }
 

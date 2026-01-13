@@ -1,7 +1,7 @@
 import React, { ChangeEvent } from "react";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { setAuthToken, setAuthUser, isAuthenticated } from "@/shared/lib/authManager.js";
+import { setAuthToken, setAuthUser, isAuthenticated, isTokenExpired, refreshAccessToken } from "@/shared/lib/authManager.js";
 
 export const SignInPage = () => {
   const navigate = useNavigate();
@@ -13,9 +13,23 @@ export const SignInPage = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    // If user is already authenticated, redirect to dashboard
-    if (isAuthenticated()) {
+    // Check if user is authenticated AND token is still valid
+    if (isAuthenticated() && !isTokenExpired()) {
       navigate('/dashboard', { replace: true });
+      return;
+    }
+
+    // If token expired, try to refresh it
+    if (isAuthenticated() && isTokenExpired()) {
+      const tryRefresh = async () => {
+        const newToken = await refreshAccessToken();
+        if (newToken) {
+          // Token refreshed successfully, redirect to dashboard
+          navigate('/dashboard', { replace: true });
+        }
+        // If refresh fails, user stays on sign-in page (handled by refreshAccessToken)
+      };
+      tryRefresh();
       return;
     }
 
@@ -62,14 +76,16 @@ export const SignInPage = () => {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
+        credentials: 'include', // Include cookies for refresh token
       });
 
       if (response.ok) {
         const result = await response.json();
 
-        if (result.token && result.user) {
+        // Check for access_token or token (for backward compatibility)
+        if ((result.access_token || result.token) && result.user) {
           // Use centralized auth manager
-          setAuthToken(result.token);
+          setAuthToken(result.access_token || result.token);
           setAuthUser(result.user);
           console.log("Successfully authenticated:", result.user.email);
           
