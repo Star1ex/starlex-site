@@ -68,6 +68,42 @@ func migrate(db *DB) error {
 		return fmt.Errorf("error migrating models: %v", err)
 	}
 
+	//if err := fillDefaultOwnerIDs(db); err != nil {
+	//	return fmt.Errorf("failed to fill task owner_ids: %v", err)
+	//}
+
 	log.Println("Models migrated successfully")
+	return nil
+}
+
+func fillDefaultOwnerIDs(db *DB) error {
+
+	var count int64
+
+	db.Raw(`SELECT COUNT(*) FROM task_models WHERE owner_id IS NULL`).Scan(&count)
+
+	if count == 0 {
+		log.Println("All tasks already have owner_id")
+		return nil
+	}
+
+	log.Printf("Filling owner_id for %d tasks", count)
+
+	var defaultOwner repository.UserModel
+	if err := db.First(&defaultOwner).Error; err != nil {
+		return fmt.Errorf("no users found for default owner: %v", err)
+	}
+
+	result := db.Exec(`
+		UPDATE task_models
+		SET owner_id = ?
+		WHERE owner_id IS NULL
+	`, defaultOwner.ID)
+
+	if result.Error != nil {
+		return fmt.Errorf("failed to update owner_id: %v", result.Error)
+	}
+
+	log.Printf("Updated %d tasks with default owner_id: %s", result.RowsAffected, defaultOwner.ID)
 	return nil
 }
