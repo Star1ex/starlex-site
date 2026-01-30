@@ -10,7 +10,7 @@ import (
 
 type TaskModel struct {
 	ID          string `gorm:"primaryKey"`
-	Task        string `gorm:"unique;not null"`
+	Task        string `gorm:"not null"`
 	Description string `gorm:"not null"`
 	Priority    string `gorm:"not null"`
 	Progress    string
