@@ -26,6 +26,7 @@ func NewHandlers(userService user.Service,
 		userService:         userService,
 		teamService:         teamService,
 		taskService:         taskService,
+		folderService:       folderService,
 		verificationService: verificationService,
 	}
 }

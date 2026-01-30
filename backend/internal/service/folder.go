@@ -5,6 +5,7 @@ import (
 
 	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
 	"github.com/Team-Tracks/team-track-site/internal/repository"
+	"github.com/Team-Tracks/team-track-site/internal/security"
 )
 
 type FolderService struct {
@@ -17,6 +18,8 @@ func NewFolderService(folderRepo *repository.FolderRepository) *FolderService {
 
 // make a new folder
 func (s *FolderService) Create(ctx context.Context, folder *entity.Folder) error {
+
+	folder.ID = security.GenerateNewID()
 	return s.folderRepo.Create(ctx, folder)
 }
 

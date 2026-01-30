@@ -30,9 +30,14 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 	{
 		auth.Post("/login", handlers.Login)
 		auth.Post("/register", handlers.Register)
-		auth.Post("/verify", handlers.VerifyEmail)
 		auth.Post("/resend-code", handlers.ResendCode)
-		auth.Post("/refresh", handlers.Refresh)
+		auth.Post("/verify", handlers.VerifyEmail)
+	}
+
+	folder := api.Group("/folder", handlers.UserIndentity)
+	{
+		folder.Post("/", handlers.CreateFolder)
+		folder.Get("/", handlers.GetFolderByID)
 	}
 
 	app.Get("/api/health", func(c *fiber.Ctx) error {
