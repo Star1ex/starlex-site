@@ -1,6 +1,12 @@
 package repository
 
-import "time"
+import (
+	"context"
+	"time"
+
+	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
+	"gorm.io/gorm"
+)
 
 type FolderModel struct {
 	ID       string  `gorm:"primaryKey"`
@@ -16,4 +22,18 @@ type FolderModel struct {
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
+}
+
+type FolderRepository struct {
+	db *gorm.DB
+}
+
+func NewFolderRepository(db *gorm.DB) *FolderRepository {
+	return &FolderRepository{
+		db: db,
+	}
+}
+
+func (r *FolderModel) Create(ctx context.Context, folder *entity.Folder) error {
+
 }
