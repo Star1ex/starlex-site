@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
 	"gorm.io/gorm"
@@ -15,7 +16,13 @@ type TaskModel struct {
 	Priority    string `gorm:"not null"`
 	Progress    string
 	Assigned    []UserModel `gorm:"many2many:task_users"`
-	TeamID      string      `gorm:"not null"`
+
+	TeamID   *string `gorm:"default:null"`
+	OwnerID  string  `gorm:"not null;index"`
+	FolderID *string `gorm:"default:null;index"`
+
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 type TaskRepository struct {
@@ -40,7 +47,7 @@ func toTaskDomain(m TaskModel) *entity.Task {
 		Task:        m.Task,
 		Description: m.Description,
 		AssignedTo:  users,
-		TeamID:      m.TeamID,
+		TeamID:      *m.TeamID,
 		Priority:    m.Priority,
 		Progress:    m.Progress,
 	}
@@ -65,7 +72,7 @@ func fromTaskDomain(t *entity.Task) *TaskModel {
 		Description: t.Description,
 		Assigned:    users,
 		Priority:    t.Priority,
-		TeamID:      t.TeamID,
+		TeamID:      &t.TeamID,
 	}
 }
 
