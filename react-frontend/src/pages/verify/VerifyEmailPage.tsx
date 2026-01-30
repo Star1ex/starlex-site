@@ -1,5 +1,6 @@
 import React, { useState, useRef, KeyboardEvent, ClipboardEvent } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { buildApiUrl } from "@/app/api/api.js";
 
 export const VerifyEmailPage = () => {
   const navigate = useNavigate();
@@ -73,7 +74,7 @@ export const VerifyEmailPage = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch("/api/auth/verify", {
+      const response = await fetch(buildApiUrl("/api/auth/verify"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -104,7 +105,7 @@ export const VerifyEmailPage = () => {
     setIsResending(true);
 
     try {
-      const response = await fetch("/api/auth/resend-code", {
+      const response = await fetch(buildApiUrl("/api/auth/resend-code"), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: userId }),
