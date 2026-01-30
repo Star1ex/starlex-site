@@ -1,6 +1,7 @@
 import React, { ChangeEvent } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { buildApiUrl } from "@/app/api/api.js";
 
 export const SignUpPage = () => {
   const navigate = useNavigate();
@@ -60,7 +61,7 @@ export const SignUpPage = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/auth/register`, {
+      const response = await fetch(buildApiUrl('/api/auth/register'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),

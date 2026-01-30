@@ -33,7 +33,7 @@ func StartServer() {
 		AllowOrigins:     "http://teamtrackwebsite.duckdns.org:8888",
 		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
 		AllowHeaders:     "Origin,Content-Type,Accept,Authorization",
-		AllowCredentials: false,
+		AllowCredentials: true,
 	}))
 
 	bus := events.NewBus()

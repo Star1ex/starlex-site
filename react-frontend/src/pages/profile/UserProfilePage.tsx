@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Avatar from '@/shared/ui/Avatar.js';
 import { getAuthToken } from '@/shared/lib/authManager.js';
+import { buildApiUrl } from '@/app/api/api.js';
 import type { User } from '@/entities/types.js';
 
 interface PublicUserProfile extends User {
@@ -55,7 +56,7 @@ export const UserProfilePage: React.FC = () => {
 
         // Strategy: Try multiple endpoints in order
         // 1. Public profile endpoint
-        let res = await fetch(`/api/users/${userId}/profile`, {
+        let res = await fetch(buildApiUrl(`/api/users/${userId}/profile`), {
           headers: {
             Authorization: `Bearer ${token}`,
             Accept: 'application/json',
@@ -64,7 +65,7 @@ export const UserProfilePage: React.FC = () => {
         
         // 2. Fallback to basic user endpoint
         if (!res.ok && res.status === 404) {
-          res = await fetch(`/api/users/${userId}`, {
+          res = await fetch(buildApiUrl(`/api/users/${userId}`), {
             headers: {
               Authorization: `Bearer ${token}`,
               Accept: 'application/json',
@@ -74,7 +75,7 @@ export const UserProfilePage: React.FC = () => {
         
         // 3. Try search by ID (if ID looks like email)
         if (!res.ok && res.status === 404 && userId.includes('@')) {
-          res = await fetch(`/api/search/${encodeURIComponent(userId)}`, {
+          res = await fetch(buildApiUrl(`/api/search/${encodeURIComponent(userId)}`), {
             headers: {
               Authorization: `Bearer ${token}`,
               Accept: 'application/json',

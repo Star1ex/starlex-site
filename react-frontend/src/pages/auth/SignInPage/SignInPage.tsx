@@ -2,6 +2,7 @@ import React, { ChangeEvent } from "react";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { setAuthToken, setAuthUser, isAuthenticated, isTokenExpired, refreshAccessToken } from "@/shared/lib/authManager.js";
+import { buildApiUrl } from "@/app/api/api.js";
 
 export const SignInPage = () => {
   const navigate = useNavigate();
@@ -72,7 +73,7 @@ export const SignInPage = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(`/api/auth/login`, {
+      const response = await fetch(buildApiUrl('/api/auth/login'), {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),

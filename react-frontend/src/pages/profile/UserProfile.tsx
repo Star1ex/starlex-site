@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { getAuthToken } from '@/shared/lib/authManager.js';
+import { buildApiUrl } from '@/app/api/api.js';
 
 type UserProfile = {
   email: string;
@@ -21,7 +22,7 @@ const ProfilePage: React.FC = () => {
       const token = getAuthToken();
       if (!token) return;
 
-      const res = await fetch(`/api/users/profile`, {
+      const res = await fetch(buildApiUrl(`/api/users/profile`), {
         headers: {
           Authorization: `Bearer ${token}`,
           Accept: 'application/json',
@@ -54,7 +55,7 @@ const ProfilePage: React.FC = () => {
 
     try {
       setUploading(true);
-      const res = await fetch(`/api/users/photo`, {
+      const res = await fetch(buildApiUrl(`/api/users/photo`), {
         method: 'POST',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -81,7 +82,7 @@ const ProfilePage: React.FC = () => {
 
     try {
       setSaving(true);
-      const res = await fetch(`/api/users/update`, {
+      const res = await fetch(buildApiUrl(`/api/users/update`), {
         method: 'PUT', 
         headers: {
           Authorization: `Bearer ${token}`,

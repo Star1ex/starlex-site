@@ -1,5 +1,11 @@
 export const API_URL = import.meta.env.VITE_API_URL ?? '';
 
+// Build full API endpoint URL with support for both absolute and relative URLs
+export const buildApiUrl = (endpoint: string): string => {
+  if (!API_URL) return endpoint; // Production: use relative URLs (/api/*)
+  return `${API_URL}${endpoint}`; // Local dev: use full URL (http://localhost:3000/api/*)
+};
+
 const getToken = () => localStorage.getItem('token');
 
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {
@@ -13,7 +19,7 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
     "Content-Type": "application/json",
   };
 
-  const res = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
+  const res = await fetch(buildApiUrl(endpoint), { ...options, headers });
   if (!res.ok) throw new Error(`API Error: ${res.status}`);
   return res.json();
 }

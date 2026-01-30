@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import TaskCard from '@/widgets/TaskCard/TaskCard.js';
-import UserSidebar from '@/widgets/UserSideBar/UserSideBar.js';
+import MembersPanel from '@/widgets/MembersPanel/MembersPanel.js';
 import CreateTaskModal from '@/widgets/CreateTaskModal/CreateTaskModal.js';
 import EditTaskModal from '@/widgets/EditTaskModal/EditTaskModal.js';
 import TaskDetailModal from '@/widgets/TaskDetailModal/TaskDetailModal.js';
@@ -8,6 +8,7 @@ import AddUserModal from '@/widgets/AddUserModal/AddUserModal.js';
 import type { Task, User } from '@/entities/types.js';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getAuthToken } from '@/shared/lib/authManager.js';
+import { buildApiUrl } from '@/app/api/api.js';
 
 const TaskBoard: React.FC = () => {
   const { team_id } = useParams<{ team_id: string }>();
@@ -16,7 +17,7 @@ const TaskBoard: React.FC = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [showMembersPanel, setShowMembersPanel] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDetailModal, setShowDetailModal] = useState(false);
@@ -40,7 +41,7 @@ const TaskBoard: React.FC = () => {
         return;
       }
 
-      const res = await fetch(`/api/team/${team_id}/tasks`, {
+      const res = await fetch(buildApiUrl(`/api/team/${team_id}/tasks`), {
         headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
       });
 
@@ -64,7 +65,7 @@ const TaskBoard: React.FC = () => {
       const token = getAuthToken();
       if (!token) return;
 
-      const res = await fetch(`/api/team/${team_id}`, {
+      const res = await fetch(buildApiUrl(`/api/team/${team_id}`), {
         headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
       });
 
@@ -126,7 +127,7 @@ const TaskBoard: React.FC = () => {
         return;
       }
 
-      const res = await fetch(`/api/team/${team_id}/tasks/${taskId}`, {
+      const res = await fetch(buildApiUrl(`/api/team/${team_id}/tasks/${taskId}`), {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,
@@ -205,11 +206,12 @@ const TaskBoard: React.FC = () => {
               + Add User
             </button>
             <button
-              className="lg:hidden px-3 py-2 bg-gray-200 dark:bg-dark-surface text-gray-900 dark:text-dark-text rounded-lg hover:bg-gray-300 dark:hover:bg-dark-border transition-all duration-200 text-xs sm:text-sm whitespace-nowrap"
-              onClick={() => setIsSidebarOpen(true)}
+              onClick={() => setShowMembersPanel(true)}
+              className="px-3 sm:px-5 py-2 sm:py-2.5 bg-gray-100 dark:bg-dark-surface text-gray-900 dark:text-dark-text rounded-lg text-xs sm:text-sm hover:bg-gray-200 dark:hover:bg-dark-border transition-all duration-200 font-medium whitespace-nowrap"
             >
-              Users
+              Members
             </button>
+
           </div>
         </div>
       </nav>
@@ -232,16 +234,9 @@ const TaskBoard: React.FC = () => {
       )}
 
       <div className="flex flex-col lg:flex-row max-w-[1600px] mx-auto px-2 sm:px-4 lg:px-6 py-4 sm:py-6 gap-4 sm:gap-6">
-        {/* Members Sidebar - Left */}
-        <UserSidebar 
-          users={users} 
-          className="hidden lg:block w-48 flex-shrink-0 order-1"
-          teamId={team_id}
-          onUserRemoved={handleUserRemoved}
-          onViewProfile={(userId: string, user?: User) => handleViewProfile(userId, user)}
-        />
+        {/* Tasks - Full width */}
         {/* Tasks - Right */}
-        <main className="flex-1 min-w-0 order-2">
+        <main className="flex-1 min-w-0 order-1">
           {tasks.length === 0 ? (
             <div className="text-center py-12 sm:py-24">
               <div className="max-w-md mx-auto px-4">
@@ -288,17 +283,16 @@ const TaskBoard: React.FC = () => {
           )}
         </main>
 
-        {isSidebarOpen && (
+        {showMembersPanel && (
           <>
             <div
-              className="fixed inset-0 bg-black bg-opacity-50 z-30 lg:hidden animate-fadeIn"
-              onClick={() => setIsSidebarOpen(false)}
+              className="fixed inset-0 bg-black bg-opacity-50 z-30 animate-fadeIn"
+              onClick={() => setShowMembersPanel(false)}
             />
-            <UserSidebar
+            <MembersPanel
+              isOpen={showMembersPanel}
               users={users}
-              className="fixed right-0 top-0 h-full w-64 z-40 lg:hidden bg-white dark:bg-dark-surface shadow-lg transition-transform duration-300"
-              style={{ transform: isSidebarOpen ? 'translateX(0)' : 'translateX(100%)' }}
-              onClose={() => setIsSidebarOpen(false)}
+              onClose={() => setShowMembersPanel(false)}
               teamId={team_id}
               onUserRemoved={handleUserRemoved}
               onViewProfile={(userId: string, user?: User) => handleViewProfile(userId, user)}
