@@ -26,6 +26,19 @@ type FolderGetByIdDTO struct {
 	ID string `json:"id" binding:"required"`
 }
 
+type FolderDeleteDTO struct {
+	ID string `json:"id" binding:"required"`
+}
+
+type FolderGetByParentIdDTO struct {
+	ParentID string `json:"parent_id" binding:"required"`
+}
+
+type FolderMoveDTO struct {
+	FolderID string `json:"folder_id" binding:"required"`
+	ParentID string `json:"parent_id"`
+}
+
 func ToDomainFolder(dto *FolderDTO) *entity.Folder {
 	return &entity.Folder{
 		ID:        dto.ID,
@@ -54,4 +67,12 @@ func FromDomainFolder(entity *entity.Folder) *FolderDTO {
 		CreatedAt: entity.CreatedAt,
 		UpdatedAt: entity.UpdatedAt,
 	}
+}
+
+func FromDomainFolders(entities []*entity.Folder) []*FolderDTO {
+	response := make([]*FolderDTO, len(entities))
+	for i, folder := range entities {
+		response[i] = FromDomainFolder(folder)
+	}
+	return response
 }
