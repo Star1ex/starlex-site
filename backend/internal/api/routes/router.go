@@ -39,6 +39,11 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 		folder.Post("/", handlers.CreateFolder)
 		folder.Get("/", handlers.GetFolderByID)
 		folder.Get("/direct", handlers.GetFoldersByUserID)
+		folder.Get("/team/:team_id", handlers.GetFoldersByTeam)
+		folder.Get("/sub", handlers.GetFoldersByParentID)
+		folder.Put("/update", handlers.UpdateFolder)
+		folder.Delete("/delete", handlers.DeleteFolder)
+		folder.Put("/move", handlers.MoveFolder)
 	}
 
 	app.Get("/api/health", func(c *fiber.Ctx) error {
