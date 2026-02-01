@@ -7,6 +7,105 @@ import (
 	fiberSwagger "github.com/swaggo/fiber-swagger"
 )
 
+func InitRoutes(app *fiber.App, h *handlers.Handlers) {
+
+	app.Static("/uploads", "./uploads")
+	app.Get("/swagger/*", fiberSwagger.WrapHandler)
+
+	api := app.Group("/api")
+
+	api.Get("/health", func(c *fiber.Ctx) error {
+		return c.SendString("healthy")
+	})
+
+	setupAuthRoutes(api, h)
+
+	protected := api.Group("", h.UserIndentity)
+	{
+		setupUserRoutes(protected, h)
+		setupSearchRoutes(protected, h)
+		setupFolderRoutes(protected, h)
+		setupTaskRoutes(protected, h)
+		setupTeamRoutes(protected, h)
+	}
+}
+
+func setupAuthRoutes(api fiber.Router, h *handlers.Handlers) {
+	auth := api.Group("/auth")
+	auth.Post("/login", h.Login)
+	auth.Post("/register", h.Register)
+	auth.Post("refresh", h.Refresh)
+	auth.Post("/resend-code", h.ResendCode)
+	auth.Post("/verify", h.VerifyEmail)
+}
+
+func setupUserRoutes(api fiber.Router, h *handlers.Handlers) {
+	users := api.Group("/users")
+	users.Get("/profile", h.GetUser)
+	users.Get("/teams", h.GetTeams)
+	users.Put("/update", h.UserUpdate)
+	users.Post("/photo", h.UploadPhoto)
+	users.Get("/photo", h.GetPhoto)
+}
+
+func setupSearchRoutes(api fiber.Router, h *handlers.Handlers) {
+	api.Get("/search/:email", h.Search)
+}
+
+func setupFolderRoutes(api fiber.Router, h *handlers.Handlers) {
+	folders := api.Group("/folder")
+
+	folders.Post("/", h.CreateFolder)
+	folders.Get("/:id", h.GetFolderByID)
+	folders.Put("/:id", h.UpdateFolder)
+	folders.Delete("/:id", h.DeleteFolder)
+	folders.Put("/:id/move", h.MoveFolder)
+
+	folders.Get("/", h.GetFoldersByUserID)
+	folders.Get("/team/:team_id", h.GetFoldersByTeam)
+	folders.Get("/:id/children", h.GetFoldersByParentID)
+}
+
+func setupTaskRoutes(api fiber.Router, h *handlers.Handlers) {
+	tasks := api.Group("/tasks")
+
+	tasks.Post("/", h.CreateTask)
+	tasks.Get("/", h.GetUserTasks)
+	tasks.Get("/:id")
+	tasks.Put("/:id", h.UpdateTask)
+	tasks.Delete("/:id", h.DeleteTask)
+
+	tasks.Put("/:id/progress", h.UpdateTaskProgress)
+
+	tasks.Get("/folder/:folder_id", h.GetFolderTasks)
+	tasks.Get("/without-folder", h.GetTasksWithoutFolder)
+	tasks.Put("/:id/move", h.MoveTaskToFolder)
+}
+
+func setupTeamRoutes(api fiber.Router, h *handlers.Handlers) {
+	teams := api.Group("/teams")
+
+	teams.Post("/", h.CreateTeam)
+	teams.Delete("/:id", h.DeleteTeam)
+
+	teams.Get("/:id/users", h.GetUsers)
+	teams.Post("/:id/users", h.AddUserToTeam)
+	teams.Delete("/:id/users", h.RemoveUserFromTeam)
+
+	teamTasks := teams.Group("/:team_id/tasks")
+	{
+		teamTasks.Post("/", h.CreateTask)
+		teamTasks.Get("/", h.GetTeamTasks)
+		teamTasks.Get("/user/:user_id", h.GetUserTasks)
+		teamTasks.Put("/:task_id", h.UpdateTask)
+		teamTasks.Put("/:task_id/progress", h.UpdateTaskProgress)
+		teamTasks.Delete("/:task_id", h.DeleteTask)
+	}
+}
+
+//		----- OLD ROUTES -----
+
+/*
 func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 
 	// --- Swagger ---
@@ -75,3 +174,5 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 		}
 	}
 }
+
+*/
