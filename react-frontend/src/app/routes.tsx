@@ -11,6 +11,7 @@ import AboutUs from "@/pages/about-us/AboutUs.js";
 import  ProfilePage  from "@/pages/profile/UserProfile.js";
 import { UserProfilePage } from "@/pages/profile/UserProfilePage.js";
 import TaskBoard from "@/pages/team/TaskBoard.js"; 
+import PersonalTasksPage from "@/pages/personal/PersonalTasksPage.js";
 
 export const AppRoutes = () => (
   <Routes>
@@ -26,5 +27,6 @@ export const AppRoutes = () => (
     <Route path="/profile" element={<Layout><ProfilePage /></Layout>} />
     <Route path="/profile/:userId" element={<Layout><UserProfilePage /></Layout>} />
     <Route path="/team/:team_id" element={<Layout><TaskBoard /></Layout>} /> 
+    <Route path="/personal" element={<Layout><PersonalTasksPage /></Layout>} />
   </Routes> 
 );

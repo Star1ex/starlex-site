@@ -179,7 +179,7 @@ export const NewTabModal: React.FC<Props> = ({ open, onClose, onTeamCreated }) =
   return (
     <Modal open={open} onClose={handleClose}>
       <div className="w-full max-w-[calc(100vw-2rem)] sm:max-w-lg mx-auto p-5 sm:p-8 bg-white dark:bg-dark-surface rounded-2xl shadow-2xl max-h-[90vh] overflow-y-auto">
-        <h2 className="text-2xl sm:text-3xl font-bold text-black dark:text-dark-text mb-6 sm:mb-8">New Tab</h2>
+        <h2 className="text-2xl sm:text-3xl font-bold text-black dark:text-dark-text mb-6 sm:mb-8">New Team</h2>
 
         <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
           {/* Name */}
@@ -188,7 +188,7 @@ export const NewTabModal: React.FC<Props> = ({ open, onClose, onTeamCreated }) =
               Name <span className="text-red-500 dark:text-red-400">*</span>
             </label>
             <Input
-              placeholder="Enter tab name"
+              placeholder="Enter team name"
               value={name}
               onChange={e => setName(e.target.value)}
               autoFocus

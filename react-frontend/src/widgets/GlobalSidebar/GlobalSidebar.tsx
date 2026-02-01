@@ -197,10 +197,66 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
             <span>Add new</span>
           </button>
         </div>
+
+        {/* Divider + Personal TASKS section */}
+        <div className="mt-4 mb-2 border-t border-gray-100 dark:border-dark-border" />
+
+        <div className="flex items-center justify-between mb-1 mt-3">
+          <span className="text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">Tasks</span>
+          <div className="relative">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                const el = e.currentTarget.nextElementSibling as HTMLElement | null;
+                if (el) el.classList.toggle('hidden');
+              }}
+              className="p-0.5 hover:bg-gray-100 dark:hover:bg-dark-border rounded transition-colors"
+              title="Create"
+            >
+              <svg className="w-3 h-3 text-gray-500 dark:text-dark-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+            </button>
+
+            <div className="hidden absolute right-0 mt-2 w-36 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded shadow z-30 overflow-hidden">
+              <button
+                onClick={(e) => {
+                  (e.currentTarget.parentElement as HTMLElement | null)?.classList.add('hidden');
+                  window.dispatchEvent(new CustomEvent('openPersonalTaskCreate'));
+                  window.location.href = '/personal';
+                }}
+                className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-dark-border text-sm"
+              >
+                 New Task
+              </button>
+              <button
+                onClick={(e) => {
+                  (e.currentTarget.parentElement as HTMLElement | null)?.classList.add('hidden');
+                  window.dispatchEvent(new CustomEvent('openPersonalFolderCreate'));
+                  window.location.href = '/personal';
+                }}
+                className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-dark-border text-sm"
+              >
+                 New Folder
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-0.5 mt-1">
+          <button
+            onClick={() => window.location.assign('/personal')}
+            className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left `}
+          >
+            <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span className="truncate flex-1">Personal Tasks</span>
+          </button>
+        </div>
       </div>
 
-      {/* Theme Toggle & Menu */}
-      <div className="border-t border-gray-100 dark:border-dark-border p-3 space-y-2">
+      {/* Theme Toggle & Menu */}      <div className="border-t border-gray-100 dark:border-dark-border p-3 space-y-2">
         {/* Theme Toggle Button */}
         <button
           onClick={toggleTheme}
