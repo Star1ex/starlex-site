@@ -24,5 +24,15 @@ type Service interface {
 	// Update task
 	UpdateTaskProgress(ctx context.Context, taskID, progress string) (*entity.Task, error)
 
+	// Delete task
 	Delete(ctx context.Context, id string) error
+
+	// Get tasks without folder
+	GetTasksWithoutFolder(ctx context.Context, userID string) ([]*entity.Task, error)
+
+	// Get tasks from folder
+	GetFolderTasks(ctx context.Context, folderID string) ([]*entity.Task, error)
+
+	// Move task to folder
+	MoveTaskToFolder(ctx context.Context, taskID, folderID string) error
 }

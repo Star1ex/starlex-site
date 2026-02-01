@@ -201,3 +201,68 @@ func (h *Handlers) DeleteTask(c *fiber.Ctx) error {
 
 	return c.Status(fiber.StatusOK).JSON("Successfuly deleted task")
 }
+
+// GetTasksWithoutFolder godoc
+// @Summary      Get tasks without folder
+// @Description  Returns a list of all tasks without a folder.
+// @Tags         tasks
+// @Param        user_id  path      string       true  "User ID"
+// @Success      200      {array}   dto.TaskResponse "List of tasks without folder"
+// @Failure      500      {object}  map[string]string "Server error"
+// @Security BearerAuth
+// @Router       /tasks/without-folder [get]
+func (h *Handlers) GetTasksWithoutFolder(ctx *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "unauthorized",
+		})
+	}
+
+	tasks, err := h.taskService.GetTasksWithoutFolder(ctx.Context(), userID)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	return ctx.Status(fiber.StatusOK).JSON(dto.TeamTasksList(tasks))
+}
+
+func (h *Handlers) GetFolderTasks(ctx *fiber.Ctx) error {
+
+	_, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "unauthorized",
+		})
+	}
+
+	folderID := ctx.Query("folder_id")
+	if folderID == "nil" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "folder ID is required in URL"})
+	}
+
+	tasks, err := h.taskService.GetFolderTasks(ctx.Context(), folderID)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	return ctx.Status(fiber.StatusOK).JSON(dto.TeamTasksList(tasks))
+}
+
+func (h *Handlers) MoveTaskToFolder(ctx *fiber.Ctx) error {
+	taskID := ctx.Params("task_id")
+	folderID := ctx.Query("folder_id")
+	if taskID == "nil" || folderID == "nil" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID and folder ID are required in URL"})
+	}
+
+	err := h.taskService.MoveTaskToFolder(ctx.Context(), taskID, folderID)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	return ctx.Status(fiber.StatusOK).JSON("Successfully moved task to folder")
+}

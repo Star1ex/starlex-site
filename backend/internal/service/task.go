@@ -100,3 +100,15 @@ func (s *TaskService) UpdateTaskProgress(ctx context.Context, taskID, progress s
 func (s *TaskService) Delete(ctx context.Context, id string) error {
 	return s.taskRepo.Delete(ctx, id)
 }
+
+func (s *TaskService) GetTasksWithoutFolder(ctx context.Context, userID string) ([]*entity.Task, error) {
+	return s.taskRepo.GetTasksWithoutFolder(ctx, userID)
+}
+
+func (s *TaskService) GetFolderTasks(ctx context.Context, folderID string) ([]*entity.Task, error) {
+	return s.taskRepo.GetFolderTasks(ctx, folderID)
+}
+
+func (s *TaskService) MoveTaskToFolder(ctx context.Context, taskID, folderID string) error {
+	return s.taskRepo.MoveTaskToFolder(ctx, taskID, folderID)
+}
