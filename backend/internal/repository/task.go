@@ -180,3 +180,39 @@ func (r *TaskRepository) GetUserTasks(ctx context.Context, userID string) ([]*en
 
 	return toTaskDomains(models), nil
 }
+
+func (r *TaskRepository) GetFolderTasks(ctx context.Context, folderID string) ([]*entity.Task, error) {
+	var models []TaskModel
+
+	err := r.db.WithContext(ctx).
+		Where("folder_id = ?", folderID).
+		Find(&models).Error
+
+	if err != nil {
+		return nil, err
+	}
+	return toTaskDomains(models), nil
+}
+
+func (r *TaskRepository) MoveTaskToFolder(ctx context.Context, taskID, folderID string) error {
+	var task TaskModel
+	if err := r.db.Preload("Assigned").Where("id = ?", taskID).First(&task).Error; err != nil {
+		return err
+	}
+	if err := r.db.Model(&task).Update("folder_id", folderID).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *TaskRepository) GetTasksWithoutFolder(ctx context.Context, userID string) ([]*entity.Task, error) {
+	var models []TaskModel
+	err := r.db.WithContext(ctx).
+		Where("folder_id IS NULL AND owner_id = ?", userID).
+		Find(&models).Error
+
+	if err != nil {
+		return nil, err
+	}
+	return toTaskDomains(models), nil
+}

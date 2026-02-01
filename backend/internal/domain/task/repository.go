@@ -16,4 +16,8 @@ type Repository interface {
 	// Getters
 	GetTeamTasks(ctx context.Context, teamID string) ([]*entity.Task, error)
 	GetUserTasks(ctx context.Context, userID string) ([]*entity.Task, error)
+	GetTasksWithoutFolder(ctx context.Context, userID string) ([]*entity.Task, error)
+	GetFolderTasks(ctx context.Context, folderID string) ([]*entity.Task, error)
+
+	MoveTaskToFolder(ctx context.Context, taskID, folderID string) error
 }
