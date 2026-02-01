@@ -61,25 +61,16 @@ func (h *Handlers) CreateFolder(ctx *fiber.Ctx) error {
 func (h *Handlers) GetFolderByID(ctx *fiber.Ctx) error {
 	_, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "unauthorized",
-		})
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "unauthorized"})
 	}
 
-	id := ctx.Query("id")
-	if id == "" {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "missing required query parameter: id",
-		})
-	}
-
+	id := ctx.Params("id")
 	folder, err := h.folderService.GetByID(context.Background(), id)
 	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
-		})
+		return ctx.Status(500).JSON(fiber.Map{"error": err.Error()})
 	}
-	return ctx.Status(fiber.StatusOK).JSON(dto.FromDomainFolder(folder))
+
+	return ctx.Status(200).JSON(dto.FromDomainFolder(folder))
 }
 
 // GetFoldersByUserID godoc

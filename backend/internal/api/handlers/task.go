@@ -23,7 +23,7 @@ import (
 // @Failure      500  {object}   map[string]string         "Internal server error"
 // @Security BearerAuth
 // @Router       /team/{team_id}/tasks [post]
-func (h *Handlers) CreateTask(ctx *fiber.Ctx) error {
+func (h *Handlers) CreateTeamTask(ctx *fiber.Ctx) error {
 	teamID := ctx.Params("team_id")
 
 	userID, authErr := h.getAuthenticatedUserID(ctx)
@@ -42,7 +42,7 @@ func (h *Handlers) CreateTask(ctx *fiber.Ctx) error {
 		Progress:    input.Progress,
 	}
 
-	err := h.taskService.CreateTask(ctx.Context(), teamID, input.AssignedToID, entityTask, userID)
+	err := h.taskService.CreateTeamTask(ctx.Context(), teamID, input.AssignedToID, entityTask, userID)
 
 	if err != nil {
 		return ctx.Status(500).JSON(fiber.Map{"error": err.Error()})
@@ -58,6 +58,35 @@ func (h *Handlers) CreateTask(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.Status(201).JSON(dto.ToTaskResponse(createdTask))
+}
+
+func (h *Handlers) CreatePersonalTask(ctx *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+
+	var input dto.TaskApi
+	if err := ctx.BodyParser(&input); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad json"})
+	}
+
+	entityTask := &entity.Task{
+		Task:        input.Task,
+		Description: input.Description,
+		Priority:    input.Priority,
+		Progress:    input.Progress,
+		OwnerID:     userID,
+		TeamID:      "",
+		FolderID:    input.FolderID,
+	}
+
+	err := h.taskService.CreatePersonalTask(ctx.Context(), entityTask)
+	if err != nil {
+		return ctx.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return ctx.Status(201).JSON(dto.ToTaskResponse(entityTask))
 }
 
 func (h *Handlers) UpdateTask(c *fiber.Ctx) error {
@@ -93,6 +122,20 @@ func (h *Handlers) UpdateTask(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(updatedTask)
+}
+
+func (h *Handlers) GetPersonalTasks(ctx *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+
+	tasks, err := h.taskService.GetTasksWithoutFolder(ctx.Context(), userID)
+	if err != nil {
+		return ctx.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return ctx.Status(200).JSON(dto.TeamTasksList(tasks))
 }
 
 // GetTeamTasks godoc

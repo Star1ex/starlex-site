@@ -69,9 +69,9 @@ func setupFolderRoutes(api fiber.Router, h *handlers.Handlers) {
 func setupTaskRoutes(api fiber.Router, h *handlers.Handlers) {
 	tasks := api.Group("/tasks")
 
-	tasks.Post("/", h.CreateTask)
-	tasks.Get("/", h.GetUserTasks)
-	tasks.Get("/:id")
+	tasks.Post("/", h.CreatePersonalTask)
+	tasks.Get("/", h.GetPersonalTasks)
+	//tasks.Get("/:id")
 	tasks.Put("/:id", h.UpdateTask)
 	tasks.Delete("/:id", h.DeleteTask)
 
@@ -94,7 +94,7 @@ func setupTeamRoutes(api fiber.Router, h *handlers.Handlers) {
 
 	teamTasks := teams.Group("/:team_id/tasks")
 	{
-		teamTasks.Post("/", h.CreateTask)
+		teamTasks.Post("/", h.CreateTeamTask)
 		teamTasks.Get("/", h.GetTeamTasks)
 		teamTasks.Get("/user/:user_id", h.GetUserTasks)
 		teamTasks.Put("/:task_id", h.UpdateTask)

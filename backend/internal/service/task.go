@@ -25,7 +25,7 @@ func NewTaskService(taskRepo task.Repository, userRepo user.Repository, teamRepo
 	}
 }
 
-func (s *TaskService) CreateTask(
+func (s *TaskService) CreateTeamTask(
 	ctx context.Context,
 	teamID string,
 	assignedIDs []string,
@@ -57,6 +57,10 @@ func (s *TaskService) CreateTask(
 	task.TeamID = teamID
 	task.ID = uuid.New().String()
 
+	return s.taskRepo.Create(ctx, task)
+}
+
+func (s *TaskService) CreatePersonalTask(ctx context.Context, task *entity.Task) error {
 	return s.taskRepo.Create(ctx, task)
 }
 
