@@ -1,8 +1,10 @@
-// CreateTaskModal.tsx - FIXED в стиле RightSidebar
+// CreateTaskModal.tsx
 import React, { useState, useCallback, useEffect } from 'react';
 import Avatar from '@/shared/ui/Avatar.js';
 import type { User, CreateTaskFormData } from '@/entities/types.js';
-import { getAuthToken } from '@/shared/lib/authManager.js';
+import { taskService } from '@/services/api/index.js';
+import { useAuth } from '@/contexts/AuthContext.js';
+
 
 interface CreateTaskModalProps {
   isOpen: boolean;
@@ -27,6 +29,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
     user_ids: [],
   });
   const [isLoading, setIsLoading] = useState(false);
+  const { userId, refreshUser } = useAuth();
 
   const resetForm = useCallback(() => {
     setFormData({
@@ -47,34 +50,58 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.task.trim()) return;
-    
+
     setIsLoading(true);
     try {
-      const token = getAuthToken();
-      if (!token) {
-        window.location.href = '/sign-in';
+      // Ensure we have owner id
+      let ownerId = userId;
+      if (!ownerId) {
+        await refreshUser();
+        // Try to decode newly acquired access token
+        const token = (await import('@/services/api/client.js')).apiClient.getAccessToken();
+        if (token) {
+          try {
+            const decoded = JSON.parse(atob(token.split('.')[1]));
+            ownerId = decoded.user_id || decoded.id || decoded.sub || null;
+          } catch (err) {
+            // ignore
+          }
+        }
+      }
+
+      if (!teamId) {
+        console.error('Missing team_id in route params');
         return;
       }
 
-      const res = await fetch(`/api/team/${teamId}/tasks`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({
-          task: formData.task,
-          description: formData.description,
-          progress: formData.progress,
-          user_ids: formData.user_ids,
-        }),
+      if (!ownerId) {
+        // fallback to decoding access token
+        const token = (await import('@/services/api/client.js')).apiClient.getAccessToken();
+        if (token) {
+          try {
+            const decoded = JSON.parse(atob(token.split('.')[1]));
+            ownerId = decoded.user_id || decoded.id || decoded.sub || null;
+          } catch (err) {
+            // ignore
+          }
+        }
+      }
+
+      if (!ownerId) {
+        console.error('Unable to determine owner id');
+        return;
+      }
+
+      await taskService.createTeamTask(teamId, {
+        task: formData.task,
+        description: formData.description,
+        progress: formData.progress,
+        user_ids: formData.user_ids,
+        owner_id: ownerId,
       });
 
-      if (res.ok) {
-        onSuccess();
-        onClose();
-      }
+      onSuccess();
+      onClose();
     } catch (error) {
       console.error('Failed to create task:', error);
     } finally {

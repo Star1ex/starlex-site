@@ -53,7 +53,8 @@ const useDebounce = (value: string, delay: number) => {
   return debouncedValue;
 };
 
-import { getAuthHeaders } from '@/shared/lib/authManager.js';
+import { searchService, teamService } from '@/services/api/index.js';
+import { useAuth } from '@/contexts/AuthContext.js';
 
 
 export const NewTabModal: React.FC<Props> = ({ open, onClose, onTeamCreated }) => {
@@ -84,16 +85,12 @@ export const NewTabModal: React.FC<Props> = ({ open, onClose, onTeamCreated }) =
       try {
         setLoadingSearch(true);
 
-        const headers: Record<string, string> = {
-          Accept: 'application/json',
-          ...getAuthHeaders(),
-        };
-
-        const res = await fetch(`/api/search/${encodeURIComponent(q)}`, { headers });
-        if (!res.ok) throw new Error(`Search error: ${res.status}`);
-
-        const data: User[] = await res.json();
-        if (!cancelled) setSearchResults(data);
+        try {
+          const data = await searchService.searchUsers(q);
+          if (!cancelled) setSearchResults(data);
+        } catch (err) {
+          if (!cancelled) setSearchResults([]);
+        }
       } catch (e) {
         if (!cancelled) {
           console.error(e);
@@ -148,6 +145,8 @@ export const NewTabModal: React.FC<Props> = ({ open, onClose, onTeamCreated }) =
     setError('');
   };
 
+  const { userId } = useAuth();
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
@@ -160,24 +159,8 @@ export const NewTabModal: React.FC<Props> = ({ open, onClose, onTeamCreated }) =
     try {
       setSubmitting(true);
 
-      const headers: Record<string, string> = {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        ...getAuthHeaders(),
-      };
-
-      const res = await fetch(`/api/team`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ name: name.trim(), description: description.trim(), emails }),
-      });
-
-      if (!res.ok) {
-        throw new Error('Failed to create team');
-      }
-
-      const created: Team = await res.json();
-      onTeamCreated(created);
+      const created = await teamService.createTeam({ user_id: userId ?? '', name: name.trim(), description: description.trim(), emails });
+      onTeamCreated(created as Team);
       resetState();
       onClose();
     } catch (err) {

@@ -1,15 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import Avatar from '@/shared/ui/Avatar.js';
-import { getAuthToken } from '@/shared/lib/authManager.js';
-import { buildApiUrl } from '@/app/api/api.js';
+import { userService, authService } from '@/services/api/index.js';
+import { searchService } from '@/services/api/index.js';
 import type { User } from '@/entities/types.js';
 
-interface PublicUserProfile extends User {
+interface PublicUserProfile {
+  id: string;
   email?: string;
   role?: string;
-  first_name?: string;
-  last_name?: string;
+  firstName?: string;
+  lastName?: string;
+  photo_url?: string | null;
 }
 
 export const UserProfilePage: React.FC = () => {
@@ -29,8 +31,7 @@ export const UserProfilePage: React.FC = () => {
       }
 
       try {
-        const token = getAuthToken();
-        if (!token) {
+        if (!authService.isAuthenticated()) {
           navigate('/sign-in');
           return;
         }
@@ -43,8 +44,8 @@ export const UserProfilePage: React.FC = () => {
         if (userFromState && (userFromState.id === userId || !userFromState.id)) {
           const normalizedUser: PublicUserProfile = {
             id: userFromState.id || userId,
-            firstName: userFromState.firstName || userFromState.first_name || '',
-            lastName: userFromState.lastName || userFromState.last_name || '',
+            firstName: userFromState.firstName || '',
+            lastName: userFromState.lastName || '',
             email: userFromState.email || '',
             photo_url: userFromState.photo_url || null,
             role: userFromState.role,
@@ -54,59 +55,59 @@ export const UserProfilePage: React.FC = () => {
           return;
         }
 
-        // Strategy: Try multiple endpoints in order
-        // 1. Public profile endpoint
-        let res = await fetch(buildApiUrl(`/api/users/${userId}/profile`), {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/json',
-          },
-        });
-        
-        // 2. Fallback to basic user endpoint
-        if (!res.ok && res.status === 404) {
-          res = await fetch(buildApiUrl(`/api/users/${userId}`), {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: 'application/json',
-            },
-          });
-        }
-        
-        // 3. Try search by ID (if ID looks like email)
-        if (!res.ok && res.status === 404 && userId.includes('@')) {
-          res = await fetch(buildApiUrl(`/api/search/${encodeURIComponent(userId)}`), {
-            headers: {
-              Authorization: `Bearer ${token}`,
-              Accept: 'application/json',
-            },
-          });
-        }
-
-        if (res.ok) {
-          const data: any = await res.json();
-          // Handle array response (from search)
-          const userData = Array.isArray(data) ? data[0] : data;
-          
-          if (userData) {
-            // Normalize user data structure
+        // Try public profile endpoint first
+        try {
+          const data = await userService.getUserProfileById(userId);
+          const userData = data;
+          const normalizedUser: PublicUserProfile = {
+            id: userData.id || userId,
+            firstName: userData.firstName || '',
+            lastName: userData.lastName || '',
+            email: userData.email || '',
+            photo_url: userData.photo_url || null,
+            role: userData.role,
+          };
+          setUser(normalizedUser);
+        } catch (err) {
+          // Fallback to basic user endpoint
+          try {
+            const data = await userService.getUserById(userId);
+            const userData = data;
             const normalizedUser: PublicUserProfile = {
               id: userData.id || userId,
-              firstName: userData.firstName || userData.first_name || '',
-              lastName: userData.lastName || userData.last_name || '',
+              firstName: userData.firstName || '',
+              lastName: userData.lastName || '',
               email: userData.email || '',
               photo_url: userData.photo_url || null,
               role: userData.role,
             };
             setUser(normalizedUser);
-          } else {
-            setError('User profile not found');
+          } catch (err2) {
+            // If looks like email, try search
+            if (userId.includes('@')) {
+              try {
+                const results = await searchService.searchUsers(userId);
+                const userData = Array.isArray(results) && results.length > 0 ? results[0] : null;
+                if (userData) {
+                  const normalizedUser: PublicUserProfile = {
+                    id: userData.id || userId,
+                    firstName: userData.firstName || '',
+                    lastName: userData.lastName || '',
+                    email: userData.email || '',
+                    photo_url: userData.photo_url || null,
+                    role: userData.role,
+                  };
+                  setUser(normalizedUser);
+                } else {
+                  setError('User profile not found');
+                }
+              } catch (err3) {
+                setError('User profile not found');
+              }
+            } else {
+              setError('User profile not found. The user may not exist or you may not have permission to view their profile.');
+            }
           }
-        } else if (res.status === 404) {
-          setError('User profile not found. The user may not exist or you may not have permission to view their profile.');
-        } else {
-          const errorData = await res.json().catch(() => ({ message: 'Failed to load user profile' }));
-          setError(errorData.message || errorData.error || 'Failed to load user profile');
         }
       } catch (err) {
         console.error('Error fetching user profile:', err);
@@ -176,14 +177,14 @@ export const UserProfilePage: React.FC = () => {
               {/* Avatar */}
               <div className="flex-shrink-0 flex items-center justify-center">
                 <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full overflow-hidden flex items-center justify-center">
-                  <Avatar user={user} size="lg" />
+                  <Avatar user={user as User} size="lg" />
                 </div>
               </div>
 
               {/* User Info */}
               <div className="flex-1 min-w-0">
                 <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-dark-text mb-2">
-                  {user.firstName || user.first_name || ''} {user.lastName || user.last_name || ''}
+                  {user.firstName || ''} {user.lastName || ''}
                 </h2>
                 
                 {user.email && (

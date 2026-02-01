@@ -1,77 +1,31 @@
-/**
- * Centralized Authentication Manager with Refresh Token Support
- * 
- * Tokens:
- * - Access Token: 1 hour expiration, stored in localStorage
- * - Refresh Token: 7 days expiration, stored in httpOnly cookie (set by server)
- * 
- * Flow:
- * 1. On login, server returns access_token and sets refreshToken cookie
- * 2. API calls use access_token in Authorization header
- * 3. When access_token expires (401 error), automatically refresh using refresh token
- * 4. On logout or refresh token expiry, user is redirected to login
- */
+import { apiClient, httpClient } from '../../services/api/client.js';
 
-export interface AuthStorage {
-  getToken(): string | null;
-  setToken(token: string): void;
-  clearToken(): void;
-  isAuthenticated(): boolean;
-  isTokenExpired(): boolean;
-}
+// Token methods now delegate to ApiClient (in-memory) instead of localStorage
+export const getAuthToken = (): string | null => apiClient.getAccessToken();
+export const setAuthToken = (token: string): void => apiClient.setAccessToken(token);
+export const clearAuthToken = (): void => apiClient.clearAccessToken();
+export const isAuthenticated = (): boolean => apiClient.getAccessToken() !== null;
 
-class TokenStorage implements AuthStorage {
-  private readonly TOKEN_KEY = 'access_token';
+// Token expiry check (decodes JWT payload if present)
+export const isTokenExpired = (): boolean => {
+  const token = getAuthToken();
+  if (!token) return true;
 
-  getToken(): string | null {
-    return localStorage.getItem(this.TOKEN_KEY);
+  try {
+    const payload = token.split('.')[1];
+    if (!payload) return true;
+    const decoded = JSON.parse(atob(payload));
+    const exp = decoded.exp;
+    if (!exp) return true;
+    // Buffer time of 60 seconds
+    return Date.now() >= (exp * 1000 - 60000);
+  } catch (err) {
+    console.error('Error checking token expiration:', err);
+    return true;
   }
+};
 
-  setToken(token: string): void {
-    localStorage.setItem(this.TOKEN_KEY, token);
-  }
-
-  clearToken(): void {
-    localStorage.removeItem(this.TOKEN_KEY);
-  }
-
-  isAuthenticated(): boolean {
-    return !!this.getToken() && !this.isTokenExpired();
-  }
-
-  isTokenExpired(): boolean {
-    const token = this.getToken();
-    if (!token) return true;
-
-    try {
-      const payload = token.split('.')[1];
-      if (!payload) return true;
-      
-      const decoded = JSON.parse(atob(payload));
-      const exp = decoded.exp;
-      
-      if (!exp) return true;
-      
-      // Add 60 second buffer - refresh if less than 1 minute left
-      return Date.now() >= (exp * 1000 - 60000);
-    } catch (err) {
-      console.error('Error checking token expiration:', err);
-      return true;
-    }
-  }
-}
-
-// Export singleton instance
-export const authStorage: AuthStorage = new TokenStorage();
-
-// Export convenience functions
-export const getAuthToken = (): string | null => authStorage.getToken();
-export const setAuthToken = (token: string): void => authStorage.setToken(token);
-export const clearAuthToken = (): void => authStorage.clearToken();
-export const isAuthenticated = (): boolean => authStorage.isAuthenticated();
-export const isTokenExpired = (): boolean => authStorage.isTokenExpired();
-
-// User storage functions
+// User storage functions (kept in localStorage)
 const USER_KEY = 'user';
 
 export const setAuthUser = (user: any): void => {
@@ -96,48 +50,22 @@ export const clearAuthUser = (): void => {
   localStorage.removeItem(USER_KEY);
 };
 
-// Clear all auth data (logout)
 export const clearAllAuthData = (): void => {
   clearAuthToken();
   clearAuthUser();
 };
 
-// Get auth headers for API calls
-export const getAuthHeaders = (): Record<string, string> => {
-  const token = getAuthToken();
-  if (!token) {
-    throw new Error('No authentication token available');
-  }
-  return {
-    Authorization: `Bearer ${token}`,
-    Accept: 'application/json',
-    'Content-Type': 'application/json',
-  };
-};
-
-// Refresh access token using refresh token (stored in httpOnly cookie)
+// Refresh access token using httpOnly refresh token cookie
 export const refreshAccessToken = async (): Promise<string | null> => {
   try {
-    const response = await fetch('/api/auth/refresh', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      credentials: 'include', // Include cookies
-    });
-
-    if (!response.ok) {
-      console.error('Token refresh failed:', response.status);
-      clearAllAuthData();
-      return null;
-    }
-
-    const data = await response.json();
-    if (data.access_token) {
+    const response = await httpClient.post<{ access_token: string }>('/api/auth/refresh');
+    const data = response.data;
+    if (data && data.access_token) {
       setAuthToken(data.access_token);
       return data.access_token;
     }
 
+    clearAllAuthData();
     return null;
   } catch (err) {
     console.error('Error refreshing token:', err);

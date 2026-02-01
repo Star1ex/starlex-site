@@ -1,7 +1,7 @@
 import React, { ChangeEvent } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { buildApiUrl } from "@/app/api/api.js";
+import { authService } from '@/services/api/index.js';
 
 export const SignUpPage = () => {
   const navigate = useNavigate();
@@ -61,34 +61,33 @@ export const SignUpPage = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(buildApiUrl('/api/auth/register'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
+      const result = await authService.register({
+        email: formEmail,
+        password: formPassword,
+        first_name: formFirstName,
+        last_name: formLastName,
       });
 
-      const result = await response.json();
+      // Navigate to verification page with user ID and email
+      navigate('/verify-email', {
+        state: {
+          userId: result.user_id,
+          email: formEmail,
+        },
+      });
+    } catch (err: any) {
+      const status = err?.response?.status;
+      const data = err?.response?.data;
 
-      if (response.ok) {
-        // Navigate to verification page with user ID and email
-        navigate('/verify-email', {
-          state: {
-            userId: result.user_id,
-            email: formEmail
-          }
-        });
+      if (status === 400) {
+        setErrorMessage(data?.error || 'Registration failed');
+      } else if (status === 500) {
+        setErrorMessage(data?.error || 'Server error. Please try again.');
       } else {
-        if (response.status === 400) {
-          setErrorMessage(result.error || "Registration failed");
-        } else if (response.status === 500) {
-          setErrorMessage(result.error || "Server error. Please try again.");
-        } else {
-          setErrorMessage("Unknown registration error");
-        }
+        setErrorMessage(err?.message || 'Unknown registration error');
       }
-    } catch (error) {
-      setErrorMessage('Unable to connect to the server. Check your connection.');
-      console.error('Network or server error:', error);
+
+      console.error('Network or server error:', err);
     } finally {
       setIsLoading(false);
     }

@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import Avatar from '@/shared/ui/Avatar.js';
-import { getAuthToken, getAuthUser } from '@/shared/lib/authManager.js';
-import { apiGet } from '@/shared/lib/apiClient.js';
+import { getAuthUser } from '@/shared/lib/authManager.js';
+import { userService } from '@/services/api/index.js';
 import { useTheme } from '@/shared/contexts/ThemeContext.js';
 import type { User } from '@/entities/types.js';
 
@@ -10,21 +10,7 @@ interface GlobalSidebarProps {
   className?: string;
 }
 
-const getUserIdFromToken = (token: string): { firstName: string; lastName: string; email?: string } | null => {
-  try {
-    const payload = token.split('.')[1];
-    if (!payload) return null;
-    const decoded = JSON.parse(atob(payload));
-    return {
-      firstName: decoded.firstName || decoded.first_name || 'User',
-      lastName: decoded.lastName || decoded.last_name || '',
-      email: decoded.email || '',
-    };
-  } catch (err) {
-    console.error('Error decoding token:', err);
-    return null;
-  }
-};
+
 
 export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) => {
   const navigate = useNavigate();
@@ -38,60 +24,45 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const token = getAuthToken();
-    if (!token) {
-      navigate('/sign-in');
-      return;
-    }
+    if (!userService) return; // safety
 
-    // Try to get user info from stored data first
     const storedUser = getAuthUser();
-    if (storedUser && (storedUser.firstName || storedUser.first_name)) {
-      const firstName = storedUser.firstName || storedUser.first_name || '';
-      const lastName = storedUser.lastName || storedUser.last_name || '';
+    if (storedUser && storedUser.firstName) {
+      const firstName = storedUser.firstName || '';
+      const lastName = storedUser.lastName || '';
       const email = storedUser.email || '';
       setUserInfo({ firstName, lastName, email });
-    } else {
-      const info = getUserIdFromToken(token);
-      setUserInfo(info);
     }
 
-    // Fetch user profile with auto-refresh on 401
     const fetchUser = async () => {
       try {
-        const res = await apiGet(`/api/users/profile`);
-        if (res.ok) {
-          const data: any = await res.json();
-          setUser(data as User);
-          // Update user info from API response
-          const firstName = data.firstName || data.first_name || '';
-          const lastName = data.lastName || data.last_name || '';
-          const email = data.email || '';
-          if (firstName || lastName) {
-            setUserInfo({ firstName, lastName, email });
-          }
-        } else if (res.status === 401) {
-          // Token invalid, redirect to login
-          navigate('/sign-in');
+        const data = await userService.getProfile();
+        setUser(data as unknown as User);
+        const firstName = data.firstName || '';
+        const lastName = data.lastName || '';
+        const email = data.email || '';
+        if (firstName || lastName) {
+          setUserInfo({ firstName, lastName, email });
         }
-      } catch (err) {
-        console.error('Error fetching user:', err);
+      } catch (err: any) {
+        if (err?.response?.status === 401) {
+          navigate('/sign-in');
+        } else {
+          console.error('Error fetching user:', err);
+        }
       }
     };
 
-    // Fetch teams with auto-refresh on 401
     const fetchTeams = async () => {
       try {
-        const res = await apiGet(`/api/users/teams`);
-        if (res.ok) {
-          const data = await res.json();
-          setTeams(Array.isArray(data) ? data.map((t: any) => ({ id: t.team_id || t.id, name: t.name })) : []);
-        } else if (res.status === 401) {
-          // Token invalid, redirect to login
+        const data = await userService.getTeams();
+        setTeams(Array.isArray(data) ? data.map((t: any) => ({ id: t.id, name: t.name })) : []);
+      } catch (err: any) {
+        if (err?.response?.status === 401) {
           navigate('/sign-in');
+        } else {
+          console.error('Error fetching teams:', err);
         }
-      } catch (err) {
-        console.error('Error fetching teams:', err);
       } finally {
         setLoading(false);
       }

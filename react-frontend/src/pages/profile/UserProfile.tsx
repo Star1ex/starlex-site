@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { getAuthToken } from '@/shared/lib/authManager.js';
-import { buildApiUrl } from '@/app/api/api.js';
+import { userService } from '@/services/api/index.js';
 
 type UserProfile = {
   email: string;
-  first_name: string;
-  last_name: string;
+  firstName: string;
+  lastName: string;
   role?: string;
-  photo_url?: string;
+  photo_url?: string | null;
 };
 
 const ProfilePage: React.FC = () => {
@@ -19,20 +18,12 @@ const ProfilePage: React.FC = () => {
 
   useEffect(() => {
     const fetchUser = async () => {
-      const token = getAuthToken();
-      if (!token) return;
-
-      const res = await fetch(buildApiUrl(`/api/users/profile`), {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/json',
-        },
-      });
-
-      if (res.ok) {
-        const data: UserProfile = await res.json();
+      try {
+        const data = await userService.getProfile();
         setUser(data);
         setForm(data);
+      } catch (err) {
+        console.error('Failed to fetch profile:', err);
       }
     };
     fetchUser();
@@ -47,29 +38,16 @@ const ProfilePage: React.FC = () => {
     if (!e.target.files?.length) return;
     const file = e.target.files[0];
 
-    const token = getAuthToken();
-    if (!token) return;
-
     const formData = new FormData();
     formData.append('photo', file);
 
     try {
       setUploading(true);
-      const res = await fetch(buildApiUrl(`/api/users/photo`), {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: formData,
-      });
-
-      if (!res.ok) {
-         throw new Error(`Error: ${res.status}`);
-      }
-
-      const data: { url: string } = await res.json();
+      const data = await userService.uploadPhoto(file);
       setUser(prev => (prev ? { ...prev, photo_url: data.url } : prev));
       setForm(prev => (prev ? { ...prev, photo_url: data.url } : prev));
+    } catch (err) {
+      console.error('Failed to upload photo:', err);
     } finally {
       setUploading(false);
     }
@@ -77,33 +55,20 @@ const ProfilePage: React.FC = () => {
 
   const handleSave = async () => {
     if (!form) return;
-    const token = getAuthToken();
-    if (!token) return;
-
     try {
       setSaving(true);
-      const res = await fetch(buildApiUrl(`/api/users/update`), {
-        method: 'PUT', 
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({
-          email: form.email,
-          first_name: form.first_name,
-          last_name: form.last_name,
-          role: form.role,
-          photo_url: form.photo_url ?? null,
-        }),
+      await userService.updateProfile({
+        email: form.email,
+        firstName: form.firstName,
+        lastName: form.lastName,
+        role: form.role,
+        photo_url: form.photo_url ?? null,
       });
-
-      if (!res.ok) {
-         return;
-        }
 
       setUser(form);
       setEditable(false);
+    } catch (err) {
+      console.error('Failed to update profile:', err);
     } finally {
       setSaving(false);
     }
@@ -167,15 +132,15 @@ const ProfilePage: React.FC = () => {
         <div className="space-y-3 sm:space-y-4">
           <ProfileField
             label="First name"
-            value={form.first_name}
+            value={form.firstName}
             editable={editable}
-            onChange={v => handleChange('first_name', v)}
+            onChange={v => handleChange('firstName', v)}
           />
           <ProfileField
             label="Last name"
-            value={form.last_name}
+            value={form.lastName}
             editable={editable}
-            onChange={v => handleChange('last_name', v)}
+            onChange={v => handleChange('lastName', v)}
           />
           <ProfileField
             label="Email"

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAuthToken } from '@/shared/lib/authManager.js';
+import { authService } from '@/services/api/index.js';
 import { SettingsSidebar } from '@/widgets/SettingsSidebar/SettingsSidebar.js';
 import { Contributing } from '@/pages/settings/Contributing.js';
 import { Appearance } from '@/pages/settings/Appearance.js';
@@ -14,8 +14,7 @@ export const GeneralSettings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'contributing' | 'appearance' | 'password'>('appearance');
 
   useEffect(() => {
-    const token = getAuthToken();
-    if (!token) {
+    if (!authService.isAuthenticated()) {
       navigate('/sign-in');
       return;
     }
@@ -23,8 +22,7 @@ export const GeneralSettings: React.FC = () => {
   }, [navigate]);
 
   useEffect(() => {
-    const token = getAuthToken();
-    if (token) {
+    if (authService.isAuthenticated()) {
       setIsAuthenticated(true);
     }
   }, []);

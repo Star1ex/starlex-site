@@ -9,9 +9,14 @@ export const App = () => {
     <ErrorBoundary>
       <ThemeProvider>
         <BrowserRouter>
-          <AppRoutes />
+          <AuthProvider>
+            <AppRoutes />
+          </AuthProvider>
         </BrowserRouter>
       </ThemeProvider>
     </ErrorBoundary>
   );
 };
+
+// Lazy import to avoid cycles in top-level imports
+import { AuthProvider } from '@/contexts/AuthContext.js';

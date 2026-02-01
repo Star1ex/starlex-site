@@ -1,6 +1,6 @@
 import React, { useState, useRef, KeyboardEvent, ClipboardEvent } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { buildApiUrl } from "@/app/api/api.js";
+import { authService } from '@/services/api/index.js';
 
 export const VerifyEmailPage = () => {
   const navigate = useNavigate();
@@ -74,27 +74,11 @@ export const VerifyEmailPage = () => {
     setIsLoading(true);
 
     try {
-      const response = await fetch(buildApiUrl("/api/auth/verify"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: userId,
-          code: verificationCode,
-        }),
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        navigate("/sign-in", {
-          state: { message: "Email verified successfully! You can now sign in." },
-        });
-      } else {
-        setErrorMessage(result.error || "Invalid verification code");
-      }
-    } catch (error) {
-      setErrorMessage("Unable to connect to the server. Please try again.");
-      console.error("Network error:", error);
+      await authService.verifyEmail({ user_id: userId, code: verificationCode });
+      navigate('/sign-in', { state: { message: 'Email verified successfully! You can now sign in.' } });
+    } catch (err: any) {
+      setErrorMessage(err?.response?.data?.error || 'Invalid verification code');
+      console.error('Network error:', err);
     } finally {
       setIsLoading(false);
     }
@@ -105,24 +89,13 @@ export const VerifyEmailPage = () => {
     setIsResending(true);
 
     try {
-      const response = await fetch(buildApiUrl("/api/auth/resend-code"), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: userId }),
-      });
-
-      const result = await response.json();
-
-      if (response.ok) {
-        alert("Verification code resent! Please check your email.");
-        setCode(["", "", "", "", "", ""]);
-        inputRefs.current[0]?.focus();
-      } else {
-        setErrorMessage(result.error || "Failed to resend code");
-      }
-    } catch (error) {
-      setErrorMessage("Unable to connect to the server. Please try again.");
-      console.error("Network error:", error);
+      await authService.resendCode({ user_id: userId });
+      alert('Verification code resent! Please check your email.');
+      setCode(['', '', '', '', '', '']);
+      inputRefs.current[0]?.focus();
+    } catch (err: any) {
+      setErrorMessage(err?.response?.data?.error || 'Failed to resend code');
+      console.error('Network error:', err);
     } finally {
       setIsResending(false);
     }

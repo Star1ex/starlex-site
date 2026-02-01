@@ -1,11 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Avatar from '@/shared/ui/Avatar.js';
-import { Token } from '@/app/api/token.js';
+import { userService } from '@/services/api/index.js';
 import type { User } from '@/entities/types.js';
 
-import { getAuthToken, getAuthUser } from '@/shared/lib/authManager.js';
-import { apiGet } from '@/shared/lib/apiClient.js';
+import { getAuthUser } from '@/shared/lib/authManager.js';
 
 type Props = {
   isMobile?: boolean;
@@ -36,39 +35,31 @@ export const RightSidebar: React.FC<Props> = ({ isMobile = false, onClose }) => 
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const token = getAuthToken();
-    if (!token) return;
-
     // Try to get user info from stored data first
     const storedUser = getAuthUser();
-    if (storedUser && (storedUser.firstName || storedUser.first_name)) {
-      const firstName = storedUser.firstName || storedUser.first_name || '';
-      const lastName = storedUser.lastName || storedUser.last_name || '';
+    if (storedUser && storedUser.firstName) {
+      const firstName = storedUser.firstName || '';
+      const lastName = storedUser.lastName || '';
       const email = storedUser.email || '';
       setUserInfo({ firstName, lastName, email });
-    } else {
-      const info = getUserIdFromToken(token);
-      setUserInfo(info);
     }
 
     const fetchUser = async () => {
       try {
-        const res = await apiGet(`/api/users/profile`);
-        if (res.ok) {
-          const data: any = await res.json();
-          setUser(data as User);
-          // Update user info from API response
-          const firstName = data.firstName || data.first_name || '';
-          const lastName = data.lastName || data.last_name || '';
-          const email = data.email || '';
-          if (firstName || lastName) {
-            setUserInfo({ firstName, lastName, email });
-          }
-        } else if (res.status === 401) {
-          navigate('/sign-in');
+        const data = await userService.getProfile();
+        setUser(data as unknown as User);
+        const firstName = data.firstName || '';
+        const lastName = data.lastName || '';
+        const email = data.email || '';
+        if (firstName || lastName) {
+          setUserInfo({ firstName, lastName, email });
         }
-      } catch (err) {
-        console.error('Error loading profile:', err);
+      } catch (err: any) {
+        if (err?.response?.status === 401) {
+          navigate('/sign-in');
+        } else {
+          console.error('Error loading profile:', err);
+        }
       }
     };
 

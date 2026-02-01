@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import Avatar from '@/shared/ui/Avatar.js';
 import type { Task, User } from '@/entities/types.js';
-import { getAuthToken } from '@/shared/lib/authManager.js';
+import { taskService } from '@/services/api/index.js';
 
 interface TaskCardProps {
   task: Task;
@@ -260,78 +260,31 @@ const TaskCard: React.FC<TaskCardProps> = ({
 
     setIsUpdating(true);
     setError(null);
-    
+
     try {
-      const token = getAuthToken();
-      if (!token) {
-        setError('Authentication required');
-        // Rollback
-        onUpdate(task);
-        return;
-      }
-
-      let res: Response;
-      
       if (field === 'progress') {
-        res = await fetch(`/api/team/${teamId}/tasks/${task.id}/update_progress`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/json',
-          },
-          body: JSON.stringify({
-            progress: value,
-            task: task.task,
-            description: task.description,
-            user_ids: userIds,
-          }),
-        });
+        const updated = await taskService.updateTeamTaskProgress(teamId, task.id, value as any);
+        onUpdate(updated as Task);
       } else if (field === 'priority') {
-        res = await fetch(`/api/team/${teamId}/tasks/${task.id}/update`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/json',
-          },
-          body: JSON.stringify({
-            task: task.task,
-            description: task.description,
-            priority: value,
-            user_ids: userIds,
-          }),
+        const updated = await taskService.updateTeamTask(teamId, task.id, {
+          task: task.task,
+          description: task.description,
+          priority: value as 'low' | 'medium' | 'high',
+          user_ids: userIds,
         });
+        onUpdate(updated as Task);
       } else {
-        res = await fetch(`/api/team/${teamId}/tasks/${task.id}/update`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/json',
-          },
-          body: JSON.stringify({
-            task: task.task,
-            description: task.description,
-            priority: task.priority,
-            user_ids: value as string[],
-          }),
+        const updated = await taskService.updateTeamTask(teamId, task.id, {
+          task: task.task,
+          description: task.description,
+          priority: task.priority,
+          user_ids: value as string[],
         });
-      }
-
-      if (res.ok) {
-        // Optionally fetch updated task from server to ensure consistency
-        const updatedTask = await res.json().catch(() => optimisticTask);
-        onUpdate(updatedTask);
-      } else {
-        const errorData = await res.json().catch(() => ({ error: 'Failed to update task' }));
-        setError(errorData.error || 'Failed to update task');
-        // Rollback on error
-        onUpdate(task);
+        onUpdate(updated as Task);
       }
     } catch (error) {
       console.error('Failed to update task:', error);
-      setError('Network error. Please try again.');
+      setError('Failed to update task. Please try again.');
       // Rollback on error
       onUpdate(task);
     } finally {
