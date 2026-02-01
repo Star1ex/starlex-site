@@ -2,7 +2,8 @@ import React, { ChangeEvent } from "react";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { authService } from '@/services/api/index.js';
-import { setAuthUser, isTokenExpired } from '@/shared/lib/authManager.js';
+import { setAuthUser } from '@/shared/lib/authManager.js';
+import { useAuth } from '@/contexts/AuthContext.js';
 
 export const SignInPage = () => {
   const navigate = useNavigate();
@@ -11,25 +12,19 @@ export const SignInPage = () => {
   const [formPassword, setFormPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { isAuthenticated, isLoading, login } = useAuth();
 
   useEffect(() => {
-    // If user already has a valid access token, send to dashboard
-    if (authService.isAuthenticated() && !isTokenExpired()) {
-      navigate('/dashboard', { replace: true });
-      return;
-    }
+    // Wait for auth initialization
+    if (isLoading) return;
 
-    // If token expired, try to refresh it
-    if (authService.isAuthenticated() && isTokenExpired()) {
-      const tryRefresh = async () => {
-        const newToken = await authService.refresh();
-        if (newToken) {
-          navigate('/dashboard', { replace: true });
-        }
-        // If refresh fails, user stays on sign-in page (authService handles redirect)
-      };
-      tryRefresh();
+    // If already authenticated, redirect to saved path or dashboard
+    if (isAuthenticated) {
+      const redirectPath = localStorage.getItem('redirectPath') || '/dashboard';
+      localStorage.removeItem('redirectPath');
+      navigate(redirectPath, { replace: true });
       return;
     }
 
@@ -39,7 +34,7 @@ export const SignInPage = () => {
       // Clear the message after 5 seconds
       setTimeout(() => setSuccessMessage(""), 5000);
     }
-  }, [location, navigate]);
+  }, [isAuthenticated, isLoading, location, navigate, login]);
 
   function handleToSignUp() {
     navigate("/sign-up");
@@ -69,14 +64,16 @@ export const SignInPage = () => {
     }
 
     const data = { email: formEmail, password: formPassword };
-    setIsLoading(true);
+    setIsSubmitting(true);
 
     try {
       const result = await authService.login(data);
 
-      if (result && result.user) {
-        // Save user locally
+      if (result && result.user && result.access_token) {
+        // Save user locally and set access token in ApiClient via AuthContext
         setAuthUser(result.user);
+        await login(result.access_token);
+
         const redirectPath = localStorage.getItem('redirectPath') || '/dashboard';
         localStorage.removeItem('redirectPath');
         navigate(redirectPath, { replace: true });
@@ -106,7 +103,7 @@ export const SignInPage = () => {
 
       console.error('Network error:', err);
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -145,7 +142,7 @@ export const SignInPage = () => {
                 onChange={handleSetEmail}
                 type="email"
                 placeholder="your@email.com"
-                disabled={isLoading}
+                disabled={isSubmitting}
                 className="mt-1 w-full border-b bg-white border-black focus:border-black focus:outline-none py-2 text-black placeholder-gray-500 transition-colors duration-300 disabled:opacity-50"
               />
             </div>
@@ -159,7 +156,7 @@ export const SignInPage = () => {
                 onChange={handleSetPassword}
                 type="password"
                 placeholder="********"
-                disabled={isLoading}
+                disabled={isSubmitting}
                 className="mt-1 w-full border-b bg-white border-black focus:border-black focus:outline-none py-2 text-black placeholder-gray-500 transition-colors duration-300 disabled:opacity-50"
               />
             </div>
@@ -175,7 +172,7 @@ export const SignInPage = () => {
               disabled={isLoading}
               className="w-full py-3 mt-6 sm:mt-8 bg-black text-white font-semibold rounded-md shadow-md hover:bg-gray-800 transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              {isLoading ? "Signing In..." : "Sign In"}
+              {isSubmitting ? "Signing In..." : "Sign In"}
             </button>
 
             <p className="text-center text-sm text-black pt-4 transition-colors duration-300">
@@ -183,7 +180,7 @@ export const SignInPage = () => {
               <button
                 type="button"
                 onClick={handleToSignUp}
-                disabled={isLoading}
+                disabled={isSubmitting}
                 className="text-black font-medium hover:text-gray-700 transition-colors duration-200"
               >
                 Create account

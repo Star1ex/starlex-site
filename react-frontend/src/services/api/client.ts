@@ -56,9 +56,11 @@ class ApiClient {
 
   private async refreshAccessToken(): Promise<string> {
     if (this.refreshing) {
+      console.log('⏳ Waiting for ongoing refresh request...');
       return this.refreshing as Promise<string>;
     }
 
+    console.log('🔁 Requesting access token via refresh endpoint...');
     this.refreshing = this.client
       .post<{ access_token: string }>('/api/auth/refresh')
       .then((response) => {
@@ -66,7 +68,13 @@ class ApiClient {
         if (!token) {
           throw new Error('No access token returned');
         }
+        console.log('✅ Refresh returned new access token');
         return token;
+      })
+      .catch((err) => {
+        console.error('❌ Refresh endpoint returned error:', err);
+        this.clearAccessToken();
+        throw err;
       })
       .finally(() => {
         this.refreshing = null;
@@ -77,12 +85,21 @@ class ApiClient {
 
   // Try to initialize session by using refresh cookie to get a new access token
   public async initialize(): Promise<boolean> {
+    if ((this as any).isInitialized) {
+      return this.accessToken !== null;
+    }
+
+    (this as any).isInitialized = true;
+
     try {
+      console.log('🔄 Initializing session...');
       const token = await this.refreshAccessToken();
       this.setAccessToken(token);
+      console.log('✅ Session restored from refresh token');
       return true;
     } catch (err) {
-      // Not authenticated or refresh failed
+      console.log('ℹ️ No valid session found (user not authenticated)');
+      // Don't clear cookie here - just clear in-memory token
       this.clearAccessToken();
       return false;
     }
@@ -90,6 +107,7 @@ class ApiClient {
 
   public setAccessToken(token: string) {
     this.accessToken = token;
+    console.log('🔑 Access token set');
   }
 
   public getAccessToken(): string | null {
@@ -98,6 +116,7 @@ class ApiClient {
 
   public clearAccessToken() {
     this.accessToken = null;
+    console.log('🗑️ Access token cleared');
   }
 
   public getClient() {

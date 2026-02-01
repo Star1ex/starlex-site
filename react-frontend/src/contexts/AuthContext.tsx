@@ -7,6 +7,8 @@ type AuthContextType = {
   userEmail: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  login: (accessToken: string) => Promise<void>;
+  logout: () => void;
   refreshUser: () => Promise<void>;
 };
 
@@ -57,12 +59,27 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  const login = async (accessToken: string) => {
+    apiClient.setAccessToken(accessToken);
+    await refreshUser();
+  };
+
+  const logout = () => {
+    apiClient.clearAccessToken();
+    setUserId(null);
+    setUserEmail(null);
+    setIsAuthenticated(false);
+    // Ensure frontend navigates to sign-in
+    window.location.href = '/sign-in';
+  };
+
   useEffect(() => {
+    console.log('🔄 AuthProvider initializing...');
     refreshUser();
   }, []);
 
   return (
-    <AuthContext.Provider value={{ userId, userEmail, isLoading, isAuthenticated, refreshUser }}>
+    <AuthContext.Provider value={{ userId, userEmail, isLoading, isAuthenticated, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
