@@ -5,6 +5,7 @@ import type { FolderDTO, TaskDTO } from '@/types/dto.js';
 import FolderItem from './FolderItem.js';
 import TaskItem from './TaskItem.js';
 import FolderInlineCreate from './FolderInlineCreate.js';
+import CollapsibleSection from './CollapsibleSection.js';
 
 export const TasksSection: React.FC = React.memo(() => {
   const navigate = useNavigate();
@@ -92,37 +93,40 @@ export const TasksSection: React.FC = React.memo(() => {
     <div className="tasks-section">
       <div className="space-y-0.5">
         <div className="pr-1">
-          {rootFolders.map(folder => renderFolder(folder, 0))}
+          <CollapsibleSection title="Tasks" storageKey="sidebar-sections-state" sectionKey="tasks" className="mb-2">
+            <div className="space-y-1">
+              {rootFolders.map(folder => renderFolder(folder, 0))}
 
-          {/* New Folder quick action - appears below folders, above standalone tasks */}
-          <div className="px-0">
-            {inlineCreateParent === 'root' ? (
-              <div className="px-1">
-                <FolderInlineCreate parentId={null} onClose={() => setInlineCreateParent(null)} />
+              {/* New Folder quick action - appears below folders, above standalone tasks */}
+              <div className="px-0">
+                {inlineCreateParent === 'root' ? (
+                  <div className="px-1">
+                    <FolderInlineCreate parentId={null} onClose={() => setInlineCreateParent(null)} />
+                  </div>
+                ) : (
+                  <div className="px-1">
+                    <button
+                      onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleCreateFolder(); }}
+                      className="w-full flex items-center gap-2 px-3 py-2 rounded text-sm text-gray-500 hover:bg-gray-50 dark:hover:bg-dark-border transition-colors text-left"
+                      style={{ minHeight: '36px' }}
+                    >
+                      <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                      <span className="truncate flex-1">New Folder</span>
+                    </button>
+                  </div>
+                )}
               </div>
-            ) : (
-              <div className="px-1">
-                <button
-                  onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleCreateFolder(); }}
-                  className="w-full flex items-center gap-2 px-3 py-2 rounded text-sm text-gray-500 hover:bg-gray-50 dark:hover:bg-dark-border transition-colors text-left"
-                  style={{ minHeight: '36px' }}
-                >
-                  <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
-                  <span className="truncate flex-1">New Folder</span>
-                </button>
-              </div>
-            )}
-          </div>
+            </div>
+          </CollapsibleSection>
 
           {tasksWithoutFolder.length > 0 && (
-            <div className="px-3 py-2">
-              <div className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Orphan Tasks</div>
-              <div className="space-y-2">
+            <CollapsibleSection title="Orphan Tasks" storageKey="sidebar-sections-state" sectionKey="orphanTasks">
+              <div className="space-y-2 px-3">
                 {tasksWithoutFolder.map(task => (
                   <TaskItem key={task.id} task={task} level={0} onNavigate={() => navigate(`/task/${task.id}`)} />
                 ))}
               </div>
-            </div>
+            </CollapsibleSection>
           )}
 
           {rootFolders.length === 0 && tasksWithoutFolder.length === 0 && (

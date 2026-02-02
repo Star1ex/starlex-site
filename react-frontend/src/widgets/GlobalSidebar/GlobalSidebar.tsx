@@ -240,6 +240,7 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
         <div className="mt-4 mb-2 border-t border-gray-100 dark:border-dark-border" />
 
         <div className="flex items-center justify-between mb-1 mt-3">
+          {/* Tasks header replaced by CollapsibleSection below */}
           <span className="text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">Tasks</span>
           <div className="relative">
             <button
@@ -278,14 +279,26 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
           </div>
         </div>
 
-        <div className="section-items flex-1 overflow-y-auto pr-1 min-h-0 max-h-[calc(100vh-220px)] pb-[220px]">
-          {/* Tasks section (Notion-style folder & task hierarchy) */}
-            <TasksSection />
+        <div className="section-items flex-1 pr-1 min-h-0 max-h-[calc(100vh-220px)] pb-[220px] overflow-y-auto sidebar-scroll scroll-smooth scroll-momentum">
+          {/* Tasks - collapsible */}
+          <div className="space-y-2">
+            <div className="px-3">
+              {/* Collapsible wrapper */}
+              <div className="bg-transparent rounded">
+                {/* Use dynamic collapse for Tasks */}
+                <div className="mb-2">
+                  {/* Re-use the simple header & content animation (kept simple here) */}
+                  {/* Full collapse behavior moved into TasksSection for folder and orphan groups */}
+                  <TasksSection />
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Theme Toggle & Menu - fixed at bottom */}
-      <div className="absolute bottom-2 left-0 right-0 z-30 bg-white dark:bg-dark-surface border-t border-gray-100 dark:border-dark-border p-3 space-y-2 h-[200px]">
+      <div className="absolute bottom-5 left-0 right-0 z-30 bg-white dark:bg-dark-surface border-t border-gray-100 dark:border-dark-border p-3 h-[200px]">
         {/* Theme Toggle Button */}
         <button
           onClick={toggleTheme}
