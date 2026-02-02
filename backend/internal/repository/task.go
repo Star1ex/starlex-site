@@ -17,10 +17,9 @@ type TaskModel struct {
 	Progress    string
 	Assigned    []UserModel `gorm:"many2many:task_users"`
 
-	TeamID   *string `gorm:"default:null"`
-	OwnerID  string  `gorm:"not null;index"`
-	FolderID *string `gorm:"default:null;index"`
-
+	TeamID    *string `gorm:"default:null"`
+	OwnerID   string  `gorm:"not null;index"`
+	FolderID  *string `gorm:"default:null"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -48,8 +47,12 @@ func toTaskDomain(m TaskModel) *entity.Task {
 		Description: m.Description,
 		AssignedTo:  users,
 		TeamID:      *m.TeamID,
+		OwnerID:     m.OwnerID,
+		FolderID:    m.FolderID,
 		Priority:    m.Priority,
 		Progress:    m.Progress,
+		CreatedAt:   m.CreatedAt,
+		UpdatedAt:   m.UpdatedAt,
 	}
 }
 func toTaskDomains(tasks []TaskModel) []*entity.Task {
@@ -72,7 +75,11 @@ func fromTaskDomain(t *entity.Task) *TaskModel {
 		Description: t.Description,
 		Assigned:    users,
 		Priority:    t.Priority,
+		OwnerID:     t.OwnerID,
+		FolderID:    t.FolderID,
 		TeamID:      &t.TeamID,
+		CreatedAt:   t.CreatedAt,
+		UpdatedAt:   t.UpdatedAt,
 	}
 }
 

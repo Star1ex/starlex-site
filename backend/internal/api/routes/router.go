@@ -53,7 +53,7 @@ func setupSearchRoutes(api fiber.Router, h *handlers.Handlers) {
 }
 
 func setupFolderRoutes(api fiber.Router, h *handlers.Handlers) {
-	folders := api.Group("/folder")
+	folders := api.Group("/folders")
 
 	folders.Post("/", h.CreateFolder)
 	folders.Get("/:id", h.GetFolderByID)

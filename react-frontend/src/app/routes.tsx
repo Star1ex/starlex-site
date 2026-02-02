@@ -12,6 +12,8 @@ import  ProfilePage  from "@/pages/profile/UserProfile.js";
 import { UserProfilePage } from "@/pages/profile/UserProfilePage.js";
 import TaskBoard from "@/pages/team/TaskBoard.js"; 
 import PersonalTasksPage from "@/pages/personal/PersonalTasksPage.js";
+import TaskView from "@/components/Tasks/TaskView.js";
+import { Navigate } from 'react-router-dom';
 
 export const AppRoutes = () => (
   <Routes>
@@ -27,6 +29,8 @@ export const AppRoutes = () => (
     <Route path="/profile" element={<Layout><ProfilePage /></Layout>} />
     <Route path="/profile/:userId" element={<Layout><UserProfilePage /></Layout>} />
     <Route path="/team/:team_id" element={<Layout><TaskBoard /></Layout>} /> 
-    <Route path="/personal" element={<Layout><PersonalTasksPage /></Layout>} />
+    <Route path="/personal" element={<Layout><Navigate to="/dashboard" replace /></Layout>} />
+    <Route path="/task/new" element={<Layout><TaskView /></Layout>} />
+    <Route path="/task/:taskId" element={<Layout><TaskView /></Layout>} />
   </Routes> 
 );

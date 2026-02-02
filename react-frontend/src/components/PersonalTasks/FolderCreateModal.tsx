@@ -1,20 +1,23 @@
 import React, { useState } from 'react';
 import { folderService } from '@/services/api/index.js';
 import { usePersonalTasks } from '@/contexts/PersonalTasksContext.js';
+import { useAuth } from '@/contexts/AuthContext.js';
 
-export default function FolderCreateModal() {
-  const { refreshFolders, closeCreateFolder } = usePersonalTasks();
+export default function FolderCreateModal({ onClose, parentId }: { onClose?: () => void; parentId?: string | null }) {
+  const { refreshFolders } = usePersonalTasks();
+  const { userId } = useAuth();
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('code');
   const [color, setColor] = useState('#3B82F6');
   const [isCreating, setIsCreating] = useState(false);
+  const parent_id = parentId ?? null;
 
   const handleCreate = async () => {
     setIsCreating(true);
     try {
-      await folderService.createFolder({ name, icon, color, parent_id: null, team_id: null, owner_id: '' as any });
+      await folderService.createFolder({ name, icon, color, parent_id, team_id: null, owner_id: userId || '' });
       await refreshFolders();
-      closeCreateFolder();
+      if (onClose) onClose();
     } catch (err) {
       console.error('Create folder failed', err);
     } finally {
@@ -39,7 +42,7 @@ export default function FolderCreateModal() {
         <input value={color} onChange={(e) => setColor(e.target.value)} type="color" />
       </div>
       <div className="flex justify-end gap-2">
-        <button onClick={closeCreateFolder} className="px-3 py-1 border rounded">Cancel</button>
+        <button onClick={onClose} className="px-3 py-1 border rounded">Cancel</button>
         <button onClick={handleCreate} disabled={isCreating || !name.trim()} className="px-3 py-1 bg-black text-white rounded">{isCreating ? 'Creating...' : 'Create Folder'}</button>
       </div>
     </div>

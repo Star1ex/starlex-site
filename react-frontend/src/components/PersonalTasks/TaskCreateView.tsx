@@ -1,15 +1,17 @@
 import React, { useState } from 'react';
 import { usePersonalTasks } from '../../contexts/PersonalTasksContext.js';
 
-export default function TaskCreateView() {
+export default function TaskCreateView({ onClose, initialFolderId }: { onClose?: () => void; initialFolderId?: string | null }) {
   const { createTask } = usePersonalTasks();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  const [folderId, setFolderId] = useState<string | null>(initialFolderId || null);
 
   const handleCreate = async () => {
-    await createTask({ task: title, description, priority: 'medium', progress: 'not_started' });
+    await createTask({ task: title, description, priority: 'medium', progress: 'not_started', folder_id: folderId });
     setTitle('');
     setDescription('');
+    if (onClose) onClose();
   };
 
   return (

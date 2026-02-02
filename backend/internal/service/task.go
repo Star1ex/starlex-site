@@ -8,6 +8,7 @@ import (
 	"github.com/Team-Tracks/team-track-site/internal/domain/task"
 	"github.com/Team-Tracks/team-track-site/internal/domain/team"
 	"github.com/Team-Tracks/team-track-site/internal/domain/user"
+	"github.com/Team-Tracks/team-track-site/internal/security"
 	"github.com/google/uuid"
 )
 
@@ -61,6 +62,7 @@ func (s *TaskService) CreateTeamTask(
 }
 
 func (s *TaskService) CreatePersonalTask(ctx context.Context, task *entity.Task) error {
+	task.ID = security.GenerateNewID()
 	return s.taskRepo.Create(ctx, task)
 }
 
