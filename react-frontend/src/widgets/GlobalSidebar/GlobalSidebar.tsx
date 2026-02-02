@@ -100,12 +100,7 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
     fetchTeams();
     refreshPersonal();
 
-    // Listen for creation events to refresh lists and add a polling fallback
-    // Initial fetch already ran earlier; add transient polling to ensure sidebar reflects recent changes
-    const interval = setInterval(() => {
-      refreshPersonal();
-    }, 3000);
-
+    // Listen for creation events to refresh lists. Remove polling to avoid excessive API calls.
     const handleTeamCreated = () => fetchTeams();
     const handlePersonalFolderCreated = () => {
       refreshPersonal();
@@ -119,7 +114,6 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
     window.addEventListener('personalTaskCreated', handlePersonalTaskCreated);
 
     return () => {
-      clearInterval(interval);
       window.removeEventListener('teamCreated', handleTeamCreated);
       window.removeEventListener('personalFolderCreated', handlePersonalFolderCreated);
       window.removeEventListener('personalTaskCreated', handlePersonalTaskCreated);
@@ -284,14 +278,14 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
           </div>
         </div>
 
-        <div className="section-items flex-1 overflow-y-auto pr-1 pb-[200px] min-h-0">
+        <div className="section-items flex-1 overflow-y-auto pr-1 min-h-0 max-h-[calc(100vh-220px)] pb-[220px]">
           {/* Tasks section (Notion-style folder & task hierarchy) */}
             <TasksSection />
         </div>
       </div>
 
       {/* Theme Toggle & Menu - fixed at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 z-30 bg-white dark:bg-dark-surface border-t border-gray-100 dark:border-dark-border p-3 space-y-2 h-[200px]">
+      <div className="absolute bottom-2 left-0 right-0 z-30 bg-white dark:bg-dark-surface border-t border-gray-100 dark:border-dark-border p-3 space-y-2 h-[200px]">
         {/* Theme Toggle Button */}
         <button
           onClick={toggleTheme}
@@ -344,7 +338,7 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
         </button>
 
         {/* Profile Button - Always at bottom */}
-        <div className="relative pt-2 border-t border-gray-100 dark:border-dark-border" ref={profileMenuRef}>
+        <div className="relative pt-2 border-t border-gray-100 dark:border-dark-border mb-3 pb-3" ref={profileMenuRef}>
           <button
             onClick={() => setShowProfileMenu(!showProfileMenu)}
             className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-border transition-colors"

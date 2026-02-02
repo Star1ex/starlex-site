@@ -71,7 +71,7 @@ func setupTaskRoutes(api fiber.Router, h *handlers.Handlers) {
 
 	tasks.Post("/", h.CreatePersonalTask)
 	tasks.Get("/", h.GetPersonalTasks)
-	//tasks.Get("/:id")
+	tasks.Get("/:id", h.GetTaskByID)
 	tasks.Put("/:id", h.UpdateTask)
 	tasks.Delete("/:id", h.DeleteTask)
 

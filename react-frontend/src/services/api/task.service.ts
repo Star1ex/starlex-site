@@ -28,13 +28,13 @@ export const taskService = {
     return response.data;
   },
 
-  async updateTask(id: string, data: UpdateTaskRequest): Promise<TaskDTO> {
-    const response = await httpClient.put<TaskDTO>(`/api/tasks/${id}`, data);
+  async updateTask(id: string, data: UpdateTaskRequest, options?: { signal?: AbortSignal }): Promise<TaskDTO> {
+    const response = await httpClient.put<TaskDTO>(`/api/tasks/${id}`, data, { signal: options?.signal as any });
     return response.data;
   },
 
-  async updateTaskProgress(id: string, progress: TaskProgress): Promise<TaskDTO> {
-    const response = await httpClient.put<TaskDTO>(`/api/tasks/${id}/progress`, { progress });
+  async updateTaskProgress(id: string, progress: TaskProgress, options?: { signal?: AbortSignal }): Promise<TaskDTO> {
+    const response = await httpClient.put<TaskDTO>(`/api/tasks/${id}/progress`, { progress }, { signal: options?.signal as any });
     return response.data;
   },
 

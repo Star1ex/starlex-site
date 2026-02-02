@@ -90,7 +90,7 @@ func (h *Handlers) CreatePersonalTask(ctx *fiber.Ctx) error {
 }
 
 func (h *Handlers) UpdateTask(c *fiber.Ctx) error {
-	taskID := c.Params("task_id")
+	taskID := c.Params("id")
 
 	_, authErr := h.getAuthenticatedUserID(c)
 	if authErr != nil {
@@ -200,7 +200,7 @@ func (h *Handlers) GetUserTasks(ctx *fiber.Ctx) error {
 // @Security BearerAuth
 // @Router       /team/{team_id}/tasks/{task_id} [put]
 func (h *Handlers) UpdateTaskProgress(ctx *fiber.Ctx) error {
-	taskId := ctx.Params("task_id")
+	taskId := ctx.Params("id")
 	if taskId == "" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
 	}
@@ -318,7 +318,7 @@ func (h *Handlers) GetTaskByID(ctx *fiber.Ctx) error {
 		})
 	}
 
-	taskID := ctx.Params("task_id")
+	taskID := ctx.Params("id")
 	if taskID == "nil" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
 	}
