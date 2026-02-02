@@ -6,6 +6,8 @@ import FolderItem from './FolderItem.js';
 import TaskItem from './TaskItem.js';
 import FolderInlineCreate from './FolderInlineCreate.js';
 import CollapsibleSection from './CollapsibleSection.js';
+import DropdownMenu from '@/components/Dropdown/DropdownMenu.js';
+import MenuItem from '@/components/Dropdown/MenuItem.js';
 
 export const TasksSection: React.FC = React.memo(() => {
   const navigate = useNavigate();
@@ -13,6 +15,9 @@ export const TasksSection: React.FC = React.memo(() => {
   const [tasks, setTasks] = useState<TaskDTO[]>([]);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [inlineCreateParent, setInlineCreateParent] = useState<string | null | 'root'>(null);
+
+  const tasksAddRef = useRef<HTMLButtonElement | null>(null);
+  const [isTasksMenuOpen, setIsTasksMenuOpen] = useState(false);
 
   const loadData = React.useCallback(async () => {
     try {
@@ -93,7 +98,48 @@ export const TasksSection: React.FC = React.memo(() => {
     <div className="tasks-section">
       <div className="space-y-0.5">
         <div className="pr-1">
-          <CollapsibleSection title="Tasks" storageKey="sidebar-sections-state" sectionKey="tasks" className="mb-2">
+          <CollapsibleSection
+            title="Tasks"
+            storageKey="sidebar-sections-state"
+            sectionKey="tasks"
+            className="mb-2 group"
+            action={
+              <div className="relative">
+                <button
+                  ref={tasksAddRef}
+                  onClick={(e) => { e.stopPropagation(); setIsTasksMenuOpen((s) => !s); }}
+                  className="p-0.5 hover:bg-gray-100 dark:hover:bg-dark-border rounded transition-colors opacity-0 group-hover:opacity-100"
+                  title="Create"
+                  aria-label="Create personal task or folder"
+                >
+                  <svg className="w-3 h-3 text-gray-500 dark:text-dark-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                </button>
+
+                {isTasksMenuOpen && (
+                  <DropdownMenu anchorEl={tasksAddRef as any} onClose={() => setIsTasksMenuOpen(false)} position="bottom-left">
+                    <MenuItem
+                      label="New Task"
+                      onClick={() => {
+                        setIsTasksMenuOpen(false);
+                        window.dispatchEvent(new CustomEvent('openPersonalTaskCreate'));
+                        navigate('/task/new');
+                      }}
+                    />
+                    <MenuItem
+                      label="New Folder"
+                      onClick={() => {
+                        setIsTasksMenuOpen(false);
+                        window.dispatchEvent(new CustomEvent('openPersonalFolderCreate'));
+                        navigate('/personal');
+                      }}
+                    />
+                  </DropdownMenu>
+                )}
+              </div>
+            }
+          >
             <div className="space-y-1">
               {rootFolders.map(folder => renderFolder(folder, 0))}
 

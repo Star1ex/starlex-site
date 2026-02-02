@@ -6,6 +6,7 @@ import { userService, folderService, taskService } from '@/services/api/index.js
 import { useTheme } from '@/shared/contexts/ThemeContext.js';
 import type { User } from '@/entities/types.js';
 import FolderTree from '@/components/Sidebar/FolderTree.js';
+import CollapsibleSection from '@/components/Sidebar/CollapsibleSection.js';
 import DropdownMenu from '@/components/Dropdown/DropdownMenu.js';
 import MenuItem from '@/components/Dropdown/MenuItem.js';
 import ContextMenu from '@/components/Dropdown/ContextMenu.js';
@@ -29,8 +30,6 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   // Personal tasks/folders state
-  const tasksAddRef = useRef<HTMLButtonElement | null>(null);
-  const [isTasksMenuOpen, setIsTasksMenuOpen] = useState(false);
   const [personalFolders, setPersonalFolders] = useState<any[]>([]);
   const [tasksWithoutFolder, setTasksWithoutFolder] = useState<any[]>([]);
 
@@ -182,113 +181,71 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
         </button>
       </div>
 
-      {/* Teams Section */}
+      {/* Teams Section (single header with collapsible + add button) */}
       <div className="px-3 py-2 flex flex-col flex-1 min-h-0">
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">Teams</span>
+        <CollapsibleSection title="Teams" storageKey="sidebar-sections-state" sectionKey="teams" className="mb-2 group" action={
           <button
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               const event = new CustomEvent('openNewTeamModal');
               window.dispatchEvent(event);
             }}
-            className="p-0.5 hover:bg-gray-100 dark:hover:bg-dark-border rounded transition-colors"
+            className="p-0.5 hover:bg-gray-100 dark:hover:bg-dark-border rounded transition-colors opacity-0 group-hover:opacity-100"
             title="Add new"
+            aria-label="Add new team"
           >
             <svg className="w-3 h-3 text-gray-500 dark:text-dark-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
           </button>
-        </div>
-        <div className="space-y-0.5 mt-1">
-          {loading ? (
-            <div className="px-2 py-1.5 text-xs text-gray-500 dark:text-dark-text-muted">Loading...</div>
-          ) : teams.length === 0 ? (
-            <div className="px-2 py-1.5 text-xs text-gray-500 dark:text-dark-text-muted">No teams yet</div>
-          ) : (
-            teams.map(team => (
-              <button
-                key={team.id}
-                onClick={() => navigate(`/team/${team.id}`)}
-                className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left ${
-                  location.pathname === `/team/${team.id}`
-                    ? 'bg-gray-100 dark:bg-dark-border text-gray-900 dark:text-dark-text'
-                    : 'text-gray-700 dark:text-dark-text-muted hover:bg-gray-100 dark:hover:bg-dark-border'
-                }`}
-              >
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <span className="truncate flex-1">{team.name}</span>
-              </button>
-            ))
-          )}
-          <button
-            onClick={() => {
-              const event = new CustomEvent('openNewTeamModal');
-              window.dispatchEvent(event);
-            }}
-            className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-dark-border text-sm text-gray-500 dark:text-dark-text-muted transition-colors"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
-            <span>Add new</span>
-          </button>
-        </div>
-
-        {/* Divider + Personal TASKS section */}
-        <div className="mt-4 mb-2 border-t border-gray-100 dark:border-dark-border" />
-
-        <div className="flex items-center justify-between mb-1 mt-3">
-          {/* Tasks header replaced by CollapsibleSection below */}
-          <span className="text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">Tasks</span>
-          <div className="relative">
+        }>
+          <div className="space-y-0.5 mt-1">
+            {loading ? (
+              <div className="px-2 py-1.5 text-xs text-gray-500 dark:text-dark-text-muted">Loading...</div>
+            ) : teams.length === 0 ? (
+              <div className="px-2 py-1.5 text-xs text-gray-500 dark:text-dark-text-muted">No teams yet</div>
+            ) : (
+              teams.map(team => (
+                <button
+                  key={team.id}
+                  onClick={() => navigate(`/team/${team.id}`)}
+                  className={`w-full flex items-center gap-2 px-2 py-1.5 rounded text-sm transition-colors text-left ${
+                    location.pathname === `/team/${team.id}`
+                      ? 'bg-gray-100 dark:bg-dark-border text-gray-900 dark:text-dark-text'
+                      : 'text-gray-700 dark:text-dark-text-muted hover:bg-gray-100 dark:hover:bg-dark-border'
+                  }`}
+                >
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  <span className="truncate flex-1">{team.name}</span>
+                </button>
+              ))
+            )}
             <button
-              ref={tasksAddRef}
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsTasksMenuOpen((s) => !s);
+              onClick={() => {
+                const event = new CustomEvent('openNewTeamModal');
+                window.dispatchEvent(event);
               }}
-              className="p-0.5 hover:bg-gray-100 dark:hover:bg-dark-border rounded transition-colors"
-              title="Create"
+              className="w-full flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-100 dark:hover:bg-dark-border text-sm text-gray-500 dark:text-dark-text-muted transition-colors"
             >
-              <svg className="w-3 h-3 text-gray-500 dark:text-dark-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
+              <span>Add new</span>
             </button>
-            {isTasksMenuOpen && (
-              <DropdownMenu anchorEl={tasksAddRef as any} onClose={() => setIsTasksMenuOpen(false)} position="bottom-left">
-                <MenuItem
-                  label="New Task"
-                  onClick={() => {
-                    setIsTasksMenuOpen(false);
-                    window.dispatchEvent(new CustomEvent('openPersonalTaskCreate'));
-                    navigate('/task/new');
-                  }}
-                />
-                <MenuItem
-                  label="New Folder"
-                  onClick={() => {
-                    setIsTasksMenuOpen(false);
-                    window.dispatchEvent(new CustomEvent('openPersonalFolderCreate'));
-                    navigate('/personal');
-                  }}
-                />
-              </DropdownMenu>
-            )}
           </div>
-        </div>
+        </CollapsibleSection>
+
+        {/* Divider + Personal TASKS section (TasksSection owns its header) */}
+        <div className="mt-4 mb-2 border-t border-gray-100 dark:border-dark-border" />
 
         <div className="section-items flex-1 pr-1 min-h-0 max-h-[calc(100vh-220px)] pb-[220px] overflow-y-auto sidebar-scroll scroll-smooth scroll-momentum">
-          {/* Tasks - collapsible */}
+          {/* Tasks - TasksSection includes its own collapsible header and add button */}
           <div className="space-y-2">
             <div className="px-3">
-              {/* Collapsible wrapper */}
               <div className="bg-transparent rounded">
-                {/* Use dynamic collapse for Tasks */}
                 <div className="mb-2">
-                  {/* Re-use the simple header & content animation (kept simple here) */}
-                  {/* Full collapse behavior moved into TasksSection for folder and orphan groups */}
                   <TasksSection />
                 </div>
               </div>
