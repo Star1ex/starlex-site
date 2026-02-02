@@ -9,6 +9,7 @@ import FolderTree from '@/components/Sidebar/FolderTree.js';
 import DropdownMenu from '@/components/Dropdown/DropdownMenu.js';
 import MenuItem from '@/components/Dropdown/MenuItem.js';
 import ContextMenu from '@/components/Dropdown/ContextMenu.js';
+import TasksSection from '@/components/Sidebar/TasksSection.js';
 
 interface GlobalSidebarProps {
   className?: string;
@@ -33,8 +34,7 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
   const [personalFolders, setPersonalFolders] = useState<any[]>([]);
   const [tasksWithoutFolder, setTasksWithoutFolder] = useState<any[]>([]);
 
-  // Folder context state (right-click)
-  const [folderContext, setFolderContext] = useState<{ open: boolean; folderId?: string | null; x?: number; y?: number }>({ open: false });
+
 
   // Refresh personal tasks/folders helper
   const refreshPersonal = async () => {
@@ -120,27 +120,11 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
     window.addEventListener('personalFolderCreated', handlePersonalFolderCreated);
     window.addEventListener('personalTaskCreated', handlePersonalTaskCreated);
 
-    // Folder context (right-click) events
-    const handleOpenFolderContext = (e: Event) => {
-      const ev = e as CustomEvent;
-      const { id, x, y } = ev.detail || {};
-      if (typeof x === 'number' && typeof y === 'number') {
-        setFolderContext({ open: true, folderId: id, x, y });
-      } else {
-        // fallback: anchor to tasksAddRef if missing coords
-        const rect = tasksAddRef.current?.getBoundingClientRect();
-        setFolderContext({ open: true, folderId: id, x: rect ? rect.left : 8, y: rect ? rect.bottom + 8 : 32 });
-      }
-    };
-
-    window.addEventListener('openFolderContext', handleOpenFolderContext as EventListener);
-    
     return () => {
       clearInterval(interval);
       window.removeEventListener('teamCreated', handleTeamCreated);
       window.removeEventListener('personalFolderCreated', handlePersonalFolderCreated);
       window.removeEventListener('personalTaskCreated', handlePersonalTaskCreated);
-      window.removeEventListener('openFolderContext', handleOpenFolderContext as EventListener);
     };
   }, [navigate]);
 
@@ -303,100 +287,10 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
         </div>
 
         <div className="section-items">
-          {/* Folder tree */}
+          {/* Tasks section (Notion-style folder & task hierarchy) */}
           <div className="px-1">
-            <FolderTree
-              folders={personalFolders}
-              onFolderClick={(id) => navigate(`/personal?folder=${id}`)}
-              onFolderRightClick={(id, e) => {
-                e.preventDefault();
-                // include mouse coordinates so context menu can position at cursor
-                window.dispatchEvent(new CustomEvent('openFolderContext', { detail: { id, x: e.clientX, y: e.clientY } }));
-              }}
-            />
+            <TasksSection />
           </div>
-
-          {/* Folder context menu (opened via right click) */}
-          {/* Listens to window events to avoid prop drilling and to keep this sidebar self-contained */}
-          {/** We add a small state + listener to show a portal context menu at cursor coords **/}
-
-          {/* Tasks without folders */}
-          <div className="mt-2 space-y-1">
-            {tasksWithoutFolder.length === 0 ? (
-              <div className="text-xs text-gray-500 dark:text-dark-text-muted px-3 py-2">No tasks yet</div>
-            ) : (
-              tasksWithoutFolder.map((task) => (
-                <button
-                  key={task.id}
-                  onClick={() => navigate(`/task/${task.id}`)}
-                  className={`w-full flex items-center gap-2 px-3 py-2 rounded text-sm transition-colors text-left ${
-                    location.pathname === `/task/${task.id}`
-                      ? 'bg-gray-100 dark:bg-dark-border text-gray-900 dark:text-dark-text'
-                      : 'text-gray-700 dark:text-dark-text-muted hover:bg-gray-50 dark:hover:bg-dark-border/50'
-                  }`}
-                >
-                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                  <span className="truncate flex-1">{task.task}</span>
-                </button>
-              ))
-            )}
-          </div>
-
-          {/* Folder context menu portal */}
-          {folderContext.open && typeof folderContext.x === 'number' && typeof folderContext.y === 'number' && (
-            <ContextMenu x={folderContext.x} y={folderContext.y} onClose={() => setFolderContext({ open: false })}>
-              <MenuItem
-                label="New Task"
-                onClick={() => {
-                  // open create task modal with folder prefilled
-                  window.dispatchEvent(new CustomEvent('openPersonalTaskCreate', { detail: { folder_id: folderContext.folderId } }));
-                  setFolderContext({ open: false });
-                }}
-              />
-
-              <MenuItem
-                label="New Subfolder"
-                onClick={() => {
-                  window.dispatchEvent(new CustomEvent('openPersonalFolderCreate', { detail: { parent_id: folderContext.folderId } }));
-                  setFolderContext({ open: false });
-                }}
-              />
-
-              <div className="dropdown-divider" />
-
-              <MenuItem
-                label="Rename"
-                onClick={async () => {
-                  const newName = prompt('New folder name');
-                  if (newName && folderContext.folderId) {
-                    try {
-                      await folderService.updateFolder(folderContext.folderId, { name: newName });
-                      await refreshPersonal();
-                    } catch (err) {
-                      console.error('Rename failed', err);
-                    }
-                  }
-                  setFolderContext({ open: false });
-                }}
-              />
-
-              <MenuItem
-                label="Delete"
-                onClick={async () => {
-                  if (!folderContext.folderId) return setFolderContext({ open: false });
-                  if (!confirm('Delete folder and its tasks?')) return setFolderContext({ open: false });
-                  try {
-                    await folderService.deleteFolder(folderContext.folderId);
-                    await refreshPersonal();
-                  } catch (err) {
-                    console.error('Delete failed', err);
-                  } finally {
-                    setFolderContext({ open: false });
-                  }
-                }}
-              />
-            </ContextMenu>
-          )}
         </div>
       </div>
 

@@ -103,6 +103,24 @@
   .folder-label { flex:1; font-size:14px; color:var(--text-primary); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .folder-children { display:flex; flex-direction:column; gap:1px; }
 
+  /* Tasks section styling (Notion-like) */
+  .tasks-section .folder-item, .tasks-section .task-item { height:32px; padding:6px 8px; border-radius:6px; }
+  .tasks-section .folder-item .flex, .tasks-section .task-item .flex { align-items:center; }
+  .tasks-section .folder-item .group:hover .opacity-0, .tasks-section .folder-item:hover .opacity-0 { opacity: 1 !important; }
+  .tasks-section .folder-item .w-5, .tasks-section .folder-item .w-4 { opacity: 0.98; }
+  .tasks-section .folder-item .group .w-5 { transition: opacity 0.12s ease; }
+  .tasks-section .folder-item .group:hover .w-5 { opacity: 1; }
+  .tasks-section .folder-item .w-4 { flex-shrink:0 }
+  .tasks-section .folder-item .truncate { margin-left: 6px }
+  .tasks-section .task-item button { padding-left: 6px; padding-right: 8px }
+  .tasks-section .task-item .w-4 { opacity: 0.9 }
+  .tasks-section .task-item:hover { background-color: var(--item-bg-hover); }
+  .tasks-section .folder-item:hover { background-color: var(--item-bg-hover); }
+  .tasks-section .folder-item.active { background-color: var(--item-bg-active); }
+  .tasks-section .folder-item .text-sm, .tasks-section .task-item .text-sm { color: var(--item-text); }
+  .tasks-section .folder-item .text-sm.truncate, .tasks-section .task-item .text-sm.truncate { color: var(--item-text); }
+
+
   /* Smooth transitions for folder items */
   .folder-item { transition: background-color 0.15s ease, transform 0.12s ease; }
   .folder-item:active { transform: translateY(1px); }
