@@ -6,20 +6,24 @@ import { Modal } from '@/shared/ui/Modal.js';
 import FolderCreateModal from '@/components/PersonalTasks/FolderCreateModal.js';
 import TaskCreateView from '@/components/PersonalTasks/TaskCreateView.js';
 
-type PersonalTasksContextType = {
+type PersonalTasksState = {
   folders: FolderDTO[];
   tasks: TaskDTO[];
   isLoading: boolean;
   refreshFolders: () => Promise<void>;
   refreshTasks: () => Promise<void>;
+};
+
+type PersonalTasksActions = {
   createTask: (data: Partial<CreateTaskRequest>) => Promise<void>;
   createFolder: (data: Partial<CreateFolderRequest>) => Promise<void>;
-  openCreateTask: () => void;
-  openCreateFolder: () => void;
+  openCreateTask: (folderId?: string | null) => void;
+  openCreateFolder: (parentId?: string | null) => void;
   closeCreateFolder: () => void;
 };
 
-const PersonalTasksContext = createContext<PersonalTasksContextType | undefined>(undefined);
+const PersonalTasksStateContext = createContext<PersonalTasksState | undefined>(undefined);
+const PersonalTasksActionsContext = createContext<PersonalTasksActions | undefined>(undefined);
 
 export const PersonalTasksProvider = ({ children }: { children: React.ReactNode }) => {
   const [folders, setFolders] = useState<FolderDTO[]>([]);
@@ -31,25 +35,25 @@ export const PersonalTasksProvider = ({ children }: { children: React.ReactNode 
   const [createFolderDefaults, setCreateFolderDefaults] = useState<Partial<CreateFolderRequest> | null>(null);
   const { userId } = useAuth();
 
-  const refreshFolders = async () => {
+  const refreshFolders = React.useCallback(async () => {
     try {
       const data = await folderService.getUserFolders();
       setFolders(data);
     } catch (err) {
       console.error('Failed to refresh folders', err);
     }
-  };
+  }, []);
 
-  const refreshTasks = async () => {
+  const refreshTasks = React.useCallback(async () => {
     try {
       const data = await taskService.getPersonalTasks();
-      // Ensure only personal tasks (team_id === null)
-      const personal = (data || []).filter((t) => t.team_id === null);
+      // Ensure only personal tasks (team_id == null OR empty string)
+      const personal = (data || []).filter((t) => t.team_id == null || t.team_id === '');
       setTasks(personal);
     } catch (err) {
       console.error('Failed to refresh tasks', err);
     }
-  };
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -82,7 +86,7 @@ export const PersonalTasksProvider = ({ children }: { children: React.ReactNode 
     };
   }, []);
 
-  const createTask = async (data: Partial<CreateTaskRequest>) => {
+  const createTask = React.useCallback(async (data: Partial<CreateTaskRequest>) => {
     try {
       const payload = {
         task: data.task || 'New Task',
@@ -100,9 +104,9 @@ export const PersonalTasksProvider = ({ children }: { children: React.ReactNode 
       console.error('Failed to create task', err);
       throw err;
     }
-  };
+  }, [refreshTasks]);
 
-  const createFolder = async (data: Partial<CreateFolderRequest>) => {
+  const createFolder = React.useCallback(async (data: Partial<CreateFolderRequest>) => {
     try {
       const payload = {
         name: data.name || 'New Folder',
@@ -119,40 +123,64 @@ export const PersonalTasksProvider = ({ children }: { children: React.ReactNode 
       console.error('Failed to create folder', err);
       throw err;
     }
-  };
+  }, [refreshFolders]);
+
+  const actionsValue = React.useMemo(() => ({
+    createTask,
+    createFolder,
+    openCreateTask: (folderId?: string | null) => {
+      setCreateTaskDefaults(folderId ? { folder_id: folderId } : null);
+      setShowCreateTask(true);
+    },
+    openCreateFolder: (parentId?: string | null) => {
+      setCreateFolderDefaults(parentId ? { parent_id: parentId } : null);
+      setShowCreateFolder(true);
+    },
+    closeCreateFolder: () => setShowCreateFolder(false),
+  }), [createTask, createFolder]);
+
+  const stateValue = React.useMemo(() => ({
+    folders,
+    tasks,
+    isLoading,
+    refreshFolders,
+    refreshTasks,
+  }), [folders, tasks, isLoading, refreshFolders, refreshTasks]);
 
   return (
-    <PersonalTasksContext.Provider
-      value={{
-        folders,
-        tasks,
-        isLoading,
-        refreshFolders,
-        refreshTasks,
-        createTask,
-        createFolder,
-        openCreateTask: () => window.dispatchEvent(new CustomEvent('openPersonalTaskCreate')),
-        openCreateFolder: () => setShowCreateFolder(true),
-        closeCreateFolder: () => setShowCreateFolder(false),
-      }}
-    >
-      {children}
+    <PersonalTasksStateContext.Provider value={stateValue}>
+      <PersonalTasksActionsContext.Provider value={actionsValue}>
+        {children}
 
-      {/* Folder create modal (shared) */}
-      <Modal open={showCreateFolder} onClose={() => setShowCreateFolder(false)}>
-        <FolderCreateModal onClose={() => setShowCreateFolder(false)} parentId={createFolderDefaults?.parent_id} />
-      </Modal>
+        {/* Folder create modal (shared) */}
+        <Modal open={showCreateFolder} onClose={() => setShowCreateFolder(false)}>
+          <FolderCreateModal onClose={() => setShowCreateFolder(false)} parentId={createFolderDefaults?.parent_id} />
+        </Modal>
 
-      {/* Task create modal (shared) */}
-      <Modal open={showCreateTask} onClose={() => setShowCreateTask(false)}>
-        <TaskCreateView onClose={() => setShowCreateTask(false)} initialFolderId={createTaskDefaults?.folder_id} />
-      </Modal>
-    </PersonalTasksContext.Provider>
+        {/* Task create modal (shared) */}
+        <Modal open={showCreateTask} onClose={() => setShowCreateTask(false)}>
+          <TaskCreateView onClose={() => setShowCreateTask(false)} initialFolderId={createTaskDefaults?.folder_id} />
+        </Modal>
+      </PersonalTasksActionsContext.Provider>
+    </PersonalTasksStateContext.Provider>
   );
 };
 
-export const usePersonalTasks = () => {
-  const ctx = useContext(PersonalTasksContext);
-  if (!ctx) throw new Error('usePersonalTasks must be used inside PersonalTasksProvider');
+export const usePersonalTasksState = () => {
+  const ctx = useContext(PersonalTasksStateContext);
+  if (!ctx) throw new Error('usePersonalTasksState must be used inside PersonalTasksProvider');
   return ctx;
+};
+
+export const usePersonalTasksActions = () => {
+  const ctx = useContext(PersonalTasksActionsContext);
+  if (!ctx) throw new Error('usePersonalTasksActions must be used inside PersonalTasksProvider');
+  return ctx;
+};
+
+// Backwards-compatible combined hook
+export const usePersonalTasks = () => {
+  const state = usePersonalTasksState();
+  const actions = usePersonalTasksActions();
+  return { ...state, ...actions } as const;
 };

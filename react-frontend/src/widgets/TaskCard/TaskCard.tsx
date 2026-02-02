@@ -61,7 +61,7 @@ const priorityConfig: Record<string, { label: string; color: string; bgColor: st
   },
 };
 
-const TaskCard: React.FC<TaskCardProps> = ({
+const TaskCardComponent: React.FC<TaskCardProps> = ({
   task,
   users,
   onUpdate,
@@ -633,4 +633,6 @@ const TaskCard: React.FC<TaskCardProps> = ({
   );
 };
 
+const TaskCard = React.memo(TaskCardComponent);
+TaskCard.displayName = 'TaskCard';
 export default TaskCard;

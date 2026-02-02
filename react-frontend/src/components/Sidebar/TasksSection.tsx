@@ -4,30 +4,29 @@ import { folderService, taskService } from '@/services/api/index.js';
 import type { FolderDTO, TaskDTO } from '@/types/dto.js';
 import FolderItem from './FolderItem.js';
 import TaskItem from './TaskItem.js';
-import DropdownMenu from '@/components/Dropdown/DropdownMenu.js';
-import MenuItem from '@/components/Dropdown/MenuItem.js';
+import FolderInlineCreate from './FolderInlineCreate.js';
 
-export const TasksSection: React.FC = () => {
+export const TasksSection: React.FC = React.memo(() => {
   const navigate = useNavigate();
-  const addButtonRef = useRef<HTMLButtonElement | null>(null);
   const [folders, setFolders] = useState<FolderDTO[]>([]);
   const [tasks, setTasks] = useState<TaskDTO[]>([]);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
-  const [isAddMenuOpen, setIsAddMenuOpen] = useState(false);
+  const [inlineCreateParent, setInlineCreateParent] = useState<string | null | 'root'>(null);
 
-  const loadData = async () => {
+  const loadData = React.useCallback(async () => {
     try {
       const [foldersData, tasksData] = await Promise.all([
         folderService.getUserFolders(),
         taskService.getPersonalTasks(),
       ]);
 
-      setFolders(Array.isArray(foldersData) ? (foldersData.filter((f:any) => f.team_id === null)) : []);
-      setTasks(Array.isArray(tasksData) ? (tasksData.filter((t:any) => t.team_id === null)) : []);
+      // Include both null and empty string team ids as personal
+      setFolders(Array.isArray(foldersData) ? (foldersData.filter((f:any) => f.team_id == null || f.team_id === '')) : []);
+      setTasks(Array.isArray(tasksData) ? (tasksData.filter((t:any) => t.team_id == null || t.team_id === '')) : []);
     } catch (error) {
       console.error('Failed to load tasks data:', error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadData();
@@ -38,17 +37,17 @@ export const TasksSection: React.FC = () => {
       window.removeEventListener('personalTaskCreated', handleRefresh);
       window.removeEventListener('personalFolderCreated', handleRefresh);
     };
-  }, []);
+  }, [loadData]);
 
-  const toggleFolder = (folderId: string) => {
+  const toggleFolder = React.useCallback((folderId: string) => {
     setExpandedFolders(prev => {
       const next = new Set(prev);
       if (next.has(folderId)) next.delete(folderId); else next.add(folderId);
       return next;
     });
-  };
+  }, []);
 
-  const renderFolder = (folder: FolderDTO, level = 0) => {
+  const renderFolder = React.useCallback((folder: FolderDTO, level = 0): React.ReactNode => {
     const subfolders = folders.filter(f => f.parent_id === folder.id);
     const folderTasks = tasks.filter(t => t.folder_id === folder.id);
     const isExpanded = expandedFolders.has(folder.id);
@@ -75,60 +74,68 @@ export const TasksSection: React.FC = () => {
         )}
       </div>
     );
-  };
+  }, [folders, tasks, expandedFolders, navigate, toggleFolder]);
 
-  const rootFolders = folders.filter(f => f.parent_id === null).sort((a,b) => (a.name || '').localeCompare(b.name || ''));
-  const tasksWithoutFolder = tasks.filter(t => t.folder_id === null).sort((a,b) => (a.task || '').localeCompare(b.task || ''));
+  const rootFolders = React.useMemo(() => folders.filter(f => f.parent_id == null).sort((a,b) => (a.name || '').localeCompare(b.name || '')), [folders]);
+  const tasksWithoutFolder = React.useMemo(() => tasks.filter(t => t.folder_id == null).sort((a,b) => (a.task || '').localeCompare(b.task || '')), [tasks]);
 
-  const handleCreateTask = () => {
-    setIsAddMenuOpen(false);
+  const handleCreateTask = React.useCallback(() => {
     navigate('/task/new');
-  };
+  }, [navigate]);
 
-  const handleCreateFolder = () => {
-    setIsAddMenuOpen(false);
-    window.dispatchEvent(new CustomEvent('openPersonalFolderCreate'));
-  };
+  const handleCreateFolder = React.useCallback(() => {
+    // show inline create at root
+    setInlineCreateParent('root');
+  }, []);
 
   return (
     <div className="tasks-section">
-      {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 mb-1">
-        <span className="text-xs font-semibold text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">Tasks</span>
-        <button
-          ref={addButtonRef}
-          onClick={() => setIsAddMenuOpen(s => !s)}
-          className="w-5 h-5 flex items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-dark-border transition-colors opacity-0 group-hover:opacity-100"
-          title="Create"
-        >
-          <svg className="w-3 h-3 text-gray-500 dark:text-dark-text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-          </svg>
-        </button>
-        {isAddMenuOpen && (
-          <DropdownMenu anchorEl={addButtonRef as any} onClose={() => setIsAddMenuOpen(false)} position="bottom-left">
-            <MenuItem label="New Task" icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>} onClick={handleCreateTask} />
-            <MenuItem label="New Folder" icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>} onClick={handleCreateFolder} />
-          </DropdownMenu>
-        )}
-      </div>
-
       <div className="space-y-0.5">
-        {rootFolders.map(folder => renderFolder(folder, 0))}
+        <div className="pr-1">
+          {rootFolders.map(folder => renderFolder(folder, 0))}
 
-        {tasksWithoutFolder.map(task => (
-          <TaskItem key={task.id} task={task} level={0} onNavigate={() => navigate(`/task/${task.id}`)} />
-        ))}
-
-        {rootFolders.length === 0 && tasksWithoutFolder.length === 0 && (
-          <div className="px-3 py-4 text-center">
-            <p className="text-sm text-gray-400 dark:text-dark-text-muted">No tasks yet</p>
-            <button onClick={handleCreateTask} className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:underline">Create your first task</button>
+          {/* New Folder quick action - appears below folders, above standalone tasks */}
+          <div className="px-0">
+            {inlineCreateParent === 'root' ? (
+              <div className="px-1">
+                <FolderInlineCreate parentId={null} onClose={() => setInlineCreateParent(null)} />
+              </div>
+            ) : (
+              <div className="px-1">
+                <button
+                  onClick={(e) => { e.stopPropagation(); e.preventDefault(); handleCreateFolder(); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 rounded text-sm text-gray-500 hover:bg-gray-50 dark:hover:bg-dark-border transition-colors text-left"
+                  style={{ minHeight: '36px' }}
+                >
+                  <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                  <span className="truncate flex-1">New Folder</span>
+                </button>
+              </div>
+            )}
           </div>
-        )}
+
+          {tasksWithoutFolder.length > 0 && (
+            <div className="px-3 py-2">
+              <div className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Orphan Tasks</div>
+              <div className="space-y-2">
+                {tasksWithoutFolder.map(task => (
+                  <TaskItem key={task.id} task={task} level={0} onNavigate={() => navigate(`/task/${task.id}`)} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {rootFolders.length === 0 && tasksWithoutFolder.length === 0 && (
+            <div className="px-3 py-4 text-center">
+              <p className="text-sm text-gray-400 dark:text-dark-text-muted">No tasks yet</p>
+              <button onClick={handleCreateTask} className="mt-2 text-sm text-blue-600 dark:text-blue-400 hover:underline">Create your first task</button>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
-};
+});
 
+TasksSection.displayName = 'TasksSection';
 export default TasksSection;

@@ -74,7 +74,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    console.log('🔄 AuthProvider initializing...');
+    console.debug('AuthProvider initializing...');
     refreshUser();
   }, []);
 

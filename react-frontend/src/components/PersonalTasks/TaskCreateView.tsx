@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { usePersonalTasks } from '../../contexts/PersonalTasksContext.js';
+import { usePersonalTasksActions } from '../../contexts/PersonalTasksContext.js';
 
-export default function TaskCreateView({ onClose, initialFolderId }: { onClose?: () => void; initialFolderId?: string | null }) {
-  const { createTask } = usePersonalTasks();
+const TaskCreateView = React.memo(function TaskCreateView({ onClose, initialFolderId }: { onClose?: () => void; initialFolderId?: string | null }) {
+  const { createTask } = usePersonalTasksActions();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [folderId, setFolderId] = useState<string | null>(initialFolderId || null);
@@ -30,4 +30,7 @@ export default function TaskCreateView({ onClose, initialFolderId }: { onClose?:
       </div>
     </div>
   );
-}
+});
+
+TaskCreateView.displayName = 'TaskCreateView';
+export default TaskCreateView;

@@ -43,8 +43,8 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
         folderService.getUserFolders(),
         taskService.getPersonalTasksWithoutFolder(),
       ]);
-      setPersonalFolders(Array.isArray(folders) ? (folders.filter((f:any) => f.team_id === null)) : []);
-      setTasksWithoutFolder(Array.isArray(tasks) ? (tasks.filter((t:any) => t.team_id === null)) : []);
+      setPersonalFolders(Array.isArray(folders) ? (folders.filter((f:any) => f.team_id == null)) : []);
+      setTasksWithoutFolder(Array.isArray(tasks) ? (tasks.filter((t:any) => t.team_id == null)) : []);
     } catch (err) {
       console.error('Error fetching personal tasks/folders:', err);
     }
@@ -108,11 +108,9 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
 
     const handleTeamCreated = () => fetchTeams();
     const handlePersonalFolderCreated = () => {
-      console.log('✅ Folder created event received');
       refreshPersonal();
     };
     const handlePersonalTaskCreated = () => {
-      console.log('✅ Task created event received');
       refreshPersonal();
     };
 
@@ -153,7 +151,7 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
   const displayEmail = (user as any)?.email || userInfo?.email || '';
 
   return (
-    <aside className={`app-sidebar bg-white dark:bg-dark-surface border-r border-gray-100 dark:border-dark-border w-64 flex flex-col h-full transition-colors ${className}`}>
+    <aside className={`app-sidebar bg-white dark:bg-dark-surface border-r border-gray-100 dark:border-dark-border w-64 flex flex-col relative h-screen transition-colors ${className}`}>
       {/* User Workspace Header */}
       <div className="px-3 py-2.5 border-b border-gray-100 dark:border-dark-border">
         <div className="flex items-center justify-between">
@@ -191,7 +189,7 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
       </div>
 
       {/* Teams Section */}
-      <div className="px-3 py-2 flex-1 overflow-y-auto">
+      <div className="px-3 py-2 flex flex-col flex-1 min-h-0">
         <div className="flex items-center justify-between mb-1">
           <span className="text-xs font-medium text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">Teams</span>
           <button
@@ -286,15 +284,14 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
           </div>
         </div>
 
-        <div className="section-items">
+        <div className="section-items flex-1 overflow-y-auto pr-1 pb-[200px] min-h-0">
           {/* Tasks section (Notion-style folder & task hierarchy) */}
-          <div className="px-1">
             <TasksSection />
-          </div>
         </div>
       </div>
 
-      {/* Theme Toggle & Menu */}      <div className="border-t border-gray-100 dark:border-dark-border p-3 space-y-2">
+      {/* Theme Toggle & Menu - fixed at bottom */}
+      <div className="absolute bottom-0 left-0 right-0 z-30 bg-white dark:bg-dark-surface border-t border-gray-100 dark:border-dark-border p-3 space-y-2 h-[200px]">
         {/* Theme Toggle Button */}
         <button
           onClick={toggleTheme}

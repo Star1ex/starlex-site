@@ -56,11 +56,11 @@ class ApiClient {
 
   private async refreshAccessToken(): Promise<string> {
     if (this.refreshing) {
-      console.log('⏳ Waiting for ongoing refresh request...');
+      console.debug(' Waiting for ongoing refresh request...');
       return this.refreshing as Promise<string>;
     }
 
-    console.log('🔁 Requesting access token via refresh endpoint...');
+    console.debug('Requesting access token via refresh endpoint...');
     this.refreshing = this.client
       .post<{ access_token: string }>('/api/auth/refresh')
       .then((response) => {
@@ -68,11 +68,11 @@ class ApiClient {
         if (!token) {
           throw new Error('No access token returned');
         }
-        console.log('✅ Refresh returned new access token');
+        console.debug('Refresh returned new access token');
         return token;
       })
       .catch((err) => {
-        console.error('❌ Refresh endpoint returned error:', err);
+        console.error(' Refresh endpoint returned error:', err);
         this.clearAccessToken();
         throw err;
       })
@@ -92,13 +92,13 @@ class ApiClient {
     (this as any).isInitialized = true;
 
     try {
-      console.log('🔄 Initializing session...');
+      console.debug('Initializing session...');
       const token = await this.refreshAccessToken();
       this.setAccessToken(token);
-      console.log('✅ Session restored from refresh token');
+      console.debug('Session restored from refresh token');
       return true;
     } catch (err) {
-      console.log('ℹ️ No valid session found (user not authenticated)');
+      console.debug('No valid session found (user not authenticated)');
       // Don't clear cookie here - just clear in-memory token
       this.clearAccessToken();
       return false;
@@ -107,7 +107,7 @@ class ApiClient {
 
   public setAccessToken(token: string) {
     this.accessToken = token;
-    console.log('🔑 Access token set');
+    console.debug('Access token set');
   }
 
   public getAccessToken(): string | null {
@@ -116,7 +116,7 @@ class ApiClient {
 
   public clearAccessToken() {
     this.accessToken = null;
-    console.log('🗑️ Access token cleared');
+    console.debug('Access token cleared');
   }
 
   public getClient() {

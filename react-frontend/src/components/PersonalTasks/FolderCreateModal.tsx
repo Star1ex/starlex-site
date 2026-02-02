@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { folderService } from '@/services/api/index.js';
-import { usePersonalTasks } from '@/contexts/PersonalTasksContext.js';
+import { usePersonalTasksState } from '@/contexts/PersonalTasksContext.js';
+
 import { useAuth } from '@/contexts/AuthContext.js';
 
 export default function FolderCreateModal({ onClose, parentId }: { onClose?: () => void; parentId?: string | null }) {
-  const { refreshFolders } = usePersonalTasks();
+  const { refreshFolders } = usePersonalTasksState();
   const { userId } = useAuth();
   const [name, setName] = useState('');
   const [icon, setIcon] = useState('code');

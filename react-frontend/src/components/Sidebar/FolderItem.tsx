@@ -1,8 +1,10 @@
 import React, { useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { folderService } from '@/services/api/index.js';
 import type { FolderDTO } from '@/types/dto.js';
 import ContextMenu from '@/components/Dropdown/ContextMenu.js';
 import MenuItem from '@/components/Dropdown/MenuItem.js';
+import FolderInlineCreate from './FolderInlineCreate.js';
 
 interface FolderItemProps {
   folder: FolderDTO;
@@ -13,29 +15,42 @@ interface FolderItemProps {
   onNavigate: () => void;
 }
 
-export const FolderItem: React.FC<FolderItemProps> = ({ folder, level, isExpanded, hasChildren, onToggle, onNavigate }) => {
+export const FolderItem: React.FC<FolderItemProps> = React.memo(({ folder, level, isExpanded, hasChildren, onToggle, onNavigate }) => {
+  const navigate = useNavigate();
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
   const [showActions, setShowActions] = useState(false);
+  const [showInlineSubfolder, setShowInlineSubfolder] = useState(false);
   const itemRef = useRef<HTMLDivElement | null>(null);
 
-  const handleContextMenu = (e: React.MouseEvent) => {
+  const handleContextMenu = React.useCallback((e: React.MouseEvent) => {
     e.preventDefault();
+    e.stopPropagation();
     setContextMenuPos({ x: e.clientX, y: e.clientY });
     setShowContextMenu(true);
-  };
+  }, []);
 
-  const handleCreateTask = () => {
+  const handleCreateTask = React.useCallback((e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    e?.preventDefault();
     setShowContextMenu(false);
+    // Navigate to new task with folder prefilled
+    navigate('/task/new', { state: { folder_id: folder.id } });
+    // Also trigger modal creation hooks
     window.dispatchEvent(new CustomEvent('openPersonalTaskCreate', { detail: { folder_id: folder.id } }));
-  };
-
-  const handleCreateSubfolder = () => {
+  }, [navigate, folder.id]);
+  
+  const handleCreateSubfolder = React.useCallback((e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    e?.preventDefault();
     setShowContextMenu(false);
-    window.dispatchEvent(new CustomEvent('openPersonalFolderCreate', { detail: { parent_id: folder.id } }));
-  };
+    // Toggle inline subfolder creation under this folder
+    setShowInlineSubfolder(true);
+  }, []);
 
-  const handleRename = async () => {
+  const handleRename = React.useCallback(async (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    e?.preventDefault();
     setShowContextMenu(false);
     const newName = prompt('New folder name:', folder.name);
     if (newName && newName.trim()) {
@@ -44,11 +59,14 @@ export const FolderItem: React.FC<FolderItemProps> = ({ folder, level, isExpande
         window.dispatchEvent(new CustomEvent('personalFolderCreated'));
       } catch (err) {
         console.error('Failed to rename folder:', err);
+        alert('Failed to rename folder');
       }
     }
-  };
+  }, [folder.id, folder.name]);
 
-  const handleDelete = async () => {
+  const handleDelete = React.useCallback(async (e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    e?.preventDefault();
     setShowContextMenu(false);
     if (!confirm(`Delete folder "${folder.name}" and all its contents?`)) return;
     try {
@@ -56,8 +74,9 @@ export const FolderItem: React.FC<FolderItemProps> = ({ folder, level, isExpande
       window.dispatchEvent(new CustomEvent('personalFolderCreated'));
     } catch (err) {
       console.error('Failed to delete folder:', err);
+      alert('Failed to delete folder');
     }
-  };
+  }, [folder.id, folder.name]);
 
   const paddingLeft = 12 + level * 16;
 
@@ -71,7 +90,7 @@ export const FolderItem: React.FC<FolderItemProps> = ({ folder, level, isExpande
         onMouseLeave={() => setShowActions(false)}
         onContextMenu={handleContextMenu}
       >
-        <div className="flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-gray-50 dark:hover:bg-dark-border/50 transition-colors cursor-pointer">
+        <div className="flex items-center gap-4 px-3 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-dark-border/50 transition-colors cursor-pointer" style={{ minHeight: '36px' }}>
           {/* Chevron */}
           {hasChildren ? (
             <button onClick={(e) => { e.stopPropagation(); onToggle(); }} className="w-4 h-4 flex items-center justify-center flex-shrink-0">
@@ -100,7 +119,7 @@ export const FolderItem: React.FC<FolderItemProps> = ({ folder, level, isExpande
                 <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" /></svg>
               </button>
 
-              <button onClick={(e) => { e.stopPropagation(); handleCreateTask(); }} className="w-5 h-5 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-dark-border transition-colors">
+              <button onClick={(e) => { e.stopPropagation(); handleCreateTask(e); }} className="w-5 h-5 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-dark-border transition-colors">
                 <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
               </button>
             </div>
@@ -117,8 +136,15 @@ export const FolderItem: React.FC<FolderItemProps> = ({ folder, level, isExpande
           <MenuItem label="Delete" icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>} onClick={handleDelete} danger />
         </ContextMenu>
       )}
+
+      {/* Inline subfolder create form, shown under this folder when requested */}
+      {showInlineSubfolder && (
+        <div style={{ marginLeft: `${paddingLeft + 12}px` }} className="mt-1">
+          <FolderInlineCreate parentId={folder.id} onClose={() => setShowInlineSubfolder(false)} />
+        </div>
+      )}
     </>
   );
-};
+});
 
 export default FolderItem;

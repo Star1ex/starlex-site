@@ -309,3 +309,25 @@ func (h *Handlers) MoveTaskToFolder(ctx *fiber.Ctx) error {
 	}
 	return ctx.Status(fiber.StatusOK).JSON("Successfully moved task to folder")
 }
+
+func (h *Handlers) GetTaskByID(ctx *fiber.Ctx) error {
+	_, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "unauthorized",
+		})
+	}
+
+	taskID := ctx.Params("task_id")
+	if taskID == "nil" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
+	}
+
+	task, err := h.taskService.GetTaskByID(ctx.Context(), taskID)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	return ctx.Status(200).JSON(dto.ToTaskResponse(task))
+}

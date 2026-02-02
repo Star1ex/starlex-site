@@ -19,7 +19,7 @@ export const FolderTree: React.FC<FolderTreeProps> = ({ folders, level = 0, onFo
     });
   };
 
-  const rootFolders = folders.filter(f => f.parent_id === null);
+  const rootFolders = folders.filter(f => f.parent_id == null);
   const getSubfolders = (parentId: string) => folders.filter(f => f.parent_id === parentId);
 
   const renderFolder = (folder: FolderDTO, currentLevel: number) => {

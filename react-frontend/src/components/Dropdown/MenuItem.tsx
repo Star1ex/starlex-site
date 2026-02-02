@@ -7,7 +7,7 @@ interface MenuItemProps {
   danger?: boolean;
 }
 
-export const MenuItem: React.FC<MenuItemProps> = ({ icon, label, onClick, danger = false }) => {
+const MenuItem: React.FC<MenuItemProps> = React.memo(({ icon, label, onClick, danger = false }) => {
   return (
     <button
       onClick={onClick}
@@ -19,6 +19,7 @@ export const MenuItem: React.FC<MenuItemProps> = ({ icon, label, onClick, danger
       <span className="flex-1">{label}</span>
     </button>
   );
-};
+});
 
+MenuItem.displayName = 'MenuItem';
 export default MenuItem;
