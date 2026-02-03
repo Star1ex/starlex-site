@@ -2,7 +2,13 @@ import React from 'react';
 import { useTheme } from '@/shared/contexts/ThemeContext.js';
 
 export const Appearance: React.FC = () => {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, setTheme } = useTheme();
+  const themeOptions = [
+    { id: 'light', label: 'White' },
+    { id: 'dark', label: 'Dark Blue' },
+    { id: 'ultra-dark', label: 'Ultra Dark' },
+    { id: 'solarized', label: 'Solarized White' },
+  ] as const;
 
   return (
     <div className="space-y-6">
@@ -18,41 +24,47 @@ export const Appearance: React.FC = () => {
       {/* Theme Toggle */}
       <div className="bg-white dark:bg-dark-surface rounded-xl border border-gray-200 dark:border-dark-border overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-200 dark:border-dark-border">
-          <h4 className="font-medium text-gray-900 dark:text-dark-text">Dark Theme</h4>
+          <h4 className="font-medium text-gray-900 dark:text-dark-text">Theme</h4>
         </div>
-        <div className="px-6 py-4">
+        <div className="px-6 py-4 space-y-3">
           <div className="flex items-center justify-between">
             <div className="flex-1">
               <p className="text-sm text-gray-600 dark:text-dark-text-muted">
-                {theme === 'dark' ? 'Dark mode is enabled' : 'Light mode is enabled'}
+                Current theme: <span className="font-medium text-gray-900 dark:text-dark-text">{themeOptions.find(t => t.id === theme)?.label}</span>
               </p>
               <p className="text-xs text-gray-500 dark:text-dark-text-muted mt-1">
-                Click the toggle to switch theme
+                Click the toggle to cycle themes
               </p>
             </div>
             <button
               onClick={toggleTheme}
               className="relative w-16 h-8 rounded-full bg-gray-300 dark:bg-gray-700 transition-all duration-500 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-dark-surface"
               role="switch"
-              aria-checked={theme === 'dark'}
-              aria-label="Toggle dark theme"
+              aria-checked={theme !== 'light'}
+              aria-label="Toggle theme"
             >
               <div
                 className={`absolute top-1 left-1 w-6 h-6 rounded-full bg-white dark:bg-yellow-400 shadow-md transform transition-all duration-500 ease-in-out flex items-center justify-center ${
-                  theme === 'dark' ? 'translate-x-8' : 'translate-x-0'
+                  theme !== 'light' ? 'translate-x-8' : 'translate-x-0'
+                }`}
+              />
+            </button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {themeOptions.map((opt) => (
+              <button
+                key={opt.id}
+                onClick={() => setTheme(opt.id as any)}
+                className={`px-4 py-2 rounded-lg border text-sm text-left transition-colors ${
+                  theme === opt.id
+                    ? 'bg-gray-100 dark:bg-dark-border border-gray-300 dark:border-dark-border text-gray-900 dark:text-dark-text'
+                    : 'bg-white dark:bg-dark-surface border-gray-200 dark:border-dark-border text-gray-600 dark:text-dark-text-muted hover:bg-gray-50 dark:hover:bg-dark-border'
                 }`}
               >
-                {theme === 'dark' ? (
-                  <svg className="w-4 h-4 text-gray-800" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
-                  </svg>
-                ) : (
-                  <svg className="w-4 h-4 text-gray-600" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M21.64 15.95c-.06-.3-.24-.58-.51-.76a7.5 7.5 0 1 1 4.73-6.88c.04.34.21.65.47.85.26.2.6.27.94.15.87-.32 1.59-1.03 1.92-1.95.14-.4.06-.81-.2-1.15-.82-1.16-2.07-2.01-3.51-2.3 1.13-.06 2.3.35 3.3 1.3 2.33 2.33 2.33 6.08 0 8.4-2.33 2.33-6.09 2.33-8.4 0-.93-.93-1.5-2.1-1.54-3.3.47-.17 1.01-.25 1.54-.2z" />
-                  </svg>
-                )}
-              </div>
-            </button>
+                {opt.label}
+              </button>
+            ))}
           </div>
         </div>
       </div>

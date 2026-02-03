@@ -94,7 +94,7 @@ export const GeneralSettings: React.FC = () => {
           sidebarOpen ? 'lg:ml-64' : 'ml-0'
         }`}
       >
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
+        <div className="max-w-5xl mx-auto px-4 sm:px-8 py-6 sm:py-10">
           {/* Mobile Header with Toggle Button */}
           <div className="lg:hidden flex items-center justify-between mb-6">
             <div>
@@ -114,8 +114,15 @@ export const GeneralSettings: React.FC = () => {
 
           {/* Desktop Header */}
           <div className="hidden lg:block mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-dark-text mb-2">Settings</h1>
-            <p className="text-gray-600 dark:text-dark-text-muted">Manage your account and application preferences</p>
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-dark-text mb-2">Settings</h1>
+                <p className="text-gray-600 dark:text-dark-text-muted">Manage your account and application preferences</p>
+              </div>
+              <div className="px-3 py-1.5 rounded-full bg-gray-100 dark:bg-dark-surface text-xs font-medium text-gray-600 dark:text-dark-text-muted border border-gray-200 dark:border-dark-border">
+                Updated just now
+              </div>
+            </div>
           </div>
 
           {/* Content with Animation */}
@@ -124,7 +131,9 @@ export const GeneralSettings: React.FC = () => {
               sidebarOpen ? 'opacity-100 translate-x-0' : 'opacity-100 translate-x-0'
             }`}
           >
-            {renderContent()}
+            <div className="bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-2xl shadow-sm p-6 sm:p-8">
+              {renderContent()}
+            </div>
           </div>
         </div>
       </main>

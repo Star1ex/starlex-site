@@ -88,93 +88,109 @@ const ProfilePage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-full flex items-center justify-center bg-white dark:bg-dark-bg transition-colors duration-300 px-4 sm:px-6 py-12">
-      <div className="bg-white dark:bg-dark-surface rounded-3xl px-6 sm:px-10 py-6 sm:py-8 shadow-md w-full max-w-md sm:max-w-xl transition-all duration-300">
-        <h1 className="text-2xl sm:text-3xl font-serif text-black dark:text-dark-text mb-4 sm:mb-6 text-center sm:text-left transition-colors duration-300">
-          Profile
-        </h1>
-
-        <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <div className="w-20 h-20 rounded-full overflow-hidden border border-gray-400 dark:border-dark-border bg-gray-100 dark:bg-dark-border flex items-center justify-center flex-shrink-0 transition-all duration-300">
-            {user.photo_url ? (
-              <img
-                src={user.photo_url}
-                alt="Avatar"
-                className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-              />
-            ) : (
-              <div className="w-16 h-16 bg-gray-300 dark:bg-dark-surface rounded-full transition-colors duration-300" />
-            )}
+    <div className="min-h-screen bg-white dark:bg-dark-bg transition-colors duration-300 px-4 sm:px-8 py-10">
+      <div className="max-w-5xl mx-auto">
+        <div className="rounded-2xl overflow-hidden border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-surface shadow-sm">
+          <div className="px-8 py-6 border-b border-gray-100 dark:border-dark-border bg-gray-50 dark:bg-dark-bg/40">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-dark-text">Profile</h1>
+                <p className="text-sm text-gray-600 dark:text-dark-text-muted mt-1">Manage your account details</p>
+              </div>
+              {!editable && (
+                <button
+                  onClick={() => setEditable(true)}
+                  className="px-5 py-2 rounded-full bg-black dark:bg-white text-white dark:text-black text-xs tracking-wide hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors duration-200 w-full sm:w-auto"
+                >
+                  Edit Profile
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="flex flex-col gap-2 text-sm text-gray-700 dark:text-dark-text-muted w-full sm:w-auto">
-            <span className="font-medium text-center sm:text-left">Profile photo</span>
-            {editable && (
-              <>
-                <label className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-black dark:bg-white text-white dark:text-black cursor-pointer hover:bg-gray-800 dark:hover:bg-gray-200 text-xs tracking-wide transition-colors duration-200 whitespace-nowrap">
-                  {uploading ? 'Uploading...' : 'Upload new'}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleUploadPhoto}
-                    disabled={uploading}
+          <div className="p-8">
+            <div className="flex flex-col lg:flex-row gap-8">
+              <div className="lg:w-1/3">
+                <div className="flex items-center gap-4">
+                  <div className="w-20 h-20 rounded-2xl overflow-hidden border border-gray-200 dark:border-dark-border bg-gray-100 dark:bg-dark-border flex items-center justify-center flex-shrink-0 transition-all duration-300">
+                    {user.photo_url ? (
+                      <img
+                        src={user.photo_url}
+                        alt="Avatar"
+                        className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                      />
+                    ) : (
+                      <div className="w-16 h-16 bg-gray-300 dark:bg-dark-surface rounded-full transition-colors duration-300" />
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium text-gray-900 dark:text-dark-text">{form.firstName} {form.lastName}</div>
+                    <div className="text-xs text-gray-500 dark:text-dark-text-muted">{form.email}</div>
+                  </div>
+                </div>
+
+                {editable && (
+                  <div className="mt-6 space-y-2 text-sm text-gray-700 dark:text-dark-text-muted">
+                    <span className="font-medium">Profile photo</span>
+                    <label className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-black dark:bg-white text-white dark:text-black cursor-pointer hover:bg-gray-800 dark:hover:bg-gray-200 text-xs tracking-wide transition-colors duration-200 whitespace-nowrap">
+                      {uploading ? 'Uploading...' : 'Upload new'}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={handleUploadPhoto}
+                        disabled={uploading}
+                      />
+                    </label>
+                    <span className="text-[11px] text-gray-500 dark:text-dark-text-muted">
+                      JPG/PNG, max 5MB
+                    </span>
+                  </div>
+                )}
+              </div>
+
+              <div className="lg:flex-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <ProfileField
+                    label="First name"
+                    value={form.firstName}
+                    editable={editable}
+                    onChange={v => handleChange('firstName', v)}
                   />
-                </label>
-                <span className="text-[11px] text-gray-500 dark:text-dark-text-muted text-center sm:text-left">
-                  JPG/PNG, max 5MB
-                </span>
-              </>
+                  <ProfileField
+                    label="Last name"
+                    value={form.lastName}
+                    editable={editable}
+                    onChange={v => handleChange('lastName', v)}
+                  />
+                  <ProfileField
+                    label="Email"
+                    value={form.email}
+                    editable={editable}
+                    onChange={v => handleChange('email', v)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {editable && (
+              <div className="mt-8 flex flex-col sm:flex-row justify-end gap-3">
+                <button
+                  onClick={handleCancel}
+                  className="px-5 py-2 rounded-full border border-black dark:border-white text-black dark:text-white text-xs tracking-wide bg-transparent hover:bg-gray-100 dark:hover:bg-dark-border transition-colors duration-200 w-full sm:w-auto"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="px-5 py-2 rounded-full bg-black dark:bg-white text-white dark:text-black text-xs tracking-wide hover:bg-gray-800 dark:hover:bg-gray-200 disabled:opacity-60 transition-colors duration-200 w-full sm:w-auto"
+                >
+                  {saving ? 'Saving...' : 'Save'}
+                </button>
+              </div>
             )}
           </div>
-        </div>
-
-        <div className="space-y-3 sm:space-y-4">
-          <ProfileField
-            label="First name"
-            value={form.firstName}
-            editable={editable}
-            onChange={v => handleChange('firstName', v)}
-          />
-          <ProfileField
-            label="Last name"
-            value={form.lastName}
-            editable={editable}
-            onChange={v => handleChange('lastName', v)}
-          />
-          <ProfileField
-            label="Email"
-            value={form.email}
-            editable={editable}
-            onChange={v => handleChange('email', v)}
-          />      
-        </div>
-
-        <div className="mt-6 sm:mt-8 flex flex-col sm:flex-row justify-end gap-3">
-          {!editable ? (
-            <button
-              onClick={() => setEditable(true)}
-              className="px-5 py-2 rounded-full bg-black dark:bg-white text-white dark:text-black text-xs tracking-wide hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors duration-200 w-full sm:w-auto"
-            >
-              Edit
-            </button>
-          ) : (
-            <>
-              <button
-                onClick={handleCancel}
-                className="px-5 py-2 rounded-full border border-black dark:border-white text-black dark:text-white text-xs tracking-wide bg-transparent hover:bg-gray-100 dark:hover:bg-dark-border transition-colors duration-200 w-full sm:w-auto"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                disabled={saving}
-                className="px-5 py-2 rounded-full bg-black dark:bg-white text-white dark:text-black text-xs tracking-wide hover:bg-gray-800 dark:hover:bg-gray-200 disabled:opacity-60 transition-colors duration-200 w-full sm:w-auto"
-              >
-                {saving ? 'Saving...' : 'Save'}
-              </button>
-            </>
-          )}
         </div>
       </div>
     </div>

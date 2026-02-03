@@ -265,7 +265,11 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
             <span className="text-xs font-medium">Priority:</span>
             <div className="flex gap-1">
               {(['low','medium','high'] as const).map((p) => (
-                <button key={p} onClick={() => setPriority(p)} className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${priority === p ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-dark-border text-gray-600 dark:text-dark-text-muted hover:bg-gray-200 dark:hover:bg-dark-border/80'}`}>
+                <button
+                  key={p}
+                  onClick={() => setPriority(p)}
+                  className={`priority-pill px-3 py-1 text-xs font-medium rounded-full transition-all ${priority === p ? 'priority-pill--active' : ''}`}
+                >
                   {p.charAt(0).toUpperCase() + p.slice(1)}
                 </button>
               ))}

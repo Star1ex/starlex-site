@@ -179,7 +179,13 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
               className="w-full flex items-center gap-3 px-2 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-dark-border transition-colors text-left"
             >
               <Moon className="w-4 h-4" />
-              <span className="text-sm">{theme === 'dark' ? 'Dark' : 'Light'} Mode</span>
+              <span className="text-sm">
+                {theme === 'light' && 'White'}
+                {theme === 'dark' && 'Dark Blue'}
+                {theme === 'ultra-dark' && 'Ultra Dark'}
+                {theme === 'solarized' && 'Solarized White'}
+                {' '}Mode
+              </span>
             </button>
             <button
               onClick={handleNavigateSettings}

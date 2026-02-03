@@ -479,7 +479,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
               <>
                 {/* Backdrop overlay */}
                 <div 
-                  className="fixed inset-0 bg-black/10 dark:bg-black/30 z-[9998] backdrop-blur-sm"
+                  className="fixed inset-0 bg-black/10 dark:bg-black/30 z-[9998]"
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsEditingStatus(false);
@@ -534,7 +534,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
               <>
                 {/* Backdrop overlay */}
                 <div 
-                  className="fixed inset-0 bg-black/10 dark:bg-black/30 z-[9998] backdrop-blur-sm"
+                  className="fixed inset-0 bg-black/10 dark:bg-black/30 z-[9998]"
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsEditingPriority(false);

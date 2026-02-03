@@ -97,9 +97,9 @@ func setupTeamRoutes(api fiber.Router, h *handlers.Handlers) {
 		teamTasks.Post("/", h.CreateTeamTask)
 		teamTasks.Get("/", h.GetTeamTasks)
 		teamTasks.Get("/user/:user_id", h.GetUserTasks)
-		teamTasks.Put("/:task_id", h.UpdateTask)
-		teamTasks.Put("/:task_id/progress", h.UpdateTaskProgress)
-		teamTasks.Delete("/:task_id", h.DeleteTask)
+		teamTasks.Put("/:id", h.UpdateTask)
+		teamTasks.Put("/:id/progress", h.UpdateTaskProgress)
+		teamTasks.Delete("/:id", h.DeleteTask)
 	}
 }
 

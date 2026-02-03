@@ -154,65 +154,63 @@ export const UserProfilePage: React.FC = () => {
   }
 
   return (
-    <div className="min-h-full bg-white dark:bg-dark-bg transition-colors">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
-        {/* Header */}
-        <div className="mb-6">
+    <div className="min-h-screen bg-white dark:bg-dark-bg transition-colors">
+      <div className="max-w-5xl mx-auto px-4 sm:px-8 py-8 sm:py-10">
+        <div className="mb-6 flex items-center justify-between">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-gray-600 dark:text-dark-text-muted hover:text-gray-900 dark:hover:text-dark-text transition-colors mb-4"
+            className="flex items-center gap-2 text-gray-600 dark:text-dark-text-muted hover:text-gray-900 dark:hover:text-dark-text transition-colors"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
             <span className="text-sm font-medium">Back</span>
           </button>
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-dark-text">User Profile</h1>
+          <span className="text-xs font-medium text-gray-500 dark:text-dark-text-muted">Public profile</span>
         </div>
 
-        {/* Profile Card */}
-        <div className="bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-xl shadow-sm overflow-hidden">
-          <div className="p-6 sm:p-8">
-            <div className="flex flex-col sm:flex-row gap-6 sm:gap-8">
-              {/* Avatar */}
-              <div className="flex-shrink-0 flex items-center justify-center">
-                <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full overflow-hidden flex items-center justify-center">
+        <div className="rounded-2xl overflow-hidden border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-surface shadow-sm">
+          <div className="px-8 py-6 border-b border-gray-100 dark:border-dark-border bg-gray-50 dark:bg-dark-bg/40">
+            <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-dark-text">User Profile</h1>
+            <p className="text-sm text-gray-600 dark:text-dark-text-muted mt-1">View public account details</p>
+          </div>
+          <div className="p-8">
+            <div className="flex flex-col lg:flex-row gap-8">
+              <div className="lg:w-1/3 flex items-center gap-4">
+                <div className="w-24 h-24 rounded-2xl overflow-hidden border border-gray-200 dark:border-dark-border bg-gray-100 dark:bg-dark-border flex items-center justify-center">
                   <Avatar user={user as User} size="lg" />
+                </div>
+                <div>
+                  <div className="text-lg font-semibold text-gray-900 dark:text-dark-text">
+                    {user.firstName || ''} {user.lastName || ''}
+                  </div>
+                  {user.role && (
+                    <span className="inline-block mt-1 px-3 py-1 rounded-full bg-gray-100 dark:bg-dark-surface text-gray-700 dark:text-dark-text text-xs font-medium">
+                      {user.role}
+                    </span>
+                  )}
                 </div>
               </div>
 
-              {/* User Info */}
-              <div className="flex-1 min-w-0">
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-dark-text mb-2">
-                  {user.firstName || ''} {user.lastName || ''}
-                </h2>
-                
-                {user.email && (
-                  <div className="mb-4">
-                    <div className="flex items-center gap-2 text-gray-600 dark:text-dark-text-muted">
-                      <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                      </svg>
-                      <span className="text-sm sm:text-base break-all">{user.email}</span>
+              <div className="lg:flex-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {user.email && (
+                    <div className="p-4 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-surface">
+                      <div className="text-xs uppercase tracking-[0.2em] text-gray-500 dark:text-dark-text-muted">Email</div>
+                      <div className="mt-2 text-sm text-gray-800 dark:text-dark-text break-all">{user.email}</div>
                     </div>
+                  )}
+                  <div className="p-4 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-surface">
+                    <div className="text-xs uppercase tracking-[0.2em] text-gray-500 dark:text-dark-text-muted">Role</div>
+                    <div className="mt-2 text-sm text-gray-800 dark:text-dark-text">{user.role || 'Team Member'}</div>
                   </div>
-                )}
-
-                {user.role && (
-                  <div className="mb-4">
-                    <span className="inline-block px-3 py-1 bg-gray-100 dark:bg-dark-surface text-gray-700 dark:text-dark-text rounded-full text-sm font-medium">
-                      {user.role}
-                    </span>
+                  <div className="p-4 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-surface">
+                    <div className="text-xs uppercase tracking-[0.2em] text-gray-500 dark:text-dark-text-muted">Status</div>
+                    <div className="mt-2 text-sm text-gray-800 dark:text-dark-text">Active</div>
                   </div>
-                )}
-
-                {/* Additional Info */}
-                <div className="mt-6 pt-6 border-t border-gray-200 dark:border-dark-border space-y-3">
-                  <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-dark-text-muted">
-                    <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    <span>Team Member</span>
+                  <div className="p-4 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-surface">
+                    <div className="text-xs uppercase tracking-[0.2em] text-gray-500 dark:text-dark-text-muted">Member Type</div>
+                    <div className="mt-2 text-sm text-gray-800 dark:text-dark-text">Team Member</div>
                   </div>
                 </div>
               </div>
@@ -223,4 +221,3 @@ export const UserProfilePage: React.FC = () => {
     </div>
   );
 };
-
