@@ -10,7 +10,12 @@ type Task struct {
 	TeamID      string
 	Priority    string
 	Progress    string
-	CreatedAt   time.Time
+
+	OwnerID  string
+	FolderID *string
+
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 type UpdateTask struct {
@@ -20,10 +25,13 @@ type UpdateTask struct {
 	TeamID      string
 	Priority    string
 	Progress    string
-	CreatedAt   time.Time
+
+	OwnerID   string
+	FolderID  *string
+	CreatedAt time.Time
 }
 
-func NewTask(ID, task, description, priority, progress string, AssignedTo []*User) *Task {
+func NewTask(ID, task, description, priority, progress string, ownerID string, folderID *string, AssignedTo []*User) *Task {
 	return &Task{
 		ID:          ID,
 		Task:        task,
@@ -31,5 +39,7 @@ func NewTask(ID, task, description, priority, progress string, AssignedTo []*Use
 		AssignedTo:  AssignedTo,
 		Progress:    progress,
 		Priority:    priority,
+		OwnerID:     ownerID,
+		FolderID:    folderID,
 	}
 }

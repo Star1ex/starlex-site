@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { GlobalSidebar } from '@/widgets/GlobalSidebar/GlobalSidebar.js';
 import { NewTabModal } from '@/widgets/NewTabModal/NewTabModal.js';
 import { useModal } from '@/shared/hooks/useModal.js';
@@ -11,6 +12,8 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const { open, onOpen, onClose } = useModal(false);
+  const location = useLocation();
+  const isSettingsRoute = location.pathname.startsWith('/settings');
 
   useEffect(() => {
     const handleOpenModal = () => {
@@ -24,6 +27,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     };
   }, [onOpen]);
 
+  useEffect(() => {
+    if (!isSettingsRoute) {
+      sessionStorage.setItem('lastNonSettingsRoute', `${location.pathname}${location.search}`);
+    } else {
+      setMobileSidebarOpen(false);
+    }
+  }, [isSettingsRoute, location.pathname, location.search]);
+
   const handleTeamCreated = () => {
     const event = new CustomEvent('teamCreated');
     window.dispatchEvent(event);
@@ -33,19 +44,21 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <div className="flex h-screen bg-white dark:bg-dark-bg transition-colors">
       {/* Mobile Menu Button */}
-      <button
-        onClick={() => setMobileSidebarOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-40 w-10 h-10 flex items-center justify-center rounded-lg bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border text-gray-700 dark:text-dark-text shadow-lg hover:bg-gray-50 dark:hover:bg-dark-border transition-all duration-200"
-        aria-label="Open menu"
-      >
-        <Menu size={20} />
-      </button>
+      {!isSettingsRoute && (
+        <button
+          onClick={() => setMobileSidebarOpen(true)}
+          className="lg:hidden fixed top-4 left-4 z-40 w-10 h-10 flex items-center justify-center rounded-lg bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border text-gray-700 dark:text-dark-text shadow-lg hover:bg-gray-50 dark:hover:bg-dark-border transition-all duration-200"
+          aria-label="Open menu"
+        >
+          <Menu size={20} />
+        </button>
+      )}
 
       {/* Global Sidebar - Desktop */}
-      <GlobalSidebar className="hidden lg:block" />
+      {!isSettingsRoute && <GlobalSidebar className="hidden lg:block" />}
 
       {/* Global Sidebar - Mobile */}
-      {mobileSidebarOpen && (
+      {!isSettingsRoute && mobileSidebarOpen && (
         <>
           <div
             className="lg:hidden fixed inset-0 bg-black bg-opacity-50 z-30"
@@ -79,4 +92,3 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     </div>
   );
 };
-

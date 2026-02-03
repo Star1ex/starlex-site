@@ -1,13 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Token } from '@/app/api/token.js';
+import { userService, teamService } from '@/services/api/index.js';
+import { getAuthUser } from '@/shared/lib/authManager.js';
 
-const getToken = () => Token.get();
+const getUserFromStorage = () => getAuthUser();
 
 type Team = { 
-  team_id: string; 
+  id: string; 
   name: string; 
   description?: string; 
+  emails?: string[];
 };
 
 type Tab = { id: string; name: string; emails: string[] };
@@ -54,28 +56,12 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
         setLoading(true);
         setError('');
         
-        const token = getToken();
-        if (!token) {
-          setError('Not authenticated');
-          setLoading(false);
-          return;
+        const userInfo = getUserFromStorage();
+        if (userInfo) {
+          setUserName({ firstName: userInfo.firstName || userInfo.first_name || 'User', lastName: userInfo.lastName || userInfo.last_name || '' });
         }
 
-        const userInfo = getUserIdFromToken(token);
-        setUserName(userInfo);
-
-        const res = await fetch(`/api/users/teams`, {
-          headers: { 
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/json',
-          },
-        });
-        
-        if (!res.ok) {
-          throw new Error(`Error: ${res.status}`);
-        }
-
-        const data: Team[] = await res.json();
+        const data = await userService.getTeams();
         setUserTeams(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error('Error fetching teams:', err);
@@ -124,28 +110,12 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
     if (!contextMenu) return;
 
     setDeleteStatus('deleting');
-    const token = getToken();
 
     try {
-      const res = await fetch(`/api/team/delete`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          team_id: contextMenu.teamId
-        })
-      });
-
-      if (res.ok) {
-        setUserTeams(userTeams.filter(t => t.team_id !== contextMenu.teamId));
-        setDeleteStatus('success');
-        setTimeout(() => setDeleteStatus('idle'), 2000);
-      } else {
-        setDeleteStatus('error');
-        setTimeout(() => setDeleteStatus('idle'), 3000);
-      }
+      await teamService.deleteTeam(contextMenu.teamId);
+      setUserTeams(userTeams.filter(t => t.id !== contextMenu.teamId));
+      setDeleteStatus('success');
+      setTimeout(() => setDeleteStatus('idle'), 2000);
     } catch (err) {
       console.error('Delete error:', err);
       setDeleteStatus('error');
@@ -160,9 +130,9 @@ export const TabsPanel = ({ tabs, onAddClick }: Props) => {
   };
 
   const allTabs = [...userTeams.map(team => ({
-    id: team.team_id,
+    id: team.id,
     name: team.name,
-    emails: [], 
+    emails: team.emails || [], 
   })), ...tabs];
 
   const displayName = userName ? `${userName.firstName}${userName.lastName ? ` ${userName.lastName}` : ''}'s` : 'My';

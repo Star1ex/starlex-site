@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import Avatar from '@/shared/ui/Avatar.js';
 import type { Task, User } from '@/entities/types.js';
-import { getAuthToken } from '@/shared/lib/authManager.js';
+import { taskService } from '@/services/api/index.js';
 
 interface EditTaskModalProps {
   isOpen: boolean;
@@ -50,48 +50,17 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
 
       setIsLoading(true);
       try {
-        const token = getAuthToken();
-        if (!token) {
-          window.location.href = '/sign-in';
-          return;
-        }
-
-        const res = await fetch(`/api/team/${teamId}/tasks/${task.id}/update`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-            Accept: 'application/json',
-          },
-          body: JSON.stringify({
-            task: formData.task,
-            description: formData.description,
-            priority: formData.priority,
-            user_ids: formData.user_ids,
-          }),
+        await taskService.updateTeamTask(teamId, task.id, {
+          task: formData.task,
+          description: formData.description,
+          priority: formData.priority,
+          user_ids: formData.user_ids,
         });
 
-        if (res.ok) {
-          const progressRes = await fetch(`/api/team/${teamId}/tasks/${task.id}/update_progress`, {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`,
-              Accept: 'application/json',
-            },
-            body: JSON.stringify({
-              progress: formData.progress,
-              task: formData.task,
-              description: formData.description,
-              user_ids: formData.user_ids,
-            }),
-          });
+        await taskService.updateTeamTaskProgress(teamId, task.id, formData.progress as any);
 
-          if (progressRes.ok) {
-            onSuccess();
-            onClose();
-          }
-        }
+        onSuccess();
+        onClose();
       } catch (error) {
         console.error('Failed to update task:', error);
       } finally {
@@ -106,24 +75,9 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
 
     setIsDeleting(true);
     try {
-      const token = getAuthToken();
-      if (!token) {
-        window.location.href = '/sign-in';
-        return;
-      }
-
-      const res = await fetch(`/api/team/${teamId}/tasks/${task.id}`, {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/json',
-        },
-      });
-
-      if (res.ok) {
-        onSuccess();
-        onClose();
-      }
+      await taskService.deleteTeamTask(teamId, task.id);
+      onSuccess();
+      onClose();
     } catch (error) {
       console.error('Failed to delete task:', error);
     } finally {

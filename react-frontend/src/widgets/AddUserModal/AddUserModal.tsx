@@ -1,8 +1,8 @@
-// AddUserModal.tsx - исправлено для массива пользователей
+// AddUserModal.tsx
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import Avatar from '@/shared/ui/Avatar.js';
 import type { SearchUserResult } from '@/entities/types.js';
-import { getAuthToken } from '@/shared/lib/authManager.js';
+import { searchService, teamService } from '@/services/api/index.js';
 
 interface AddUserModalProps {
   isOpen: boolean;
@@ -32,22 +32,8 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
 
     setIsSearching(true);
     try {
-      const token = getAuthToken();
-      if (!token) return;
-
-      const res = await fetch(`/api/search/${encodeURIComponent(searchEmail)}`, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/json',
-        },
-      });
-
-      if (res.ok) {
-        const data: SearchUserResult[] = await res.json();
-        setSearchResults(data);
-      } else {
-        setSearchResults([]);
-      }
+      const data = await searchService.searchUsers(searchEmail);
+      setSearchResults(data);
     } catch (error) {
       console.error('Search failed:', error);
       setSearchResults([]);
@@ -59,23 +45,9 @@ const AddUserModal: React.FC<AddUserModalProps> = ({
   const handleAddUser = useCallback(async (userEmail: string) => {
     setIsLoading(true);
     try {
-      const token = getAuthToken();
-      if (!token) return;
-
-      const res = await fetch(`/api/team/${teamId}/add`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/json',
-        },
-        body: JSON.stringify({ email: userEmail }),
-      });
-
-      if (res.ok) {
-        onSuccess();
-        onClose();
-      }
+      await teamService.addUserToTeam(teamId, userEmail);
+      onSuccess();
+      onClose();
     } catch (error) {
       console.error('Failed to add user:', error);
     } finally {

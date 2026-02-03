@@ -1,103 +1,38 @@
-/**
- * API Client with automatic token refresh on 401
- * 
- * Handles:
- * - Automatically refreshing access token when it expires
- * - Retrying failed requests with new token
- * - Clearing auth data and redirecting to login on permanent auth failure
- */
-
-import { getAuthToken, refreshAccessToken, clearAllAuthData, getAuthHeaders } from './authManager.js';
-
-let isRefreshing = false;
-let refreshSubscribers: Array<(token: string | null) => void> = [];
-
-const subscribeTokenRefresh = (callback: (token: string | null) => void) => {
-  refreshSubscribers.push(callback);
-};
-
-const onTokenRefreshed = (token: string | null) => {
-  refreshSubscribers.forEach(callback => callback(token));
-  refreshSubscribers = [];
-};
+import { httpClient } from '@/services/api/client.js';
 
 /**
- * Wrapper around fetch that handles token refresh on 401
+ * Lightweight wrapper that returns a Fetch-like Response for compatibility
  */
 export const apiClient = async (
   url: string,
   options: RequestInit = {}
-): Promise<Response> => {
-  // Add auth headers if not explicitly provided
-  if (!options.headers) {
-    options.headers = {};
-  }
+): Promise<{ ok: boolean; status: number; json: () => Promise<any> }> => {
+  const method = options.method ? (options.method as string).toLowerCase() : 'get';
+  const data = (options as any).body ? JSON.parse((options as any).body as string) : undefined;
 
-  const headers = options.headers as Record<string, string>;
-  
-  // If no authorization header is set, try to add token
-  if (!headers['Authorization']) {
-    const token = getAuthToken();
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
+  try {
+    const response = await httpClient.request({ url, method, data, headers: options.headers as any });
+    return {
+      ok: response.status >= 200 && response.status < 300,
+      status: response.status,
+      json: async () => response.data,
+    };
+  } catch (err: any) {
+    if (err.response) {
+      return {
+        ok: false,
+        status: err.response.status,
+        json: async () => err.response.data,
+      };
     }
+    throw err;
   }
-
-  let response = await fetch(url, options);
-
-  // Handle 401 - try to refresh token and retry
-  if (response.status === 401) {
-    if (!isRefreshing) {
-      isRefreshing = true;
-
-      const newToken = await refreshAccessToken();
-      isRefreshing = false;
-
-      if (newToken) {
-        // Token refreshed successfully, update headers and retry
-        const retryHeaders = new Headers(headers);
-        retryHeaders.set('Authorization', `Bearer ${newToken}`);
-
-        const retryOptions = { ...options, headers: retryHeaders };
-        response = await fetch(url, retryOptions);
-
-        onTokenRefreshed(newToken);
-      } else {
-        // Refresh failed - redirect to login
-        window.location.href = '/sign-in';
-        onTokenRefreshed(null);
-        return response; // Return original 401 response
-      }
-    } else {
-      // Refresh is already in progress, wait for it
-      return new Promise(resolve => {
-        subscribeTokenRefresh((token: string | null) => {
-          if (token) {
-            const retryHeaders = new Headers(headers);
-            retryHeaders.set('Authorization', `Bearer ${token}`);
-            const retryOptions = { ...options, headers: retryHeaders };
-            fetch(url, retryOptions).then(resolve);
-          } else {
-            resolve(response);
-          }
-        });
-      });
-    }
-  }
-
-  return response;
 };
 
-/**
- * Convenience method for GET requests
- */
 export const apiGet = (url: string, options?: RequestInit) => {
   return apiClient(url, { ...options, method: 'GET' });
 };
 
-/**
- * Convenience method for POST requests
- */
 export const apiPost = (url: string, body?: any, options?: RequestInit) => {
   return apiClient(url, {
     ...options,
@@ -110,9 +45,6 @@ export const apiPost = (url: string, body?: any, options?: RequestInit) => {
   });
 };
 
-/**
- * Convenience method for PUT requests
- */
 export const apiPut = (url: string, body?: any, options?: RequestInit) => {
   return apiClient(url, {
     ...options,
@@ -125,9 +57,6 @@ export const apiPut = (url: string, body?: any, options?: RequestInit) => {
   });
 };
 
-/**
- * Convenience method for DELETE requests
- */
 export const apiDelete = (url: string, options?: RequestInit) => {
   return apiClient(url, { ...options, method: 'DELETE' });
 };

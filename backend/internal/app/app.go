@@ -54,6 +54,7 @@ func StartServer() {
 	userRepo := repository.NewUserRepository(db.DB)
 	teamRepo := repository.NewTeamRepository(db.DB)
 	taskRepo := repository.NewTaskRepository(db.DB)
+	folderRepo := repository.NewFolderRepository(db.DB)
 	verificationRepo := repository.NewVerificationRepository(db.DB)
 
 	emailService := emailService.NewEmailService(emailService.EmailConfig{
@@ -70,7 +71,8 @@ func StartServer() {
 	userService := service.NewUserService(userRepo, storage, bus)
 	teamService := service.NewTeamService(teamRepo, userRepo)
 	taskService := service.NewTaskService(taskRepo, userRepo, teamRepo)
-	httpHandlers := handlers.NewHandlers(userService, teamService, taskService, verificationService)
+	folderService := service.NewFolderService(folderRepo)
+	httpHandlers := handlers.NewHandlers(userService, teamService, taskService, folderService, verificationService)
 	routes.InitRoutes(app, httpHandlers)
 
 	app.Listen(":3000")

@@ -66,7 +66,7 @@ Thank you for contributing to TeamTrack!`;
 
 export const Contributing: React.FC = () => {
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 text-center max-w-3xl mx-auto">
       <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text mb-2">
           Contributing to TeamTrack
@@ -77,8 +77,8 @@ export const Contributing: React.FC = () => {
       </div>
 
       {/* Markdown Content */}
-      <div className="bg-white dark:bg-dark-surface rounded-xl border border-gray-200 dark:border-dark-border overflow-hidden">
-        <div className="max-w-none prose prose-sm dark:prose-invert px-6 py-6 overflow-x-auto prose-headings:text-gray-900 dark:prose-headings:text-dark-text prose-p:text-gray-700 dark:prose-p:text-dark-text-secondary prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-strong:text-gray-900 dark:prose-strong:text-dark-text prose-code:bg-gray-100 dark:prose-code:bg-dark-bg prose-code:text-gray-800 dark:prose-code:text-dark-text prose-code:rounded prose-code:px-2 prose-code:py-1 prose-pre:bg-gray-100 dark:prose-pre:bg-dark-bg prose-blockquote:border-gray-300 dark:prose-blockquote:border-dark-border prose-blockquote:text-gray-700 dark:prose-blockquote:text-dark-text-secondary">
+      <div className="bg-white dark:bg-dark-surface rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.06)] overflow-hidden text-left">
+        <div className="max-w-none prose prose-base dark:prose-invert px-6 sm:px-8 py-6 overflow-x-auto prose-headings:text-gray-900 dark:prose-headings:text-dark-text prose-p:text-gray-700 dark:prose-p:text-dark-text-muted prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-strong:text-gray-900 dark:prose-strong:text-dark-text prose-code:bg-gray-100 dark:prose-code:bg-dark-bg prose-code:text-gray-800 dark:prose-code:text-dark-text prose-code:rounded prose-code:px-2 prose-code:py-1 prose-pre:bg-gray-100 dark:prose-pre:bg-dark-bg prose-blockquote:border-gray-300 dark:prose-blockquote:border-dark-border prose-blockquote:text-gray-700 dark:prose-blockquote:text-dark-text-muted">
           <ReactMarkdown
             components={{
               h1: ({ ...props }) => (
@@ -91,13 +91,13 @@ export const Contributing: React.FC = () => {
                 <h3 className="text-xl font-semibold mt-5 mb-3 text-gray-900 dark:text-dark-text" {...props} />
               ),
               p: ({ ...props }) => (
-                <p className="text-base leading-relaxed text-gray-700 dark:text-dark-text-secondary mb-3" {...props} />
+                <p className="text-[15.5px] leading-relaxed text-gray-700 dark:text-dark-text-muted mb-3" {...props} />
               ),
               ul: ({ ...props }) => (
-                <ul className="list-disc list-inside space-y-2 my-3 text-gray-700 dark:text-dark-text-secondary" {...props} />
+                <ul className="list-disc list-inside space-y-2 my-3 text-gray-700 dark:text-dark-text-muted" {...props} />
               ),
               ol: ({ ...props }) => (
-                <ol className="list-decimal list-inside space-y-2 my-3 text-gray-700 dark:text-dark-text-secondary" {...props} />
+                <ol className="list-decimal list-inside space-y-2 my-3 text-gray-700 dark:text-dark-text-muted" {...props} />
               ),
               li: ({ ...props }) => <li className="ml-2" {...props} />,
               code: ({ inline, ...props }: any) =>
@@ -110,7 +110,7 @@ export const Contributing: React.FC = () => {
                 <pre className="bg-gray-100 dark:bg-dark-bg rounded-lg overflow-x-auto my-4 p-4" {...props} />
               ),
               blockquote: ({ ...props }) => (
-                <blockquote className="border-l-4 border-gray-300 dark:border-dark-border pl-4 py-2 my-3 italic text-gray-700 dark:text-dark-text-secondary" {...props} />
+                <blockquote className="border-l-4 border-gray-300 dark:border-dark-border pl-4 py-2 my-3 italic text-gray-700 dark:text-dark-text-muted" {...props} />
               ),
               a: ({ ...props }) => (
                 <a className="text-blue-600 dark:text-blue-400 hover:underline" target="_blank" rel="noopener noreferrer" {...props} />
@@ -123,7 +123,7 @@ export const Contributing: React.FC = () => {
       </div>
 
       {/* Info Box */}
-      <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+      <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4 text-left">
         <p className="text-sm text-blue-700 dark:text-blue-400">
           <strong>Tip:</strong> Visit our GitHub repository to see the latest contribution guidelines and submit pull requests!
         </p>

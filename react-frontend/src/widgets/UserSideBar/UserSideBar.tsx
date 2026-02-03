@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Avatar from '@/shared/ui/Avatar.js';
 import type { User } from '@/entities/types.js';
-import { getAuthToken } from '@/shared/lib/authManager.js';
+import { teamService } from '@/services/api/index.js';
 
 interface UserSidebarProps {
   users: User[];
@@ -60,27 +60,9 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
     }
 
     setDeletingUserId(userId);
-    
+
     try {
-      const token = getAuthToken();
-      if (!token) {
-        throw new Error('Authentication required');
-      }
-
-      const response = await fetch(`/api/team/${teamId}/users`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-          'Accept': 'application/json',
-        },
-        body: JSON.stringify({ userId }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || errorData.message || 'Failed to remove user from team');
-      }
+      await teamService.removeUserFromTeam(teamId, userId);
 
       if (onUserRemoved) {
         onUserRemoved(userId);

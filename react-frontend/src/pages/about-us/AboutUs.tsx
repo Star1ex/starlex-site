@@ -1,9 +1,18 @@
 import React from "react";
 import { motion } from "framer-motion";
 
-export default function AboutUs() {
+type AboutUsProps = {
+  variant?: 'page' | 'settings';
+};
+
+export default function AboutUs({ variant = 'page' }: AboutUsProps) {
+  const isSettings = variant === 'settings';
   return (
-    <div className="min-h-full flex flex-col justify-center items-center bg-white dark:bg-dark-bg text-black dark:text-dark-text px-6 text-center transition-colors duration-300 py-12">
+    <div
+      className={`bg-white dark:bg-dark-bg text-black dark:text-dark-text transition-colors duration-300 ${
+        isSettings ? 'w-full flex flex-col items-center text-center py-6' : 'min-h-full flex flex-col justify-center items-center px-6 text-center py-12'
+      }`}
+    >
       <motion.h1
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -30,6 +39,8 @@ export default function AboutUs() {
       >
         <a
           href="https://github.com/Team-Tracks"
+          target="_blank"
+          rel="noopener noreferrer"
           className="py-3 rounded-2xl bg-black dark:bg-white text-white dark:text-black shadow-sm hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors duration-200 text-center"
           style={{ border: "none" }}
         >
@@ -37,17 +48,25 @@ export default function AboutUs() {
         </a>
         <a
           href="https://t.me/teamtrack1"
+          target="_blank"
+          rel="noopener noreferrer"
           className="py-3 rounded-2xl bg-black dark:bg-white text-white dark:text-black shadow-sm hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors duration-200 text-center"
           style={{ border: "none" }}
         >
           Telegram Channel
         </a>
         <a
-          href="mailto:teamtracktech@gmail.com"
+          href="mailto:teamtracktech@gmail.com?subject=Support"
           className="py-3 rounded-2xl bg-black dark:bg-white text-white dark:text-black shadow-sm hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors duration-200 text-center"
           style={{ border: "none" }}
         >
           Support
+        </a>
+        <a
+          href="/settings?tab=support"
+          className="py-3 rounded-2xl bg-gray-100 dark:bg-dark-surface text-gray-900 dark:text-dark-text shadow-sm hover:bg-gray-200 dark:hover:bg-dark-border transition-colors duration-200 text-center"
+        >
+          Support Center
         </a>
       </motion.div>
     </div>

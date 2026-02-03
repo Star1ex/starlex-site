@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
 	"gorm.io/gorm"
@@ -10,12 +11,17 @@ import (
 
 type TaskModel struct {
 	ID          string `gorm:"primaryKey"`
-	Task        string `gorm:"unique;not null"`
+	Task        string `gorm:"not null"`
 	Description string `gorm:"not null"`
 	Priority    string `gorm:"not null"`
 	Progress    string
 	Assigned    []UserModel `gorm:"many2many:task_users"`
-	TeamID      string      `gorm:"not null"`
+
+	TeamID    *string `gorm:"default:null"`
+	OwnerID   string  `gorm:"not null;index:idx_owner_folder"`
+	FolderID  *string `gorm:"default:null;index:idx_owner_folder"`
+	CreatedAt time.Time
+	UpdatedAt time.Time
 }
 
 type TaskRepository struct {
@@ -40,9 +46,13 @@ func toTaskDomain(m TaskModel) *entity.Task {
 		Task:        m.Task,
 		Description: m.Description,
 		AssignedTo:  users,
-		TeamID:      m.TeamID,
+		TeamID:      *m.TeamID,
+		OwnerID:     m.OwnerID,
+		FolderID:    m.FolderID,
 		Priority:    m.Priority,
 		Progress:    m.Progress,
+		CreatedAt:   m.CreatedAt,
+		UpdatedAt:   m.UpdatedAt,
 	}
 }
 func toTaskDomains(tasks []TaskModel) []*entity.Task {
@@ -65,7 +75,11 @@ func fromTaskDomain(t *entity.Task) *TaskModel {
 		Description: t.Description,
 		Assigned:    users,
 		Priority:    t.Priority,
-		TeamID:      t.TeamID,
+		OwnerID:     t.OwnerID,
+		FolderID:    t.FolderID,
+		TeamID:      &t.TeamID,
+		CreatedAt:   t.CreatedAt,
+		UpdatedAt:   t.UpdatedAt,
 	}
 }
 
@@ -171,5 +185,41 @@ func (r *TaskRepository) GetUserTasks(ctx context.Context, userID string) ([]*en
 		return nil, err
 	}
 
+	return toTaskDomains(models), nil
+}
+
+func (r *TaskRepository) GetFolderTasks(ctx context.Context, folderID string) ([]*entity.Task, error) {
+	var models []TaskModel
+
+	err := r.db.WithContext(ctx).
+		Where("folder_id = ?", folderID).
+		Find(&models).Error
+
+	if err != nil {
+		return nil, err
+	}
+	return toTaskDomains(models), nil
+}
+
+func (r *TaskRepository) MoveTaskToFolder(ctx context.Context, taskID, folderID string) error {
+	var task TaskModel
+	if err := r.db.Preload("Assigned").Where("id = ?", taskID).First(&task).Error; err != nil {
+		return err
+	}
+	if err := r.db.Model(&task).Update("folder_id", folderID).Error; err != nil {
+		return err
+	}
+	return nil
+}
+
+func (r *TaskRepository) GetTasksWithoutFolder(ctx context.Context, userID string) ([]*entity.Task, error) {
+	var models []TaskModel
+	err := r.db.WithContext(ctx).
+		Where("folder_id IS NULL AND owner_id = ?", userID).
+		Find(&models).Error
+
+	if err != nil {
+		return nil, err
+	}
 	return toTaskDomains(models), nil
 }

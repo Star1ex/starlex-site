@@ -7,8 +7,7 @@ import TaskDetailModal from '@/widgets/TaskDetailModal/TaskDetailModal.js';
 import AddUserModal from '@/widgets/AddUserModal/AddUserModal.js';
 import type { Task, User } from '@/entities/types.js';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getAuthToken } from '@/shared/lib/authManager.js';
-import { buildApiUrl } from '@/app/api/api.js';
+import { taskService, teamService, authService } from '@/services/api/index.js';
 
 const TaskBoard: React.FC = () => {
   const { team_id } = useParams<{ team_id: string }>();
@@ -26,8 +25,7 @@ const TaskBoard: React.FC = () => {
   const [showAddUserModal, setShowAddUserModal] = useState(false);
 
   useEffect(() => {
-    const token = getAuthToken();
-    if (!token) {
+    if (!authService.isAuthenticated()) {
       navigate('/sign-in');
       return;
     }
@@ -35,46 +33,26 @@ const TaskBoard: React.FC = () => {
 
   const fetchTasks = useCallback(async () => {
     try {
-      const token = getAuthToken();
-      if (!token) {
-        setError('Authentication required');
-        return;
-      }
-
-      const res = await fetch(buildApiUrl(`/api/team/${team_id}/tasks`), {
-        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-      });
-
-      if (res.ok) {
-        const data: Task[] = await res.json();
-        setTasks(Array.isArray(data) ? data : []);
-        setError(null);
-      } else {
-        setTasks([]);
-        setError(res.status === 404 ? 'Team not found' : 'Failed to load tasks');
-      }
-    } catch (err) {
+      if (!team_id) return;
+      const data = await taskService.getTeamTasks(team_id);
+      setTasks(Array.isArray(data) ? data : []);
+      setError(null);
+    } catch (err: any) {
       console.error('Error fetching tasks:', err);
       setTasks([]);
-      setError('Failed to load tasks. Please try again.');
+      if (err?.response?.status === 404) {
+        setError('Team not found');
+      } else {
+        setError('Failed to load tasks. Please try again.');
+      }
     }
   }, [team_id]);
 
   const fetchUsers = useCallback(async () => {
     try {
-      const token = getAuthToken();
-      if (!token) return;
-
-      const res = await fetch(buildApiUrl(`/api/team/${team_id}`), {
-        headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
-      });
-
-      if (res.ok) {
-        const data: User[] = await res.json();
-        setUsers(Array.isArray(data) ? data : []);
-      } else {
-        setUsers([]);
-      }
+      if (!team_id) return;
+      const data = await teamService.getTeamUsers(team_id);
+      setUsers(Array.isArray(data) ? data : []);
     } catch (err) {
       console.error('Error fetching users:', err);
       setUsers([]);
@@ -118,27 +96,13 @@ const TaskBoard: React.FC = () => {
   const handleTaskDelete = useCallback(async (taskId: string) => {
     // Optimistic update - remove from UI immediately
     setTasks(prevTasks => prevTasks.filter(t => t.id !== taskId));
-    
+
     try {
-      const token = getAuthToken();
-      if (!token) {
-        // Rollback on error
+      if (!team_id) {
         await loadData();
         return;
       }
-
-      const res = await fetch(buildApiUrl(`/api/team/${team_id}/tasks/${taskId}`), {
-        method: 'DELETE',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: 'application/json',
-        },
-      });
-
-      if (!res.ok) {
-        // Rollback on error
-        await loadData();
-      }
+      await taskService.deleteTeamTask(team_id, taskId);
     } catch (error) {
       console.error('Failed to delete task:', error);
       // Rollback on error
@@ -190,24 +154,24 @@ const TaskBoard: React.FC = () => {
   return (
     <div className="min-h-full bg-white dark:bg-dark-bg text-black dark:text-dark-text font-sans transition-colors">
       <nav className="sticky top-0 bg-white/95 dark:bg-dark-surface/95 backdrop-blur-sm border-b border-gray-100 dark:border-dark-border px-4 sm:px-6 py-3 sm:py-4 z-20">
-        <div className="flex justify-between max-w-[1600px] mx-auto items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:justify-between max-w-[1600px] mx-auto items-start sm:items-center gap-3">
           <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-dark-text truncate">Team Tasks</h1>
-          <div className="flex gap-2 sm:gap-3 items-center flex-shrink-0">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center w-full sm:w-auto">
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-3 sm:px-5 py-2 sm:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-lg text-xs sm:text-sm hover:bg-gray-900 dark:hover:bg-gray-200 transition-all duration-200 font-medium whitespace-nowrap"
+              className="px-3 sm:px-5 py-2 sm:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-lg text-xs sm:text-sm hover:bg-gray-900 dark:hover:bg-gray-200 transition-all duration-200 font-medium whitespace-nowrap w-full sm:w-auto"
             >
               + Add Task
             </button>
             <button
               onClick={() => setShowAddUserModal(true)}
-              className="hidden sm:block px-3 sm:px-5 py-2 sm:py-2.5 bg-gray-100 dark:bg-dark-surface text-gray-900 dark:text-dark-text rounded-lg text-xs sm:text-sm hover:bg-gray-200 dark:hover:bg-dark-border transition-all duration-200 font-medium whitespace-nowrap"
+              className="hidden sm:block px-3 sm:px-5 py-2 sm:py-2.5 bg-gray-100 dark:bg-dark-surface text-gray-900 dark:text-dark-text rounded-lg text-xs sm:text-sm hover:bg-gray-200 dark:hover:bg-dark-border transition-all duration-200 font-medium whitespace-nowrap w-full sm:w-auto"
             >
               + Add User
             </button>
             <button
               onClick={() => setShowMembersPanel(true)}
-              className="px-3 sm:px-5 py-2 sm:py-2.5 bg-gray-100 dark:bg-dark-surface text-gray-900 dark:text-dark-text rounded-lg text-xs sm:text-sm hover:bg-gray-200 dark:hover:bg-dark-border transition-all duration-200 font-medium whitespace-nowrap"
+              className="px-3 sm:px-5 py-2 sm:py-2.5 bg-gray-100 dark:bg-dark-surface text-gray-900 dark:text-dark-text rounded-lg text-xs sm:text-sm hover:bg-gray-200 dark:hover:bg-dark-border transition-all duration-200 font-medium whitespace-nowrap w-full sm:w-auto"
             >
               Members
             </button>

@@ -7,11 +7,15 @@ import (
 )
 
 type TaskApi struct {
-	AssignedToID []string `json:"user_ids"` // Optional: can be empty array
-	Task         string   `json:"task" binding:"required"`
-	Description  string   `json:"description"`
-	Progress     string   `json:"progress"`
-	Priority     string   `json:"priority"`
+	AssignedToID []string  `json:"user_ids"` // Optional: can be empty array
+	Task         string    `json:"task" binding:"required"`
+	Description  string    `json:"description"`
+	Progress     string    `json:"progress"`
+	Priority     string    `json:"priority"`
+	FolderID     *string   `json:"folder_id"`
+	TeamID       *string   `json:"team_id"`
+	OwnerID      string    `json:"owner_id"`
+	CreatedAt    time.Time `json:"created_at"`
 }
 
 type TaskResponse struct {
@@ -20,6 +24,8 @@ type TaskResponse struct {
 	Description string    `json:"description"`
 	AssignedTo  []string  `json:"user_ids"`
 	TeamID      string    `json:"team_id"`
+	FolderID    *string   `json:"folder_id"`
+	OwnerID     string    `json:"owner_id"`
 	Priority    string    `json:"priority"`
 	Progress    string    `json:"progress"`
 	CreatedAt   time.Time `json:"created_at,omitempty"`
@@ -30,6 +36,8 @@ type UpdateTask struct {
 	Description string   `json:"description"`
 	AssignedTo  []string `json:"user_ids"`
 	Priority    string   `json:"priority"`
+	FolderID    *string  `json:"folder_id"`
+	OwnerID     string   `json:"owner_id"`
 }
 
 func ToTaskResponse(task *entity.Task) *TaskResponse {
@@ -83,6 +91,9 @@ type UpdateDto struct {
 	AssignedToID *[]string `json:"user_id"`
 	Task         *string   `json:"task"`
 	Description  *string   `json:"description"`
+	FolderID     *string   `json:"folder_id"`
+	TeamID       *string   `json:"team_id"`
+	OwnerID      *string   `json:"owner_id"`
 	Progress     *string   `json:"progress"`
 	Priority     *string   `json:"priority"`
 }

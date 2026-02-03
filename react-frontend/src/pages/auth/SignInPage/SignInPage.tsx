@@ -1,8 +1,9 @@
 import React, { ChangeEvent } from "react";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { setAuthToken, setAuthUser, isAuthenticated, isTokenExpired, refreshAccessToken } from "@/shared/lib/authManager.js";
-import { buildApiUrl } from "@/app/api/api.js";
+import { authService } from '@/services/api/index.js';
+import { setAuthUser } from '@/shared/lib/authManager.js';
+import { useAuth } from '@/contexts/AuthContext.js';
 
 export const SignInPage = () => {
   const navigate = useNavigate();
@@ -11,26 +12,19 @@ export const SignInPage = () => {
   const [formPassword, setFormPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const { isAuthenticated, isLoading, login } = useAuth();
 
   useEffect(() => {
-    // Check if user is authenticated AND token is still valid
-    if (isAuthenticated() && !isTokenExpired()) {
-      navigate('/dashboard', { replace: true });
-      return;
-    }
+    // Wait for auth initialization
+    if (isLoading) return;
 
-    // If token expired, try to refresh it
-    if (isAuthenticated() && isTokenExpired()) {
-      const tryRefresh = async () => {
-        const newToken = await refreshAccessToken();
-        if (newToken) {
-          // Token refreshed successfully, redirect to dashboard
-          navigate('/dashboard', { replace: true });
-        }
-        // If refresh fails, user stays on sign-in page (handled by refreshAccessToken)
-      };
-      tryRefresh();
+    // If already authenticated, redirect to saved path or dashboard
+    if (isAuthenticated) {
+      const redirectPath = localStorage.getItem('redirectPath') || '/dashboard';
+      localStorage.removeItem('redirectPath');
+      navigate(redirectPath, { replace: true });
       return;
     }
 
@@ -40,7 +34,7 @@ export const SignInPage = () => {
       // Clear the message after 5 seconds
       setTimeout(() => setSuccessMessage(""), 5000);
     }
-  }, [location, navigate]);
+  }, [isAuthenticated, isLoading, location, navigate, login]);
 
   function handleToSignUp() {
     navigate("/sign-up");
@@ -70,70 +64,46 @@ export const SignInPage = () => {
     }
 
     const data = { email: formEmail, password: formPassword };
-    setIsLoading(true);
+    setIsSubmitting(true);
 
     try {
-      const response = await fetch(buildApiUrl('/api/auth/login'), {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-        credentials: 'include', // Include cookies for refresh token
-      });
+      const result = await authService.login(data);
 
-      if (response.ok) {
-        const result = await response.json();
+      if (result && result.user && result.access_token) {
+        // Save user locally and set access token in ApiClient via AuthContext
+        setAuthUser(result.user);
+        await login(result.access_token);
 
-        // Check for access_token or token (for backward compatibility)
-        if ((result.access_token || result.token) && result.user) {
-          // Use centralized auth manager
-          setAuthToken(result.access_token || result.token);
-          setAuthUser(result.user);
-          console.log("Successfully authenticated:", result.user.email);
-          
-          // Redirect to dashboard or saved redirect path
-          const redirectPath = localStorage.getItem('redirectPath') || '/dashboard';
-          localStorage.removeItem('redirectPath');
-          navigate(redirectPath, { replace: true });
-          return;
-        } else {
-          setErrorMessage("Internal server error");
-          return;
+        const redirectPath = localStorage.getItem('redirectPath') || '/dashboard';
+        localStorage.removeItem('redirectPath');
+        navigate(redirectPath, { replace: true });
+        return;
+      } else {
+        setErrorMessage('Internal server error');
+        return;
+      }
+    } catch (err: any) {
+      const response = err?.response;
+      const status = response?.status;
+
+      if (status === 400 || status === 401) {
+        setErrorMessage(err?.response?.data?.error || 'Invalid email or password');
+      } else if (status === 403) {
+        setErrorMessage(err?.response?.data?.message || 'Please verify your email first');
+        if (err?.response?.data?.user_id) {
+          setTimeout(() => {
+            navigate('/verify-email', { state: { userId: err.response.data.user_id, email: formEmail } });
+          }, 2000);
         }
+      } else if (status === 409) {
+        setErrorMessage('User already authenticated');
+      } else {
+        setErrorMessage(err?.response?.data?.error || 'Server authentication error');
       }
 
-      const errorData = await response.json().catch(() => ({}));
-      
-      switch (response.status) {
-        case 400:
-        case 401:
-          setErrorMessage(errorData.error || "Invalid email or password");
-          break;
-        case 403:
-          // Email not verified
-          setErrorMessage(errorData.message || "Please verify your email first");
-          if (errorData.user_id) {
-            // Redirect to verification page
-            setTimeout(() => {
-              navigate("/verify-email", {
-                state: {
-                  userId: errorData.user_id,
-                  email: formEmail
-                }
-              });
-            }, 2000);
-          }
-          break;
-        case 409:
-          setErrorMessage("User already authenticated");
-          break;
-        default:
-          setErrorMessage(errorData.error || "Server authentication error");
-      }
-    } catch (error) {
-      setErrorMessage("Missing connection to server");
-      console.error("Network error:", error);
+      console.error('Network error:', err);
     } finally {
-      setIsLoading(false);
+      setIsSubmitting(false);
     }
   };
 
@@ -172,7 +142,7 @@ export const SignInPage = () => {
                 onChange={handleSetEmail}
                 type="email"
                 placeholder="your@email.com"
-                disabled={isLoading}
+                disabled={isSubmitting}
                 className="mt-1 w-full border-b bg-white border-black focus:border-black focus:outline-none py-2 text-black placeholder-gray-500 transition-colors duration-300 disabled:opacity-50"
               />
             </div>
@@ -186,7 +156,7 @@ export const SignInPage = () => {
                 onChange={handleSetPassword}
                 type="password"
                 placeholder="********"
-                disabled={isLoading}
+                disabled={isSubmitting}
                 className="mt-1 w-full border-b bg-white border-black focus:border-black focus:outline-none py-2 text-black placeholder-gray-500 transition-colors duration-300 disabled:opacity-50"
               />
             </div>
@@ -202,7 +172,7 @@ export const SignInPage = () => {
               disabled={isLoading}
               className="w-full py-3 mt-6 sm:mt-8 bg-black text-white font-semibold rounded-md shadow-md hover:bg-gray-800 transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
             >
-              {isLoading ? "Signing In..." : "Sign In"}
+              {isSubmitting ? "Signing In..." : "Sign In"}
             </button>
 
             <p className="text-center text-sm text-black pt-4 transition-colors duration-300">
@@ -210,7 +180,7 @@ export const SignInPage = () => {
               <button
                 type="button"
                 onClick={handleToSignUp}
-                disabled={isLoading}
+                disabled={isSubmitting}
                 className="text-black font-medium hover:text-gray-700 transition-colors duration-200"
               >
                 Create account

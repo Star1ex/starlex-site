@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { NewTabModal } from '@/widgets/NewTabModal/NewTabModal.js';
 import { useModal } from '@/shared/hooks/useModal.js';
 import { useNavigate } from 'react-router-dom';
-import { getAuthToken, getAuthUser } from '@/shared/lib/authManager.js';
-import { apiGet } from '@/shared/lib/apiClient.js';
+import { getAuthUser } from '@/shared/lib/authManager.js';
+import { userService, authService } from '@/services/api/index.js';
 
 type Team = {
   id: string;
@@ -49,46 +49,38 @@ export const Dashboard: React.FC = () => {
   const [userName, setUserName] = useState('User');
 
   useEffect(() => {
-    const token = getAuthToken();
-    if (!token) {
+    if (!authService.isAuthenticated()) {
       navigate('/sign-in');
       return;
     }
-    
-    const userId = getUserIdFromToken(token);
-    setCanEdit(userId === ALLOWED_USER_ID);
-    
-    // Try to get user name from stored user data first
+
     const storedUser = getAuthUser();
+    const userId = storedUser?.id || storedUser?.user_id || null;
+    setCanEdit(userId === ALLOWED_USER_ID);
+
     if (storedUser && (storedUser.firstName || storedUser.first_name)) {
       const firstName = storedUser.firstName || storedUser.first_name || '';
       const lastName = storedUser.lastName || storedUser.last_name || '';
       setUserName(`${firstName} ${lastName}`.trim() || 'User');
-    } else {
-      // Fallback to token
-      setUserName(getUserNameFromToken(token));
     }
-    
-    // Fetch fresh user data with auto-refresh on 401
+
     const fetchUser = async () => {
       try {
-        const res = await apiGet('/api/users/profile');
-        if (res.ok) {
-          const userData = await res.json();
-          const firstName = userData.firstName || userData.first_name || '';
-          const lastName = userData.lastName || userData.last_name || '';
-          setUserName(`${firstName} ${lastName}`.trim() || 'User');
-        } else if (res.status === 401) {
-          // Token invalid, redirect to login
+        const userData = await userService.getProfile();
+        const firstName = userData.firstName || '';
+        const lastName = userData.lastName || '';
+        setUserName(`${firstName} ${lastName}`.trim() || 'User');
+      } catch (err: any) {
+        if (err?.response?.status === 401) {
           navigate('/sign-in');
+        } else {
+          console.error('Error fetching user:', err);
         }
-      } catch (err) {
-        console.error('Error fetching user:', err);
       } finally {
         setLoading(false);
       }
     };
-    
+
     fetchUser();
   }, [navigate]);
 

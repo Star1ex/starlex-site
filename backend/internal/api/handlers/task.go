@@ -23,7 +23,7 @@ import (
 // @Failure      500  {object}   map[string]string         "Internal server error"
 // @Security BearerAuth
 // @Router       /team/{team_id}/tasks [post]
-func (h *Handlers) CreateTask(ctx *fiber.Ctx) error {
+func (h *Handlers) CreateTeamTask(ctx *fiber.Ctx) error {
 	teamID := ctx.Params("team_id")
 
 	userID, authErr := h.getAuthenticatedUserID(ctx)
@@ -42,7 +42,7 @@ func (h *Handlers) CreateTask(ctx *fiber.Ctx) error {
 		Progress:    input.Progress,
 	}
 
-	err := h.taskService.CreateTask(ctx.Context(), teamID, input.AssignedToID, entityTask, userID)
+	err := h.taskService.CreateTeamTask(ctx.Context(), teamID, input.AssignedToID, entityTask, userID)
 
 	if err != nil {
 		return ctx.Status(500).JSON(fiber.Map{"error": err.Error()})
@@ -60,8 +60,37 @@ func (h *Handlers) CreateTask(ctx *fiber.Ctx) error {
 	return ctx.Status(201).JSON(dto.ToTaskResponse(createdTask))
 }
 
+func (h *Handlers) CreatePersonalTask(ctx *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+
+	var input dto.TaskApi
+	if err := ctx.BodyParser(&input); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad json"})
+	}
+
+	entityTask := &entity.Task{
+		Task:        input.Task,
+		Description: input.Description,
+		Priority:    input.Priority,
+		Progress:    input.Progress,
+		OwnerID:     userID,
+		TeamID:      "",
+		FolderID:    input.FolderID,
+	}
+
+	err := h.taskService.CreatePersonalTask(ctx.Context(), entityTask)
+	if err != nil {
+		return ctx.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return ctx.Status(201).JSON(dto.ToTaskResponse(entityTask))
+}
+
 func (h *Handlers) UpdateTask(c *fiber.Ctx) error {
-	taskID := c.Params("task_id")
+	taskID := c.Params("id")
 
 	_, authErr := h.getAuthenticatedUserID(c)
 	if authErr != nil {
@@ -93,6 +122,20 @@ func (h *Handlers) UpdateTask(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(updatedTask)
+}
+
+func (h *Handlers) GetPersonalTasks(ctx *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+
+	tasks, err := h.taskService.GetTasksWithoutFolder(ctx.Context(), userID)
+	if err != nil {
+		return ctx.Status(500).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return ctx.Status(200).JSON(dto.TeamTasksList(tasks))
 }
 
 // GetTeamTasks godoc
@@ -157,7 +200,7 @@ func (h *Handlers) GetUserTasks(ctx *fiber.Ctx) error {
 // @Security BearerAuth
 // @Router       /team/{team_id}/tasks/{task_id} [put]
 func (h *Handlers) UpdateTaskProgress(ctx *fiber.Ctx) error {
-	taskId := ctx.Params("task_id")
+	taskId := ctx.Params("id")
 	if taskId == "" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
 	}
@@ -187,7 +230,7 @@ func (h *Handlers) UpdateTaskProgress(ctx *fiber.Ctx) error {
 }
 
 func (h *Handlers) DeleteTask(c *fiber.Ctx) error {
-	taskID := c.Params("task_id")
+	taskID := c.Params("id")
 	if taskID == "nil" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
 	}
@@ -200,4 +243,91 @@ func (h *Handlers) DeleteTask(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON("Successfuly deleted task")
+}
+
+// GetTasksWithoutFolder godoc
+// @Summary      Get tasks without folder
+// @Description  Returns a list of all tasks without a folder.
+// @Tags         tasks
+// @Param        user_id  path      string       true  "User ID"
+// @Success      200      {array}   dto.TaskResponse "List of tasks without folder"
+// @Failure      500      {object}  map[string]string "Server error"
+// @Security BearerAuth
+// @Router       /tasks/without-folder [get]
+func (h *Handlers) GetTasksWithoutFolder(ctx *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "unauthorized",
+		})
+	}
+
+	tasks, err := h.taskService.GetTasksWithoutFolder(ctx.Context(), userID)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	return ctx.Status(fiber.StatusOK).JSON(dto.TeamTasksList(tasks))
+}
+
+func (h *Handlers) GetFolderTasks(ctx *fiber.Ctx) error {
+
+	_, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "unauthorized",
+		})
+	}
+
+	folderID := ctx.Query("folder_id")
+	if folderID == "nil" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "folder ID is required in URL"})
+	}
+
+	tasks, err := h.taskService.GetFolderTasks(ctx.Context(), folderID)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	return ctx.Status(fiber.StatusOK).JSON(dto.TeamTasksList(tasks))
+}
+
+func (h *Handlers) MoveTaskToFolder(ctx *fiber.Ctx) error {
+	taskID := ctx.Params("task_id")
+	folderID := ctx.Query("folder_id")
+	if taskID == "nil" || folderID == "nil" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID and folder ID are required in URL"})
+	}
+
+	err := h.taskService.MoveTaskToFolder(ctx.Context(), taskID, folderID)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	return ctx.Status(fiber.StatusOK).JSON("Successfully moved task to folder")
+}
+
+func (h *Handlers) GetTaskByID(ctx *fiber.Ctx) error {
+	_, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "unauthorized",
+		})
+	}
+
+	taskID := ctx.Params("id")
+	if taskID == "nil" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
+	}
+
+	task, err := h.taskService.GetTaskByID(ctx.Context(), taskID)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": err.Error(),
+		})
+	}
+	return ctx.Status(200).JSON(dto.ToTaskResponse(task))
 }

@@ -9,20 +9,26 @@ import (
 type Service interface {
 
 	// Create task
-	CreateTask(ctx context.Context, teamID string, assignedIDs []string, task *entity.Task, userId string) error
-	Update(ctx context.Context, id string, data *entity.Task, assignedTo []string) (*entity.Task, error)
+	CreateTeamTask(ctx context.Context, teamID string, assignedIDs []string, task *entity.Task, userId string) error
+	CreatePersonalTask(ctx context.Context, task *entity.Task) error
 
 	// Get task by ID
 	GetTaskByID(ctx context.Context, taskID string) (*entity.Task, error)
-
 	// Get all tasks from team by ID
 	GetTeamTasks(ctx context.Context, teamID string) ([]*entity.Task, error)
-
 	// Retrieves all tasks by ID
 	GetUserTasks(ctx context.Context, userID string) ([]*entity.Task, error)
+	// Get tasks without folder
+	GetTasksWithoutFolder(ctx context.Context, userID string) ([]*entity.Task, error)
+	// Get tasks from folder
+	GetFolderTasks(ctx context.Context, folderID string) ([]*entity.Task, error)
 
+	Update(ctx context.Context, id string, data *entity.Task, assignedTo []string) (*entity.Task, error)
 	// Update task
 	UpdateTaskProgress(ctx context.Context, taskID, progress string) (*entity.Task, error)
-
+	// Delete task
 	Delete(ctx context.Context, id string) error
+
+	// Move task to folder
+	MoveTaskToFolder(ctx context.Context, taskID, folderID string) error
 }

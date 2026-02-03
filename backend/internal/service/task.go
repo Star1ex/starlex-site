@@ -8,6 +8,7 @@ import (
 	"github.com/Team-Tracks/team-track-site/internal/domain/task"
 	"github.com/Team-Tracks/team-track-site/internal/domain/team"
 	"github.com/Team-Tracks/team-track-site/internal/domain/user"
+	"github.com/Team-Tracks/team-track-site/internal/security"
 	"github.com/google/uuid"
 )
 
@@ -25,7 +26,7 @@ func NewTaskService(taskRepo task.Repository, userRepo user.Repository, teamRepo
 	}
 }
 
-func (s *TaskService) CreateTask(
+func (s *TaskService) CreateTeamTask(
 	ctx context.Context,
 	teamID string,
 	assignedIDs []string,
@@ -57,6 +58,11 @@ func (s *TaskService) CreateTask(
 	task.TeamID = teamID
 	task.ID = uuid.New().String()
 
+	return s.taskRepo.Create(ctx, task)
+}
+
+func (s *TaskService) CreatePersonalTask(ctx context.Context, task *entity.Task) error {
+	task.ID = security.GenerateNewID()
 	return s.taskRepo.Create(ctx, task)
 }
 
@@ -99,4 +105,16 @@ func (s *TaskService) UpdateTaskProgress(ctx context.Context, taskID, progress s
 
 func (s *TaskService) Delete(ctx context.Context, id string) error {
 	return s.taskRepo.Delete(ctx, id)
+}
+
+func (s *TaskService) GetTasksWithoutFolder(ctx context.Context, userID string) ([]*entity.Task, error) {
+	return s.taskRepo.GetTasksWithoutFolder(ctx, userID)
+}
+
+func (s *TaskService) GetFolderTasks(ctx context.Context, folderID string) ([]*entity.Task, error) {
+	return s.taskRepo.GetFolderTasks(ctx, folderID)
+}
+
+func (s *TaskService) MoveTaskToFolder(ctx context.Context, taskID, folderID string) error {
+	return s.taskRepo.MoveTaskToFolder(ctx, taskID, folderID)
 }
