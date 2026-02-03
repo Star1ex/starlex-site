@@ -10,14 +10,14 @@ export default function AboutUs({ variant = 'page' }: AboutUsProps) {
   return (
     <div
       className={`bg-white dark:bg-dark-bg text-black dark:text-dark-text transition-colors duration-300 ${
-        isSettings ? 'w-full' : 'min-h-full flex flex-col justify-center items-center px-6 text-center py-12'
+        isSettings ? 'w-full flex flex-col items-center text-center py-6' : 'min-h-full flex flex-col justify-center items-center px-6 text-center py-12'
       }`}
     >
       <motion.h1
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6 }}
-        className={`text-5xl font-serif mb-6 transition-colors duration-300 ${isSettings ? 'text-left' : ''}`}
+        className="text-5xl font-serif mb-6 transition-colors duration-300"
       >
         About Us
       </motion.h1>
@@ -26,7 +26,7 @@ export default function AboutUs({ variant = 'page' }: AboutUsProps) {
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, delay: 0.2 }}
-        className={`text-lg max-w-2xl leading-relaxed mb-12 transition-colors duration-300 ${isSettings ? 'text-left' : ''}`}
+        className="text-lg max-w-2xl leading-relaxed mb-12 transition-colors duration-300"
       >
         Open Source minimalistic task manager. Connect with us via GitHub, Telegram or email for support.
       </motion.p>
@@ -35,7 +35,7 @@ export default function AboutUs({ variant = 'page' }: AboutUsProps) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.6, delay: 0.3 }}
-        className={`flex flex-col gap-4 ${isSettings ? 'w-full max-w-xs' : 'w-full max-w-xs'}`}
+        className="flex flex-col gap-4 w-full max-w-xs"
       >
         <a
           href="https://github.com/Team-Tracks"
@@ -61,6 +61,12 @@ export default function AboutUs({ variant = 'page' }: AboutUsProps) {
           style={{ border: "none" }}
         >
           Support
+        </a>
+        <a
+          href="/settings?tab=support"
+          className="py-3 rounded-2xl bg-gray-100 dark:bg-dark-surface text-gray-900 dark:text-dark-text shadow-sm hover:bg-gray-200 dark:hover:bg-dark-border transition-colors duration-200 text-center"
+        >
+          Support Center
         </a>
       </motion.div>
     </div>

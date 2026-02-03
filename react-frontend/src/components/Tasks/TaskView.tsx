@@ -27,6 +27,7 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
   const [showMarkdownPreview, setShowMarkdownPreview] = useState(true);
   const editorRef = useRef<HTMLTextAreaElement | null>(null);
   const typingTimeoutRef = useRef<number | null>(null);
+  const enterEditTimeoutRef = useRef<number | null>(null);
 
   // Local editing fields
   const [title, setTitle] = useState('');
@@ -51,13 +52,23 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
       if (e.ctrlKey || e.metaKey || e.altKey) return;
       const isTypingKey = e.key.length === 1 || e.key === 'Backspace' || e.key === 'Delete' || e.key === 'Enter';
       if (!isTypingKey) return;
-      setShowMarkdownPreview(false);
-      window.setTimeout(() => {
-        editorRef.current?.focus();
-      }, 0);
+      if (enterEditTimeoutRef.current) {
+        window.clearTimeout(enterEditTimeoutRef.current);
+      }
+      enterEditTimeoutRef.current = window.setTimeout(() => {
+        setShowMarkdownPreview(false);
+        window.setTimeout(() => {
+          editorRef.current?.focus();
+        }, 0);
+      }, 1200);
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      if (enterEditTimeoutRef.current) {
+        window.clearTimeout(enterEditTimeoutRef.current);
+      }
+    };
   }, [showMarkdownPreview]);
 
 
@@ -176,7 +187,7 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
     }
     typingTimeoutRef.current = window.setTimeout(() => {
       setShowMarkdownPreview(true);
-    }, 1200);
+    }, 1500);
     return () => {
       if (typingTimeoutRef.current) {
         window.clearTimeout(typingTimeoutRef.current);
@@ -232,7 +243,7 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
     <div className="task-view-container min-h-screen bg-white dark:bg-dark-surface">
       {/* Header Bar */}
       <div className="sticky top-0 z-10 bg-white/80 dark:bg-dark-surface/80 backdrop-blur-sm border-b border-gray-100 dark:border-dark-border">
-        <div className="w-full px-6 md:px-24 py-3 flex items-center justify-between">
+        <div className="w-full px-4 sm:px-6 md:px-24 py-3 flex items-center justify-between">
           <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 dark:text-dark-text-muted dark:hover:text-dark-text transition-colors">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
             Back
@@ -258,7 +269,7 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
       </div>
 
       {/* Main Content */}
-      <div className="w-full px-6 md:px-24 pt-14 pb-16">
+      <div className="w-full px-4 sm:px-6 md:px-24 pt-10 sm:pt-12 md:pt-14 pb-16">
         {/* Metadata Pills */}
         <div className="flex items-center gap-3 mb-6 text-sm text-gray-500 dark:text-dark-text-muted">
           <div className="flex items-center gap-2">

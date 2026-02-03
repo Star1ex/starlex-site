@@ -76,7 +76,7 @@ export const ChangePassword: React.FC<ChangePasswordProps> = ({ onSubmit }) => {
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           disabled={loading}
-          className="w-full px-4 py-3 rounded-lg border border-gray-300 dark:border-dark-border bg-white dark:bg-dark-bg text-gray-900 dark:text-dark-text placeholder-gray-500 dark:placeholder-dark-text-muted focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          className="w-full px-4 py-3 rounded-lg border border-gray-200/80 dark:border-dark-border/60 bg-white dark:bg-dark-bg text-gray-900 dark:text-dark-text placeholder-gray-500 dark:placeholder-dark-text-muted focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         />
         <button
           type="button"
@@ -92,7 +92,7 @@ export const ChangePassword: React.FC<ChangePasswordProps> = ({ onSubmit }) => {
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8 text-center max-w-3xl mx-auto">
       <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text mb-2">
           Change Password
@@ -102,7 +102,7 @@ export const ChangePassword: React.FC<ChangePasswordProps> = ({ onSubmit }) => {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4 text-left max-w-2xl mx-auto">
         {passwordField(
           'Current Password',
           currentPassword,
@@ -134,8 +134,8 @@ export const ChangePassword: React.FC<ChangePasswordProps> = ({ onSubmit }) => {
           <div
             className={`p-4 rounded-lg text-sm font-medium transition-all ${
               message.type === 'success'
-                ? 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-800'
-                : 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800'
+                ? 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400'
+                : 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-400'
             }`}
           >
             {message.text}
@@ -145,11 +145,11 @@ export const ChangePassword: React.FC<ChangePasswordProps> = ({ onSubmit }) => {
         <button
           type="submit"
           disabled={loading}
-          className="w-full px-4 py-3 bg-blue-600 hover:bg-blue-700 dark:bg-blue-700 dark:hover:bg-blue-600 text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+          className="w-full px-4 py-3 bg-white hover:bg-gray-100 text-gray-900 dark:bg-black dark:hover:bg-gray-900 dark:text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
         >
           {loading ? (
             <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
               Updating...
             </>
           ) : (
@@ -158,7 +158,7 @@ export const ChangePassword: React.FC<ChangePasswordProps> = ({ onSubmit }) => {
         </button>
       </form>
 
-      <div className="bg-blue-50 dark:bg-blue-950 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+      <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4 text-left max-w-2xl mx-auto">
         <p className="text-sm text-blue-700 dark:text-blue-400">
           <strong>Note:</strong> This is a prototype for the password change feature. Implementation coming soon!
         </p>

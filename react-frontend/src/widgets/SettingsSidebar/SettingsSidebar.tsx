@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, FileText, Home, Info, Lock, Moon, Palette, Settings } from 'lucide-react';
+import { ChevronLeft, ChevronRight, FileText, Home, Info, LifeBuoy, Lock, Moon, Palette, Settings } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Avatar from '@/shared/ui/Avatar.js';
 import { getAuthUser } from '@/shared/lib/authManager.js';
@@ -13,8 +13,8 @@ import ResizeHandle from '@/components/Sidebar/ResizeHandle.js';
 
 interface SettingsSidebarProps {
   isOpen: boolean;
-  activeTab: 'contributing' | 'appearance' | 'password' | 'about';
-  onTabChange: (tab: 'contributing' | 'appearance' | 'password' | 'about') => void;
+  activeTab: 'contributing' | 'appearance' | 'password' | 'about' | 'support';
+  onTabChange: (tab: 'contributing' | 'appearance' | 'password' | 'about' | 'support') => void;
   onClose: () => void;
   onBack?: () => void;
   backLabel?: string;
@@ -25,6 +25,7 @@ const settingsTabs = [
   { id: 'password', label: 'Change Password', icon: Lock },
   { id: 'contributing', label: 'Contributing', icon: FileText },
   { id: 'about', label: 'About Us', icon: Info },
+  { id: 'support', label: 'Support', icon: LifeBuoy },
 ] as const;
 
 export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({

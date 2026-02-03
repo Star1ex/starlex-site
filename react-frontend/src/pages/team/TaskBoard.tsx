@@ -154,24 +154,24 @@ const TaskBoard: React.FC = () => {
   return (
     <div className="min-h-full bg-white dark:bg-dark-bg text-black dark:text-dark-text font-sans transition-colors">
       <nav className="sticky top-0 bg-white/95 dark:bg-dark-surface/95 backdrop-blur-sm border-b border-gray-100 dark:border-dark-border px-4 sm:px-6 py-3 sm:py-4 z-20">
-        <div className="flex justify-between max-w-[1600px] mx-auto items-center gap-3">
+        <div className="flex flex-col sm:flex-row sm:justify-between max-w-[1600px] mx-auto items-start sm:items-center gap-3">
           <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-dark-text truncate">Team Tasks</h1>
-          <div className="flex gap-2 sm:gap-3 items-center flex-shrink-0">
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center w-full sm:w-auto">
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-3 sm:px-5 py-2 sm:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-lg text-xs sm:text-sm hover:bg-gray-900 dark:hover:bg-gray-200 transition-all duration-200 font-medium whitespace-nowrap"
+              className="px-3 sm:px-5 py-2 sm:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-lg text-xs sm:text-sm hover:bg-gray-900 dark:hover:bg-gray-200 transition-all duration-200 font-medium whitespace-nowrap w-full sm:w-auto"
             >
               + Add Task
             </button>
             <button
               onClick={() => setShowAddUserModal(true)}
-              className="hidden sm:block px-3 sm:px-5 py-2 sm:py-2.5 bg-gray-100 dark:bg-dark-surface text-gray-900 dark:text-dark-text rounded-lg text-xs sm:text-sm hover:bg-gray-200 dark:hover:bg-dark-border transition-all duration-200 font-medium whitespace-nowrap"
+              className="hidden sm:block px-3 sm:px-5 py-2 sm:py-2.5 bg-gray-100 dark:bg-dark-surface text-gray-900 dark:text-dark-text rounded-lg text-xs sm:text-sm hover:bg-gray-200 dark:hover:bg-dark-border transition-all duration-200 font-medium whitespace-nowrap w-full sm:w-auto"
             >
               + Add User
             </button>
             <button
               onClick={() => setShowMembersPanel(true)}
-              className="px-3 sm:px-5 py-2 sm:py-2.5 bg-gray-100 dark:bg-dark-surface text-gray-900 dark:text-dark-text rounded-lg text-xs sm:text-sm hover:bg-gray-200 dark:hover:bg-dark-border transition-all duration-200 font-medium whitespace-nowrap"
+              className="px-3 sm:px-5 py-2 sm:py-2.5 bg-gray-100 dark:bg-dark-surface text-gray-900 dark:text-dark-text rounded-lg text-xs sm:text-sm hover:bg-gray-200 dark:hover:bg-dark-border transition-all duration-200 font-medium whitespace-nowrap w-full sm:w-auto"
             >
               Members
             </button>

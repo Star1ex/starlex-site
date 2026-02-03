@@ -5,6 +5,7 @@ import { SettingsSidebar } from '@/widgets/SettingsSidebar/SettingsSidebar.js';
 import { Contributing } from '@/pages/settings/Contributing.js';
 import { Appearance } from '@/pages/settings/Appearance.js';
 import { ChangePassword } from '@/pages/settings/ChangePassword.js';
+import { Support } from '@/pages/settings/Support.js';
 import AboutUs from '@/pages/about-us/AboutUs.js';
 
 export const GeneralSettings: React.FC = () => {
@@ -13,7 +14,7 @@ export const GeneralSettings: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activeTab, setActiveTab] = useState<'contributing' | 'appearance' | 'password' | 'about'>('appearance');
+  const [activeTab, setActiveTab] = useState<'contributing' | 'appearance' | 'password' | 'about' | 'support'>('appearance');
 
   useEffect(() => {
     if (!authService.isAuthenticated()) {
@@ -30,9 +31,22 @@ export const GeneralSettings: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) {
+        setSidebarOpen(false);
+      } else {
+        setSidebarOpen(true);
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tab = params.get('tab');
-    if (tab === 'contributing' || tab === 'appearance' || tab === 'password' || tab === 'about') {
+    if (tab === 'contributing' || tab === 'appearance' || tab === 'password' || tab === 'about' || tab === 'support') {
       setActiveTab(tab);
     }
   }, [location.search]);
@@ -71,6 +85,8 @@ export const GeneralSettings: React.FC = () => {
         return <ChangePassword />;
       case 'about':
         return <AboutUs variant="settings" />;
+      case 'support':
+        return <Support />;
       default:
         return <Appearance />;
     }
@@ -94,16 +110,16 @@ export const GeneralSettings: React.FC = () => {
           sidebarOpen ? 'lg:ml-64' : 'ml-0'
         }`}
       >
-        <div className="max-w-5xl mx-auto px-4 sm:px-8 py-6 sm:py-10">
+        <div className="max-w-5xl mx-auto px-4 sm:px-8 py-6 sm:py-10 text-center">
           {/* Mobile Header with Toggle Button */}
-          <div className="lg:hidden flex items-center justify-between mb-6">
-            <div>
+          <div className="lg:hidden flex items-center justify-between gap-3 mb-6">
+            <div className="flex-1 text-center">
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-dark-text">Settings</h1>
               <p className="text-gray-600 dark:text-dark-text-muted mt-1">Manage your preferences</p>
             </div>
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 rounded-lg bg-gray-100 dark:bg-dark-surface border border-gray-200 dark:border-dark-border hover:bg-gray-200 dark:hover:bg-dark-border transition-colors text-gray-700 dark:text-dark-text"
+              className="p-2 rounded-lg bg-gray-100 dark:bg-dark-surface hover:bg-gray-200 dark:hover:bg-dark-border transition-colors text-gray-700 dark:text-dark-text shadow-sm"
               aria-label="Toggle settings menu"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -114,12 +130,10 @@ export const GeneralSettings: React.FC = () => {
 
           {/* Desktop Header */}
           <div className="hidden lg:block mb-8">
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900 dark:text-dark-text mb-2">Settings</h1>
-                <p className="text-gray-600 dark:text-dark-text-muted">Manage your account and application preferences</p>
-              </div>
-              <div className="px-3 py-1.5 rounded-full bg-gray-100 dark:bg-dark-surface text-xs font-medium text-gray-600 dark:text-dark-text-muted border border-gray-200 dark:border-dark-border">
+            <div className="flex flex-col items-center text-center gap-2">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-dark-text">Settings</h1>
+              <p className="text-gray-600 dark:text-dark-text-muted">Manage your account and application preferences</p>
+              <div className="px-3 py-1.5 rounded-full bg-gray-100 dark:bg-dark-surface text-xs font-medium text-gray-600 dark:text-dark-text-muted">
                 Updated just now
               </div>
             </div>
@@ -131,7 +145,7 @@ export const GeneralSettings: React.FC = () => {
               sidebarOpen ? 'opacity-100 translate-x-0' : 'opacity-100 translate-x-0'
             }`}
           >
-            <div className="bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-2xl shadow-sm p-6 sm:p-8">
+            <div className="bg-white/80 dark:bg-dark-surface/80 rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] p-6 sm:p-10">
               {renderContent()}
             </div>
           </div>

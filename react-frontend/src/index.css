@@ -116,6 +116,8 @@
   .theme-solarized .text-gray-600 { color: var(--text-secondary) !important; }
   .theme-solarized .text-gray-500 { color: var(--text-tertiary) !important; }
   .theme-solarized .text-gray-400 { color: var(--text-tertiary) !important; }
+  .theme-solarized .text-black { color: var(--text-primary) !important; }
+  .theme-solarized .bg-black { background-color: #002b36 !important; }
   .theme-solarized .border-gray-200 { border-color: var(--border-color) !important; }
   .theme-solarized .border-gray-100 { border-color: var(--border-color) !important; }
   .theme-solarized .border-gray-300 { border-color: var(--border-color) !important; }
