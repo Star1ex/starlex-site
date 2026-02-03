@@ -57,14 +57,14 @@ jobs:
           echo "=== Status ==="
           docker compose ps
           
-          if ! docker compose ps --filter "name=team-track-backend" --format "table {{.Name}}\t{{.State}}" | grep -q "team-track-backend.*Up"; then
+          if ! docker compose ps --filter "name=team-track-site-backend" --format "table {{.Name}}\t{{.State}}" | grep -q "team-track-site-backend.*Up"; then
             echo "Crash. Logs..."
-            echo "=== logs team-track-backend ==="
-            docker-compose logs team-track-backend
+            echo "=== logs team-track-site-backend ==="
+            docker-compose logs team-track-site-backend
             exit 1
           fi
           
           echo "Successfully started containers"
           echo "===  ==="
-          docker compose logs --tail=20 team-track-backend
+          docker compose logs --tail=20 team-track-site-backend
 
