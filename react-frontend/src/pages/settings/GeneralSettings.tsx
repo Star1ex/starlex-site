@@ -37,6 +37,15 @@ export const GeneralSettings: React.FC = () => {
     }
   }, [location.search]);
 
+  const handleBack = () => {
+    const lastRoute = sessionStorage.getItem('lastNonSettingsRoute');
+    if (lastRoute) {
+      navigate(lastRoute);
+    } else {
+      navigate('/dashboard');
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-bg transition-colors">
@@ -61,20 +70,22 @@ export const GeneralSettings: React.FC = () => {
       case 'password':
         return <ChangePassword />;
       case 'about':
-        return <AboutUs />;
+        return <AboutUs variant="settings" />;
       default:
         return <Appearance />;
     }
   };
 
   return (
-    <div className="min-h-full bg-white dark:bg-dark-bg transition-colors overflow-hidden">
+    <div className="min-h-screen bg-white dark:bg-dark-bg transition-colors">
       {/* Settings Sidebar */}
       <SettingsSidebar
         isOpen={sidebarOpen}
         activeTab={activeTab}
         onTabChange={setActiveTab}
         onClose={() => setSidebarOpen(false)}
+        onBack={handleBack}
+        backLabel="Back"
       />
 
       {/* Main Content */}
