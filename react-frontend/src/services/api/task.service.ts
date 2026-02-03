@@ -4,7 +4,7 @@ import { TaskDTO, CreateTaskRequest, UpdateTaskRequest, TaskProgress } from '../
 export const taskService = {
   // Personal
   async getPersonalTasks(): Promise<TaskDTO[]> {
-    const response = await httpClient.get<TaskDTO[]>('/api/tasks/');
+    const response = await httpClient.get<TaskDTO[]>('/api/tasks');
     return response.data;
   },
 
@@ -19,7 +19,7 @@ export const taskService = {
   },
 
   async createPersonalTask(data: CreateTaskRequest): Promise<TaskDTO> {
-    const response = await httpClient.post<TaskDTO>('/api/tasks/', data);
+    const response = await httpClient.post<TaskDTO>('/api/tasks', data);
     return response.data;
   },
 
@@ -55,7 +55,7 @@ export const taskService = {
 
   // Team
   async getTeamTasks(teamId: string): Promise<TaskDTO[]> {
-    const response = await httpClient.get<TaskDTO[]>(`/api/teams/${teamId}/tasks/`);
+    const response = await httpClient.get<TaskDTO[]>(`/api/teams/${teamId}/tasks`);
     return response.data;
   },
 
@@ -65,7 +65,7 @@ export const taskService = {
   },
 
   async createTeamTask(teamId: string, data: CreateTaskRequest): Promise<TaskDTO> {
-    const response = await httpClient.post<TaskDTO>(`/api/teams/${teamId}/tasks/`, data);
+    const response = await httpClient.post<TaskDTO>(`/api/teams/${teamId}/tasks`, data);
     return response.data;
   },
 

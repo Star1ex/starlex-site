@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import MarkdownEditor from '@/components/TaskView/MarkdownEditor.js';
 import { useDebounce } from '@/shared/hooks/useDebounce.js';
 import { taskService } from '@/services/api/index.js';
 import { useAuth } from '@/contexts/AuthContext.js';
@@ -12,6 +11,7 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
   const taskIdParam = taskIdProp || (params as any).taskId;
   const isNew = taskIdParam === 'new' || !taskIdParam;
   const navigate = useNavigate();
+  const location = useLocation();
   const { userId } = useAuth();
 
   // State
@@ -24,13 +24,20 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
   });
   // per-field saving handled by useAutoSave
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [showMarkdownPreview, setShowMarkdownPreview] = useState(false);
 
   // Local editing fields
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'low'|'medium'|'high'>('medium');
   const [progress, setProgress] = useState<'not_started'|'in_progress'|'In review'|'done'>('not_started');
+
+  const locationFolderId = (location.state as any)?.folder_id ?? null;
+
+  useEffect(() => {
+    if (!isNew) return;
+    if (!locationFolderId) return;
+    setTask((prev) => ({ ...prev, folder_id: locationFolderId }));
+  }, [isNew, locationFolderId]);
 
 
 
@@ -160,6 +167,8 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
         progress: 'not_started',
         folder_id: task.folder_id ?? null,
         owner_id: userId || '',
+        team_id: null,
+        user_ids: [],
       };
 
       const created = await taskService.createPersonalTask(payload);
@@ -187,7 +196,7 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
     <div className="task-view-container min-h-screen bg-white dark:bg-dark-surface">
       {/* Header Bar */}
       <div className="sticky top-0 z-10 bg-white/80 dark:bg-dark-surface/80 backdrop-blur-sm border-b border-gray-100 dark:border-dark-border">
-        <div className="max-w-4xl mx-auto px-8 py-3 flex items-center justify-between">
+        <div className="w-full px-8 py-3 flex items-center justify-between">
           <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 dark:text-dark-text-muted dark:hover:text-dark-text transition-colors">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
             Back
@@ -205,15 +214,13 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
               ) : null}
             </div>
 
-            <button onClick={() => setShowMarkdownPreview(!showMarkdownPreview)} className="text-xs px-3 py-1.5 rounded-md border border-gray-200 dark:border-dark-border hover:bg-gray-50 dark:hover:bg-dark-border transition-colors">
-              {showMarkdownPreview ? 'Edit' : 'Preview'}
-            </button>
+            <div className="text-xs text-gray-400 dark:text-dark-text-muted">Markdown enabled</div>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-8 py-12">
+      <div className="w-full px-8 py-12">
         {/* Metadata Pills */}
         <div className="flex items-center gap-3 mb-6">
           <div className="flex items-center gap-2">
@@ -241,19 +248,9 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
         {/* Title Input - Notion Style */}
         <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Untitled" className="w-full text-5xl font-bold text-gray-900 dark:text-dark-text placeholder-gray-300 dark:placeholder-dark-text-muted bg-transparent border-none outline-none mb-4" style={{ fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.02em' }} />
 
-        {/* Description - Notion Style */}
-        <div className="mt-8">
-          {showMarkdownPreview ? (
-            <div onClick={() => setShowMarkdownPreview(false)} className="prose prose-lg dark:prose-invert max-w-none cursor-text min-h-[300px] p-4 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-border/20 transition-colors">
-              {description ? (
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>{description}</ReactMarkdown>
-              ) : (
-                <p className="text-gray-400 dark:text-dark-text-muted italic">Click to start writing...</p>
-              )}
-            </div>
-          ) : (
-            <textarea value={description} onChange={(e) => setDescription(e.target.value)} placeholder="Press '/' for commands, or start typing..." className="w-full min-h-[400px] text-base text-gray-700 dark:text-dark-text placeholder-gray-400 dark:placeholder-dark-text-muted bg-transparent border-none outline-none resize-none font-normal leading-relaxed" style={{ lineHeight: 1.7, fontFamily: 'inherit' }} />
-          )}
+        {/* Description - Markdown Editor */}
+        <div className="mt-8 min-h-[400px]">
+          <MarkdownEditor value={description} onChange={setDescription} />
         </div>
 
         {/* Create Button (only for new tasks) */}

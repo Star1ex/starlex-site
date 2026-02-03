@@ -1,150 +1,119 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ChevronRight, MoreVertical } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { folderService } from '@/services/api/index.js';
-import type { FolderDTO } from '@/types/dto.js';
-import ContextMenu from '@/components/Dropdown/ContextMenu.js';
-import MenuItem from '@/components/Dropdown/MenuItem.js';
-import FolderInlineCreate from './FolderInlineCreate.js';
+import type { FolderDTO, TaskDTO, CreateFolderRequest, CreateTaskRequest } from '@/types/dto.js';
+import { useContextMenu } from '@/hooks/useContextMenu.js';
+import InlineEdit from '@/components/shared/InlineEdit.js';
+import TaskItem from './TaskItem.js';
 
 interface FolderItemProps {
   folder: FolderDTO;
   level: number;
-  isExpanded: boolean;
-  hasChildren: boolean;
-  onToggle: () => void;
-  onNavigate: () => void;
+  getSubfolders: (parentId: string) => FolderDTO[];
+  getFolderTasks: (folderId: string) => TaskDTO[];
+  onUpdateFolder: (id: string, data: Partial<CreateFolderRequest>) => Promise<any>;
+  onDeleteFolder: (id: string) => Promise<void>;
+  onUpdateTask: (id: string, data: Partial<CreateTaskRequest>) => Promise<any>;
 }
 
-export const FolderItem: React.FC<FolderItemProps> = React.memo(({ folder, level, isExpanded, hasChildren, onToggle, onNavigate }) => {
+export const FolderItem: React.FC<FolderItemProps> = ({ folder, level, getSubfolders, getFolderTasks, onUpdateFolder, onDeleteFolder, onUpdateTask }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
   const navigate = useNavigate();
-  const [showContextMenu, setShowContextMenu] = useState(false);
-  const [contextMenuPos, setContextMenuPos] = useState({ x: 0, y: 0 });
-  const [showActions, setShowActions] = useState(false);
-  const [showInlineSubfolder, setShowInlineSubfolder] = useState(false);
-  const itemRef = useRef<HTMLDivElement | null>(null);
+  const { openContextMenu } = useContextMenu();
 
-  const handleContextMenu = React.useCallback((e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setContextMenuPos({ x: e.clientX, y: e.clientY });
-    setShowContextMenu(true);
-  }, []);
+  const subfolders = useMemo(() => getSubfolders(folder.id), [getSubfolders, folder.id]);
+  const tasks = useMemo(() => getFolderTasks(folder.id), [getFolderTasks, folder.id]);
+  const hasChildren = subfolders.length > 0 || tasks.length > 0;
 
-  const handleCreateTask = React.useCallback((e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    e?.preventDefault();
-    setShowContextMenu(false);
-    // Navigate to new task with folder prefilled
-    navigate('/task/new', { state: { folder_id: folder.id } });
-    // Also trigger modal creation hooks
-    window.dispatchEvent(new CustomEvent('openPersonalTaskCreate', { detail: { folder_id: folder.id } }));
-  }, [navigate, folder.id]);
-  
-  const handleCreateSubfolder = React.useCallback((e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    e?.preventDefault();
-    setShowContextMenu(false);
-    // Toggle inline subfolder creation under this folder
-    setShowInlineSubfolder(true);
-  }, []);
-
-  const handleRename = React.useCallback(async (e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    e?.preventDefault();
-    setShowContextMenu(false);
-    const newName = prompt('New folder name:', folder.name);
-    if (newName && newName.trim()) {
-      try {
-        await folderService.updateFolder(folder.id, { name: newName.trim() });
-        window.dispatchEvent(new CustomEvent('personalFolderCreated'));
-      } catch (err) {
-        console.error('Failed to rename folder:', err);
-        alert('Failed to rename folder');
+  useEffect(() => {
+    const onRename = (event: Event) => {
+      const ev = event as CustomEvent;
+      if (ev?.detail?.type === 'folder' && ev?.detail?.id === folder.id) {
+        setIsRenaming(true);
       }
-    }
-  }, [folder.id, folder.name]);
+    };
 
-  const handleDelete = React.useCallback(async (e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    e?.preventDefault();
-    setShowContextMenu(false);
-    if (!confirm(`Delete folder "${folder.name}" and all its contents?`)) return;
-    try {
-      await folderService.deleteFolder(folder.id);
-      window.dispatchEvent(new CustomEvent('personalFolderCreated'));
-    } catch (err) {
-      console.error('Failed to delete folder:', err);
-      alert('Failed to delete folder');
-    }
-  }, [folder.id, folder.name]);
+    window.addEventListener('sidebarRename', onRename as EventListener);
+    return () => window.removeEventListener('sidebarRename', onRename as EventListener);
+  }, [folder.id]);
 
-  const paddingLeft = 12 + level * 16;
+  const handleRename = async (newName: string) => {
+    await onUpdateFolder(folder.id, { name: newName });
+    setIsRenaming(false);
+  };
+
+  const paddingLeft = level * 12 + 8;
 
   return (
-    <>
+    <div>
       <div
-        ref={itemRef}
-        className="folder-item group relative"
-        style={{ paddingLeft: `${paddingLeft}px` }}
-        onMouseEnter={() => setShowActions(true)}
-        onMouseLeave={() => setShowActions(false)}
-        onContextMenu={handleContextMenu}
+        className="flex items-center gap-1 px-2 py-1 hover:bg-gray-100 dark:hover:bg-dark-border rounded-md cursor-pointer group transition-colors"
+        style={{ paddingLeft }}
+        onClick={() => setIsExpanded(!isExpanded)}
+        onContextMenu={(e) => openContextMenu(e, { type: 'folder', folderId: folder.id })}
       >
-        <div className="flex items-center gap-4 px-3 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-dark-border/50 transition-colors cursor-pointer" style={{ minHeight: '36px' }}>
-          {/* Chevron */}
-          {hasChildren ? (
-            <button onClick={(e) => { e.stopPropagation(); onToggle(); }} className="w-4 h-4 flex items-center justify-center flex-shrink-0">
-              <svg className={`w-3 h-3 text-gray-500 dark:text-dark-text-muted transition-transform ${isExpanded ? 'rotate-90' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-          ) : (
-            <div className="w-4" />
-          )}
+        {hasChildren ? (
+          <ChevronRight
+            className={`w-3 h-3 text-gray-400 transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
+          />
+        ) : (
+          <div className="w-3" />
+        )}
 
-          {/* Folder icon */}
-          <div className="flex-shrink-0 text-gray-600 dark:text-dark-text-muted" onClick={onNavigate}>
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
-            </svg>
+        <span className="text-base flex-shrink-0">{folder.icon || ''}</span>
+
+        {isRenaming ? (
+          <div className="flex-1" onClick={(e) => e.stopPropagation()}>
+            <InlineEdit
+              value={folder.name}
+              onSave={handleRename}
+              onCancel={() => setIsRenaming(false)}
+              className="w-full text-sm px-2 py-1 rounded border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-surface"
+            />
           </div>
+        ) : (
+          <span
+            className="text-sm text-gray-700 dark:text-dark-text truncate flex-1"
+            onDoubleClick={() => navigate(`/personal?folder=${folder.id}`)}
+          >
+            {folder.name}
+          </span>
+        )}
 
-          {/* Name */}
-          <span className="flex-1 text-sm text-gray-700 dark:text-dark-text truncate" onClick={onNavigate}>{folder.name}</span>
-
-          {/* Actions */}
-          {showActions && (
-            <div className="flex items-center gap-1 flex-shrink-0">
-              <button onClick={(e) => { e.stopPropagation(); const rect = itemRef.current?.getBoundingClientRect(); if (rect) { setContextMenuPos({ x: rect.right, y: rect.top }); setShowContextMenu(true); } }} className="w-5 h-5 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-dark-border transition-colors">
-                <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="5" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="12" cy="19" r="2" /></svg>
-              </button>
-
-              <button onClick={(e) => { e.stopPropagation(); handleCreateTask(e); }} className="w-5 h-5 flex items-center justify-center rounded hover:bg-gray-200 dark:hover:bg-dark-border transition-colors">
-                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
-              </button>
-            </div>
-          )}
-        </div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            openContextMenu(e, { type: 'folder', folderId: folder.id });
+          }}
+          className="p-1 opacity-0 group-hover:opacity-100 hover:bg-gray-200 dark:hover:bg-dark-border rounded transition-opacity flex-shrink-0"
+          title="Folder actions"
+        >
+          <MoreVertical className="w-3 h-3 text-gray-500" />
+        </button>
       </div>
 
-      {showContextMenu && (
-        <ContextMenu x={contextMenuPos.x} y={contextMenuPos.y} onClose={() => setShowContextMenu(false)}>
-          <MenuItem label="New Task" icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>} onClick={handleCreateTask} />
-          <MenuItem label="New Subfolder" icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>} onClick={handleCreateSubfolder} />
-          <div className="border-t border-gray-100 dark:border-dark-border my-1" />
-          <MenuItem label="Rename" icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/></svg>} onClick={handleRename} />
-          <MenuItem label="Delete" icon={<svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>} onClick={handleDelete} danger />
-        </ContextMenu>
-      )}
-
-      {/* Inline subfolder create form, shown under this folder when requested */}
-      {showInlineSubfolder && (
-        <div style={{ marginLeft: `${paddingLeft + 12}px` }} className="mt-1">
-          <FolderInlineCreate parentId={folder.id} onClose={() => setShowInlineSubfolder(false)} />
+      {isExpanded && hasChildren && (
+        <div className="space-y-0.5">
+          {subfolders.map((subfolder) => (
+            <FolderItem
+              key={subfolder.id}
+              folder={subfolder}
+              level={level + 1}
+              getSubfolders={getSubfolders}
+              getFolderTasks={getFolderTasks}
+              onUpdateFolder={onUpdateFolder}
+              onDeleteFolder={onDeleteFolder}
+              onUpdateTask={onUpdateTask}
+            />
+          ))}
+          {tasks.map((task) => (
+            <TaskItem key={task.id} task={task} level={level + 1} onUpdateTask={onUpdateTask} />
+          ))}
         </div>
       )}
-    </>
+    </div>
   );
-});
+};
 
 export default FolderItem;

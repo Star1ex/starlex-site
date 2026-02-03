@@ -3,7 +3,7 @@ import { FolderDTO, CreateFolderRequest } from '@/types/dto.js';
 
 export const folderService = {
   async getUserFolders(): Promise<FolderDTO[]> {
-    const response = await httpClient.get<FolderDTO[]>('/api/folders/');
+    const response = await httpClient.get<FolderDTO[]>('/api/folders');
     return response.data;
   },
 
@@ -23,7 +23,7 @@ export const folderService = {
   },
 
   async createFolder(data: CreateFolderRequest): Promise<string> {
-    const response = await httpClient.post<string>('/api/folders/', data);
+    const response = await httpClient.post<string>('/api/folders', data);
     return response.data;
   },
 
@@ -37,7 +37,7 @@ export const folderService = {
     return response.data;
   },
 
-  async moveFolder(folderId: string, parentId: string): Promise<string> {
+  async moveFolder(folderId: string, parentId: string | null): Promise<string> {
     const response = await httpClient.put<string>(`/api/folders/${folderId}/move`, {
       folder_id: folderId,
       parent_id: parentId,

@@ -96,6 +96,7 @@ export const PersonalTasksProvider = ({ children }: { children: React.ReactNode 
         folder_id: data.folder_id ?? null,
         owner_id: userId || '',
         team_id: null,
+        user_ids: data.user_ids ?? [],
       };
       await taskService.createPersonalTask(payload as CreateTaskRequest);
       await refreshTasks();
@@ -111,10 +112,11 @@ export const PersonalTasksProvider = ({ children }: { children: React.ReactNode 
       const payload = {
         name: data.name || 'New Folder',
         color: data.color || '#3B82F6',
-        icon: data.icon || 'code',
+        icon: data.icon || '📁',
         parent_id: data.parent_id ?? null,
         team_id: null,
         owner_id: userId || '',
+        position: data.position ?? 0,
       };
       await folderService.createFolder(payload as CreateFolderRequest);
       await refreshFolders();

@@ -1,37 +1,77 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { FileText, MoreVertical } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import type { TaskDTO } from '@/types/dto.js';
+import type { TaskDTO, CreateTaskRequest } from '@/types/dto.js';
+import { useContextMenu } from '@/hooks/useContextMenu.js';
+import InlineEdit from '@/components/shared/InlineEdit.js';
 
 interface TaskItemProps {
   task: TaskDTO;
   level: number;
-  onNavigate: () => void;
+  onUpdateTask: (id: string, data: Partial<CreateTaskRequest>) => Promise<any>;
 }
 
-export const TaskItem: React.FC<TaskItemProps> = React.memo(({ task, level, onNavigate }) => {
-  const [showActions, setShowActions] = useState(false);
-  const paddingLeft = 12 + level * 16;
-
-  const handleMouseEnter = React.useCallback(() => setShowActions(true), []);
-  const handleMouseLeave = React.useCallback(() => setShowActions(false), []);
+export const TaskItem: React.FC<TaskItemProps> = ({ task, level, onUpdateTask }) => {
   const navigate = useNavigate();
-  const handleClick = React.useCallback((e: React.MouseEvent) => { e.stopPropagation(); if (onNavigate) { onNavigate(); } else { navigate(`/task/${task.id}`); } }, [onNavigate, navigate, task.id]);
+  const { openContextMenu } = useContextMenu();
+  const [isRenaming, setIsRenaming] = useState(false);
+  const paddingLeft = level * 12 + 20;
+
+  useEffect(() => {
+    const onRename = (event: Event) => {
+      const ev = event as CustomEvent;
+      if (ev?.detail?.type === 'task' && ev?.detail?.id === task.id) {
+        setIsRenaming(true);
+      }
+    };
+
+    window.addEventListener('sidebarRename', onRename as EventListener);
+    return () => window.removeEventListener('sidebarRename', onRename as EventListener);
+  }, [task.id]);
+
+  const handleRename = async (newTitle: string) => {
+    await onUpdateTask(task.id, { task: newTitle });
+    setIsRenaming(false);
+  };
+
 
   return (
-    <div className="task-item group" style={{ paddingLeft: `${paddingLeft}px` }} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
-      <button onClick={handleClick} className="w-full flex items-center gap-4 px-3 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-dark-border/50 transition-colors text-left" style={{ minHeight: '36px' }}>
-        <div className="w-4 h-4 flex items-center justify-center flex-shrink-0 text-gray-500 dark:text-dark-text-muted">
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
+    <div
+      className="flex items-center gap-2 px-2 py-1 hover:bg-gray-100 dark:hover:bg-dark-border rounded-md cursor-pointer transition-colors group"
+      style={{ paddingLeft }}
+      onClick={() => navigate(`/task/${task.id}`)}
+      onContextMenu={(e) => openContextMenu(e, { type: 'task', taskId: task.id })}
+    >
+      <FileText className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+
+      {isRenaming ? (
+        <div className="flex-1" onClick={(e) => e.stopPropagation()}>
+          <InlineEdit
+            value={task.task || 'Untitled'}
+            onSave={handleRename}
+            onCancel={() => setIsRenaming(false)}
+            className="w-full text-sm px-2 py-1 rounded border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-surface"
+          />
         </div>
+      ) : (
+        <span className="text-sm text-gray-600 dark:text-dark-text-muted truncate flex-1">
+          {task.task || 'Untitled'}
+        </span>
+      )}
 
-        <span className="flex-1 text-sm text-gray-700 dark:text-dark-text truncate">{task.task}</span>
-
-        {task.priority === 'high' && showActions && <span className="w-1.5 h-1.5 rounded-full bg-red-500" title="High priority" />}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          openContextMenu(e, { type: 'task', taskId: task.id });
+        }}
+        className="p-1 opacity-0 group-hover:opacity-100 hover:bg-gray-200 dark:hover:bg-dark-border rounded transition-opacity flex-shrink-0"
+        title="Task actions"
+      >
+        <MoreVertical className="w-3 h-3 text-gray-500" />
       </button>
+
     </div>
   );
-});
+};
 
 export default TaskItem;

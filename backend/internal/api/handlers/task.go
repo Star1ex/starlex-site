@@ -230,7 +230,7 @@ func (h *Handlers) UpdateTaskProgress(ctx *fiber.Ctx) error {
 }
 
 func (h *Handlers) DeleteTask(c *fiber.Ctx) error {
-	taskID := c.Params("task_id")
+	taskID := c.Params("id")
 	if taskID == "nil" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
 	}

@@ -61,10 +61,10 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({ title, d
         aria-expanded={expanded}
         onClick={toggle}
         onKeyDown={onKeyDown}
-        className="flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-border px-3 py-2 rounded-md transition-colors"
+        className="flex items-center justify-between cursor-pointer hover:bg-gray-50 dark:hover:bg-dark-border px-2 py-1.5 rounded-md transition-colors"
       >
         <div className="flex items-center gap-2">
-          <svg className={`chevron-icon w-3 h-3 text-gray-500 transition-transform ${expanded ? 'expanded rotate-90' : ''}`} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 4l6 6-6 6" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" /></svg>
+          <svg className={`chevron-icon w-4 h-4 text-gray-500 transition-transform ${expanded ? 'expanded rotate-90' : ''}`} viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 4l6 6-6 6" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" /></svg>
           <span className="text-xs font-semibold text-gray-500 uppercase tracking-wider">{title}</span>
         </div>
 
@@ -74,7 +74,7 @@ export const CollapsibleSection: React.FC<CollapsibleSectionProps> = ({ title, d
       </div>
 
       <div className={`overflow-hidden transition-all duration-200 ease-in-out ${expanded ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'}`}>
-        <div className="px-1 pt-2 pb-2">
+        <div className="pt-2 pb-2">
           {children}
         </div>
       </div>
