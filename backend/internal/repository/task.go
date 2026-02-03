@@ -18,7 +18,7 @@ type TaskModel struct {
 	Assigned    []UserModel `gorm:"many2many:task_users"`
 
 	TeamID    *string `gorm:"default:null"`
-	OwnerID   string  `gorm:"not null;index:idx_owner_folder"`
+	OwnerID   string  `gorm:"index:idx_owner_folder"`
 	FolderID  *string `gorm:"default:null;index:idx_owner_folder"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
