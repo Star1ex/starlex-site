@@ -5,6 +5,7 @@ import Avatar from '@/shared/ui/Avatar.js';
 import { getAuthUser } from '@/shared/lib/authManager.js';
 import { userService } from '@/services/api/index.js';
 import { useTheme } from '@/shared/contexts/ThemeContext.js';
+import { useAuth } from '@/contexts/AuthContext.js';
 import type { User } from '@/entities/types.js';
 import { useSidebarResize } from '@/hooks/useSidebarResize.js';
 import { ContextMenuProvider } from '@/hooks/useContextMenu.js';
@@ -29,7 +30,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
   const [userInfo, setUserInfo] = useState<{ firstName: string; lastName: string; email?: string } | null>(null);
   const [teams, setTeams] = useState<Array<{ id: string; name: string }>>([]);
   const [loadingTeams, setLoadingTeams] = useState(true);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
+  const { logout } = useAuth();
 
   const foldersHook = useFolders();
   const tasksHook = useTasks();
@@ -84,6 +87,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
     window.addEventListener('teamCreated', handleTeamCreated);
     return () => window.removeEventListener('teamCreated', handleTeamCreated);
   }, [navigate]);
+
+  useEffect(() => {
+    if (!showProfileMenu) return;
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {
+        setShowProfileMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showProfileMenu]);
 
   const displayName = useMemo(() => {
     if (user) {
@@ -161,8 +175,14 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
                 <span className="text-sm">About Us</span>
               </button>
 
-              <div className="pt-2 border-t border-gray-100 dark:border-dark-border" ref={profileMenuRef}>
-                <div className="flex items-center gap-3 px-3 py-2">
+              <div className="pt-2 border-t border-gray-100 dark:border-dark-border relative sidebar-footer" ref={profileMenuRef}>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowProfileMenu((prev) => !prev);
+                  }}
+                  className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-border transition-colors text-left"
+                >
                   <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800 flex-shrink-0">
                     {user ? <Avatar user={user} size="sm" /> : null}
                   </div>
@@ -170,7 +190,45 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
                     <p className="text-sm font-medium truncate">{displayName}</p>
                     <p className="text-xs text-gray-500 dark:text-dark-text-muted truncate">{userInfo?.email || ''}</p>
                   </div>
-                </div>
+                  <svg className="w-4 h-4 text-gray-500 dark:text-dark-text-muted" fill="currentColor" viewBox="0 0 16 16">
+                    <circle cx="8" cy="4" r="1.5" />
+                    <circle cx="8" cy="8" r="1.5" />
+                    <circle cx="8" cy="12" r="1.5" />
+                  </svg>
+                </button>
+
+                {showProfileMenu && (
+                  <div className="absolute bottom-full left-0 mb-2 w-full bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-xl p-2 z-50">
+                    <button
+                      onClick={() => {
+                        navigate('/profile');
+                        setShowProfileMenu(false);
+                      }}
+                      className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-dark-border text-sm"
+                    >
+                      View Profile
+                    </button>
+                    <button
+                      onClick={() => {
+                        navigate('/settings');
+                        setShowProfileMenu(false);
+                      }}
+                      className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-dark-border text-sm"
+                    >
+                      Settings
+                    </button>
+                    <div className="h-px bg-gray-200 dark:bg-dark-border my-1" />
+                    <button
+                      onClick={() => {
+                        logout();
+                        setShowProfileMenu(false);
+                      }}
+                      className="w-full text-left px-3 py-2 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 text-sm"
+                    >
+                      Logout
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>

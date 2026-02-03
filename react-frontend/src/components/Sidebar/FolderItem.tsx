@@ -5,6 +5,7 @@ import type { FolderDTO, TaskDTO, CreateFolderRequest, CreateTaskRequest } from 
 import { useContextMenu } from '@/hooks/useContextMenu.js';
 import InlineEdit from '@/components/shared/InlineEdit.js';
 import TaskItem from './TaskItem.js';
+import { taskService } from '@/services/api/index.js';
 
 interface FolderItemProps {
   folder: FolderDTO;
@@ -23,8 +24,9 @@ export const FolderItem: React.FC<FolderItemProps> = ({ folder, level, getSubfol
   const { openContextMenu } = useContextMenu();
 
   const subfolders = useMemo(() => getSubfolders(folder.id), [getSubfolders, folder.id]);
-  const tasks = useMemo(() => getFolderTasks(folder.id), [getFolderTasks, folder.id]);
-  const hasChildren = subfolders.length > 0 || tasks.length > 0;
+  const tasksFromStore = useMemo(() => getFolderTasks(folder.id), [getFolderTasks, folder.id]);
+  const [folderTasks, setFolderTasks] = useState<TaskDTO[]>(tasksFromStore);
+  const hasChildren = subfolders.length > 0 || folderTasks.length > 0;
 
   useEffect(() => {
     const onRename = (event: Event) => {
@@ -37,6 +39,32 @@ export const FolderItem: React.FC<FolderItemProps> = ({ folder, level, getSubfol
     window.addEventListener('sidebarRename', onRename as EventListener);
     return () => window.removeEventListener('sidebarRename', onRename as EventListener);
   }, [folder.id]);
+
+  useEffect(() => {
+    setFolderTasks(tasksFromStore);
+  }, [tasksFromStore]);
+
+  useEffect(() => {
+    let mounted = true;
+    const loadFolderTasks = async () => {
+      if (!isExpanded) return;
+      try {
+        const data = await taskService.getTasksByFolder(folder.id);
+        if (mounted) setFolderTasks(Array.isArray(data) ? data : []);
+      } catch (err) {
+        console.error('Failed to load folder tasks:', err);
+      }
+    };
+
+    loadFolderTasks();
+
+    const onTaskCreated = () => loadFolderTasks();
+    window.addEventListener('personalTaskCreated', onTaskCreated);
+    return () => {
+      mounted = false;
+      window.removeEventListener('personalTaskCreated', onTaskCreated);
+    };
+  }, [folder.id, isExpanded]);
 
   const handleRename = async (newName: string) => {
     await onUpdateFolder(folder.id, { name: newName });
@@ -61,7 +89,9 @@ export const FolderItem: React.FC<FolderItemProps> = ({ folder, level, getSubfol
           <div className="w-3" />
         )}
 
-        <span className="text-base flex-shrink-0">{folder.icon || ''}</span>
+        <svg className="w-4 h-4 flex-shrink-0" style={{ color: folder.color || '#6B7280' }} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+        </svg>
 
         {isRenaming ? (
           <div className="flex-1" onClick={(e) => e.stopPropagation()}>
@@ -107,7 +137,7 @@ export const FolderItem: React.FC<FolderItemProps> = ({ folder, level, getSubfol
               onUpdateTask={onUpdateTask}
             />
           ))}
-          {tasks.map((task) => (
+          {folderTasks.map((task) => (
             <TaskItem key={task.id} task={task} level={level + 1} onUpdateTask={onUpdateTask} />
           ))}
         </div>

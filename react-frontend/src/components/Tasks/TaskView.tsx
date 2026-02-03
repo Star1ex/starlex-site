@@ -24,6 +24,7 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
   });
   // per-field saving handled by useAutoSave
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [showMarkdownPreview, setShowMarkdownPreview] = useState(false);
 
   // Local editing fields
   const [title, setTitle] = useState('');
@@ -196,7 +197,7 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
     <div className="task-view-container min-h-screen bg-white dark:bg-dark-surface">
       {/* Header Bar */}
       <div className="sticky top-0 z-10 bg-white/80 dark:bg-dark-surface/80 backdrop-blur-sm border-b border-gray-100 dark:border-dark-border">
-        <div className="w-full px-8 py-3 flex items-center justify-between">
+        <div className="w-full px-6 md:px-24 py-3 flex items-center justify-between">
           <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 dark:text-dark-text-muted dark:hover:text-dark-text transition-colors">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
             Back
@@ -214,20 +215,22 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
               ) : null}
             </div>
 
-            <div className="text-xs text-gray-400 dark:text-dark-text-muted">Markdown enabled</div>
+            <button onClick={() => setShowMarkdownPreview(!showMarkdownPreview)} className="text-xs px-3 py-1.5 rounded-md border border-gray-200 dark:border-dark-border hover:bg-gray-50 dark:hover:bg-dark-border transition-colors">
+              {showMarkdownPreview ? 'Edit' : 'Preview'}
+            </button>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="w-full px-8 py-12">
+      <div className="w-full px-6 md:px-24 pt-14 pb-16">
         {/* Metadata Pills */}
-        <div className="flex items-center gap-3 mb-6">
+        <div className="flex items-center gap-3 mb-6 text-sm text-gray-500 dark:text-dark-text-muted">
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-gray-500 dark:text-dark-text-muted">Priority:</span>
+            <span className="text-xs font-medium">Priority:</span>
             <div className="flex gap-1">
               {(['low','medium','high'] as const).map((p) => (
-                <button key={p} onClick={() => setPriority(p)} className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${priority === p ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-dark-border text-gray-700 dark:text-dark-text-muted hover:bg-gray-200 dark:hover:bg-dark-border/80'}`}>
+                <button key={p} onClick={() => setPriority(p)} className={`px-3 py-1 text-xs font-medium rounded-full transition-all ${priority === p ? 'bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900' : 'bg-gray-100 dark:bg-dark-border text-gray-600 dark:text-dark-text-muted hover:bg-gray-200 dark:hover:bg-dark-border/80'}`}>
                   {p.charAt(0).toUpperCase() + p.slice(1)}
                 </button>
               ))}
@@ -235,8 +238,8 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="text-xs font-medium text-gray-500 dark:text-dark-text-muted">Status:</span>
-            <select value={progress} onChange={(e) => setProgress(e.target.value as any)} className="px-3 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-dark-border text-gray-700 dark:text-dark-text-muted border-none outline-none cursor-pointer hover:bg-gray-200 dark:hover:bg-dark-border/80 transition-colors">
+            <span className="text-xs font-medium">Status:</span>
+            <select value={progress} onChange={(e) => setProgress(e.target.value as any)} className="px-3 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-dark-border text-gray-600 dark:text-dark-text-muted border-none outline-none cursor-pointer hover:bg-gray-200 dark:hover:bg-dark-border/80 transition-colors">
               <option value="not_started">Not Started</option>
               <option value="in_progress">In Progress</option>
               <option value="In review">In Review</option>
@@ -246,11 +249,21 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
         </div>
 
         {/* Title Input - Notion Style */}
-        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Untitled" className="w-full text-5xl font-bold text-gray-900 dark:text-dark-text placeholder-gray-300 dark:placeholder-dark-text-muted bg-transparent border-none outline-none mb-4" style={{ fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.02em' }} />
+        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Untitled" className="w-full text-5xl font-bold text-gray-900 dark:text-dark-text placeholder-gray-300 dark:placeholder-dark-text-muted bg-transparent border-none outline-none mb-6" style={{ fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.02em' }} />
 
         {/* Description - Markdown Editor */}
-        <div className="mt-8 min-h-[400px]">
-          <MarkdownEditor value={description} onChange={setDescription} />
+        <div className="mt-6 min-h-[400px] group">
+          <MarkdownEditor
+            value={description}
+            onChange={setDescription}
+            mode={showMarkdownPreview ? 'preview' : 'edit'}
+            showToolbar
+            onTogglePreview={() => setShowMarkdownPreview(!showMarkdownPreview)}
+            toolbarClassName="flex items-center gap-2 py-2 opacity-0 group-hover:opacity-100 transition-opacity"
+            textareaClassName="w-full min-h-[400px] text-base leading-relaxed bg-transparent border-none outline-none resize-none font-normal"
+            previewClassName="min-h-[400px]"
+            containerClassName="flex flex-col h-full"
+          />
         </div>
 
         {/* Create Button (only for new tasks) */}

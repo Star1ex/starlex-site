@@ -143,7 +143,7 @@ func (r *FolderRepository) Update(ctx context.Context, folder *entity.Folder) er
 	folderModel := fromFolderDomain(folder)
 	result := r.db.WithContext(ctx).
 		Where("id = ?", folderModel.ID).
-		First(folderModel)
+		First(&folderModel)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return gorm.ErrRecordNotFound
@@ -180,14 +180,14 @@ func (r *FolderRepository) Delete(ctx context.Context, id string) error {
 	var folder FolderModel
 	result := r.db.WithContext(ctx).
 		Where("id = ?", id).
-		First(folder)
+		First(&folder)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return gorm.ErrRecordNotFound
 		}
 		return result.Error
 	}
-	return r.db.WithContext(ctx).Delete(folder).Error
+	return r.db.WithContext(ctx).Delete(&folder).Error
 }
 
 // change parentID
@@ -204,5 +204,5 @@ func (r *FolderRepository) Move(ctx context.Context, folderID string, newParentI
 		}
 		return result.Error
 	}
-	return r.db.WithContext(ctx).Model(folder).Update("parent_id", newParentID).Error
+	return r.db.WithContext(ctx).Model(&folder).Update("parent_id", newParentID).Error
 }

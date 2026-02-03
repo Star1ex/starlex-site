@@ -231,15 +231,17 @@ func (h *Handlers) DeleteFolder(ctx *fiber.Ctx) error {
 			"error": "unauthorized",
 		})
 	}
-	var req dto.FolderDeleteDTO
+	//var req dto.FolderDeleteDTO
 
-	if err := ctx.BodyParser(&req); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Invalid request body",
-		})
-	}
+	//if err := ctx.BodyParser(&req); err != nil {
+	//	return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+	//		"error": "Invalid request body",
+	//	})
+	//}
 
-	err := h.folderService.Delete(context.Background(), req.ID)
+	folderID := ctx.Params("id")
+
+	err := h.folderService.Delete(context.Background(), folderID)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),

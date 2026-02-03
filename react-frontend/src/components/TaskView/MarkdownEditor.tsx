@@ -5,10 +5,28 @@ import MarkdownPreview from './MarkdownPreview.js';
 interface MarkdownEditorProps {
   value: string;
   onChange: (value: string) => void;
+  mode?: 'edit' | 'preview';
+  showToolbar?: boolean;
+  onTogglePreview?: () => void;
+  toolbarClassName?: string;
+  textareaClassName?: string;
+  previewClassName?: string;
+  containerClassName?: string;
 }
 
-export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange }) => {
+export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
+  value,
+  onChange,
+  mode,
+  showToolbar = true,
+  onTogglePreview,
+  toolbarClassName,
+  textareaClassName,
+  previewClassName,
+  containerClassName,
+}) => {
   const [showPreview, setShowPreview] = useState(false);
+  const isPreview = mode ? mode === 'preview' : showPreview;
 
   const insertMarkdown = (before: string, after = '') => {
     const textarea = document.querySelector('textarea[data-markdown-editor="true"]') as HTMLTextAreaElement | null;
@@ -28,14 +46,15 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange 
   };
 
   return (
-    <div className="flex flex-col h-full border border-gray-200 dark:border-dark-border rounded-lg overflow-hidden">
-      <div className="flex items-center gap-2 p-2 border-b border-gray-200 dark:border-dark-border bg-gray-50 dark:bg-dark-surface">
+    <div className={containerClassName || 'flex flex-col h-full'}>
+      {showToolbar && (
+        <div className={toolbarClassName || 'flex items-center gap-2 py-2'}>
         <ToolbarButton onClick={() => insertMarkdown('# ')} title="Heading 1">H1</ToolbarButton>
         <ToolbarButton onClick={() => insertMarkdown('## ')} title="Heading 2">H2</ToolbarButton>
         <ToolbarButton onClick={() => insertMarkdown('**', '**')} title="Bold"><Bold className="w-4 h-4" /></ToolbarButton>
         <ToolbarButton onClick={() => insertMarkdown('*', '*')} title="Italic"><Italic className="w-4 h-4" /></ToolbarButton>
         <ToolbarButton onClick={() => insertMarkdown('~~', '~~')} title="Strikethrough"><Strikethrough className="w-4 h-4" /></ToolbarButton>
-        <div className="w-px h-6 bg-gray-300 dark:bg-dark-border" />
+        <div className="w-px h-6 bg-gray-200 dark:bg-dark-border" />
         <ToolbarButton onClick={() => insertMarkdown('`', '`')} title="Inline Code"><Code className="w-4 h-4" /></ToolbarButton>
         <ToolbarButton onClick={() => insertMarkdown('```\n', '\n```')} title="Code Block"><FileCode className="w-4 h-4" /></ToolbarButton>
         <ToolbarButton onClick={() => insertMarkdown('[](', ')')} title="Link"><Link className="w-4 h-4" /></ToolbarButton>
@@ -43,14 +62,15 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange 
         <ToolbarButton onClick={() => insertMarkdown('- [ ] ')} title="Checklist"><CheckSquare className="w-4 h-4" /></ToolbarButton>
         <ToolbarButton onClick={() => insertMarkdown('> ')} title="Quote"><Quote className="w-4 h-4" /></ToolbarButton>
         <div className="flex-1" />
-        <ToolbarButton onClick={() => setShowPreview(!showPreview)} title={showPreview ? 'Edit' : 'Preview'}>
-          {showPreview ? <Edit2 className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+        <ToolbarButton onClick={() => (onTogglePreview ? onTogglePreview() : setShowPreview(!showPreview))} title={isPreview ? 'Edit' : 'Preview'}>
+          {isPreview ? <Edit2 className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
         </ToolbarButton>
       </div>
+      )}
 
       <div className="flex-1 overflow-hidden">
-        {showPreview ? (
-          <div className="h-full overflow-y-auto p-6">
+        {isPreview ? (
+          <div className={previewClassName || 'h-full overflow-y-auto'}>
             <MarkdownPreview value={value} />
           </div>
         ) : (
@@ -59,7 +79,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange 
             value={value}
             onChange={(e) => onChange(e.target.value)}
             placeholder="Start typing... Use markdown for formatting"
-            className="w-full h-full p-6 text-base leading-relaxed bg-transparent border-none outline-none resize-none font-mono"
+            className={textareaClassName || 'w-full h-full text-base leading-relaxed bg-transparent border-none outline-none resize-none font-normal'}
             spellCheck
           />
         )}

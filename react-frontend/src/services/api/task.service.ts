@@ -14,7 +14,7 @@ export const taskService = {
   },
 
   async getTasksByFolder(folderId: string): Promise<TaskDTO[]> {
-    const response = await httpClient.get<TaskDTO[]>(`/api/tasks/folder/${folderId}`);
+    const response = await httpClient.get<TaskDTO[]>(`/api/tasks/folder/${folderId}?folder_id=${folderId}`);
     return response.data;
   },
 
