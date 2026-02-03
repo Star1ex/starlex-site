@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { authService } from '@/services/api/index.js';
 import { SettingsSidebar } from '@/widgets/SettingsSidebar/SettingsSidebar.js';
 import { Contributing } from '@/pages/settings/Contributing.js';
 import { Appearance } from '@/pages/settings/Appearance.js';
 import { ChangePassword } from '@/pages/settings/ChangePassword.js';
+import AboutUs from '@/pages/about-us/AboutUs.js';
 
 export const GeneralSettings: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activeTab, setActiveTab] = useState<'contributing' | 'appearance' | 'password'>('appearance');
+  const [activeTab, setActiveTab] = useState<'contributing' | 'appearance' | 'password' | 'about'>('appearance');
 
   useEffect(() => {
     if (!authService.isAuthenticated()) {
@@ -26,6 +28,14 @@ export const GeneralSettings: React.FC = () => {
       setIsAuthenticated(true);
     }
   }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const tab = params.get('tab');
+    if (tab === 'contributing' || tab === 'appearance' || tab === 'password' || tab === 'about') {
+      setActiveTab(tab);
+    }
+  }, [location.search]);
 
   if (loading) {
     return (
@@ -50,6 +60,8 @@ export const GeneralSettings: React.FC = () => {
         return <Appearance />;
       case 'password':
         return <ChangePassword />;
+      case 'about':
+        return <AboutUs />;
       default:
         return <Appearance />;
     }

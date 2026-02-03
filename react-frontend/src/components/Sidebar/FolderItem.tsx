@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ChevronRight, MoreVertical } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { FolderDTO, TaskDTO, CreateFolderRequest, CreateTaskRequest } from '@/types/dto.js';
@@ -66,20 +66,29 @@ export const FolderItem: React.FC<FolderItemProps> = React.memo(({ folder, level
     };
   }, [folder.id, isExpanded]);
 
-  const handleRename = async (newName: string) => {
+  const handleRename = useCallback(async (newName: string) => {
     await onUpdateFolder(folder.id, { name: newName });
     setIsRenaming(false);
-  };
+  }, [folder.id, onUpdateFolder]);
 
   const paddingLeft = level * 12 + 8;
+  const handleToggleExpand = useCallback(() => {
+    setIsExpanded((prev) => !prev);
+  }, []);
+  const handleOpenContextMenu = useCallback((e: React.MouseEvent) => {
+    openContextMenu(e, { type: 'folder', folderId: folder.id });
+  }, [openContextMenu, folder.id]);
+  const handleNavigate = useCallback(() => {
+    navigate(`/personal?folder=${folder.id}`);
+  }, [navigate, folder.id]);
 
   return (
     <div>
       <div
         className="flex items-center gap-1 px-2 py-1 hover:bg-gray-100 dark:hover:bg-dark-border rounded-md cursor-pointer group transition-colors"
         style={{ paddingLeft }}
-        onClick={() => setIsExpanded(!isExpanded)}
-        onContextMenu={(e) => openContextMenu(e, { type: 'folder', folderId: folder.id })}
+        onClick={handleToggleExpand}
+        onContextMenu={handleOpenContextMenu}
       >
         {hasChildren ? (
           <ChevronRight
@@ -105,7 +114,7 @@ export const FolderItem: React.FC<FolderItemProps> = React.memo(({ folder, level
         ) : (
           <span
             className="text-sm text-gray-700 dark:text-dark-text truncate flex-1"
-            onDoubleClick={() => navigate(`/personal?folder=${folder.id}`)}
+            onDoubleClick={handleNavigate}
           >
             {folder.name}
           </span>
@@ -114,7 +123,7 @@ export const FolderItem: React.FC<FolderItemProps> = React.memo(({ folder, level
         <button
           onClick={(e) => {
             e.stopPropagation();
-            openContextMenu(e, { type: 'folder', folderId: folder.id });
+            handleOpenContextMenu(e);
           }}
           className="p-1 opacity-0 group-hover:opacity-100 hover:bg-gray-200 dark:hover:bg-dark-border rounded transition-opacity flex-shrink-0"
           title="Folder actions"
@@ -124,7 +133,7 @@ export const FolderItem: React.FC<FolderItemProps> = React.memo(({ folder, level
       </div>
 
       {isExpanded && hasChildren && (
-        <div className="space-y-0.5">
+        <div className="space-y-0.5" style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 200px' }}>
           {subfolders.map((subfolder) => (
             <FolderItem
               key={subfolder.id}

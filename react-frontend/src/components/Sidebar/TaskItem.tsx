@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { FileText, MoreVertical } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { TaskDTO, CreateTaskRequest } from '@/types/dto.js';
@@ -29,18 +29,26 @@ export const TaskItem: React.FC<TaskItemProps> = React.memo(({ task, level, onUp
     return () => window.removeEventListener('sidebarRename', onRename as EventListener);
   }, [task.id]);
 
-  const handleRename = async (newTitle: string) => {
+  const handleRename = useCallback(async (newTitle: string) => {
     await onUpdateTask(task.id, { task: newTitle });
     setIsRenaming(false);
-  };
+  }, [onUpdateTask, task.id]);
+
+  const handleOpenContextMenu = useCallback((e: React.MouseEvent) => {
+    openContextMenu(e, { type: 'task', taskId: task.id });
+  }, [openContextMenu, task.id]);
+
+  const handleNavigate = useCallback(() => {
+    navigate(`/task/${task.id}`);
+  }, [navigate, task.id]);
 
 
   return (
     <div
       className="flex items-center gap-2 px-2 py-1 hover:bg-gray-100 dark:hover:bg-dark-border rounded-md cursor-pointer transition-colors group"
       style={{ paddingLeft }}
-      onClick={() => navigate(`/task/${task.id}`)}
-      onContextMenu={(e) => openContextMenu(e, { type: 'task', taskId: task.id })}
+      onClick={handleNavigate}
+      onContextMenu={handleOpenContextMenu}
     >
       <FileText className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
 
@@ -62,7 +70,7 @@ export const TaskItem: React.FC<TaskItemProps> = React.memo(({ task, level, onUp
       <button
         onClick={(e) => {
           e.stopPropagation();
-          openContextMenu(e, { type: 'task', taskId: task.id });
+          handleOpenContextMenu(e);
         }}
         className="p-1 opacity-0 group-hover:opacity-100 hover:bg-gray-200 dark:hover:bg-dark-border rounded transition-opacity flex-shrink-0"
         title="Task actions"

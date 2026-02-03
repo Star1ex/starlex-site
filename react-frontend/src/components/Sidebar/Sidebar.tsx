@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronRight, Home, Moon, Settings } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Avatar from '@/shared/ui/Avatar.js';
@@ -116,6 +116,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
     return match ? match[1] : null;
   }, [location.pathname]);
 
+  const handleNavigateHome = useCallback(() => {
+    navigate('/dashboard');
+  }, [navigate]);
+
+  const handleAddTeam = useCallback(() => {
+    window.dispatchEvent(new CustomEvent('openNewTeamModal'));
+  }, []);
+
+  const handleTeamClick = useCallback((id: string) => {
+    navigate(`/team/${id}`);
+  }, [navigate]);
+
+  const handleNavigateSettings = useCallback(() => {
+    navigate('/settings');
+  }, [navigate]);
+
+
   return (
     <ContextMenuProvider>
       <aside
@@ -128,7 +145,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
 
             <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-2 space-y-1">
               <button
-                onClick={() => navigate('/dashboard')}
+                onClick={handleNavigateHome}
                 className={`flex items-center gap-3 w-full px-3 py-2 rounded-md transition-colors text-left ${
                   location.pathname === '/dashboard'
                     ? 'bg-gray-100 dark:bg-dark-border text-gray-900 dark:text-dark-text'
@@ -146,8 +163,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
                 teams={teams}
                 loadingTeams={loadingTeams}
                 activeTeamId={activeTeamId}
-                onTeamClick={(id) => navigate(`/team/${id}`)}
-                onAddTeam={() => window.dispatchEvent(new CustomEvent('openNewTeamModal'))}
+                onTeamClick={handleTeamClick}
+                onAddTeam={handleAddTeam}
               />
 
               <SidebarSection title="TASKS" type="tasks" defaultExpanded foldersHook={foldersHook} tasksHook={tasksHook} />
@@ -162,17 +179,11 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
                 <span className="text-sm">{theme === 'dark' ? 'Dark' : 'Light'} Mode</span>
               </button>
               <button
-                onClick={() => navigate('/settings')}
+                onClick={handleNavigateSettings}
                 className="w-full flex items-center gap-3 px-2 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-dark-border transition-colors text-left"
               >
                 <Settings className="w-4 h-4" />
                 <span className="text-sm">Settings</span>
-              </button>
-              <button
-                onClick={() => navigate('/about-us')}
-                className="w-full flex items-center gap-3 px-2 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-dark-border transition-colors text-left"
-              >
-                <span className="text-sm">About Us</span>
               </button>
 
               <div className="pt-2 border-t border-gray-100 dark:border-dark-border relative sidebar-footer" ref={profileMenuRef}>

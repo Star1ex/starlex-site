@@ -1,30 +1,63 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { taskService } from '@/services/api/index.js';
 import type { CreateTaskRequest, TaskDTO } from '@/types/dto.js';
 
 export const useTasks = () => {
-  const [tasks, setTasks] = useState<TaskDTO[]>([]);
+  const [tasksById, setTasksById] = useState<Record<string, TaskDTO>>({});
+  const [taskIds, setTaskIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const refreshControllerRef = useRef<AbortController | null>(null);
+  const refreshTimeoutRef = useRef<number | null>(null);
 
   const refreshTasks = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await taskService.getPersonalTasks();
+      if (refreshControllerRef.current) {
+        refreshControllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      refreshControllerRef.current = controller;
+      const data = await taskService.getPersonalTasks({ signal: controller.signal });
       const personal = (data || []).filter((t) => t.team_id == null || t.team_id === '');
-      setTasks(personal);
-    } catch (err) {
+      const nextById: Record<string, TaskDTO> = {};
+      const nextIds: string[] = [];
+      for (const task of personal) {
+        nextById[task.id] = task;
+        nextIds.push(task.id);
+      }
+      setTasksById(nextById);
+      setTaskIds(nextIds);
+    } catch (err: any) {
+      if (err?.name === 'CanceledError' || err?.name === 'AbortError') return;
       console.error('Failed to load tasks:', err);
     } finally {
       setLoading(false);
     }
   }, []);
 
+  const debouncedRefresh = useCallback(() => {
+    if (refreshTimeoutRef.current) {
+      window.clearTimeout(refreshTimeoutRef.current);
+    }
+    refreshTimeoutRef.current = window.setTimeout(() => {
+      refreshTasks();
+    }, 150);
+  }, [refreshTasks]);
+
   useEffect(() => {
     refreshTasks();
-    const onCreated = () => refreshTasks();
+    const onCreated = () => debouncedRefresh();
     window.addEventListener('personalTaskCreated', onCreated);
-    return () => window.removeEventListener('personalTaskCreated', onCreated);
-  }, []);
+    return () => {
+      window.removeEventListener('personalTaskCreated', onCreated);
+      if (refreshTimeoutRef.current) {
+        window.clearTimeout(refreshTimeoutRef.current);
+      }
+      if (refreshControllerRef.current) {
+        refreshControllerRef.current.abort();
+      }
+    };
+  }, [refreshTasks, debouncedRefresh]);
 
   const createTask = useCallback(async (data: CreateTaskRequest) => {
     const tempId = `temp-${Date.now()}`;
@@ -42,7 +75,8 @@ export const useTasks = () => {
       created_at: now,
     };
 
-    setTasks((prev) => [...prev, optimisticTask]);
+    setTasksById((prev) => ({ ...prev, [tempId]: optimisticTask }));
+    setTaskIds((prev) => [...prev, tempId]);
 
     const payload: CreateTaskRequest = {
       task: data.task || 'New Task',
@@ -57,20 +91,31 @@ export const useTasks = () => {
 
     try {
       const created = await taskService.createPersonalTask(payload);
-      setTasks((prev) => prev.map((t) => (t.id === tempId ? (created as any) : t)));
-      window.dispatchEvent(new CustomEvent('personalTaskCreated'));
+      const real = created as TaskDTO;
+      setTasksById((prev) => {
+        const next = { ...prev };
+        delete next[tempId];
+        next[real.id] = real;
+        return next;
+      });
+      setTaskIds((prev) => prev.map((id) => (id === tempId ? real.id : id)));
       return created;
     } catch (err) {
-      setTasks((prev) => prev.filter((t) => t.id !== tempId));
+      setTasksById((prev) => {
+        const next = { ...prev };
+        delete next[tempId];
+        return next;
+      });
+      setTaskIds((prev) => prev.filter((id) => id !== tempId));
       throw err;
     }
-  }, [refreshTasks]);
+  }, []);
 
   const updateTask = useCallback(async (id: string, data: Partial<CreateTaskRequest>) => {
-    setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...data } as TaskDTO : t)));
+    setTasksById((prev) => ({ ...prev, [id]: { ...prev[id], ...data } as TaskDTO }));
     try {
       const updated = await taskService.updateTask(id, data as any);
-      setTasks((prev) => prev.map((t) => (t.id === id ? (updated as any) : t)));
+      setTasksById((prev) => ({ ...prev, [id]: updated as TaskDTO }));
       return updated;
     } catch (err) {
       await refreshTasks();
@@ -79,21 +124,28 @@ export const useTasks = () => {
   }, [refreshTasks]);
 
   const deleteTask = useCallback(async (id: string) => {
-    const snapshot = tasks;
-    setTasks((prev) => prev.filter((t) => t.id !== id));
+    const snapshotById = tasksById;
+    const snapshotIds = taskIds;
+    setTasksById((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+    setTaskIds((prev) => prev.filter((taskId) => taskId !== id));
     try {
       await taskService.deleteTask(id);
-      window.dispatchEvent(new CustomEvent('personalTaskCreated'));
     } catch (err) {
-      setTasks(snapshot);
+      setTasksById(snapshotById);
+      setTaskIds(snapshotIds);
       throw err;
     }
-  }, [tasks]);
+  }, [tasksById, taskIds]);
 
   const getFolderTasks = useCallback((folderId: string) => {
-    return tasks.filter((t) => t.folder_id === folderId);
-  }, [tasks]);
+    return taskIds.map((id) => tasksById[id]).filter((t) => t?.folder_id === folderId);
+  }, [taskIds, tasksById]);
 
+  const tasks = useMemo(() => taskIds.map((id) => tasksById[id]).filter(Boolean), [taskIds, tasksById]);
   const orphanTasks = useMemo(() => tasks.filter((t) => t.folder_id == null), [tasks]);
 
   return {

@@ -2,8 +2,8 @@ import { httpClient } from './client.js';
 import { FolderDTO, CreateFolderRequest } from '@/types/dto.js';
 
 export const folderService = {
-  async getUserFolders(): Promise<FolderDTO[]> {
-    const response = await httpClient.get<FolderDTO[]>('/api/folders');
+  async getUserFolders(options?: { signal?: AbortSignal }): Promise<FolderDTO[]> {
+    const response = await httpClient.get<FolderDTO[]>('/api/folders', { signal: options?.signal as any });
     return response.data;
   },
 

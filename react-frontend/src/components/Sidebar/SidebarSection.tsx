@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { ChevronRight, Plus } from 'lucide-react';
 import FolderItem from './FolderItem.js';
 import TaskItem from './TaskItem.js';
@@ -39,10 +39,16 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
   const tasksHook = tasksHookProp || useTasks();
   const { openContextMenu } = useContextMenu();
 
-  const rootFolders = useMemo(() => foldersHook.rootFolders.sort((a, b) => (a.name || '').localeCompare(b.name || '')), [foldersHook.rootFolders]);
-  const orphanTasks = useMemo(() => tasksHook.orphanTasks.sort((a, b) => (a.task || '').localeCompare(b.task || '')), [tasksHook.orphanTasks]);
+  const rootFolders = useMemo(
+    () => [...foldersHook.rootFolders].sort((a, b) => (a.name || '').localeCompare(b.name || '')),
+    [foldersHook.rootFolders],
+  );
+  const orphanTasks = useMemo(
+    () => [...tasksHook.orphanTasks].sort((a, b) => (a.task || '').localeCompare(b.task || '')),
+    [tasksHook.orphanTasks],
+  );
 
-  const handleAddNew = async () => {
+  const handleAddNew = useCallback(async () => {
     if (type === 'teams') {
       onAddTeam?.();
       return;
@@ -58,18 +64,28 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
       team_id: null,
       position: 0,
     });
-  };
+  }, [type, onAddTeam, userId, foldersHook]);
+
+  const handleToggleExpanded = useCallback(() => {
+    setIsExpanded((prev) => !prev);
+  }, []);
+
+  const handleHeaderContextMenu = useCallback((e: React.MouseEvent) => {
+    if (type === 'tasks') openContextMenu(e, { type: 'root' });
+  }, [openContextMenu, type]);
+
+  const handleTeamClick = useCallback((teamId: string) => {
+    onTeamClick?.(teamId);
+  }, [onTeamClick]);
 
   return (
     <div className="py-1">
       <div
         className="flex items-center justify-between px-1 group"
-        onContextMenu={(e) => {
-          if (type === 'tasks') openContextMenu(e, { type: 'root' });
-        }}
+        onContextMenu={handleHeaderContextMenu}
       >
         <button
-          onClick={() => setIsExpanded(!isExpanded)}
+          onClick={handleToggleExpanded}
           className="flex items-center gap-2 flex-1 px-2 py-1 hover:bg-gray-100 dark:hover:bg-dark-border rounded-md transition-colors text-left"
         >
           <ChevronRight
@@ -90,7 +106,7 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
       </div>
 
       {isExpanded && (
-        <div className="pl-2 mt-1 space-y-0.5">
+        <div className="pl-2 mt-1 space-y-0.5" style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 400px' }}>
           {type === 'tasks' ? (
             <>
               {rootFolders.map((folder: FolderDTO) => (
@@ -123,17 +139,13 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
                 <div className="pl-4 py-1.5 text-xs text-gray-500 dark:text-dark-text-muted text-left">No teams yet</div>
               )}
               {teams.map((team) => (
-                <button
+                <TeamItem
                   key={team.id}
-                  onClick={() => onTeamClick?.(team.id)}
-                  className={`w-full flex items-center gap-2 pl-4 pr-2 py-1.5 rounded text-sm transition-colors text-left ${
-                    activeTeamId === team.id
-                      ? 'bg-gray-100 dark:bg-dark-border text-gray-900 dark:text-dark-text'
-                      : 'text-gray-700 dark:text-dark-text-muted hover:bg-gray-100 dark:hover:bg-dark-border'
-                  }`}
-                >
-                  <span className="truncate flex-1">{team.name}</span>
-                </button>
+                  id={team.id}
+                  name={team.name}
+                  isActive={activeTeamId === team.id}
+                  onClick={handleTeamClick}
+                />
               ))}
             </>
           )}
@@ -144,3 +156,22 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
 };
 
 export default SidebarSection;
+
+const TeamItem: React.FC<{ id: string; name: string; isActive: boolean; onClick: (id: string) => void }> = React.memo(
+  ({ id, name, isActive, onClick }) => {
+    const handleClick = useCallback(() => onClick(id), [id, onClick]);
+    return (
+      <button
+        onClick={handleClick}
+        className={`w-full flex items-center gap-2 pl-4 pr-2 py-1.5 rounded text-sm transition-colors text-left ${
+          isActive
+            ? 'bg-gray-100 dark:bg-dark-border text-gray-900 dark:text-dark-text'
+            : 'text-gray-700 dark:text-dark-text-muted hover:bg-gray-100 dark:hover:bg-dark-border'
+        }`}
+      >
+        <span className="truncate flex-1">{name}</span>
+      </button>
+    );
+  },
+  (prev, next) => prev.id === next.id && prev.name === next.name && prev.isActive === next.isActive,
+);

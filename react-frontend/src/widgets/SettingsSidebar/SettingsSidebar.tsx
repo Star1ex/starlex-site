@@ -1,11 +1,11 @@
 import React, { useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, FileText, Palette, Lock } from 'lucide-react';
+import { ChevronLeft, FileText, Palette, Lock, Info } from 'lucide-react';
 
 interface SettingsSidebarProps {
   isOpen: boolean;
-  activeTab: 'contributing' | 'appearance' | 'password';
-  onTabChange: (tab: 'contributing' | 'appearance' | 'password') => void;
+  activeTab: 'contributing' | 'appearance' | 'password' | 'about';
+  onTabChange: (tab: 'contributing' | 'appearance' | 'password' | 'about') => void;
   onClose: () => void;
 }
 
@@ -13,6 +13,7 @@ const tabs = [
   { id: 'contributing', label: 'Contributing', icon: FileText },
   { id: 'appearance', label: 'Appearance', icon: Palette },
   { id: 'password', label: 'Change Password', icon: Lock },
+  { id: 'about', label: 'About Us', icon: Info },
 ];
 
 export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({

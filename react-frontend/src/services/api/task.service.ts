@@ -3,8 +3,8 @@ import { TaskDTO, CreateTaskRequest, UpdateTaskRequest, TaskProgress } from '../
 
 export const taskService = {
   // Personal
-  async getPersonalTasks(): Promise<TaskDTO[]> {
-    const response = await httpClient.get<TaskDTO[]>('/api/tasks');
+  async getPersonalTasks(options?: { signal?: AbortSignal }): Promise<TaskDTO[]> {
+    const response = await httpClient.get<TaskDTO[]>('/api/tasks', { signal: options?.signal as any });
     return response.data;
   },
 

@@ -139,7 +139,7 @@ export const RightSidebar: React.FC<Props> = ({ isMobile = false, onClose }) => 
           
           <button
             onClick={() => {
-              navigate('/about-us');
+              navigate('/settings?tab=about');
               onClose?.();
             }}
             className="w-full py-4 px-6 bg-white border-2 border-black text-black rounded-xl hover:bg-gray-100 transition-all duration-200 font-semibold text-lg transform hover:scale-[1.02]"
@@ -242,7 +242,7 @@ export const RightSidebar: React.FC<Props> = ({ isMobile = false, onClose }) => 
         </button>
         <button
                 onClick={() => {
-                  navigate('/about-us');
+                  navigate('/settings?tab=about');
                   setShowMenu(false);
                 }}
                 className="w-full text-left px-4 py-2.5 hover:bg-gray-100 transition-colors text-sm text-gray-700"

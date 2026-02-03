@@ -1,30 +1,63 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { folderService } from '@/services/api/index.js';
 import type { CreateFolderRequest, FolderDTO } from '@/types/dto.js';
 
 export const useFolders = () => {
-  const [folders, setFolders] = useState<FolderDTO[]>([]);
+  const [foldersById, setFoldersById] = useState<Record<string, FolderDTO>>({});
+  const [folderIds, setFolderIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const refreshControllerRef = useRef<AbortController | null>(null);
+  const refreshTimeoutRef = useRef<number | null>(null);
 
   const refreshFolders = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await folderService.getUserFolders();
+      if (refreshControllerRef.current) {
+        refreshControllerRef.current.abort();
+      }
+      const controller = new AbortController();
+      refreshControllerRef.current = controller;
+      const data = await folderService.getUserFolders({ signal: controller.signal });
       const personal = (data || []).filter((f) => f.team_id == null || f.team_id === '');
-      setFolders(personal);
-    } catch (err) {
+      const nextById: Record<string, FolderDTO> = {};
+      const nextIds: string[] = [];
+      for (const folder of personal) {
+        nextById[folder.id] = folder;
+        nextIds.push(folder.id);
+      }
+      setFoldersById(nextById);
+      setFolderIds(nextIds);
+    } catch (err: any) {
+      if (err?.name === 'CanceledError' || err?.name === 'AbortError') return;
       console.error('Failed to load folders:', err);
     } finally {
       setLoading(false);
     }
   }, []);
 
+  const debouncedRefresh = useCallback(() => {
+    if (refreshTimeoutRef.current) {
+      window.clearTimeout(refreshTimeoutRef.current);
+    }
+    refreshTimeoutRef.current = window.setTimeout(() => {
+      refreshFolders();
+    }, 150);
+  }, [refreshFolders]);
+
   useEffect(() => {
     refreshFolders();
-    const onCreated = () => refreshFolders();
+    const onCreated = () => debouncedRefresh();
     window.addEventListener('personalFolderCreated', onCreated);
-    return () => window.removeEventListener('personalFolderCreated', onCreated);
-  }, [refreshFolders]);
+    return () => {
+      window.removeEventListener('personalFolderCreated', onCreated);
+      if (refreshTimeoutRef.current) {
+        window.clearTimeout(refreshTimeoutRef.current);
+      }
+      if (refreshControllerRef.current) {
+        refreshControllerRef.current.abort();
+      }
+    };
+  }, [refreshFolders, debouncedRefresh]);
 
   const createFolder = useCallback(async (data: CreateFolderRequest) => {
     const tempId = `temp-${Date.now()}`;
@@ -42,7 +75,8 @@ export const useFolders = () => {
       updated_at: now,
     };
 
-    setFolders((prev) => [...prev, optimisticFolder]);
+    setFoldersById((prev) => ({ ...prev, [tempId]: optimisticFolder }));
+    setFolderIds((prev) => [...prev, tempId]);
 
     const payload: CreateFolderRequest = {
       name: data.name || 'New Folder',
@@ -60,22 +94,33 @@ export const useFolders = () => {
       if (typeof created === 'string') {
         await refreshFolders();
       } else {
-        setFolders((prev) => prev.map((f) => (f.id === tempId ? (created as any) : f)));
+        const real = created as FolderDTO;
+        setFoldersById((prev) => {
+          const next = { ...prev };
+          delete next[tempId];
+          next[real.id] = real;
+          return next;
+        });
+        setFolderIds((prev) => prev.map((id) => (id === tempId ? real.id : id)));
       }
-      window.dispatchEvent(new CustomEvent('personalFolderCreated'));
       return created;
     } catch (err) {
-      setFolders((prev) => prev.filter((f) => f.id !== tempId));
+      setFoldersById((prev) => {
+        const next = { ...prev };
+        delete next[tempId];
+        return next;
+      });
+      setFolderIds((prev) => prev.filter((id) => id !== tempId));
       throw err;
     }
   }, [refreshFolders]);
 
   const updateFolder = useCallback(async (id: string, data: Partial<CreateFolderRequest>) => {
-    setFolders((prev) => prev.map((f) => (f.id === id ? { ...f, ...data } as FolderDTO : f)));
+    setFoldersById((prev) => ({ ...prev, [id]: { ...prev[id], ...data } as FolderDTO }));
     try {
       const updated = await folderService.updateFolder(id, data as any);
       if (typeof updated !== 'string') {
-        setFolders((prev) => prev.map((f) => (f.id === id ? (updated as any) : f)));
+        setFoldersById((prev) => ({ ...prev, [id]: updated as FolderDTO }));
       }
       return updated;
     } catch (err) {
@@ -85,21 +130,28 @@ export const useFolders = () => {
   }, [refreshFolders]);
 
   const deleteFolder = useCallback(async (id: string) => {
-    const snapshot = folders;
-    setFolders((prev) => prev.filter((f) => f.id !== id));
+    const snapshotById = foldersById;
+    const snapshotIds = folderIds;
+    setFoldersById((prev) => {
+      const next = { ...prev };
+      delete next[id];
+      return next;
+    });
+    setFolderIds((prev) => prev.filter((folderId) => folderId !== id));
     try {
       await folderService.deleteFolder(id);
-      window.dispatchEvent(new CustomEvent('personalFolderCreated'));
     } catch (err) {
-      setFolders(snapshot);
+      setFoldersById(snapshotById);
+      setFolderIds(snapshotIds);
       throw err;
     }
-  }, [folders]);
+  }, [foldersById, folderIds]);
 
   const getSubfolders = useCallback((parentId: string) => {
-    return folders.filter((f) => f.parent_id === parentId);
-  }, [folders]);
+    return folderIds.map((id) => foldersById[id]).filter((f) => f?.parent_id === parentId);
+  }, [folderIds, foldersById]);
 
+  const folders = useMemo(() => folderIds.map((id) => foldersById[id]).filter(Boolean), [folderIds, foldersById]);
   const rootFolders = useMemo(() => folders.filter((f) => f.parent_id == null), [folders]);
 
   return {
