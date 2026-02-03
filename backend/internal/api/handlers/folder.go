@@ -193,6 +193,7 @@ func (h *Handlers) UpdateFolder(ctx *fiber.Ctx) error {
 		})
 	}
 
+	folderIDParams := ctx.Params("id")
 	var req dto.FolderDTO
 
 	if err := ctx.BodyParser(&req); err != nil {
@@ -201,6 +202,7 @@ func (h *Handlers) UpdateFolder(ctx *fiber.Ctx) error {
 		})
 	}
 
+	req.ID = folderIDParams
 	err := h.folderService.Update(context.Background(), dto.ToDomainFolder(&req))
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
