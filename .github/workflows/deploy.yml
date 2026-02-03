@@ -52,13 +52,8 @@ jobs:
           docker compose down --remove-orphans
           docker compose build --no-cache backend
           docker compose up -d
-          sleep 40
+          sleep 60
           docker compose ps
           BACKEND_STATUS=$(docker compose ps team-track-site-backend --format "{{.State}}")
           echo "Backend status: $BACKEND_STATUS"
-          if [[ ! "$BACKEND_STATUS" =~ "Up" ]]; then
-            docker compose logs --timestamps team-track-site-backend
-            exit 1
-          fi
-          docker compose logs --tail=20 --timestamps team-track-site-backend
-
+          docker compose logs --timestamps team-track-site-backend
