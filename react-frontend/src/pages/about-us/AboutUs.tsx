@@ -39,6 +39,8 @@ export default function AboutUs({ variant = 'page' }: AboutUsProps) {
       >
         <a
           href="https://github.com/Team-Tracks"
+          target="_blank"
+          rel="noopener noreferrer"
           className="py-3 rounded-2xl bg-black dark:bg-white text-white dark:text-black shadow-sm hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors duration-200 text-center"
           style={{ border: "none" }}
         >
@@ -46,13 +48,15 @@ export default function AboutUs({ variant = 'page' }: AboutUsProps) {
         </a>
         <a
           href="https://t.me/teamtrack1"
+          target="_blank"
+          rel="noopener noreferrer"
           className="py-3 rounded-2xl bg-black dark:bg-white text-white dark:text-black shadow-sm hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors duration-200 text-center"
           style={{ border: "none" }}
         >
           Telegram Channel
         </a>
         <a
-          href="mailto:teamtracktech@gmail.com"
+          href="mailto:teamtracktech@gmail.com?subject=Support"
           className="py-3 rounded-2xl bg-black dark:bg-white text-white dark:text-black shadow-sm hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors duration-200 text-center"
           style={{ border: "none" }}
         >

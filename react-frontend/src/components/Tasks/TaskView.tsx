@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import MarkdownEditor from '@/components/TaskView/MarkdownEditor.js';
 import { useDebounce } from '@/shared/hooks/useDebounce.js';
@@ -24,7 +24,9 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
   });
   // per-field saving handled by useAutoSave
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [showMarkdownPreview, setShowMarkdownPreview] = useState(false);
+  const [showMarkdownPreview, setShowMarkdownPreview] = useState(true);
+  const editorRef = useRef<HTMLTextAreaElement | null>(null);
+  const typingTimeoutRef = useRef<number | null>(null);
 
   // Local editing fields
   const [title, setTitle] = useState('');
@@ -39,6 +41,24 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
     if (!locationFolderId) return;
     setTask((prev) => ({ ...prev, folder_id: locationFolderId }));
   }, [isNew, locationFolderId]);
+
+  useEffect(() => {
+    if (!showMarkdownPreview) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName?.toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || (target && (target as any).isContentEditable)) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const isTypingKey = e.key.length === 1 || e.key === 'Backspace' || e.key === 'Delete' || e.key === 'Enter';
+      if (!isTypingKey) return;
+      setShowMarkdownPreview(false);
+      window.setTimeout(() => {
+        editorRef.current?.focus();
+      }, 0);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [showMarkdownPreview]);
 
 
 
@@ -148,6 +168,21 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
     };
   }, [debouncedTitle, debouncedDescription, debouncedPriority, debouncedProgress, taskIdParam, isInitialLoad]);
   const isAnySaving = isSavingCombined;
+
+  useEffect(() => {
+    if (showMarkdownPreview) return;
+    if (typingTimeoutRef.current) {
+      window.clearTimeout(typingTimeoutRef.current);
+    }
+    typingTimeoutRef.current = window.setTimeout(() => {
+      setShowMarkdownPreview(true);
+    }, 1200);
+    return () => {
+      if (typingTimeoutRef.current) {
+        window.clearTimeout(typingTimeoutRef.current);
+      }
+    };
+  }, [description, showMarkdownPreview]);
 
 
 
@@ -263,6 +298,11 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
             textareaClassName="w-full min-h-[400px] text-base leading-relaxed bg-transparent border-none outline-none resize-none font-normal"
             previewClassName="min-h-[400px]"
             containerClassName="flex flex-col h-full"
+            onPreviewClick={() => {
+              setShowMarkdownPreview(false);
+              window.setTimeout(() => editorRef.current?.focus(), 0);
+            }}
+            textareaRef={editorRef}
           />
         </div>
 

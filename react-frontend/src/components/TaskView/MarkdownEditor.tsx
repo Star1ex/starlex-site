@@ -12,6 +12,8 @@ interface MarkdownEditorProps {
   textareaClassName?: string;
   previewClassName?: string;
   containerClassName?: string;
+  onPreviewClick?: () => void;
+  textareaRef?: React.Ref<HTMLTextAreaElement>;
 }
 
 export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
@@ -24,6 +26,8 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   textareaClassName,
   previewClassName,
   containerClassName,
+  onPreviewClick,
+  textareaRef,
 }) => {
   const [showPreview, setShowPreview] = useState(false);
   const isPreview = mode ? mode === 'preview' : showPreview;
@@ -70,11 +74,12 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
 
       <div className="flex-1 overflow-hidden">
         {isPreview ? (
-          <div className={previewClassName || 'h-full overflow-y-auto'}>
+          <div className={previewClassName || 'h-full overflow-y-auto'} onClick={onPreviewClick}>
             <MarkdownPreview value={value} />
           </div>
         ) : (
           <textarea
+            ref={textareaRef as any}
             data-markdown-editor="true"
             value={value}
             onChange={(e) => onChange(e.target.value)}
