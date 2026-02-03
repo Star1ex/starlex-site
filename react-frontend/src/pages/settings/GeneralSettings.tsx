@@ -145,7 +145,7 @@ export const GeneralSettings: React.FC = () => {
               sidebarOpen ? 'opacity-100 translate-x-0' : 'opacity-100 translate-x-0'
             }`}
           >
-            <div className="bg-white/80 dark:bg-dark-surface/80 rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] p-6 sm:p-10">
+            <div className="bg-white/80 dark:bg-dark-surface/80 rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] p-6 sm:p-10 max-w-4xl mx-auto w-full">
               {renderContent()}
             </div>
           </div>

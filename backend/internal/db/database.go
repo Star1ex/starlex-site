@@ -69,9 +69,9 @@ func migrate(db *DB) error {
 		return fmt.Errorf("error migrating models: %v", err)
 	}
 
-	//if err := fillDefaultOwnerIDs(db); err != nil {
-	//	return fmt.Errorf("failed to fill task owner_ids: %v", err)
-	//}
+	if err := fillDefaultOwnerIDs(db); err != nil {
+		return fmt.Errorf("failed to fill task owner_ids: %v", err)
+	}
 
 	log.Println("Models migrated successfully")
 	return nil

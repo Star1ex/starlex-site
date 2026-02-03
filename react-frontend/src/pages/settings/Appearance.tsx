@@ -9,6 +9,12 @@ export const Appearance: React.FC = () => {
     { id: 'ultra-dark', label: 'Ultra Dark' },
     { id: 'solarized', label: 'Solarized White' },
   ] as const;
+  const previewThemes = [
+    { id: 'light', label: 'White', bg: 'bg-white', surface: 'bg-gray-50', border: 'border-gray-200', text: 'text-gray-900', muted: 'text-gray-500' },
+    { id: 'dark', label: 'Dark Blue', bg: 'bg-gray-900', surface: 'bg-[#0f172a]', border: 'border-gray-800', text: 'text-gray-100', muted: 'text-gray-400' },
+    { id: 'ultra-dark', label: 'Ultra Dark', bg: 'bg-[#1e2124]', surface: 'bg-[#2f3136]', border: 'border-[#202225]', text: 'text-gray-100', muted: 'text-gray-400' },
+    { id: 'solarized', label: 'Solarized White', bg: 'bg-[#fdf6e3]', surface: 'bg-[#f7f0dd]', border: 'border-[#e7e0cc]', text: 'text-[#586e75]', muted: 'text-[#657b83]' },
+  ] as const;
 
   return (
     <div className="space-y-8 text-center max-w-3xl mx-auto">
@@ -27,28 +33,15 @@ export const Appearance: React.FC = () => {
           <h4 className="font-medium text-gray-900 dark:text-dark-text">Theme</h4>
         </div>
         <div className="px-6 pb-6 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-left sm:text-left">
+          <div className="flex flex-col gap-2 text-left sm:text-left">
             <div className="flex-1">
               <p className="text-sm text-gray-600 dark:text-dark-text-muted">
                 Current theme: <span className="font-medium text-gray-900 dark:text-dark-text">{themeOptions.find(t => t.id === theme)?.label}</span>
               </p>
               <p className="text-xs text-gray-500 dark:text-dark-text-muted mt-1">
-                Click the toggle to cycle themes
+                Select a theme below
               </p>
             </div>
-            <button
-              onClick={toggleTheme}
-              className="relative w-16 h-8 rounded-full bg-gray-300 dark:bg-gray-700 transition-all duration-500 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 dark:focus:ring-offset-dark-surface"
-              role="switch"
-              aria-checked={theme !== 'light'}
-              aria-label="Toggle theme"
-            >
-              <div
-                className={`absolute top-1 left-1 w-6 h-6 rounded-full bg-white dark:bg-yellow-400 shadow-md transform transition-all duration-500 ease-in-out flex items-center justify-center ${
-                  theme !== 'light' ? 'translate-x-8' : 'translate-x-0'
-                }`}
-              />
-            </button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -71,14 +64,13 @@ export const Appearance: React.FC = () => {
 
       {/* Theme Preview */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        <div className="p-4 rounded-xl bg-gray-50 dark:bg-dark-bg shadow-sm">
-          <div className="w-full h-24 bg-white dark:bg-dark-surface rounded-lg shadow-sm mb-2" />
-          <p className="text-xs text-gray-600 dark:text-dark-text-muted">Light Colors</p>
-        </div>
-        <div className="p-4 rounded-xl bg-gray-900 dark:bg-dark-surface shadow-sm">
-          <div className="w-full h-24 bg-gray-800 dark:bg-gray-700 rounded-lg shadow-sm mb-2" />
-          <p className="text-xs text-gray-400">Dark Colors</p>
-        </div>
+        {previewThemes.map((preview) => (
+          <div key={preview.id} className={`p-4 rounded-xl shadow-sm ${preview.bg}`}>
+            <div className={`w-full h-24 rounded-lg shadow-sm mb-3 border ${preview.surface} ${preview.border}`} />
+            <div className={`text-xs font-medium ${preview.text}`}>{preview.label}</div>
+            <div className={`text-[11px] mt-0.5 ${preview.muted}`}>Preview palette</div>
+          </div>
+        ))}
       </div>
 
       {/* Additional Theme Settings */}
