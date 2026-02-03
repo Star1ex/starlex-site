@@ -17,7 +17,7 @@ interface FolderItemProps {
   onUpdateTask: (id: string, data: Partial<CreateTaskRequest>) => Promise<any>;
 }
 
-export const FolderItem: React.FC<FolderItemProps> = ({ folder, level, getSubfolders, getFolderTasks, onUpdateFolder, onDeleteFolder, onUpdateTask }) => {
+export const FolderItem: React.FC<FolderItemProps> = React.memo(({ folder, level, getSubfolders, getFolderTasks, onUpdateFolder, onDeleteFolder, onUpdateTask }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const navigate = useNavigate();
@@ -144,6 +144,15 @@ export const FolderItem: React.FC<FolderItemProps> = ({ folder, level, getSubfol
       )}
     </div>
   );
-};
+}, (prev, next) => {
+  return (
+    prev.folder.id === next.folder.id &&
+    prev.folder.name === next.folder.name &&
+    prev.folder.color === next.folder.color &&
+    prev.folder.parent_id === next.folder.parent_id &&
+    prev.folder.updated_at === next.folder.updated_at &&
+    prev.level === next.level
+  );
+});
 
 export default FolderItem;

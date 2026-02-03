@@ -27,6 +27,23 @@ export const useFolders = () => {
   }, [refreshFolders]);
 
   const createFolder = useCallback(async (data: CreateFolderRequest) => {
+    const tempId = `temp-${Date.now()}`;
+    const now = new Date().toISOString();
+    const optimisticFolder: FolderDTO = {
+      id: tempId,
+      name: data.name || 'New Folder',
+      color: data.color || '#3B82F6',
+      icon: data.icon || '📁',
+      parent_id: data.parent_id ?? null,
+      team_id: data.team_id ?? null,
+      owner_id: data.owner_id,
+      position: data.position ?? 0,
+      created_at: now,
+      updated_at: now,
+    };
+
+    setFolders((prev) => [...prev, optimisticFolder]);
+
     const payload: CreateFolderRequest = {
       name: data.name || 'New Folder',
       color: data.color || '#3B82F6',
@@ -37,23 +54,47 @@ export const useFolders = () => {
       position: data.position ?? 0,
     };
 
-    const created = await folderService.createFolder(payload);
-    await refreshFolders();
-    window.dispatchEvent(new CustomEvent('personalFolderCreated'));
-    return created;
+    try {
+      const created = await folderService.createFolder(payload);
+      // If API returns a string, refresh to reconcile. Otherwise replace temp.
+      if (typeof created === 'string') {
+        await refreshFolders();
+      } else {
+        setFolders((prev) => prev.map((f) => (f.id === tempId ? (created as any) : f)));
+      }
+      window.dispatchEvent(new CustomEvent('personalFolderCreated'));
+      return created;
+    } catch (err) {
+      setFolders((prev) => prev.filter((f) => f.id !== tempId));
+      throw err;
+    }
   }, [refreshFolders]);
 
   const updateFolder = useCallback(async (id: string, data: Partial<CreateFolderRequest>) => {
-    const updated = await folderService.updateFolder(id, data as any);
-    await refreshFolders();
-    return updated;
+    setFolders((prev) => prev.map((f) => (f.id === id ? { ...f, ...data } as FolderDTO : f)));
+    try {
+      const updated = await folderService.updateFolder(id, data as any);
+      if (typeof updated !== 'string') {
+        setFolders((prev) => prev.map((f) => (f.id === id ? (updated as any) : f)));
+      }
+      return updated;
+    } catch (err) {
+      await refreshFolders();
+      throw err;
+    }
   }, [refreshFolders]);
 
   const deleteFolder = useCallback(async (id: string) => {
-    await folderService.deleteFolder(id);
-    await refreshFolders();
-    window.dispatchEvent(new CustomEvent('personalFolderCreated'));
-  }, [refreshFolders]);
+    const snapshot = folders;
+    setFolders((prev) => prev.filter((f) => f.id !== id));
+    try {
+      await folderService.deleteFolder(id);
+      window.dispatchEvent(new CustomEvent('personalFolderCreated'));
+    } catch (err) {
+      setFolders(snapshot);
+      throw err;
+    }
+  }, [folders]);
 
   const getSubfolders = useCallback((parentId: string) => {
     return folders.filter((f) => f.parent_id === parentId);

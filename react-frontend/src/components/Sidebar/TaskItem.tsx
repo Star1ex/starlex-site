@@ -11,7 +11,7 @@ interface TaskItemProps {
   onUpdateTask: (id: string, data: Partial<CreateTaskRequest>) => Promise<any>;
 }
 
-export const TaskItem: React.FC<TaskItemProps> = ({ task, level, onUpdateTask }) => {
+export const TaskItem: React.FC<TaskItemProps> = React.memo(({ task, level, onUpdateTask }) => {
   const navigate = useNavigate();
   const { openContextMenu } = useContextMenu();
   const [isRenaming, setIsRenaming] = useState(false);
@@ -72,6 +72,15 @@ export const TaskItem: React.FC<TaskItemProps> = ({ task, level, onUpdateTask })
 
     </div>
   );
-};
+}, (prev, next) => {
+  return (
+    prev.task.id === next.task.id &&
+    prev.task.task === next.task.task &&
+    prev.task.folder_id === next.task.folder_id &&
+    prev.task.priority === next.task.priority &&
+    prev.task.progress === next.task.progress &&
+    prev.level === next.level
+  );
+});
 
 export default TaskItem;
