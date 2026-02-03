@@ -51,3 +51,20 @@ jobs:
         run: |
           docker compose down
           docker compose up -d --build
+          
+          sleep 20
+        
+          echo "=== Status ==="
+          docker compose ps
+          
+          if ! docker compose ps --filter "name=team-track-backend" --format "table {{.Name}}\t{{.State}}" | grep -q "team-track-backend.*Up"; then
+            echo "Crash. Logs..."
+            echo "=== logs team-track-backend ==="
+            docker-compose logs team-track-backend
+            exit 1
+          fi
+          
+          echo "Successfully started containers"
+          echo "===  ==="
+          docker compose logs --tail=20 team-track-backend
+
