@@ -49,22 +49,16 @@ jobs:
 
       - name: Build and Deploy
         run: |
-          docker compose down
-          docker compose up -d --build
-          
-          sleep 20
-        
-          echo "=== Status ==="
+          docker compose down --remove-orphans
+          docker compose build --no-cache backend
+          docker compose up -d
+          sleep 40
           docker compose ps
-          
-          if ! docker compose ps --filter "name=team-track-site-backend" --format "table {{.Name}}\t{{.State}}" | grep -q "team-track-site-backend.*Up"; then
-            echo "Crash. Logs..."
-            echo "=== logs team-track-site-backend ==="
-            docker-compose logs team-track-site-backend
+          BACKEND_STATUS=$(docker compose ps team-track-site-backend --format "{{.State}}")
+          echo "Backend status: $BACKEND_STATUS"
+          if [[ ! "$BACKEND_STATUS" =~ "Up" ]]; then
+            docker compose logs --timestamps team-track-site-backend
             exit 1
           fi
-          
-          echo "Successfully started containers"
-          echo "===  ==="
-          docker compose logs --tail=20 team-track-site-backend
+          docker compose logs --tail=20 --timestamps team-track-site-backend
 
