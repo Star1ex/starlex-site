@@ -4,6 +4,10 @@ import Avatar from '@/shared/ui/Avatar.js';
 import type { User, CreateTaskFormData } from '@/entities/types.js';
 import { taskService } from '@/services/api/index.js';
 import { useAuth } from '@/contexts/AuthContext.js';
+import { EditorContent, useEditor } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Placeholder from '@tiptap/extension-placeholder';
+import Link from '@tiptap/extension-link';
 
 
 interface CreateTaskModalProps {
@@ -46,6 +50,48 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
       resetForm();
     }
   }, [isOpen, resetForm]);
+
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Link.configure({
+        openOnClick: true,
+        autolink: true,
+        linkOnPaste: true,
+      }),
+      Placeholder.configure({
+        placeholder: 'Describe the task…',
+        showOnlyWhenEditable: true,
+        showOnlyCurrent: false,
+      }),
+    ],
+    content: formData.description || '',
+    onUpdate: ({ editor: tiptap }) => {
+      setFormData((prev) => ({ ...prev, description: tiptap.getHTML() }));
+    },
+    editorProps: {
+      attributes: {
+        class: 'team-task-create-editor',
+      },
+    },
+  });
+
+  useEffect(() => {
+    if (!editor) return;
+    const current = editor.getHTML();
+    if ((formData.description || '') !== current) {
+      editor.commands.setContent(formData.description || '', false);
+    }
+  }, [formData.description, editor]);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onEsc);
+    return () => document.removeEventListener('keydown', onEsc);
+  }, [isOpen, onClose]);
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
@@ -117,7 +163,7 @@ return (
     role="dialog"
     aria-modal="true"
   >
-    <div className="bg-white dark:bg-dark-surface rounded-2xl shadow-2xl w-full max-w-sm sm:max-w-md max-h-[90vh] overflow-y-auto">
+    <div className="bg-white dark:bg-dark-surface rounded-2xl shadow-2xl w-[60vw] max-w-[60vw] min-w-[320px] max-h-[90vh] overflow-y-auto">
       {/* Header */}
       <div className="p-6 sm:p-8">
         <h2 className="text-xl sm:text-2xl font-bold mb-1 sm:mb-2 text-gray-900 dark:text-dark-text">Create Task</h2>
@@ -137,7 +183,7 @@ return (
             type="text"
             value={formData.task}
             onChange={(e) => setFormData({ ...formData, task: e.target.value })}
-            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent text-sm sm:text-base bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text transition-all duration-200"
+            className="w-full px-0 py-2 bg-transparent border-0 border-b border-gray-200 dark:border-dark-border focus:outline-none focus:ring-0 text-sm sm:text-base text-gray-900 dark:text-dark-text transition-colors"
             placeholder="Enter task name"
             disabled={isLoading}
           />
@@ -148,15 +194,9 @@ return (
           <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-dark-text mb-1 sm:mb-2" htmlFor="description">
             Description
           </label>
-          <textarea
-            id="description"
-            value={formData.description}
-            onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-            rows={4}
-            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all duration-200 resize-vertical text-sm sm:text-base bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text"
-            placeholder="Optional description..."
-            disabled={isLoading}
-          />
+          <div className="mt-2">
+            <EditorContent editor={editor} />
+          </div>
         </div>
 
         {/* Status */}
@@ -170,7 +210,7 @@ return (
             onChange={(e) =>
               setFormData({ ...formData, progress: e.target.value as 'not_started' | 'in_progress' | 'done' })
             }
-            className="w-full px-3 sm:px-4 py-2.5 sm:py-3 border border-gray-300 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent text-sm sm:text-base bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text transition-all duration-200"
+            className="w-full px-0 py-2 bg-transparent border-0 border-b border-gray-200 dark:border-dark-border focus:outline-none focus:ring-0 text-sm sm:text-base text-gray-900 dark:text-dark-text transition-colors"
             disabled={isLoading}
           >
             <option value="not_started">Not started</option>
@@ -182,13 +222,13 @@ return (
         {/* Assign Users */}
         <div>
           <label className="block text-sm sm:text-base font-medium text-gray-700 dark:text-dark-text mb-1 sm:mb-2">Assign Users</label>
-          <div className="space-y-2 max-h-48 sm:max-h-60 overflow-y-auto border border-gray-200 dark:border-dark-border rounded-xl p-2 sm:p-3 bg-gray-50 dark:bg-dark-border/30">
+          <div className="space-y-2 max-h-48 sm:max-h-60 overflow-y-auto p-1 sm:p-2">
             {users.map((user) => {
               const isSelected = formData.user_ids.includes(user.id);
               return (
                 <label
                   key={user.id}
-                  className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-lg hover:bg-white dark:hover:bg-dark-surface cursor-pointer transition-colors"
+                  className="flex items-center gap-2 sm:gap-3 p-2 sm:p-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-border/40 cursor-pointer transition-colors"
                 >
                   <input
                     type="checkbox"
@@ -216,7 +256,7 @@ return (
             type="button"
             onClick={onClose}
             disabled={isLoading}
-            className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 border border-gray-300 dark:border-dark-border text-gray-700 dark:text-dark-text rounded-xl hover:bg-gray-50 dark:hover:bg-dark-border font-medium text-sm sm:text-base transition-all duration-200"
+            className="flex-1 px-4 sm:px-6 py-2.5 sm:py-3 text-gray-700 dark:text-dark-text rounded-xl hover:bg-gray-50 dark:hover:bg-dark-border/40 font-medium text-sm sm:text-base transition-all duration-200"
           >
             Cancel
           </button>
@@ -230,6 +270,34 @@ return (
         </div>
       </form>
     </div>
+
+    <style>{`
+      .team-task-create-editor {
+        min-height: 260px;
+        padding: 0;
+        outline: none;
+        border: none;
+        color: inherit;
+        font-size: 1rem;
+        line-height: 1.7;
+        background: transparent;
+      }
+      .team-task-create-editor p { margin: 0 0 0.9em 0; }
+      .team-task-create-editor h1 { font-size: 1.8rem; font-weight: 700; margin: 0.6em 0 0.4em 0; line-height: 1.15; }
+      .team-task-create-editor h2 { font-size: 1.45rem; font-weight: 700; margin: 0.7em 0 0.4em 0; line-height: 1.2; }
+      .team-task-create-editor h3 { font-size: 1.2rem; font-weight: 700; margin: 0.7em 0 0.35em 0; line-height: 1.25; }
+      .team-task-create-editor ul, .team-task-create-editor ol { padding-left: 1.5em; margin: 0 0 0.9em 0; }
+      .team-task-create-editor li { margin: 0.2em 0; }
+      .team-task-create-editor code { background-color: #f3f4f6; padding: 0.2em 0.35em; border-radius: 0.25rem; font-size: 0.95em; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+      .team-task-create-editor pre { background-color: #f3f4f6; padding: 1em; border-radius: 0.5rem; overflow-x: auto; margin: 0 0 1em 0; }
+      .team-task-create-editor blockquote { border-left: 3px solid #e5e7eb; padding-left: 1em; margin: 0 0 1em 0; color: #6b7280; }
+      .team-task-create-editor a { color: #2563eb; text-decoration: underline; }
+      .team-task-create-editor .is-empty::before { content: attr(data-placeholder); float: left; color: #9ca3af; pointer-events: none; height: 0; }
+      .dark .team-task-create-editor code { background-color: #1e293b; color: #f1f5f9; }
+      .dark .team-task-create-editor pre { background-color: #1e293b; color: #f1f5f9; }
+      .dark .team-task-create-editor blockquote { border-left-color: #475569; color: #cbd5e1; }
+      .dark .team-task-create-editor a { color: #60a5fa; }
+    `}</style>
   </div>
 );
 

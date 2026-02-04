@@ -72,6 +72,8 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
   const [isEditingAssignee, setIsEditingAssignee] = useState(false);
   const [isEditingStatus, setIsEditingStatus] = useState(false);
   const [isEditingPriority, setIsEditingPriority] = useState(false);
+  const [isRenaming, setIsRenaming] = useState(false);
+  const [titleDraft, setTitleDraft] = useState(task.task || '');
   const [showContextMenu, setShowContextMenu] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -86,6 +88,17 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
   const priorityRef = useRef<HTMLDivElement>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
   const assigneeDropdownRef = useRef<HTMLDivElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setTitleDraft(task.task || '');
+  }, [task.id, task.task]);
+
+  useEffect(() => {
+    if (!isRenaming) return;
+    titleInputRef.current?.focus();
+    titleInputRef.current?.select();
+  }, [isRenaming]);
 
   // Handle user_ids - can be array of TaskUser objects or strings
   const userIds = React.useMemo(() => {
@@ -109,6 +122,16 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
     const s = task.progress as 'not_started' | 'in_progress' | 'done';
     return (s && statusConfig[s]) ? s : 'not_started';
   }, [task.progress]);
+
+  const handleTitleChange = async (next: string) => {
+    setTitleDraft(next);
+    onUpdate({ ...task, task: next });
+    try {
+      await taskService.updateTeamTaskTitle(teamId, task.id, next);
+    } catch (err) {
+      console.error('Failed to update task title:', err);
+    }
+  };
 
   // Calculate dropdown position - anchor to task card, prefer opening downward
   useEffect(() => {
@@ -263,24 +286,11 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
 
     try {
       if (field === 'progress') {
-        const updated = await taskService.updateTeamTaskProgress(teamId, task.id, value as any);
-        onUpdate(updated as Task);
+        await taskService.updateTeamTaskStatus(teamId, task.id, value as any);
       } else if (field === 'priority') {
-        const updated = await taskService.updateTeamTask(teamId, task.id, {
-          task: task.task,
-          description: task.description,
-          priority: value as 'low' | 'medium' | 'high',
-          user_ids: userIds,
-        });
-        onUpdate(updated as Task);
+        await taskService.updateTeamTaskPriority(teamId, task.id, value as any);
       } else {
-        const updated = await taskService.updateTeamTask(teamId, task.id, {
-          task: task.task,
-          description: task.description,
-          priority: task.priority,
-          user_ids: value as string[],
-        });
-        onUpdate(updated as Task);
+        await taskService.updateTeamTaskAssignees(teamId, task.id, value as string[]);
       }
     } catch (error) {
       console.error('Failed to update task:', error);
@@ -347,9 +357,38 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
       <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 min-w-[600px] sm:min-w-0">
         {/* Task Name */}
         <div className="flex-1 min-w-[120px] sm:min-w-[200px] max-w-[200px] sm:max-w-none">
-          <div className="font-medium text-gray-900 dark:text-dark-text text-xs sm:text-sm leading-tight truncate" title={task.task || 'Untitled Task'}>
-            {task.task || 'Untitled Task'}
-          </div>
+          {isRenaming ? (
+            <input
+              ref={titleInputRef}
+              value={titleDraft}
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => handleTitleChange(e.target.value)}
+              onBlur={() => setIsRenaming(false)}
+              onKeyDown={(e) => {
+                if (e.key === 'Escape') {
+                  e.preventDefault();
+                  setTitleDraft(task.task || '');
+                  setIsRenaming(false);
+                }
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  setIsRenaming(false);
+                }
+              }}
+              className="w-full bg-transparent border-0 outline-none text-xs sm:text-sm font-medium text-gray-900 dark:text-dark-text"
+            />
+          ) : (
+            <div
+              className="font-medium text-gray-900 dark:text-dark-text text-xs sm:text-sm leading-tight truncate"
+              title={task.task || 'Untitled Task'}
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                setIsRenaming(true);
+              }}
+            >
+              {task.task || 'Untitled Task'}
+            </div>
+          )}
         </div>
 
         {/* Assignee */}

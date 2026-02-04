@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import Avatar from '@/shared/ui/Avatar.js';
+import MarkdownPreview from '@/components/TaskView/MarkdownPreview.js';
 import type { Task, User } from '@/entities/types.js';
 import { taskService } from '@/services/api/index.js';
 
@@ -16,7 +16,6 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
   isOpen,
   onClose,
   task,
-  users,
   onSuccess,
   teamId,
 }) => {
@@ -28,7 +27,6 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
     user_ids: [] as string[],
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [isDeleting, setIsDeleting] = useState(false);
 
   useEffect(() => {
     if (task && isOpen) {
@@ -43,6 +41,15 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
     }
   }, [task, isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onEsc);
+    return () => document.removeEventListener('keydown', onEsc);
+  }, [isOpen, onClose]);
+
   const handleSubmit = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
@@ -50,14 +57,34 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
 
       setIsLoading(true);
       try {
-        await taskService.updateTeamTask(teamId, task.id, {
-          task: formData.task,
-          description: formData.description,
-          priority: formData.priority,
-          user_ids: formData.user_ids,
-        });
+        const updates: Promise<void>[] = [];
+        const trimmedTitle = formData.task.trim();
+        if (trimmedTitle !== (task.task || '')) {
+          updates.push(taskService.updateTeamTaskTitle(teamId, task.id, trimmedTitle));
+        }
+        if ((formData.description || '') !== (task.description || '')) {
+          updates.push(taskService.updateTeamTaskDescription(teamId, task.id, formData.description || ''));
+        }
+        if ((formData.priority || 'low') !== (task.priority || 'low')) {
+          updates.push(taskService.updateTeamTaskPriority(teamId, task.id, formData.priority));
+        }
+        if ((formData.progress || 'not_started') !== (task.progress || 'not_started')) {
+          updates.push(taskService.updateTeamTaskStatus(teamId, task.id, formData.progress as any));
+        }
 
-        await taskService.updateTeamTaskProgress(teamId, task.id, formData.progress as any);
+        const originalUserIds =
+          task.user_ids?.map((u) => (typeof u === 'string' ? u : u.id)).filter(Boolean) || [];
+        const nextUserIds = formData.user_ids || [];
+        const usersChanged =
+          originalUserIds.length !== nextUserIds.length ||
+          originalUserIds.some((id) => !nextUserIds.includes(id));
+        if (usersChanged) {
+          updates.push(taskService.updateTeamTaskAssignees(teamId, task.id, nextUserIds));
+        }
+
+        if (updates.length > 0) {
+          await Promise.all(updates);
+        }
 
         onSuccess();
         onClose();
@@ -70,21 +97,6 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
     [task, formData, teamId, onSuccess, onClose]
   );
 
-  const handleDelete = useCallback(async () => {
-    if (!task || !confirm('Are you sure you want to delete this task?')) return;
-
-    setIsDeleting(true);
-    try {
-      await taskService.deleteTeamTask(teamId, task.id);
-      onSuccess();
-      onClose();
-    } catch (error) {
-      console.error('Failed to delete task:', error);
-    } finally {
-      setIsDeleting(false);
-    }
-  }, [task, teamId, onSuccess, onClose]);
-
   if (!isOpen || !task) return null;
 
   return (
@@ -94,12 +106,9 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
       aria-modal="true"
     >
       <div className="bg-white dark:bg-dark-surface rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto animate-slideUp">
-        <div className="p-6 sm:p-8">
-          <div className="flex items-start justify-between mb-6">
-            <div>
-              <h2 className="text-2xl sm:text-3xl font-bold mb-1 text-gray-900 dark:text-dark-text">Edit Task</h2>
-              <p className="text-gray-500 dark:text-dark-text-muted text-sm">Update task details and description</p>
-            </div>
+        <div className="px-6 sm:px-8 pt-6 sm:pt-8 pb-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-dark-text">Edit Task</h2>
             <button
               onClick={onClose}
               className="flex-shrink-0 p-2 text-gray-400 dark:text-dark-text-muted hover:text-gray-600 dark:hover:text-dark-text hover:bg-gray-100 dark:hover:bg-dark-border rounded-lg transition-all duration-200"
@@ -113,8 +122,8 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
 
         <form onSubmit={handleSubmit} className="px-6 sm:px-8 pb-6 sm:pb-8 space-y-6">
           <div>
-            <label className="block text-sm font-semibold text-gray-900 dark:text-dark-text mb-2" htmlFor="task-name">
-              Task Name *
+            <label className="block text-xs uppercase tracking-[0.2em] text-gray-500 dark:text-dark-text-muted mb-2" htmlFor="task-name">
+              Title
             </label>
             <input
               id="task-name"
@@ -122,128 +131,50 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
               type="text"
               value={formData.task}
               onChange={(e) => setFormData({ ...formData, task: e.target.value })}
-              className="w-full px-4 py-3 border border-gray-200 dark:border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent text-base bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text transition-all duration-200"
-              placeholder="Enter task name"
+              className="w-full px-0 py-2 border-0 border-b border-gray-200 dark:border-dark-border focus:outline-none focus:ring-0 focus:border-gray-900 dark:focus:border-white text-2xl font-medium bg-transparent text-gray-900 dark:text-dark-text transition-colors duration-200"
+              placeholder="Task title"
               disabled={isLoading}
             />
           </div>
 
           <div>
-            <label className="block text-sm font-semibold text-gray-900 dark:text-dark-text mb-2" htmlFor="description">
+            <label className="block text-xs uppercase tracking-[0.2em] text-gray-500 dark:text-dark-text-muted mb-3" htmlFor="description">
               Description
             </label>
-            <textarea
-              id="description"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              rows={20}
-              className="w-full px-4 py-3 border border-gray-200 dark:border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent transition-all duration-200 resize-y text-sm leading-relaxed font-mono bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text"
-              placeholder="Write a detailed description for this task...&#10;&#10;Supports Markdown formatting:&#10;• **bold**&#10;• *italic*&#10;• Lists&#10;• Code blocks"
-              disabled={isLoading}
-            />
-            <p className="text-xs text-gray-500 dark:text-dark-text-muted mt-2">Supports Markdown formatting for rich text</p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 dark:text-dark-text mb-2" htmlFor="priority">
-                Priority
-              </label>
-              <select
-                id="priority"
-                value={formData.priority}
-                onChange={(e) => setFormData({ ...formData, priority: e.target.value as 'low' | 'medium' | 'high' })}
-                className="w-full px-4 py-3 border border-gray-200 dark:border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent text-base bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text transition-all duration-200"
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <textarea
+                id="description"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={18}
+                className="w-full min-h-[320px] px-4 py-4 border border-gray-200 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-black/5 dark:focus:ring-white/10 focus:border-gray-300 dark:focus:border-dark-border transition-all duration-200 resize-y text-sm leading-relaxed font-mono bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text"
+                placeholder="Write in Markdown..."
                 disabled={isLoading}
-              >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-sm font-semibold text-gray-900 dark:text-dark-text mb-2" htmlFor="status">
-                Status
-              </label>
-              <select
-                id="status"
-                value={formData.progress}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    progress: e.target.value as 'not_started' | 'in_progress' | 'done',
-                  })
-                }
-                className="w-full px-4 py-3 border border-gray-200 dark:border-dark-border rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white focus:border-transparent text-base bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text transition-all duration-200"
-                disabled={isLoading}
-              >
-                <option value="not_started">Not started</option>
-                <option value="in_progress">In Progress</option>
-                <option value="done">Done</option>
-              </select>
+              />
+              <div className="min-h-[320px] border border-gray-200 dark:border-dark-border rounded-xl px-4 py-4 bg-gray-50/40 dark:bg-dark-border/20 overflow-y-auto">
+                <div className="task-edit-preview">
+                  <MarkdownPreview value={formData.description} />
+                </div>
+              </div>
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-gray-900 dark:text-dark-text mb-2">Assign Users</label>
-            <div className="space-y-2 max-h-64 overflow-y-auto border border-gray-200 dark:border-dark-border rounded-lg p-4 bg-gray-50 dark:bg-dark-border/30">
-              {users.map((user) => {
-                const isSelected = formData.user_ids.includes(user.id);
-                return (
-                  <label
-                    key={user.id}
-                    className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-all duration-200 ${
-                      isSelected ? 'bg-white dark:bg-dark-surface border-2 border-gray-300 dark:border-dark-border shadow-sm' : 'hover:bg-white dark:hover:bg-dark-surface'
-                    }`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isSelected}
-                      onChange={(e) => {
-                        const userIds = e.target.checked
-                          ? [...formData.user_ids, user.id]
-                          : formData.user_ids.filter((id) => id !== user.id);
-                        setFormData({ ...formData, user_ids: userIds });
-                      }}
-                      className="w-5 h-5 text-black dark:text-white border-gray-300 dark:border-dark-border rounded focus:ring-black dark:focus:ring-white transition-all duration-200"
-                      disabled={isLoading}
-                    />
-                    <Avatar user={user} size="sm" />
-                    <span className="font-medium text-base text-gray-900 dark:text-dark-text">{`${user.firstName} ${user.lastName}`}</span>
-                  </label>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="flex items-center justify-between pt-6">
+          <div className="flex items-center justify-end gap-3 pt-2">
             <button
               type="button"
-              onClick={handleDelete}
-              disabled={isDeleting || isLoading}
-              className="px-5 py-2.5 border border-gray-300 dark:border-dark-border text-red-600 dark:text-red-400 rounded-lg font-medium hover:bg-red-50 dark:hover:bg-red-900/30 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 text-sm"
+              onClick={onClose}
+              disabled={isLoading}
+              className="px-5 py-2 border border-gray-200 dark:border-dark-border text-gray-700 dark:text-dark-text rounded-full hover:bg-gray-50 dark:hover:bg-dark-border font-medium text-sm transition-all duration-200"
             >
-              {isDeleting ? 'Deleting...' : 'Delete Task'}
+              Cancel
             </button>
-
-            <div className="flex gap-3">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={isLoading}
-                className="px-6 py-2.5 border border-gray-300 dark:border-dark-border text-gray-700 dark:text-dark-text rounded-lg hover:bg-gray-50 dark:hover:bg-dark-border font-medium text-base transition-all duration-200"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={isLoading || !formData.task.trim()}
-                className="px-8 py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-lg font-semibold hover:bg-gray-900 dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 min-h-[44px] text-base"
-              >
-                {isLoading ? 'Saving...' : 'Save Changes'}
-              </button>
-            </div>
+            <button
+              type="submit"
+              disabled={isLoading || !formData.task.trim()}
+              className="px-6 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full font-semibold hover:bg-gray-900 dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 min-h-[40px] text-sm"
+            >
+              {isLoading ? 'Saving...' : 'Save'}
+            </button>
           </div>
         </form>
       </div>
@@ -268,6 +199,79 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
         }
         .animate-slideUp {
           animation: slideUp 0.3s ease-out;
+        }
+        .task-edit-preview .prose h1 {
+          font-size: 1.6em;
+          font-weight: 700;
+          margin-top: 1em;
+          margin-bottom: 0.5em;
+        }
+        .task-edit-preview .prose h2 {
+          font-size: 1.35em;
+          font-weight: 700;
+          margin-top: 0.9em;
+          margin-bottom: 0.45em;
+        }
+        .task-edit-preview .prose h3 {
+          font-size: 1.15em;
+          font-weight: 700;
+          margin-top: 0.8em;
+          margin-bottom: 0.4em;
+        }
+        .task-edit-preview .prose p {
+          margin-bottom: 0.8em;
+        }
+        .task-edit-preview .prose ul,
+        .task-edit-preview .prose ol {
+          margin-left: 1.5em;
+          margin-bottom: 0.8em;
+        }
+        .task-edit-preview .prose li {
+          margin-bottom: 0.3em;
+        }
+        .task-edit-preview .prose code {
+          background-color: #f3f4f6;
+          padding: 0.2em 0.4em;
+          border-radius: 0.25rem;
+          font-size: 0.9em;
+        }
+        .task-edit-preview .prose pre {
+          background-color: #f3f4f6;
+          padding: 1em;
+          border-radius: 0.5rem;
+          overflow-x: auto;
+          margin-bottom: 1em;
+        }
+        .task-edit-preview .prose blockquote {
+          border-left: 4px solid #e5e7eb;
+          padding-left: 1em;
+          margin-left: 0;
+          color: #6b7280;
+        }
+        .task-edit-preview .prose a {
+          color: #2563eb;
+          text-decoration: underline;
+        }
+        .task-edit-preview .prose strong {
+          font-weight: 600;
+        }
+        .task-edit-preview .prose em {
+          font-style: italic;
+        }
+        .dark .task-edit-preview .prose code {
+          background-color: #1e293b;
+          color: #f1f5f9;
+        }
+        .dark .task-edit-preview .prose pre {
+          background-color: #1e293b;
+          color: #f1f5f9;
+        }
+        .dark .task-edit-preview .prose blockquote {
+          border-left-color: #475569;
+          color: #cbd5e1;
+        }
+        .dark .task-edit-preview .prose a {
+          color: #60a5fa;
         }
       `}</style>
     </div>

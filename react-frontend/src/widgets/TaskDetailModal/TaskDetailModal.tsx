@@ -30,6 +30,15 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({
   users,
   onEdit,
 }) => {
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onEsc);
+    return () => document.removeEventListener('keydown', onEsc);
+  }, [isOpen, onClose]);
+
   // Defensive checks to prevent white screen
   if (!isOpen) return null;
   

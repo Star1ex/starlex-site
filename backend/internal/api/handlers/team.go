@@ -2,9 +2,12 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"log"
+	"strings"
 
 	"github.com/Team-Tracks/team-track-site/internal/api/dto"
+	"github.com/Team-Tracks/team-track-site/internal/repository"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -66,6 +69,94 @@ func (h *Handlers) DeleteTeam(ctx *fiber.Ctx) error {
 		})
 	}
 	return ctx.Status(fiber.StatusOK).JSON("Successfuly delete team")
+}
+
+func (h *Handlers) PatchTeamName(ctx *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+
+	teamID := ctx.Params("id")
+	if teamID == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "team id is required",
+		})
+	}
+
+	var input dto.UpdateTeamName
+	if err := ctx.BodyParser(&input); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request body",
+		})
+	}
+	if input.Name == nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "name field is required",
+		})
+	}
+	name := strings.TrimSpace(*input.Name)
+	if name == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "team name cannot be empty",
+		})
+	}
+
+	err := h.teamService.UpdateTeamName(ctx.Context(), teamID, name, userID)
+	if err != nil {
+		switch {
+		case errors.Is(err, repository.ErrTeamNotFound):
+			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "team not found"})
+		case errors.Is(err, repository.ErrTeamAlreadyExists):
+			return ctx.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "team name already exists"})
+		case err.Error() == "only team owner can update team name":
+			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
+		default:
+			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		}
+	}
+
+	return ctx.SendStatus(fiber.StatusNoContent)
+}
+
+func (h *Handlers) PatchTeamDescription(ctx *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+
+	teamID := ctx.Params("id")
+	if teamID == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "team id is required",
+		})
+	}
+
+	var input dto.UpdateTeamDescription
+	if err := ctx.BodyParser(&input); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid request body",
+		})
+	}
+	if input.Description == nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "description field is required",
+		})
+	}
+
+	err := h.teamService.UpdateTeamDescription(ctx.Context(), teamID, *input.Description, userID)
+	if err != nil {
+		switch {
+		case errors.Is(err, repository.ErrTeamNotFound):
+			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "team not found"})
+		case err.Error() == "only team owner can update team description":
+			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
+		default:
+			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		}
+	}
+
+	return ctx.SendStatus(fiber.StatusNoContent)
 }
 
 // GetUsers godoc

@@ -77,8 +77,8 @@ export const Contributing: React.FC = () => {
       </div>
 
       {/* Markdown Content */}
-      <div className="bg-white dark:bg-dark-surface rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.06)] overflow-hidden text-left">
-        <div className="max-w-none prose prose-base dark:prose-invert px-6 sm:px-8 py-6 overflow-x-auto prose-headings:text-gray-900 dark:prose-headings:text-dark-text prose-p:text-gray-700 dark:prose-p:text-dark-text-muted prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-strong:text-gray-900 dark:prose-strong:text-dark-text prose-code:bg-gray-100 dark:prose-code:bg-dark-bg prose-code:text-gray-800 dark:prose-code:text-dark-text prose-code:rounded prose-code:px-2 prose-code:py-1 prose-pre:bg-gray-100 dark:prose-pre:bg-dark-bg prose-blockquote:border-gray-300 dark:prose-blockquote:border-dark-border prose-blockquote:text-gray-700 dark:prose-blockquote:text-dark-text-muted">
+      <div className="text-left">
+        <div className="max-w-none prose prose-base dark:prose-invert px-0 sm:px-0 py-2 overflow-x-auto prose-headings:text-gray-900 dark:prose-headings:text-dark-text prose-p:text-gray-700 dark:prose-p:text-dark-text-muted prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-strong:text-gray-900 dark:prose-strong:text-dark-text prose-code:bg-gray-100 dark:prose-code:bg-dark-bg prose-code:text-gray-800 dark:prose-code:text-dark-text prose-code:rounded prose-code:px-2 prose-code:py-1 prose-pre:bg-gray-100 dark:prose-pre:bg-dark-bg prose-blockquote:border-gray-300 dark:prose-blockquote:border-dark-border prose-blockquote:text-gray-700 dark:prose-blockquote:text-dark-text-muted">
           <ReactMarkdown
             components={{
               h1: ({ ...props }) => (
@@ -123,8 +123,8 @@ export const Contributing: React.FC = () => {
       </div>
 
       {/* Info Box */}
-      <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4 text-left">
-        <p className="text-sm text-blue-700 dark:text-blue-400">
+      <div className="text-left">
+        <p className="text-sm text-gray-600 dark:text-dark-text-muted">
           <strong>Tip:</strong> Visit our GitHub repository to see the latest contribution guidelines and submit pull requests!
         </p>
       </div>

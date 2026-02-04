@@ -2,11 +2,14 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"log"
+	"strings"
 
 	"github.com/Team-Tracks/team-track-site/internal/api/dto"
 	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 // CreateTask godoc
@@ -122,6 +125,165 @@ func (h *Handlers) UpdateTask(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(updatedTask)
+}
+
+func (h *Handlers) PatchTaskTitle(ctx *fiber.Ctx) error {
+	_, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+
+	taskID := ctx.Params("id")
+	if taskID == "" || taskID == "nil" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
+	}
+
+	var input dto.UpdateTaskTitle
+	if err := ctx.BodyParser(&input); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad json"})
+	}
+	if input.Task == nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task field is required"})
+	}
+	title := strings.TrimSpace(*input.Task)
+	if title == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task title cannot be empty"})
+	}
+
+	if err := h.taskService.UpdateTaskTitle(ctx.Context(), taskID, title); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "task not found"})
+		}
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return ctx.SendStatus(fiber.StatusNoContent)
+}
+
+func (h *Handlers) PatchTaskDescription(ctx *fiber.Ctx) error {
+	_, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+
+	taskID := ctx.Params("id")
+	if taskID == "" || taskID == "nil" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
+	}
+
+	var input dto.UpdateTaskDescription
+	if err := ctx.BodyParser(&input); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad json"})
+	}
+	if input.Description == nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "description field is required"})
+	}
+
+	if err := h.taskService.UpdateTaskDescription(ctx.Context(), taskID, *input.Description); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "task not found"})
+		}
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return ctx.SendStatus(fiber.StatusNoContent)
+}
+
+func (h *Handlers) PatchTaskPriority(ctx *fiber.Ctx) error {
+	_, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+
+	taskID := ctx.Params("id")
+	if taskID == "" || taskID == "nil" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
+	}
+
+	var input dto.UpdateTaskPriority
+	if err := ctx.BodyParser(&input); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad json"})
+	}
+	if input.Priority == nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "priority field is required"})
+	}
+
+	priorityValue := strings.TrimSpace(*input.Priority)
+	if priorityValue != "low" && priorityValue != "medium" && priorityValue != "high" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid priority"})
+	}
+
+	if err := h.taskService.UpdateTaskPriority(ctx.Context(), taskID, priorityValue); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "task not found"})
+		}
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return ctx.SendStatus(fiber.StatusNoContent)
+}
+
+func (h *Handlers) PatchTaskProgress(ctx *fiber.Ctx) error {
+	_, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+
+	taskID := ctx.Params("id")
+	if taskID == "" || taskID == "nil" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
+	}
+
+	var input dto.UpdateTaskProgress
+	if err := ctx.BodyParser(&input); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad json"})
+	}
+	if input.Progress == nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "progress field is required"})
+	}
+
+	progressValue := strings.TrimSpace(*input.Progress)
+	if progressValue != "not_started" && progressValue != "in_progress" && progressValue != "In review" && progressValue != "done" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad task progress"})
+	}
+
+	if err := h.taskService.UpdateTaskStatus(ctx.Context(), taskID, progressValue); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "task not found"})
+		}
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return ctx.SendStatus(fiber.StatusNoContent)
+}
+
+func (h *Handlers) PatchTaskAssignees(ctx *fiber.Ctx) error {
+	_, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+
+	taskID := ctx.Params("id")
+	if taskID == "" || taskID == "nil" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
+	}
+
+	var input dto.UpdateTaskAssignees
+	if err := ctx.BodyParser(&input); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad json"})
+	}
+	if input.UserIDs == nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "user_ids field is required"})
+	}
+
+	if err := h.taskService.UpdateTaskAssignees(ctx.Context(), taskID, *input.UserIDs); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "task not found"})
+		}
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+	}
+
+	return ctx.SendStatus(fiber.StatusNoContent)
 }
 
 func (h *Handlers) GetPersonalTasks(ctx *fiber.Ctx) error {

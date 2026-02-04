@@ -6,6 +6,7 @@ import { useContextMenu } from '@/hooks/useContextMenu.js';
 import InlineEdit from '@/components/shared/InlineEdit.js';
 import TaskItem from './TaskItem.js';
 import { taskService } from '@/services/api/index.js';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
 
 interface FolderItemProps {
   folder: FolderDTO;
@@ -15,9 +16,11 @@ interface FolderItemProps {
   onUpdateFolder: (id: string, data: Partial<CreateFolderRequest>) => Promise<any>;
   onDeleteFolder: (id: string) => Promise<void>;
   onUpdateTask: (id: string, data: Partial<CreateTaskRequest>) => Promise<any>;
+  removingFolderIds?: Record<string, boolean>;
+  removingTaskIds?: Record<string, boolean>;
 }
 
-export const FolderItem: React.FC<FolderItemProps> = React.memo(({ folder, level, getSubfolders, getFolderTasks, onUpdateFolder, onDeleteFolder, onUpdateTask }) => {
+export const FolderItem: React.FC<FolderItemProps> = React.memo(({ folder, level, getSubfolders, getFolderTasks, onUpdateFolder, onDeleteFolder, onUpdateTask, removingFolderIds = {}, removingTaskIds = {} }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [isRenaming, setIsRenaming] = useState(false);
   const navigate = useNavigate();
@@ -72,6 +75,31 @@ export const FolderItem: React.FC<FolderItemProps> = React.memo(({ folder, level
   }, [folder.id, onUpdateFolder]);
 
   const paddingLeft = level * 12 + 8;
+  const isRemoving = !!removingFolderIds[folder.id];
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDragRef,
+    transform,
+    isDragging,
+  } = useDraggable({
+    id: `folder-${folder.id}`,
+    data: { type: 'folder', id: folder.id },
+  });
+  const { setNodeRef: setDropRef, isOver } = useDroppable({
+    id: `drop-folder-${folder.id}`,
+    data: { type: 'folder', id: folder.id },
+  });
+  const setRefs = useCallback(
+    (node: HTMLElement | null) => {
+      setDragRef(node);
+      setDropRef(node);
+    },
+    [setDragRef, setDropRef]
+  );
+  const dragStyle = transform
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
+    : undefined;
   const handleToggleExpand = useCallback(() => {
     setIsExpanded((prev) => !prev);
   }, []);
@@ -83,12 +111,21 @@ export const FolderItem: React.FC<FolderItemProps> = React.memo(({ folder, level
   }, [navigate, folder.id]);
 
   return (
-    <div>
+    <div
+      className={`transition-all duration-200 ${
+        isRemoving ? 'opacity-0 -translate-y-1 pointer-events-none' : 'opacity-100 translate-y-0'
+      } ${isDragging ? 'opacity-60' : ''}`}
+    >
       <div
-        className="flex items-center gap-1 px-2 py-1 hover:bg-gray-100 dark:hover:bg-dark-border rounded-md cursor-pointer group transition-colors"
-        style={{ paddingLeft }}
+        ref={setRefs}
+        className={`flex items-center gap-1 px-2 py-1 rounded-md cursor-pointer group transition-colors ${
+          isOver ? 'bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-300 dark:ring-blue-700' : 'hover:bg-gray-100 dark:hover:bg-dark-border'
+        }`}
+        style={{ paddingLeft, ...(dragStyle || {}) }}
         onClick={handleToggleExpand}
         onContextMenu={handleOpenContextMenu}
+        {...attributes}
+        {...listeners}
       >
         {hasChildren ? (
           <ChevronRight
@@ -108,13 +145,19 @@ export const FolderItem: React.FC<FolderItemProps> = React.memo(({ folder, level
               value={folder.name}
               onSave={handleRename}
               onCancel={() => setIsRenaming(false)}
-              className="w-full text-sm px-2 py-1 rounded border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-surface"
+              onChange={(value) => {
+                window.dispatchEvent(new CustomEvent('personalFolderNameChange', { detail: { id: folder.id, name: value } }));
+              }}
+              className="w-full text-sm bg-transparent border-0 outline-none p-0 focus:outline-none"
             />
           </div>
         ) : (
           <span
             className="text-sm text-gray-700 dark:text-dark-text truncate flex-1"
-            onDoubleClick={handleNavigate}
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              setIsRenaming(true);
+            }}
           >
             {folder.name}
           </span>
@@ -132,7 +175,7 @@ export const FolderItem: React.FC<FolderItemProps> = React.memo(({ folder, level
         </button>
       </div>
 
-      {isExpanded && hasChildren && (
+      {isExpanded && hasChildren && !isRemoving && (
         <div className="space-y-0.5" style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 200px' }}>
           {subfolders.map((subfolder) => (
             <FolderItem
@@ -144,10 +187,12 @@ export const FolderItem: React.FC<FolderItemProps> = React.memo(({ folder, level
               onUpdateFolder={onUpdateFolder}
               onDeleteFolder={onDeleteFolder}
               onUpdateTask={onUpdateTask}
+              removingFolderIds={removingFolderIds}
+              removingTaskIds={removingTaskIds}
             />
           ))}
           {folderTasks.map((task) => (
-            <TaskItem key={task.id} task={task} level={level + 1} onUpdateTask={onUpdateTask} />
+            <TaskItem key={task.id} task={task} level={level + 1} onUpdateTask={onUpdateTask} isRemoving={!!removingTaskIds[task.id]} />
           ))}
         </div>
       )}

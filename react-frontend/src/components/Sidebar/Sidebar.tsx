@@ -3,7 +3,7 @@ import { ChevronRight, Home, Moon, Settings } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Avatar from '@/shared/ui/Avatar.js';
 import { getAuthUser } from '@/shared/lib/authManager.js';
-import { userService } from '@/services/api/index.js';
+import { userService, teamService } from '@/services/api/index.js';
 import { useTheme } from '@/shared/contexts/ThemeContext.js';
 import { useAuth } from '@/contexts/AuthContext.js';
 import type { User } from '@/entities/types.js';
@@ -128,6 +128,31 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
     navigate(`/team/${id}`);
   }, [navigate]);
 
+  const handleRenameTeam = useCallback(async (id: string, name: string) => {
+    const snapshot = teams;
+    setTeams((prev) => prev.map((t) => (t.id === id ? { ...t, name } : t)));
+    try {
+      await teamService.updateTeam(id, { name });
+    } catch (err) {
+      setTeams(snapshot);
+      console.error('Failed to rename team:', err);
+    }
+  }, [teams]);
+
+  const handleDeleteTeam = useCallback(async (id: string) => {
+    const snapshot = teams;
+    setTeams((prev) => prev.filter((t) => t.id !== id));
+    if (activeTeamId === id) {
+      navigate('/dashboard');
+    }
+    try {
+      await teamService.deleteTeam(id);
+    } catch (err) {
+      setTeams(snapshot);
+      console.error('Failed to delete team:', err);
+    }
+  }, [teams, activeTeamId, navigate]);
+
   const handleNavigateSettings = useCallback(() => {
     navigate('/settings');
   }, [navigate]);
@@ -165,6 +190,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
                 activeTeamId={activeTeamId}
                 onTeamClick={handleTeamClick}
                 onAddTeam={handleAddTeam}
+                onRenameTeam={handleRenameTeam}
+                onDeleteTeam={handleDeleteTeam}
               />
 
               <SidebarSection title="TASKS" type="tasks" defaultExpanded foldersHook={foldersHook} tasksHook={tasksHook} />
@@ -200,7 +227,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
                   }}
                   className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-border transition-colors text-left"
                 >
-                  <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800 flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
                     {user ? <Avatar user={user} size="sm" /> : null}
                   </div>
                   <div className="flex-1 min-w-0">

@@ -87,11 +87,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ onCreateFolder, onCrea
 
   const handleDelete = async () => {
     if (contextMenu.type === 'folder' && contextMenu.folderId) {
-      if (!window.confirm('Delete this folder and all its contents?')) return;
       await onDeleteFolder(contextMenu.folderId);
     }
     if (contextMenu.type === 'task' && contextMenu.taskId) {
-      if (!window.confirm('Delete this task?')) return;
       await onDeleteTask(contextMenu.taskId);
     }
     closeContextMenu();

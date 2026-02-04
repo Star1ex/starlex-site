@@ -2,12 +2,25 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { taskService } from '@/services/api/index.js';
 import type { CreateTaskRequest, TaskDTO } from '@/types/dto.js';
 
+const REMOVE_ANIMATION_MS = 220;
+
 export const useTasks = () => {
   const [tasksById, setTasksById] = useState<Record<string, TaskDTO>>({});
   const [taskIds, setTaskIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [removingTaskIds, setRemovingTaskIds] = useState<Record<string, boolean>>({});
   const refreshControllerRef = useRef<AbortController | null>(null);
   const refreshTimeoutRef = useRef<number | null>(null);
+  const tasksByIdRef = useRef(tasksById);
+  const taskIdsRef = useRef(taskIds);
+
+  useEffect(() => {
+    tasksByIdRef.current = tasksById;
+  }, [tasksById]);
+
+  useEffect(() => {
+    taskIdsRef.current = taskIds;
+  }, [taskIds]);
 
   const refreshTasks = useCallback(async () => {
     setLoading(true);
@@ -48,8 +61,16 @@ export const useTasks = () => {
     refreshTasks();
     const onCreated = () => debouncedRefresh();
     window.addEventListener('personalTaskCreated', onCreated);
+    const onTitleChange = (event: Event) => {
+      const ev = event as CustomEvent;
+      const { id, task } = ev.detail || {};
+      if (!id || typeof task !== 'string') return;
+      setTasksById((prev) => (prev[id] ? { ...prev, [id]: { ...prev[id], task } as TaskDTO } : prev));
+    };
+    window.addEventListener('personalTaskTitleChange', onTitleChange as EventListener);
     return () => {
       window.removeEventListener('personalTaskCreated', onCreated);
+      window.removeEventListener('personalTaskTitleChange', onTitleChange as EventListener);
       if (refreshTimeoutRef.current) {
         window.clearTimeout(refreshTimeoutRef.current);
       }
@@ -114,18 +135,50 @@ export const useTasks = () => {
   const updateTask = useCallback(async (id: string, data: Partial<CreateTaskRequest>) => {
     setTasksById((prev) => ({ ...prev, [id]: { ...prev[id], ...data } as TaskDTO }));
     try {
-      const updated = await taskService.updateTask(id, data as any);
-      setTasksById((prev) => ({ ...prev, [id]: updated as TaskDTO }));
-      return updated;
+      const updates: Promise<void>[] = [];
+      if (data.task !== undefined) {
+        updates.push(taskService.updateTaskTitle(id, data.task));
+      }
+      if (data.description !== undefined) {
+        updates.push(taskService.updateTaskDescription(id, data.description || ''));
+      }
+      if (data.priority !== undefined) {
+        updates.push(taskService.updateTaskPriority(id, data.priority));
+      }
+      if (data.progress !== undefined) {
+        updates.push(taskService.updateTaskStatus(id, data.progress as any));
+      }
+      if (data.user_ids !== undefined) {
+        updates.push(taskService.updateTaskAssignees(id, data.user_ids));
+      }
+      if (updates.length > 0) {
+        await Promise.all(updates);
+      }
+      return;
     } catch (err) {
       await refreshTasks();
       throw err;
     }
   }, [refreshTasks]);
 
+  const moveTaskToFolder = useCallback(async (id: string, folderId: string | null) => {
+    const snapshotById = tasksByIdRef.current;
+    const snapshotIds = taskIdsRef.current;
+    setTasksById((prev) => (prev[id] ? { ...prev, [id]: { ...prev[id], folder_id: folderId } as TaskDTO } : prev));
+    try {
+      await taskService.moveTaskToFolder(id, folderId);
+    } catch (err) {
+      setTasksById(snapshotById);
+      setTaskIds(snapshotIds);
+      throw err;
+    }
+  }, []);
+
   const deleteTask = useCallback(async (id: string) => {
-    const snapshotById = tasksById;
-    const snapshotIds = taskIds;
+    const snapshotById = tasksByIdRef.current;
+    const snapshotIds = taskIdsRef.current;
+    setRemovingTaskIds((prev) => ({ ...prev, [id]: true }));
+    await new Promise((resolve) => window.setTimeout(resolve, REMOVE_ANIMATION_MS));
     setTasksById((prev) => {
       const next = { ...prev };
       delete next[id];
@@ -137,9 +190,20 @@ export const useTasks = () => {
     } catch (err) {
       setTasksById(snapshotById);
       setTaskIds(snapshotIds);
+      setRemovingTaskIds((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
       throw err;
+    } finally {
+      setRemovingTaskIds((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
     }
-  }, [tasksById, taskIds]);
+  }, []);
 
   const getFolderTasks = useCallback((folderId: string) => {
     return taskIds.map((id) => tasksById[id]).filter((t) => t?.folder_id === folderId);
@@ -155,6 +219,8 @@ export const useTasks = () => {
     createTask,
     updateTask,
     deleteTask,
+    moveTaskToFolder,
+    removingTaskIds,
     getFolderTasks,
     refreshTasks,
   } as const;

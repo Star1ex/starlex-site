@@ -1,5 +1,5 @@
 import { httpClient } from './client.js';
-import { TeamDTO, CreateTeamRequest, UserDTO } from '../../types/dto.js';
+import { CreateTeamRequest, TeamDTO, UserDTO } from '../../types/dto.js';
 
 export const teamService = {
   async createTeam(data: CreateTeamRequest): Promise<TeamDTO> {
@@ -12,6 +12,17 @@ export const teamService = {
       data: { team_id: teamId },
     });
     return response.data;
+  },
+
+  async updateTeam(teamId: string, data: { name?: string }): Promise<void> {
+    if (!data.name) {
+      throw new Error('Team name is required');
+    }
+    await httpClient.patch(`/api/teams/${teamId}/name`, { name: data.name });
+  },
+
+  async updateTeamDescription(teamId: string, description: string): Promise<void> {
+    await httpClient.patch(`/api/teams/${teamId}/description`, { description });
   },
 
   async getTeamUsers(teamId: string): Promise<UserDTO[]> {

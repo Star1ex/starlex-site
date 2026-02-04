@@ -79,7 +79,7 @@ const Avatar: React.FC<AvatarProps> = ({
         <img
           src={user.photo_url}
           alt={`${firstName} ${lastName}`}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover object-center rounded-full block"
           onError={handleImageError}
           loading="lazy"
           decoding="async"

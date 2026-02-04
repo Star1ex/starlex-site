@@ -12,6 +12,15 @@ interface MembersPanelProps {
 }
 
 const MembersPanel: React.FC<MembersPanelProps> = ({ isOpen, users, onClose, teamId, onUserRemoved, onViewProfile }) => {
+  React.useEffect(() => {
+    if (!isOpen) return;
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('keydown', onEsc);
+    return () => document.removeEventListener('keydown', onEsc);
+  }, [isOpen, onClose]);
+
   const getWidthClass = () => {
     // Mobile uses full width for better usability; larger screens use compact widths depending on member count
     if (users.length <= 1) return 'w-full sm:w-56 md:w-64';

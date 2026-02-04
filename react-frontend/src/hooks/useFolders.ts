@@ -2,12 +2,25 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { folderService } from '@/services/api/index.js';
 import type { CreateFolderRequest, FolderDTO } from '@/types/dto.js';
 
+const REMOVE_ANIMATION_MS = 220;
+
 export const useFolders = () => {
   const [foldersById, setFoldersById] = useState<Record<string, FolderDTO>>({});
   const [folderIds, setFolderIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [removingFolderIds, setRemovingFolderIds] = useState<Record<string, boolean>>({});
   const refreshControllerRef = useRef<AbortController | null>(null);
   const refreshTimeoutRef = useRef<number | null>(null);
+  const foldersByIdRef = useRef(foldersById);
+  const folderIdsRef = useRef(folderIds);
+
+  useEffect(() => {
+    foldersByIdRef.current = foldersById;
+  }, [foldersById]);
+
+  useEffect(() => {
+    folderIdsRef.current = folderIds;
+  }, [folderIds]);
 
   const refreshFolders = useCallback(async () => {
     setLoading(true);
@@ -48,8 +61,16 @@ export const useFolders = () => {
     refreshFolders();
     const onCreated = () => debouncedRefresh();
     window.addEventListener('personalFolderCreated', onCreated);
+    const onNameChange = (event: Event) => {
+      const ev = event as CustomEvent;
+      const { id, name } = ev.detail || {};
+      if (!id || typeof name !== 'string') return;
+      setFoldersById((prev) => (prev[id] ? { ...prev, [id]: { ...prev[id], name } as FolderDTO } : prev));
+    };
+    window.addEventListener('personalFolderNameChange', onNameChange as EventListener);
     return () => {
       window.removeEventListener('personalFolderCreated', onCreated);
+      window.removeEventListener('personalFolderNameChange', onNameChange as EventListener);
       if (refreshTimeoutRef.current) {
         window.clearTimeout(refreshTimeoutRef.current);
       }
@@ -129,9 +150,24 @@ export const useFolders = () => {
     }
   }, [refreshFolders]);
 
+  const moveFolder = useCallback(async (id: string, parentId: string | null) => {
+    const snapshotById = foldersByIdRef.current;
+    const snapshotIds = folderIdsRef.current;
+    setFoldersById((prev) => (prev[id] ? { ...prev, [id]: { ...prev[id], parent_id: parentId } as FolderDTO } : prev));
+    try {
+      await folderService.moveFolder(id, parentId);
+    } catch (err) {
+      setFoldersById(snapshotById);
+      setFolderIds(snapshotIds);
+      throw err;
+    }
+  }, []);
+
   const deleteFolder = useCallback(async (id: string) => {
-    const snapshotById = foldersById;
-    const snapshotIds = folderIds;
+    const snapshotById = foldersByIdRef.current;
+    const snapshotIds = folderIdsRef.current;
+    setRemovingFolderIds((prev) => ({ ...prev, [id]: true }));
+    await new Promise((resolve) => window.setTimeout(resolve, REMOVE_ANIMATION_MS));
     setFoldersById((prev) => {
       const next = { ...prev };
       delete next[id];
@@ -143,9 +179,20 @@ export const useFolders = () => {
     } catch (err) {
       setFoldersById(snapshotById);
       setFolderIds(snapshotIds);
+      setRemovingFolderIds((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
       throw err;
+    } finally {
+      setRemovingFolderIds((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
     }
-  }, [foldersById, folderIds]);
+  }, []);
 
   const getSubfolders = useCallback((parentId: string) => {
     return folderIds.map((id) => foldersById[id]).filter((f) => f?.parent_id === parentId);
@@ -161,6 +208,8 @@ export const useFolders = () => {
     createFolder,
     updateFolder,
     deleteFolder,
+    moveFolder,
+    removingFolderIds,
     getSubfolders,
     refreshFolders,
   } as const;

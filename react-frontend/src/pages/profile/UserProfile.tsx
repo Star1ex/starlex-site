@@ -81,8 +81,36 @@ const ProfilePage: React.FC = () => {
 
   if (!user || !form) {
     return (
-      <div className="flex items-center justify-center h-full bg-white dark:bg-dark-bg transition-colors duration-300">
-        <div className="text-gray-700 dark:text-dark-text-muted">Loading profile...</div>
+      <div className="min-h-screen bg-white dark:bg-dark-bg transition-colors duration-300 px-4 sm:px-8 py-10">
+        <div className="max-w-5xl mx-auto animate-pulse">
+          <div className="rounded-2xl overflow-hidden border border-gray-200/40 dark:border-dark-border/40 bg-white dark:bg-dark-surface shadow-sm">
+            <div className="px-8 py-6 border-b border-gray-100/50 dark:border-dark-border/40 bg-gray-50 dark:bg-dark-bg/40">
+              <div className="h-6 w-32 bg-gray-200 dark:bg-dark-border rounded-full" />
+              <div className="mt-2 h-3 w-48 bg-gray-200 dark:bg-dark-border rounded-full" />
+            </div>
+            <div className="p-8">
+              <div className="flex flex-col lg:flex-row gap-8">
+                <div className="lg:w-1/3">
+                  <div className="flex items-center gap-4">
+                    <div className="w-20 h-20 rounded-2xl bg-gray-200 dark:bg-dark-border" />
+                    <div className="space-y-2">
+                      <div className="h-4 w-32 bg-gray-200 dark:bg-dark-border rounded-full" />
+                      <div className="h-3 w-40 bg-gray-200 dark:bg-dark-border rounded-full" />
+                    </div>
+                  </div>
+                </div>
+                <div className="lg:flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {Array.from({ length: 4 }).map((_, idx) => (
+                    <div key={idx} className="p-4 rounded-xl border border-gray-200/40 dark:border-dark-border/40">
+                      <div className="h-3 w-20 bg-gray-200 dark:bg-dark-border rounded-full" />
+                      <div className="mt-3 h-4 w-48 bg-gray-200 dark:bg-dark-border rounded-full" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

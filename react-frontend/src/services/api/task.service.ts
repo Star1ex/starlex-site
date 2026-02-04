@@ -33,9 +33,24 @@ export const taskService = {
     return response.data;
   },
 
-  async updateTaskProgress(id: string, progress: TaskProgress, options?: { signal?: AbortSignal }): Promise<TaskDTO> {
-    const response = await httpClient.put<TaskDTO>(`/api/tasks/${id}/progress`, { progress }, { signal: options?.signal as any });
-    return response.data;
+  async updateTaskTitle(id: string, task: string, options?: { signal?: AbortSignal }): Promise<void> {
+    await httpClient.patch(`/api/tasks/${id}/title`, { task }, { signal: options?.signal as any });
+  },
+
+  async updateTaskDescription(id: string, description: string, options?: { signal?: AbortSignal }): Promise<void> {
+    await httpClient.patch(`/api/tasks/${id}/description`, { description }, { signal: options?.signal as any });
+  },
+
+  async updateTaskPriority(id: string, priority: 'low' | 'medium' | 'high', options?: { signal?: AbortSignal }): Promise<void> {
+    await httpClient.patch(`/api/tasks/${id}/priority`, { priority }, { signal: options?.signal as any });
+  },
+
+  async updateTaskStatus(id: string, progress: TaskProgress, options?: { signal?: AbortSignal }): Promise<void> {
+    await httpClient.patch(`/api/tasks/${id}/progress`, { progress }, { signal: options?.signal as any });
+  },
+
+  async updateTaskAssignees(id: string, userIds: string[], options?: { signal?: AbortSignal }): Promise<void> {
+    await httpClient.patch(`/api/tasks/${id}/assignees`, { user_ids: userIds }, { signal: options?.signal as any });
   },
 
   async deleteTask(id: string): Promise<string> {
@@ -74,11 +89,24 @@ export const taskService = {
     return response.data;
   },
 
-  async updateTeamTaskProgress(teamId: string, taskId: string, progress: TaskProgress): Promise<TaskDTO> {
-    const response = await httpClient.put<TaskDTO>(`/api/teams/${teamId}/tasks/${taskId}/progress`, {
-      progress,
-    });
-    return response.data;
+  async updateTeamTaskTitle(teamId: string, taskId: string, task: string): Promise<void> {
+    await httpClient.patch(`/api/teams/${teamId}/tasks/${taskId}/title`, { task });
+  },
+
+  async updateTeamTaskDescription(teamId: string, taskId: string, description: string): Promise<void> {
+    await httpClient.patch(`/api/teams/${teamId}/tasks/${taskId}/description`, { description });
+  },
+
+  async updateTeamTaskPriority(teamId: string, taskId: string, priority: 'low' | 'medium' | 'high'): Promise<void> {
+    await httpClient.patch(`/api/teams/${teamId}/tasks/${taskId}/priority`, { priority });
+  },
+
+  async updateTeamTaskStatus(teamId: string, taskId: string, progress: TaskProgress): Promise<void> {
+    await httpClient.patch(`/api/teams/${teamId}/tasks/${taskId}/progress`, { progress });
+  },
+
+  async updateTeamTaskAssignees(teamId: string, taskId: string, userIds: string[]): Promise<void> {
+    await httpClient.patch(`/api/teams/${teamId}/tasks/${taskId}/assignees`, { user_ids: userIds });
   },
 
   async deleteTeamTask(teamId: string, taskId: string): Promise<string> {

@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { getCookie, setCookie } from '@/shared/lib/cookies.js';
 
 type Theme = 'light' | 'dark' | 'ultra-dark' | 'solarized';
 
@@ -11,10 +12,16 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 const THEME_STORAGE_KEY = 'teamtrack-theme';
+const THEME_COOKIE_KEY = 'teamtrack-theme';
+const THEME_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>(() => {
-    // Check localStorage first
+    const savedCookie = getCookie(THEME_COOKIE_KEY);
+    if (savedCookie === 'dark' || savedCookie === 'light' || savedCookie === 'ultra-dark' || savedCookie === 'solarized') {
+      return savedCookie;
+    }
+    // Check localStorage next
     const saved = localStorage.getItem(THEME_STORAGE_KEY);
     if (saved === 'dark' || saved === 'light' || saved === 'ultra-dark' || saved === 'solarized') {
       return saved;
@@ -42,6 +49,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
 
     localStorage.setItem(THEME_STORAGE_KEY, theme);
+    setCookie(THEME_COOKIE_KEY, theme, { maxAge: THEME_COOKIE_MAX_AGE, path: '/' });
   }, [theme]);
 
   const setTheme = (newTheme: Theme) => {

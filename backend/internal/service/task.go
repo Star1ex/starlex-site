@@ -91,16 +91,30 @@ func (s *TaskService) GetUserTasks(ctx context.Context, userID string) ([]*entit
 }
 
 func (s *TaskService) UpdateTaskProgress(ctx context.Context, taskID, progress string) (*entity.Task, error) {
-	updatedTask := &entity.Task{
-		Progress: progress,
-	}
-
-	var main []string
-	task, err := s.taskRepo.Update(ctx, taskID, updatedTask, main)
-	if err != nil {
+	if err := s.taskRepo.UpdateProgress(ctx, taskID, progress); err != nil {
 		return nil, err
 	}
-	return task, err
+	return s.taskRepo.Get(ctx, taskID)
+}
+
+func (s *TaskService) UpdateTaskTitle(ctx context.Context, taskID, title string) error {
+	return s.taskRepo.UpdateTitle(ctx, taskID, title)
+}
+
+func (s *TaskService) UpdateTaskDescription(ctx context.Context, taskID, description string) error {
+	return s.taskRepo.UpdateDescription(ctx, taskID, description)
+}
+
+func (s *TaskService) UpdateTaskPriority(ctx context.Context, taskID, priority string) error {
+	return s.taskRepo.UpdatePriority(ctx, taskID, priority)
+}
+
+func (s *TaskService) UpdateTaskStatus(ctx context.Context, taskID, progress string) error {
+	return s.taskRepo.UpdateProgress(ctx, taskID, progress)
+}
+
+func (s *TaskService) UpdateTaskAssignees(ctx context.Context, taskID string, assignedTo []string) error {
+	return s.taskRepo.UpdateAssignees(ctx, taskID, assignedTo)
 }
 
 func (s *TaskService) Delete(ctx context.Context, id string) error {

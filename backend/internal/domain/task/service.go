@@ -26,6 +26,11 @@ type Service interface {
 	Update(ctx context.Context, id string, data *entity.Task, assignedTo []string) (*entity.Task, error)
 	// Update task
 	UpdateTaskProgress(ctx context.Context, taskID, progress string) (*entity.Task, error)
+	UpdateTaskTitle(ctx context.Context, taskID, title string) error
+	UpdateTaskDescription(ctx context.Context, taskID, description string) error
+	UpdateTaskPriority(ctx context.Context, taskID, priority string) error
+	UpdateTaskStatus(ctx context.Context, taskID, progress string) error
+	UpdateTaskAssignees(ctx context.Context, taskID string, assignedTo []string) error
 	// Delete task
 	Delete(ctx context.Context, id string) error
 

@@ -4,18 +4,27 @@ import { useNavigate } from 'react-router-dom';
 import type { TaskDTO, CreateTaskRequest } from '@/types/dto.js';
 import { useContextMenu } from '@/hooks/useContextMenu.js';
 import InlineEdit from '@/components/shared/InlineEdit.js';
+import { useDraggable } from '@dnd-kit/core';
 
 interface TaskItemProps {
   task: TaskDTO;
   level: number;
   onUpdateTask: (id: string, data: Partial<CreateTaskRequest>) => Promise<any>;
+  isRemoving?: boolean;
 }
 
-export const TaskItem: React.FC<TaskItemProps> = React.memo(({ task, level, onUpdateTask }) => {
+export const TaskItem: React.FC<TaskItemProps> = React.memo(({ task, level, onUpdateTask, isRemoving = false }) => {
   const navigate = useNavigate();
   const { openContextMenu } = useContextMenu();
   const [isRenaming, setIsRenaming] = useState(false);
   const paddingLeft = level * 12 + 20;
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `task-${task.id}`,
+    data: { type: 'task', id: task.id },
+  });
+  const dragStyle = transform
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
+    : undefined;
 
   useEffect(() => {
     const onRename = (event: Event) => {
@@ -39,16 +48,20 @@ export const TaskItem: React.FC<TaskItemProps> = React.memo(({ task, level, onUp
   }, [openContextMenu, task.id]);
 
   const handleNavigate = useCallback(() => {
+    if (isRenaming) return;
     navigate(`/task/${task.id}`);
-  }, [navigate, task.id]);
+  }, [navigate, task.id, isRenaming]);
 
 
   return (
     <div
-      className="flex items-center gap-2 px-2 py-1 hover:bg-gray-100 dark:hover:bg-dark-border rounded-md cursor-pointer transition-colors group"
-      style={{ paddingLeft }}
+      ref={setNodeRef}
+      className={`flex items-center gap-2 px-2 py-1 hover:bg-gray-100 dark:hover:bg-dark-border rounded-md cursor-pointer transition-all group ${isRemoving ? 'opacity-0 -translate-y-1 pointer-events-none' : 'opacity-100 translate-y-0'} ${isDragging ? 'opacity-60' : ''}`}
+      style={{ paddingLeft, ...(dragStyle || {}) }}
       onClick={handleNavigate}
       onContextMenu={handleOpenContextMenu}
+      {...attributes}
+      {...listeners}
     >
       <FileText className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
 
@@ -58,11 +71,20 @@ export const TaskItem: React.FC<TaskItemProps> = React.memo(({ task, level, onUp
             value={task.task || 'Untitled'}
             onSave={handleRename}
             onCancel={() => setIsRenaming(false)}
-            className="w-full text-sm px-2 py-1 rounded border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-surface"
+            onChange={(value) => {
+              window.dispatchEvent(new CustomEvent('personalTaskTitleChange', { detail: { id: task.id, task: value } }));
+            }}
+            className="w-full text-sm bg-transparent border-0 outline-none p-0 focus:outline-none"
           />
         </div>
       ) : (
-        <span className="text-sm text-gray-600 dark:text-dark-text-muted truncate flex-1">
+        <span
+          className="text-sm text-gray-600 dark:text-dark-text-muted truncate flex-1"
+          onDoubleClick={(e) => {
+            e.stopPropagation();
+            setIsRenaming(true);
+          }}
+        >
           {task.task || 'Untitled'}
         </span>
       )}

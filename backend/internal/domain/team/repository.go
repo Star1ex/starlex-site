@@ -16,6 +16,7 @@ type Repository interface {
 	GetTeamByID(ctx context.Context, teamID string) (*entity.Team, error)
 	AddUserToTeam(ctx context.Context, teamID string, userID string) error
 	RemoveUserFromTeam(ctx context.Context, teamID string, userID string) error
-	//Update(ctx context.Context, teamID string, updateTeam *entity.UpdateTeam) (*entity.Team, error)
+	UpdateName(ctx context.Context, teamID string, name string) error
+	UpdateDescription(ctx context.Context, teamID string, description string) error
 	Delete(ctx context.Context, teamID string) error
 }
