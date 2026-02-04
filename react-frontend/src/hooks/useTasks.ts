@@ -2,12 +2,25 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { taskService } from '@/services/api/index.js';
 import type { CreateTaskRequest, TaskDTO } from '@/types/dto.js';
 
+const REMOVE_ANIMATION_MS = 220;
+
 export const useTasks = () => {
   const [tasksById, setTasksById] = useState<Record<string, TaskDTO>>({});
   const [taskIds, setTaskIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [removingTaskIds, setRemovingTaskIds] = useState<Record<string, boolean>>({});
   const refreshControllerRef = useRef<AbortController | null>(null);
   const refreshTimeoutRef = useRef<number | null>(null);
+  const tasksByIdRef = useRef(tasksById);
+  const taskIdsRef = useRef(taskIds);
+
+  useEffect(() => {
+    tasksByIdRef.current = tasksById;
+  }, [tasksById]);
+
+  useEffect(() => {
+    taskIdsRef.current = taskIds;
+  }, [taskIds]);
 
   const refreshTasks = useCallback(async () => {
     setLoading(true);
@@ -48,8 +61,16 @@ export const useTasks = () => {
     refreshTasks();
     const onCreated = () => debouncedRefresh();
     window.addEventListener('personalTaskCreated', onCreated);
+    const onTitleChange = (event: Event) => {
+      const ev = event as CustomEvent;
+      const { id, task } = ev.detail || {};
+      if (!id || typeof task !== 'string') return;
+      setTasksById((prev) => (prev[id] ? { ...prev, [id]: { ...prev[id], task } as TaskDTO } : prev));
+    };
+    window.addEventListener('personalTaskTitleChange', onTitleChange as EventListener);
     return () => {
       window.removeEventListener('personalTaskCreated', onCreated);
+      window.removeEventListener('personalTaskTitleChange', onTitleChange as EventListener);
       if (refreshTimeoutRef.current) {
         window.clearTimeout(refreshTimeoutRef.current);
       }
@@ -124,8 +145,10 @@ export const useTasks = () => {
   }, [refreshTasks]);
 
   const deleteTask = useCallback(async (id: string) => {
-    const snapshotById = tasksById;
-    const snapshotIds = taskIds;
+    const snapshotById = tasksByIdRef.current;
+    const snapshotIds = taskIdsRef.current;
+    setRemovingTaskIds((prev) => ({ ...prev, [id]: true }));
+    await new Promise((resolve) => window.setTimeout(resolve, REMOVE_ANIMATION_MS));
     setTasksById((prev) => {
       const next = { ...prev };
       delete next[id];
@@ -137,9 +160,20 @@ export const useTasks = () => {
     } catch (err) {
       setTasksById(snapshotById);
       setTaskIds(snapshotIds);
+      setRemovingTaskIds((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
       throw err;
+    } finally {
+      setRemovingTaskIds((prev) => {
+        const next = { ...prev };
+        delete next[id];
+        return next;
+      });
     }
-  }, [tasksById, taskIds]);
+  }, []);
 
   const getFolderTasks = useCallback((folderId: string) => {
     return taskIds.map((id) => tasksById[id]).filter((t) => t?.folder_id === folderId);
@@ -155,6 +189,7 @@ export const useTasks = () => {
     createTask,
     updateTask,
     deleteTask,
+    removingTaskIds,
     getFolderTasks,
     refreshTasks,
   } as const;

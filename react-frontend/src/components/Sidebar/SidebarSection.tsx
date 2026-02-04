@@ -47,6 +47,8 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
     () => [...tasksHook.orphanTasks].sort((a, b) => (a.task || '').localeCompare(b.task || '')),
     [tasksHook.orphanTasks],
   );
+  const removingFolderIds = foldersHook.removingFolderIds || {};
+  const removingTaskIds = tasksHook.removingTaskIds || {};
 
   const handleAddNew = useCallback(async () => {
     if (type === 'teams') {
@@ -119,13 +121,15 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
                   onUpdateFolder={foldersHook.updateFolder}
                   onDeleteFolder={foldersHook.deleteFolder}
                   onUpdateTask={tasksHook.updateTask}
+                  removingFolderIds={removingFolderIds}
+                  removingTaskIds={removingTaskIds}
                 />
               ))}
 
               {orphanTasks.length > 0 && (
                 <div className="mt-1">
                   {orphanTasks.map((task: TaskDTO) => (
-                    <TaskItem key={task.id} task={task} level={0} onUpdateTask={tasksHook.updateTask} />
+                    <TaskItem key={task.id} task={task} level={0} onUpdateTask={tasksHook.updateTask} isRemoving={!!removingTaskIds[task.id]} />
                   ))}
                 </div>
               )}

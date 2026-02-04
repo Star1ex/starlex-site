@@ -9,9 +9,10 @@ interface TaskItemProps {
   task: TaskDTO;
   level: number;
   onUpdateTask: (id: string, data: Partial<CreateTaskRequest>) => Promise<any>;
+  isRemoving?: boolean;
 }
 
-export const TaskItem: React.FC<TaskItemProps> = React.memo(({ task, level, onUpdateTask }) => {
+export const TaskItem: React.FC<TaskItemProps> = React.memo(({ task, level, onUpdateTask, isRemoving = false }) => {
   const navigate = useNavigate();
   const { openContextMenu } = useContextMenu();
   const [isRenaming, setIsRenaming] = useState(false);
@@ -45,7 +46,7 @@ export const TaskItem: React.FC<TaskItemProps> = React.memo(({ task, level, onUp
 
   return (
     <div
-      className="flex items-center gap-2 px-2 py-1 hover:bg-gray-100 dark:hover:bg-dark-border rounded-md cursor-pointer transition-colors group"
+      className={`flex items-center gap-2 px-2 py-1 hover:bg-gray-100 dark:hover:bg-dark-border rounded-md cursor-pointer transition-all group ${isRemoving ? 'opacity-0 -translate-y-1 pointer-events-none' : 'opacity-100 translate-y-0'}`}
       style={{ paddingLeft }}
       onClick={handleNavigate}
       onContextMenu={handleOpenContextMenu}
@@ -58,6 +59,9 @@ export const TaskItem: React.FC<TaskItemProps> = React.memo(({ task, level, onUp
             value={task.task || 'Untitled'}
             onSave={handleRename}
             onCancel={() => setIsRenaming(false)}
+            onChange={(value) => {
+              window.dispatchEvent(new CustomEvent('personalTaskTitleChange', { detail: { id: task.id, task: value } }));
+            }}
             className="w-full text-sm px-2 py-1 rounded border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-surface"
           />
         </div>

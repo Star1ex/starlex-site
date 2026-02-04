@@ -118,6 +118,11 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const lastSaveRef = React.useRef<number>(0);
 
+  useEffect(() => {
+    if (invalidTaskId) return;
+    window.dispatchEvent(new CustomEvent('personalTaskTitleChange', { detail: { id: taskIdParam, task: title } }));
+  }, [title, taskIdParam, invalidTaskId]);
+
   // Ensure we don't trigger on initial load
   useEffect(() => {
     if (!isInitialLoad) return;
@@ -220,7 +225,8 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
   return (
     <div className="task-view-container min-h-screen bg-white dark:bg-dark-surface">
       {/* Main Content */}
-      <div className="w-full px-4 sm:px-6 md:px-24 pt-12 sm:pt-14 md:pt-16 pb-16">
+      <div className="w-full px-4 sm:px-6 md:px-16 pt-12 sm:pt-14 md:pt-16 pb-16">
+        <div className="max-w-5xl mx-auto">
         {/* Title Input - Notion Style */}
         <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Untitled" className="w-full text-5xl font-bold text-gray-900 dark:text-dark-text placeholder-gray-300 dark:placeholder-dark-text-muted bg-transparent border-none outline-none mb-6" style={{ fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.02em' }} />
 
@@ -230,17 +236,18 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
         </div>
 
         {/* Create Button (only for new tasks) */}
-        {isNew && (
-          <div className="mt-10">
-            <button
-              onClick={handleCreate}
-              disabled={isCreating || !title.trim()}
-              className="px-6 py-2.5 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-full font-medium text-sm hover:bg-gray-800 dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-            >
-              {isCreating ? 'Creating...' : 'Create Task'}
-            </button>
-          </div>
-        )}
+          {isNew && (
+            <div className="mt-10">
+              <button
+                onClick={handleCreate}
+                disabled={isCreating || !title.trim()}
+                className="px-6 py-2.5 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-full font-medium text-sm hover:bg-gray-800 dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+              >
+                {isCreating ? 'Creating...' : 'Create Task'}
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       <style>{`
