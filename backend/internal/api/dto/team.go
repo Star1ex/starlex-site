@@ -32,6 +32,14 @@ type DeleteTeam struct {
 	TeamID string `json:"team_id" binding:"required"`
 }
 
+type UpdateTeamName struct {
+	Name *string `json:"name"`
+}
+
+type UpdateTeamDescription struct {
+	Description *string `json:"description"`
+}
+
 func ToTeamsResponse(teams []*entity.Team) []TeamResponse {
 	response := make([]TeamResponse, len(teams))
 	for i, team := range teams {

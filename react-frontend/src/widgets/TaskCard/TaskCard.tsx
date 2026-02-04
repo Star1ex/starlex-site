@@ -127,7 +127,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
     setTitleDraft(next);
     onUpdate({ ...task, task: next });
     try {
-      await taskService.updateTeamTask(teamId, task.id, { task: next });
+      await taskService.updateTeamTaskTitle(teamId, task.id, next);
     } catch (err) {
       console.error('Failed to update task title:', err);
     }
@@ -286,24 +286,11 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
 
     try {
       if (field === 'progress') {
-        const updated = await taskService.updateTeamTaskProgress(teamId, task.id, value as any);
-        onUpdate(updated as Task);
+        await taskService.updateTeamTaskStatus(teamId, task.id, value as any);
       } else if (field === 'priority') {
-        const updated = await taskService.updateTeamTask(teamId, task.id, {
-          task: task.task,
-          description: task.description,
-          priority: value as 'low' | 'medium' | 'high',
-          user_ids: userIds,
-        });
-        onUpdate(updated as Task);
+        await taskService.updateTeamTaskPriority(teamId, task.id, value as any);
       } else {
-        const updated = await taskService.updateTeamTask(teamId, task.id, {
-          task: task.task,
-          description: task.description,
-          priority: task.priority,
-          user_ids: value as string[],
-        });
-        onUpdate(updated as Task);
+        await taskService.updateTeamTaskAssignees(teamId, task.id, value as string[]);
       }
     } catch (error) {
       console.error('Failed to update task:', error);

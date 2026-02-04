@@ -144,6 +144,31 @@ func (t *TeamRepository) GetTeamByID(ctx context.Context, teamID string) (*entit
 	return toTeamDomain(&teamModel), nil
 }
 
+func (t *TeamRepository) UpdateName(ctx context.Context, teamID string, name string) error {
+	result := t.db.WithContext(ctx).Model(&TeamModel{}).Where("id = ?", teamID).Update("name", name)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
+			return ErrTeamAlreadyExists
+		}
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return ErrTeamNotFound
+	}
+	return nil
+}
+
+func (t *TeamRepository) UpdateDescription(ctx context.Context, teamID string, description string) error {
+	result := t.db.WithContext(ctx).Model(&TeamModel{}).Where("id = ?", teamID).Update("description", description)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return ErrTeamNotFound
+	}
+	return nil
+}
+
 // AddUserToTeam
 func (t *TeamRepository) AddUserToTeam(ctx context.Context, teamID string, userID string) error {
 	return t.db.Transaction(func(tx *gorm.DB) error {

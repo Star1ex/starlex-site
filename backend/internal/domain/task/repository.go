@@ -11,6 +11,11 @@ type Repository interface {
 	Create(ctx context.Context, task *entity.Task) error
 	Get(ctx context.Context, id string) (*entity.Task, error)
 	Update(ctx context.Context, id string, data *entity.Task, assignedTo []string) (*entity.Task, error)
+	UpdateTitle(ctx context.Context, id string, title string) error
+	UpdateDescription(ctx context.Context, id string, description string) error
+	UpdatePriority(ctx context.Context, id string, priority string) error
+	UpdateProgress(ctx context.Context, id string, progress string) error
+	UpdateAssignees(ctx context.Context, id string, assignedTo []string) error
 	Delete(ctx context.Context, id string) error
 
 	// Getters

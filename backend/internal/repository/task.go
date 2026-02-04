@@ -146,6 +146,70 @@ func (r *TaskRepository) Update(ctx context.Context, id string, data *entity.Tas
 	return toTaskDomain(task), nil
 }
 
+func (r *TaskRepository) UpdateTitle(ctx context.Context, id string, title string) error {
+	result := r.db.WithContext(ctx).Model(&TaskModel{}).Where("id = ?", id).Update("task", title)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
+func (r *TaskRepository) UpdateDescription(ctx context.Context, id string, description string) error {
+	result := r.db.WithContext(ctx).Model(&TaskModel{}).Where("id = ?", id).Update("description", description)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
+func (r *TaskRepository) UpdatePriority(ctx context.Context, id string, priority string) error {
+	result := r.db.WithContext(ctx).Model(&TaskModel{}).Where("id = ?", id).Update("priority", priority)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
+func (r *TaskRepository) UpdateProgress(ctx context.Context, id string, progress string) error {
+	result := r.db.WithContext(ctx).Model(&TaskModel{}).Where("id = ?", id).Update("progress", progress)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
+func (r *TaskRepository) UpdateAssignees(ctx context.Context, id string, assigned []string) error {
+	var task TaskModel
+	if err := r.db.WithContext(ctx).Where("id = ?", id).First(&task).Error; err != nil {
+		return err
+	}
+
+	var users []UserModel
+	if len(assigned) > 0 {
+		if err := r.db.WithContext(ctx).Where("id IN ?", assigned).Find(&users).Error; err != nil {
+			return err
+		}
+	}
+
+	if err := r.db.WithContext(ctx).Model(&task).Association("Assigned").Replace(users); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (r *TaskRepository) Delete(ctx context.Context, id string) error {
 	var task TaskModel
 	if err := r.db.Preload("Assigned").Where("id = ?", id).First(&task).Error; err != nil {

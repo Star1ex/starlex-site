@@ -40,6 +40,26 @@ type UpdateTask struct {
 	OwnerID     string   `json:"owner_id"`
 }
 
+type UpdateTaskTitle struct {
+	Task *string `json:"task"`
+}
+
+type UpdateTaskDescription struct {
+	Description *string `json:"description"`
+}
+
+type UpdateTaskPriority struct {
+	Priority *string `json:"priority"`
+}
+
+type UpdateTaskProgress struct {
+	Progress *string `json:"progress"`
+}
+
+type UpdateTaskAssignees struct {
+	UserIDs *[]string `json:"user_ids"`
+}
+
 func ToTaskResponse(task *entity.Task) *TaskResponse {
 	assignedIDs := make([]string, len(task.AssignedTo))
 	for i, u := range task.AssignedTo {

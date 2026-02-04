@@ -146,12 +146,18 @@ export const TeamTaskPanel: React.FC<TeamTaskPanelProps> = ({ task, isOpen, team
         ) {
           return;
         }
-        const updated = await taskService.updateTeamTask(teamId, task.id, {
-          task: debouncedTitle,
-          description: debouncedDescription,
-        });
-        lastSentRef.current = { title: debouncedTitle, description: debouncedDescription };
-        onUpdated(updated as Task);
+        const updates: Promise<void>[] = [];
+        if (lastSentRef.current.title !== debouncedTitle) {
+          updates.push(taskService.updateTeamTaskTitle(teamId, task.id, debouncedTitle));
+        }
+        if (lastSentRef.current.description !== debouncedDescription) {
+          updates.push(taskService.updateTeamTaskDescription(teamId, task.id, debouncedDescription));
+        }
+        if (updates.length > 0) {
+          await Promise.all(updates);
+          lastSentRef.current = { title: debouncedTitle, description: debouncedDescription };
+          onUpdated({ ...task, task: debouncedTitle, description: debouncedDescription });
+        }
       } catch (err) {
         console.error('Failed to update team task:', err);
       }

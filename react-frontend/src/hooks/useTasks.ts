@@ -135,9 +135,26 @@ export const useTasks = () => {
   const updateTask = useCallback(async (id: string, data: Partial<CreateTaskRequest>) => {
     setTasksById((prev) => ({ ...prev, [id]: { ...prev[id], ...data } as TaskDTO }));
     try {
-      const updated = await taskService.updateTask(id, data as any);
-      setTasksById((prev) => ({ ...prev, [id]: updated as TaskDTO }));
-      return updated;
+      const updates: Promise<void>[] = [];
+      if (data.task !== undefined) {
+        updates.push(taskService.updateTaskTitle(id, data.task));
+      }
+      if (data.description !== undefined) {
+        updates.push(taskService.updateTaskDescription(id, data.description || ''));
+      }
+      if (data.priority !== undefined) {
+        updates.push(taskService.updateTaskPriority(id, data.priority));
+      }
+      if (data.progress !== undefined) {
+        updates.push(taskService.updateTaskStatus(id, data.progress as any));
+      }
+      if (data.user_ids !== undefined) {
+        updates.push(taskService.updateTaskAssignees(id, data.user_ids));
+      }
+      if (updates.length > 0) {
+        await Promise.all(updates);
+      }
+      return;
     } catch (err) {
       await refreshTasks();
       throw err;

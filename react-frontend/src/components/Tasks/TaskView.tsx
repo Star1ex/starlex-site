@@ -99,6 +99,12 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
         setDescription(data.description || '');
         setPriority(data.priority as any || 'medium');
         setProgress(data.progress as any || 'not_started');
+        lastSentRef.current = {
+          title: data.task || '',
+          description: data.description || '',
+          priority: (data.priority as any) || 'medium',
+          progress: (data.progress as any) || 'not_started',
+        };
         if (data?.id) updateRecentTasks(data.id, data.task || 'Untitled');
       } catch (err) {
         console.error('Failed to load task', err);
@@ -132,6 +138,12 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
   const [, setIsSavingCombined] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const lastSaveRef = React.useRef<number>(0);
+  const lastSentRef = React.useRef({
+    title: '',
+    description: '',
+    priority: 'medium',
+    progress: 'not_started',
+  });
 
   useEffect(() => {
     if (invalidTaskId) return;
@@ -145,6 +157,16 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
     setIsInitialLoad(false);
     // We leave this early return to avoid saving immediately after loading
   }, [taskIdParam]);
+
+  useEffect(() => {
+    if (isInitialLoad) return;
+    lastSentRef.current = {
+      title,
+      description,
+      priority,
+      progress,
+    };
+  }, [isInitialLoad]);
 
   useEffect(() => {
     // Strict ID validation (first priority)
@@ -170,23 +192,33 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
 
     const saveTask = async () => {
       try {
-        // Update core fields together (title/description/priority)
-        await taskService.updateTask(taskIdParam as string, {
-          task: debouncedTitle,
-          description: debouncedDescription,
-          priority: debouncedPriority as any,
-        }, { signal: controller.signal });
-
-        if (controller.signal.aborted) return;
-
-        // Update progress separately with same controller
-        if (debouncedProgress !== undefined && debouncedProgress !== null) {
-          await taskService.updateTaskProgress(taskIdParam as string, debouncedProgress as any, { signal: controller.signal });
+        const updates: Promise<void>[] = [];
+        if (debouncedTitle !== lastSentRef.current.title) {
+          updates.push(taskService.updateTaskTitle(taskIdParam as string, debouncedTitle, { signal: controller.signal }));
+        }
+        if (debouncedDescription !== lastSentRef.current.description) {
+          updates.push(
+            taskService.updateTaskDescription(taskIdParam as string, debouncedDescription, { signal: controller.signal })
+          );
+        }
+        if (debouncedPriority !== lastSentRef.current.priority) {
+          updates.push(taskService.updateTaskPriority(taskIdParam as string, debouncedPriority as any, { signal: controller.signal }));
+        }
+        if (debouncedProgress !== lastSentRef.current.progress) {
+          updates.push(taskService.updateTaskStatus(taskIdParam as string, debouncedProgress as any, { signal: controller.signal }));
         }
 
-        if (controller.signal.aborted) return;
-
-        lastSaveRef.current = Date.now();
+        if (updates.length > 0) {
+          await Promise.all(updates);
+          if (controller.signal.aborted) return;
+          lastSentRef.current = {
+            title: debouncedTitle,
+            description: debouncedDescription,
+            priority: debouncedPriority as any,
+            progress: debouncedProgress as any,
+          };
+          lastSaveRef.current = Date.now();
+        }
       } catch (err: any) {
         if (err?.name === 'AbortError') {
           cancelled = true;
