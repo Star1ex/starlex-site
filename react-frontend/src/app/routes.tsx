@@ -1,5 +1,5 @@
 import React, { Suspense } from "react";
-import { Route, Routes } from "react-router-dom";
+import { Route, Routes, useLocation } from "react-router-dom";
 import { Layout } from "@/widgets/Layout/Layout.js";
 import { ErrorBoundary } from '@/shared/ui/ErrorBoundary.js';
 import { authService } from '@/services/api/index.js';
@@ -21,12 +21,20 @@ const TaskView = React.lazy(() => import('@/components/Tasks/TaskView.js').then(
 
 import { Navigate } from 'react-router-dom';
 
-const Fallback = () => <div className="p-6">Loading…</div>;
+const Fallback = () => <div className="min-h-screen bg-white dark:bg-dark-bg" />;
 
 export const AppRoutes = () => (
   <ErrorBoundary>
     <Suspense fallback={<Fallback />}>
-      <Routes>
+      <AnimatedRoutes />
+    </Suspense>
+  </ErrorBoundary>
+);
+
+const AnimatedRoutes = () => {
+  const location = useLocation();
+  return (
+    <Routes location={location}>
       <Route path="/" element={<HomePage />} />
       <Route path="/sign-in" element={<SignInPage />} />
       <Route path="/sign-up" element={<SignUpPage />} />
@@ -43,9 +51,8 @@ export const AppRoutes = () => (
       <Route path="/task/new" element={<RequireAuth><Layout><TaskView /></Layout></RequireAuth>} />
       <Route path="/task/:taskId" element={<RequireAuth><Layout><TaskView /></Layout></RequireAuth>} />
     </Routes>
-  </Suspense>
-  </ErrorBoundary>
-);
+  );
+};
 
 const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [ready, setReady] = React.useState(false);
@@ -80,7 +87,10 @@ const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     };
   }, []);
 
-  if (!ready) return <Fallback />;
+  if (!ready) {
+    if (authed) return <>{children}</>;
+    return <Fallback />;
+  }
   if (!authed) return <Navigate to="/" replace />;
   return <>{children}</>;
 };

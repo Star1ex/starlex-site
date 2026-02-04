@@ -111,17 +111,6 @@ export const Dashboard: React.FC = () => {
     setTeams(prev => [...prev, team]);
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-dark-bg transition-colors">
-        <div className="text-center">
-          <div className="w-12 h-12 border-3 border-gray-300 dark:border-gray-600 border-t-black dark:border-t-white rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-dark-text-muted font-medium">Loading dashboard...</p>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-full bg-white dark:bg-dark-bg transition-colors duration-300">
       {/* Main Content */}
@@ -132,6 +121,11 @@ export const Dashboard: React.FC = () => {
             <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-dark-text mb-2">
               Hi {userName.split(' ')[0] || 'there'}
             </h1>
+            {loading && (
+              <div className="text-xs text-gray-400 dark:text-dark-text-muted animate-pulse">
+                Syncing your workspace…
+              </div>
+            )}
           </div>
 
           {recentTasks.length > 0 && (

@@ -11,14 +11,12 @@ import AboutUs from '@/pages/about-us/AboutUs.js';
 export const GeneralSettings: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(authService.isAuthenticated());
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeTab, setActiveTab] = useState<'contributing' | 'appearance' | 'password' | 'about' | 'support'>('appearance');
 
   useEffect(() => {
     // Auth gate handled by routing; no redirect here
-    setLoading(false);
   }, []);
 
   useEffect(() => {
@@ -56,17 +54,6 @@ export const GeneralSettings: React.FC = () => {
       navigate('/dashboard');
     }
   };
-
-  if (loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-dark-bg transition-colors">
-        <div className="text-center">
-          <div className="w-12 h-12 border-3 border-gray-300 dark:border-gray-600 border-t-black dark:border-t-white rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-dark-text-muted font-medium">Loading settings...</p>
-        </div>
-      </div>
-    );
-  }
 
   if (!isAuthenticated) {
     return null;

@@ -122,10 +122,37 @@ export const UserProfilePage: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-full flex items-center justify-center bg-white dark:bg-dark-bg transition-colors">
-        <div className="text-center">
-          <div className="w-12 h-12 border-3 border-gray-300 dark:border-gray-600 border-t-black dark:border-t-white rounded-full animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-dark-text-muted font-medium">Loading profile...</p>
+      <div className="min-h-screen bg-white dark:bg-dark-bg transition-colors">
+        <div className="max-w-5xl mx-auto px-4 sm:px-8 py-8 sm:py-10 animate-pulse">
+          <div className="mb-6 flex items-center justify-between">
+            <div className="h-4 w-24 bg-gray-200 dark:bg-dark-border rounded-full" />
+            <div className="h-3 w-20 bg-gray-200 dark:bg-dark-border rounded-full" />
+          </div>
+          <div className="rounded-2xl overflow-hidden border border-gray-200/40 dark:border-dark-border/40 bg-white dark:bg-dark-surface shadow-sm">
+            <div className="px-8 py-6 border-b border-gray-100/50 dark:border-dark-border/40 bg-gray-50 dark:bg-dark-bg/40">
+              <div className="h-6 w-40 bg-gray-200 dark:bg-dark-border rounded-full" />
+              <div className="mt-2 h-3 w-56 bg-gray-200 dark:bg-dark-border rounded-full" />
+            </div>
+            <div className="p-8">
+              <div className="flex flex-col lg:flex-row gap-8">
+                <div className="lg:w-1/3 flex items-center gap-4">
+                  <div className="w-24 h-24 rounded-2xl bg-gray-200 dark:bg-dark-border" />
+                  <div className="space-y-2">
+                    <div className="h-4 w-32 bg-gray-200 dark:bg-dark-border rounded-full" />
+                    <div className="h-3 w-24 bg-gray-200 dark:bg-dark-border rounded-full" />
+                  </div>
+                </div>
+                <div className="lg:flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {Array.from({ length: 4 }).map((_, idx) => (
+                    <div key={idx} className="p-4 rounded-xl border border-gray-200/40 dark:border-dark-border/40">
+                      <div className="h-3 w-16 bg-gray-200 dark:bg-dark-border rounded-full" />
+                      <div className="mt-3 h-4 w-40 bg-gray-200 dark:bg-dark-border rounded-full" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
