@@ -200,7 +200,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
                   }}
                   className="w-full flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-50 dark:hover:bg-dark-border transition-colors text-left"
                 >
-                  <div className="w-8 h-8 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800 flex-shrink-0">
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">
                     {user ? <Avatar user={user} size="sm" /> : null}
                   </div>
                   <div className="flex-1 min-w-0">

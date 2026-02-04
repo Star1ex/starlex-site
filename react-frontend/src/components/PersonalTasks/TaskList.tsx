@@ -2,6 +2,8 @@ import React, { useMemo } from 'react';
 import type { TaskDTO } from '@/types/dto.js';
 import VirtualList from '@/components/Virtualized/VirtualList.js';
 
+const stripHtml = (value: string) => value.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+
 function TaskListComponent({ tasks }: { tasks: TaskDTO[] }) {
   if (!tasks || tasks.length === 0) {
     return <div className="text-sm text-gray-500">No tasks yet — create one using +</div>;
@@ -14,7 +16,7 @@ function TaskListComponent({ tasks }: { tasks: TaskDTO[] }) {
           <div className="text-sm font-medium">{t.task}</div>
           <div className="text-xs text-gray-500">{t.priority}</div>
         </div>
-        <div className="mt-2 text-xs text-gray-600 line-clamp-3">{t.description}</div>
+        <div className="mt-2 text-xs text-gray-600 line-clamp-3">{stripHtml(t.description || '')}</div>
       </div>
     ),
     []

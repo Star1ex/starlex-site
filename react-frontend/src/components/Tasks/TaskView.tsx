@@ -1,6 +1,9 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import MarkdownEditor from '@/components/TaskView/MarkdownEditor.js';
+import { EditorContent, useEditor } from '@tiptap/react';
+import StarterKit from '@tiptap/starter-kit';
+import Placeholder from '@tiptap/extension-placeholder';
+import Link from '@tiptap/extension-link';
 import { useDebounce } from '@/shared/hooks/useDebounce.js';
 import { taskService } from '@/services/api/index.js';
 import { useAuth } from '@/contexts/AuthContext.js';
@@ -23,11 +26,6 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
     folder_id: null,
   });
   // per-field saving handled by useAutoSave
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [showMarkdownPreview, setShowMarkdownPreview] = useState(true);
-  const editorRef = useRef<HTMLTextAreaElement | null>(null);
-  const typingTimeoutRef = useRef<number | null>(null);
-  const enterEditTimeoutRef = useRef<number | null>(null);
 
   // Local editing fields
   const [title, setTitle] = useState('');
@@ -43,35 +41,35 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
     setTask((prev) => ({ ...prev, folder_id: locationFolderId }));
   }, [isNew, locationFolderId]);
 
-  useEffect(() => {
-    if (!showMarkdownPreview) return;
-    const handleKeyDown = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      const tag = target?.tagName?.toLowerCase();
-      if (tag === 'input' || tag === 'textarea' || (target && (target as any).isContentEditable)) return;
-      if (e.ctrlKey || e.metaKey || e.altKey) return;
-      const isTypingKey = e.key.length === 1 || e.key === 'Backspace' || e.key === 'Delete' || e.key === 'Enter';
-      if (!isTypingKey) return;
-      if (enterEditTimeoutRef.current) {
-        window.clearTimeout(enterEditTimeoutRef.current);
-      }
-      enterEditTimeoutRef.current = window.setTimeout(() => {
-        setShowMarkdownPreview(false);
-        window.setTimeout(() => {
-          editorRef.current?.focus();
-        }, 0);
-      }, 1200);
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      window.removeEventListener('keydown', handleKeyDown);
-      if (enterEditTimeoutRef.current) {
-        window.clearTimeout(enterEditTimeoutRef.current);
-      }
-    };
-  }, [showMarkdownPreview]);
+  const editorExtensions = useMemo(
+    () => [
+      StarterKit,
+      Link.configure({
+        openOnClick: true,
+        autolink: true,
+        linkOnPaste: true,
+      }),
+      Placeholder.configure({
+        placeholder: 'Description',
+        showOnlyWhenEditable: true,
+        showOnlyCurrent: false,
+      }),
+    ],
+    []
+  );
 
-
+  const editor = useEditor({
+    extensions: editorExtensions,
+    content: description || '',
+    onUpdate: ({ editor: tiptap }) => {
+      setDescription(tiptap.getHTML());
+    },
+    editorProps: {
+      attributes: {
+        class: 'task-editor',
+      },
+    },
+  });
 
   // Load task if editing
   useEffect(() => {
@@ -100,6 +98,14 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
     };
   }, [taskIdParam, isNew]);
 
+  useEffect(() => {
+    if (!editor) return;
+    const current = editor.getHTML();
+    if ((description || '') !== current) {
+      editor.commands.setContent(description || '', false);
+    }
+  }, [description, editor]);
+
   // Combined save: debounced text + immediate state but saved together to prevent parallel requests
   const invalidTaskId = !taskIdParam || taskIdParam === 'new' || taskIdParam === '' || taskIdParam === 'without-folder';
 
@@ -108,7 +114,7 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
   const debouncedPriority = useDebounce(priority, 300);
   const debouncedProgress = useDebounce(progress, 300);
 
-  const [isSavingCombined, setIsSavingCombined] = useState(false);
+  const [, setIsSavingCombined] = useState(false);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const lastSaveRef = React.useRef<number>(0);
 
@@ -160,7 +166,6 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
         if (controller.signal.aborted) return;
 
         lastSaveRef.current = Date.now();
-        setLastSaved(new Date());
       } catch (err: any) {
         if (err?.name === 'AbortError') {
           cancelled = true;
@@ -178,25 +183,6 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
       controller.abort();
     };
   }, [debouncedTitle, debouncedDescription, debouncedPriority, debouncedProgress, taskIdParam, isInitialLoad]);
-  const isAnySaving = isSavingCombined;
-
-  useEffect(() => {
-    if (showMarkdownPreview) return;
-    if (typingTimeoutRef.current) {
-      window.clearTimeout(typingTimeoutRef.current);
-    }
-    typingTimeoutRef.current = window.setTimeout(() => {
-      setShowMarkdownPreview(true);
-    }, 1500);
-    return () => {
-      if (typingTimeoutRef.current) {
-        window.clearTimeout(typingTimeoutRef.current);
-      }
-    };
-  }, [description, showMarkdownPreview]);
-
-
-
   // Create new task
   const [isCreating, setIsCreating] = useState(false);
   const handleCreate = async () => {
@@ -231,103 +217,119 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
     }
   };
 
-  const formatRelativeTime = (date: Date) => {
-    const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
-    if (seconds < 60) return 'just now';
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-    return date.toLocaleDateString();
-  };
-
   return (
     <div className="task-view-container min-h-screen bg-white dark:bg-dark-surface">
-      {/* Header Bar */}
-      <div className="sticky top-0 z-10 bg-white/80 dark:bg-dark-surface/80 backdrop-blur-sm border-b border-gray-100 dark:border-dark-border">
-        <div className="w-full px-4 sm:px-6 md:px-24 py-3 flex items-center justify-between">
-          <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-sm text-gray-500 hover:text-gray-700 dark:text-dark-text-muted dark:hover:text-dark-text transition-colors">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg>
-            Back
-          </button>
-
-          <div className="flex items-center gap-4">
-            <div className="text-xs text-gray-500 dark:text-dark-text-muted">
-              {isAnySaving ? (
-                <span className="flex items-center gap-2">
-                  <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" /></svg>
-                  Saving...
-                </span>
-              ) : lastSaved ? (
-                <span>Saved {formatRelativeTime(lastSaved)}</span>
-              ) : null}
-            </div>
-
-            <button onClick={() => setShowMarkdownPreview(!showMarkdownPreview)} className="text-xs px-3 py-1.5 rounded-md border border-gray-200 dark:border-dark-border hover:bg-gray-50 dark:hover:bg-dark-border transition-colors">
-              {showMarkdownPreview ? 'Edit' : 'Preview'}
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* Main Content */}
-      <div className="w-full px-4 sm:px-6 md:px-24 pt-10 sm:pt-12 md:pt-14 pb-16">
-        {/* Metadata Pills */}
-        <div className="flex items-center gap-3 mb-6 text-sm text-gray-500 dark:text-dark-text-muted">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium">Priority:</span>
-            <div className="flex gap-1">
-              {(['low','medium','high'] as const).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPriority(p)}
-                  className={`priority-pill px-3 py-1 text-xs font-medium rounded-full transition-all ${priority === p ? 'priority-pill--active' : ''}`}
-                >
-                  {p.charAt(0).toUpperCase() + p.slice(1)}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-medium">Status:</span>
-            <select value={progress} onChange={(e) => setProgress(e.target.value as any)} className="px-3 py-1 text-xs font-medium rounded-full bg-gray-100 dark:bg-dark-border text-gray-600 dark:text-dark-text-muted border-none outline-none cursor-pointer hover:bg-gray-200 dark:hover:bg-dark-border/80 transition-colors">
-              <option value="not_started">Not Started</option>
-              <option value="in_progress">In Progress</option>
-              <option value="In review">In Review</option>
-              <option value="done">Done</option>
-            </select>
-          </div>
-        </div>
-
+      <div className="w-full px-4 sm:px-6 md:px-24 pt-12 sm:pt-14 md:pt-16 pb-16">
         {/* Title Input - Notion Style */}
         <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Untitled" className="w-full text-5xl font-bold text-gray-900 dark:text-dark-text placeholder-gray-300 dark:placeholder-dark-text-muted bg-transparent border-none outline-none mb-6" style={{ fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.02em' }} />
 
-        {/* Description - Markdown Editor */}
-        <div className="mt-6 min-h-[400px] group">
-          <MarkdownEditor
-            value={description}
-            onChange={setDescription}
-            mode={showMarkdownPreview ? 'preview' : 'edit'}
-            showToolbar
-            onTogglePreview={() => setShowMarkdownPreview(!showMarkdownPreview)}
-            toolbarClassName="flex items-center gap-2 py-2 opacity-0 group-hover:opacity-100 transition-opacity"
-            textareaClassName="w-full min-h-[400px] text-base leading-relaxed bg-transparent border-none outline-none resize-none font-normal"
-            previewClassName="min-h-[400px]"
-            containerClassName="flex flex-col h-full"
-            onPreviewClick={() => {
-              setShowMarkdownPreview(false);
-              window.setTimeout(() => editorRef.current?.focus(), 0);
-            }}
-            textareaRef={editorRef}
-          />
+        {/* Description - WYSIWYG Markdown */}
+        <div className="mt-6">
+          <EditorContent editor={editor} />
         </div>
 
         {/* Create Button (only for new tasks) */}
         {isNew && (
-          <div className="mt-8 pt-6 border-t border-gray-100 dark:border-dark-border">
-            <button onClick={handleCreate} disabled={isCreating || !title.trim()} className="px-6 py-2.5 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-lg font-medium text-sm hover:bg-gray-800 dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all">{isCreating ? 'Creating...' : 'Create Task'}</button>
+          <div className="mt-10">
+            <button
+              onClick={handleCreate}
+              disabled={isCreating || !title.trim()}
+              className="px-6 py-2.5 bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 rounded-full font-medium text-sm hover:bg-gray-800 dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              {isCreating ? 'Creating...' : 'Create Task'}
+            </button>
           </div>
         )}
       </div>
+
+      <style>{`
+        .task-editor {
+          min-height: 360px;
+          padding: 0;
+          outline: none;
+          border: none;
+          color: inherit;
+          font-size: 1rem;
+          line-height: 1.7;
+          background: transparent;
+        }
+        .task-editor p {
+          margin: 0 0 0.9em 0;
+        }
+        .task-editor h1 {
+          font-size: 2.15rem;
+          font-weight: 700;
+          margin: 0.6em 0 0.4em 0;
+          line-height: 1.15;
+        }
+        .task-editor h2 {
+          font-size: 1.65rem;
+          font-weight: 700;
+          margin: 0.7em 0 0.4em 0;
+          line-height: 1.2;
+        }
+        .task-editor h3 {
+          font-size: 1.35rem;
+          font-weight: 700;
+          margin: 0.7em 0 0.35em 0;
+          line-height: 1.25;
+        }
+        .task-editor ul,
+        .task-editor ol {
+          padding-left: 1.5em;
+          margin: 0 0 0.9em 0;
+        }
+        .task-editor li {
+          margin: 0.2em 0;
+        }
+        .task-editor code {
+          background-color: #f3f4f6;
+          padding: 0.2em 0.35em;
+          border-radius: 0.25rem;
+          font-size: 0.95em;
+          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+        }
+        .task-editor pre {
+          background-color: #f3f4f6;
+          padding: 1em;
+          border-radius: 0.5rem;
+          overflow-x: auto;
+          margin: 0 0 1em 0;
+        }
+        .task-editor blockquote {
+          border-left: 3px solid #e5e7eb;
+          padding-left: 1em;
+          margin: 0 0 1em 0;
+          color: #6b7280;
+        }
+        .task-editor a {
+          color: #2563eb;
+          text-decoration: underline;
+        }
+        .task-editor .is-empty::before {
+          content: attr(data-placeholder);
+          float: left;
+          color: #9ca3af;
+          pointer-events: none;
+          height: 0;
+        }
+        .dark .task-editor code {
+          background-color: #1e293b;
+          color: #f1f5f9;
+        }
+        .dark .task-editor pre {
+          background-color: #1e293b;
+          color: #f1f5f9;
+        }
+        .dark .task-editor blockquote {
+          border-left-color: #475569;
+          color: #cbd5e1;
+        }
+        .dark .task-editor a {
+          color: #60a5fa;
+        }
+      `}</style>
     </div>
   );
 };

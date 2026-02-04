@@ -1,27 +1,11 @@
-export const API_URL = import.meta.env.VITE_API_URL ?? '';
-
-// Build full API endpoint URL with support for both absolute and relative URLs
-export const buildApiUrl = (endpoint: string): string => {
-  if (!API_URL) return endpoint; // Production: use relative URLs (/api/*)
-  return `${API_URL}${endpoint}`; // Local dev: use full URL (http://localhost:3000/api/*)
-};
-
-const getToken = () => localStorage.getItem('token');
+import { httpClient } from '@/services/api/client.js';
 
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {
-  const token = getToken();
-  if (!token) throw new Error("No auth token");
+  const method = options.method ? options.method.toLowerCase() : 'get';
+  const data = (options as any).body ? JSON.parse((options as any).body as string) : undefined;
 
-  const headers = {
-    ...options.headers,
-    Authorization: `Bearer ${token}`,
-    Accept: "application/json",
-    "Content-Type": "application/json",
-  };
-
-  const res = await fetch(buildApiUrl(endpoint), { ...options, headers });
-  if (!res.ok) throw new Error(`API Error: ${res.status}`);
-  return res.json();
+  const response = await httpClient.request({ url: endpoint, method, data, headers: options.headers as any });
+  return response.data;
 }
 
 
@@ -31,19 +15,8 @@ export interface FetchOptions extends RequestInit {
 }
 
 export const fetchWithAuth = async (url: string, options: FetchOptions = {}): Promise<any> => {
-  const token = localStorage.getItem('authToken');
-  const response = await fetch(url, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...(token && { Authorization: `Bearer ${token}` }),
-      ...options.headers,
-    },
-  });
-
-  if (!response.ok) {
-    throw new Error(`HTTP error! status: ${response.status}`);
-  }
-
-  return response.json();
+  const method = options.method ? options.method.toLowerCase() : 'get';
+  const data = (options as any).body ? JSON.parse((options as any).body as string) : undefined;
+  const response = await httpClient.request({ url, method, data, headers: options.headers as any });
+  return response.data;
 };

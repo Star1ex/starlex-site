@@ -5,6 +5,8 @@ import DraggableItem from './DraggableItem.js';
 import type { TaskDTO } from '@/types/dto.js';
 import { taskService } from '@/services/api/index.js';
 
+const stripHtml = (value: string) => value.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+
 export default function DraggableTaskList({ initialTasks, onOrderChange }: { initialTasks: TaskDTO[]; onOrderChange?: (t: TaskDTO[]) => void }) {
   const [items, setItems] = useState<TaskDTO[]>(initialTasks);
   const sensors = useSensor(PointerSensor, { activationConstraint: { distance: 5 } });
@@ -53,7 +55,7 @@ export default function DraggableTaskList({ initialTasks, onOrderChange }: { ini
                   <div className="text-sm font-medium text-gray-900 dark:text-dark-text">{t.task}</div>
                   <div className="text-xs text-gray-500 dark:text-dark-text-muted">{t.priority}</div>
                 </div>
-                <div className="mt-2 text-xs text-gray-600 dark:text-dark-text-muted line-clamp-3">{t.description}</div>
+                <div className="mt-2 text-xs text-gray-600 dark:text-dark-text-muted line-clamp-3">{stripHtml(t.description || '')}</div>
               </div>
             </DraggableItem>
           ))}
