@@ -11,10 +11,10 @@ export const Support: React.FC = () => {
         </p>
       </div>
 
-      <div className="grid sm:grid-cols-2 gap-4">
+      <div className="grid sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
         <a
           href="mailto:teamtracktech@gmail.com"
-          className="group flex items-center gap-3 rounded-2xl bg-white dark:bg-dark-surface p-5 hover:bg-gray-50 dark:hover:bg-dark-border transition-colors shadow-[0_8px_24px_rgba(0,0,0,0.06)] text-left"
+          className="group flex items-center justify-center gap-3 rounded-xl p-4 hover:bg-gray-50 dark:hover:bg-dark-border/40 transition-colors text-left"
         >
           <span className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-dark-border flex items-center justify-center text-gray-700 dark:text-dark-text">
             <Mail className="w-5 h-5" />
@@ -29,7 +29,7 @@ export const Support: React.FC = () => {
           href="https://t.me/critiq1"
           target="_blank"
           rel="noopener noreferrer"
-          className="group flex items-center gap-3 rounded-2xl bg-white dark:bg-dark-surface p-5 hover:bg-gray-50 dark:hover:bg-dark-border transition-colors shadow-[0_8px_24px_rgba(0,0,0,0.06)] text-left"
+          className="group flex items-center justify-center gap-3 rounded-xl p-4 hover:bg-gray-50 dark:hover:bg-dark-border/40 transition-colors text-left"
         >
           <span className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-dark-border flex items-center justify-center text-gray-700 dark:text-dark-text">
             <MessageCircle className="w-5 h-5" />

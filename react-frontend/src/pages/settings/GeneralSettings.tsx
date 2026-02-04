@@ -115,7 +115,6 @@ export const GeneralSettings: React.FC = () => {
           <div className="lg:hidden flex items-center justify-between gap-3 mb-6">
             <div className="flex-1 text-center">
               <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-dark-text">Settings</h1>
-              <p className="text-gray-600 dark:text-dark-text-muted mt-1">Manage your preferences</p>
             </div>
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -129,15 +128,7 @@ export const GeneralSettings: React.FC = () => {
           </div>
 
           {/* Desktop Header */}
-          <div className="hidden lg:block mb-8">
-            <div className="flex flex-col items-center text-center gap-2">
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-dark-text">Settings</h1>
-              <p className="text-gray-600 dark:text-dark-text-muted">Manage your account and application preferences</p>
-              <div className="px-3 py-1.5 rounded-full bg-gray-100 dark:bg-dark-surface text-xs font-medium text-gray-600 dark:text-dark-text-muted">
-                Updated just now
-              </div>
-            </div>
-          </div>
+
 
           {/* Content with Animation */}
           <div
@@ -145,7 +136,7 @@ export const GeneralSettings: React.FC = () => {
               sidebarOpen ? 'opacity-100 translate-x-0' : 'opacity-100 translate-x-0'
             }`}
           >
-            <div className="bg-white/80 dark:bg-dark-surface/80 rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.08)] p-6 sm:p-10 max-w-4xl mx-auto w-full">
+            <div className="p-2 sm:p-4 max-w-4xl mx-auto w-full">
               {renderContent()}
             </div>
           </div>

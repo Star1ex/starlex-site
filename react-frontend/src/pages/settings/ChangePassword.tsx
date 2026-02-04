@@ -76,7 +76,7 @@ export const ChangePassword: React.FC<ChangePasswordProps> = ({ onSubmit }) => {
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           disabled={loading}
-          className="w-full px-4 py-3 rounded-lg border border-gray-200/80 dark:border-dark-border/60 bg-white dark:bg-dark-bg text-gray-900 dark:text-dark-text placeholder-gray-500 dark:placeholder-dark-text-muted focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+          className="w-full px-0 py-2 bg-transparent border-0 border-b border-gray-200/80 dark:border-dark-border/60 text-gray-900 dark:text-dark-text placeholder-gray-500 dark:placeholder-dark-text-muted focus:outline-none focus:ring-0 focus:border-gray-400 dark:focus:border-dark-text-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         />
         <button
           type="button"
@@ -145,7 +145,7 @@ export const ChangePassword: React.FC<ChangePasswordProps> = ({ onSubmit }) => {
         <button
           type="submit"
           disabled={loading}
-          className="w-full px-4 py-3 bg-white hover:bg-gray-100 text-gray-900 dark:bg-black dark:hover:bg-gray-900 dark:text-white font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-sm"
+          className="w-full px-4 py-3 bg-gray-900 text-white dark:bg-white dark:text-black font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
         >
           {loading ? (
             <>
@@ -158,8 +158,8 @@ export const ChangePassword: React.FC<ChangePasswordProps> = ({ onSubmit }) => {
         </button>
       </form>
 
-      <div className="bg-blue-50 dark:bg-blue-950 rounded-lg p-4 text-left max-w-2xl mx-auto">
-        <p className="text-sm text-blue-700 dark:text-blue-400">
+      <div className="text-left max-w-2xl mx-auto">
+        <p className="text-sm text-gray-600 dark:text-dark-text-muted">
           <strong>Note:</strong> This is a prototype for the password change feature. Implementation coming soon!
         </p>
       </div>

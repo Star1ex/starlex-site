@@ -28,45 +28,41 @@ export const Appearance: React.FC = () => {
       </div>
 
       {/* Theme Toggle */}
-      <div className="bg-white dark:bg-dark-surface rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.06)] overflow-hidden">
-        <div className="px-6 py-5">
-          <h4 className="font-medium text-gray-900 dark:text-dark-text">Theme</h4>
+      <div className="space-y-4 text-left">
+        <h4 className="font-medium text-gray-900 dark:text-dark-text">Theme</h4>
+        <div className="flex flex-col gap-2">
+          <div className="flex-1">
+            <p className="text-sm text-gray-600 dark:text-dark-text-muted">
+              Current theme: <span className="font-medium text-gray-900 dark:text-dark-text">{themeOptions.find(t => t.id === theme)?.label}</span>
+            </p>
+            <p className="text-xs text-gray-500 dark:text-dark-text-muted mt-1">
+              Select a theme below
+            </p>
+          </div>
         </div>
-        <div className="px-6 pb-6 space-y-4">
-          <div className="flex flex-col gap-2 text-left sm:text-left">
-            <div className="flex-1">
-              <p className="text-sm text-gray-600 dark:text-dark-text-muted">
-                Current theme: <span className="font-medium text-gray-900 dark:text-dark-text">{themeOptions.find(t => t.id === theme)?.label}</span>
-              </p>
-              <p className="text-xs text-gray-500 dark:text-dark-text-muted mt-1">
-                Select a theme below
-              </p>
-            </div>
-          </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {themeOptions.map((opt) => (
-              <button
-                key={opt.id}
-                onClick={() => setTheme(opt.id as any)}
-                className={`px-4 py-2 rounded-xl text-sm text-left transition-colors shadow-sm ${
-                  theme === opt.id
-                    ? 'bg-gray-100 dark:bg-dark-border text-gray-900 dark:text-dark-text'
-                    : 'bg-white/80 dark:bg-dark-surface text-gray-600 dark:text-dark-text-muted hover:bg-gray-50 dark:hover:bg-dark-border'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {themeOptions.map((opt) => (
+            <button
+              key={opt.id}
+              onClick={() => setTheme(opt.id as any)}
+              className={`px-3 py-2 rounded-lg text-sm text-left transition-colors ${
+                theme === opt.id
+                  ? 'bg-gray-100/70 dark:bg-dark-border/60 text-gray-900 dark:text-dark-text'
+                  : 'text-gray-600 dark:text-dark-text-muted hover:bg-gray-50 dark:hover:bg-dark-border/40'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
       </div>
 
       {/* Theme Preview */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {previewThemes.map((preview) => (
-          <div key={preview.id} className={`p-4 rounded-xl shadow-sm ${preview.bg}`}>
-            <div className={`w-full h-24 rounded-lg shadow-sm mb-3 border ${preview.surface} ${preview.border}`} />
+          <div key={preview.id} className={`p-4 rounded-xl ${preview.bg}`}>
+            <div className={`w-full h-24 rounded-lg mb-3 border ${preview.surface} ${preview.border}`} />
             <div className={`text-xs font-medium ${preview.text}`}>{preview.label}</div>
             <div className={`text-[11px] mt-0.5 ${preview.muted}`}>Preview palette</div>
           </div>
@@ -74,12 +70,10 @@ export const Appearance: React.FC = () => {
       </div>
 
       {/* Additional Theme Settings */}
-      <div className="bg-white dark:bg-dark-surface rounded-2xl shadow-[0_8px_24px_rgba(0,0,0,0.06)] overflow-hidden">
-        <div className="px-6 py-5">
-          <h4 className="font-medium text-gray-900 dark:text-dark-text">Display Options</h4>
-        </div>
-        <div className="px-6 pb-6 space-y-3 text-left">
-          <label className="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-gray-50 dark:hover:bg-dark-border transition-colors">
+      <div className="space-y-3 text-left">
+        <h4 className="font-medium text-gray-900 dark:text-dark-text">Display Options</h4>
+        <div className="space-y-2">
+          <label className="flex items-center gap-3 cursor-pointer py-1.5 rounded hover:bg-gray-50/70 dark:hover:bg-dark-border/30 transition-colors">
             <input
               type="checkbox"
               defaultChecked
@@ -87,7 +81,7 @@ export const Appearance: React.FC = () => {
             />
             <span className="text-sm text-gray-700 dark:text-dark-text">Enable animations</span>
           </label>
-          <label className="flex items-center gap-3 cursor-pointer p-2 rounded hover:bg-gray-50 dark:hover:bg-dark-border transition-colors">
+          <label className="flex items-center gap-3 cursor-pointer py-1.5 rounded hover:bg-gray-50/70 dark:hover:bg-dark-border/30 transition-colors">
             <input
               type="checkbox"
               defaultChecked

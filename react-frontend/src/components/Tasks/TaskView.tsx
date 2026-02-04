@@ -9,6 +9,20 @@ import { taskService } from '@/services/api/index.js';
 import { useAuth } from '@/contexts/AuthContext.js';
 import type { TaskDTO, CreateTaskRequest } from '@/types/dto.js';
 
+const RECENT_TASKS_KEY = 'recentTasks';
+
+const updateRecentTasks = (taskId: string, title: string) => {
+  try {
+    const raw = localStorage.getItem(RECENT_TASKS_KEY);
+    const parsed = raw ? (JSON.parse(raw) as Array<{ id: string; title: string; openedAt: number }>) : [];
+    const filtered = parsed.filter((t) => t.id !== taskId);
+    const next = [{ id: taskId, title, openedAt: Date.now() }, ...filtered].slice(0, 5);
+    localStorage.setItem(RECENT_TASKS_KEY, JSON.stringify(next));
+  } catch {
+    // ignore storage errors
+  }
+};
+
 export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
   const params = useParams();
   const taskIdParam = taskIdProp || (params as any).taskId;
@@ -85,6 +99,7 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
         setDescription(data.description || '');
         setPriority(data.priority as any || 'medium');
         setProgress(data.progress as any || 'not_started');
+        if (data?.id) updateRecentTasks(data.id, data.task || 'Untitled');
       } catch (err) {
         console.error('Failed to load task', err);
       } finally {
@@ -121,6 +136,7 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
   useEffect(() => {
     if (invalidTaskId) return;
     window.dispatchEvent(new CustomEvent('personalTaskTitleChange', { detail: { id: taskIdParam, task: title } }));
+    if (taskIdParam && title) updateRecentTasks(taskIdParam, title);
   }, [title, taskIdParam, invalidTaskId]);
 
   // Ensure we don't trigger on initial load
