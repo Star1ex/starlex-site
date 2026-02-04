@@ -17,12 +17,9 @@ export const GeneralSettings: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'contributing' | 'appearance' | 'password' | 'about' | 'support'>('appearance');
 
   useEffect(() => {
-    if (!authService.isAuthenticated()) {
-      navigate('/sign-in');
-      return;
-    }
+    // Auth gate handled by routing; no redirect here
     setLoading(false);
-  }, [navigate]);
+  }, []);
 
   useEffect(() => {
     if (authService.isAuthenticated()) {

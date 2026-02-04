@@ -2,6 +2,8 @@ import React, { Suspense } from "react";
 import { Route, Routes } from "react-router-dom";
 import { Layout } from "@/widgets/Layout/Layout.js";
 import { ErrorBoundary } from '@/shared/ui/ErrorBoundary.js';
+import { authService } from '@/services/api/index.js';
+import { apiClient } from '@/services/api/client.js';
 
 // Lazy-loaded pages for better initial bundle size
 const HomePage = React.lazy(() => import('@/pages/home/HomePage.js').then(m => ({ default: m.HomePage })));
@@ -31,16 +33,54 @@ export const AppRoutes = () => (
       <Route path="/verify-email" element={<VerifyEmailPage />} />
 
       {/* Protected routes with Layout */}
-      <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
-      <Route path="/settings" element={<Layout><GeneralSettings /></Layout>} />
-      <Route path="/about-us" element={<Layout><AboutUs /></Layout>} />
-      <Route path="/profile" element={<Layout><ProfilePage /></Layout>} />
-      <Route path="/profile/:userId" element={<Layout><UserProfilePage /></Layout>} />
-      <Route path="/team/:team_id" element={<Layout><TaskBoard /></Layout>} />
-      <Route path="/personal" element={<Layout><Navigate to="/dashboard" replace /></Layout>} />
-      <Route path="/task/new" element={<Layout><TaskView /></Layout>} />
-      <Route path="/task/:taskId" element={<Layout><TaskView /></Layout>} />
+      <Route path="/dashboard" element={<RequireAuth><Layout><Dashboard /></Layout></RequireAuth>} />
+      <Route path="/settings" element={<RequireAuth><Layout><GeneralSettings /></Layout></RequireAuth>} />
+      <Route path="/about-us" element={<RequireAuth><Layout><AboutUs /></Layout></RequireAuth>} />
+      <Route path="/profile" element={<RequireAuth><Layout><ProfilePage /></Layout></RequireAuth>} />
+      <Route path="/profile/:userId" element={<RequireAuth><Layout><UserProfilePage /></Layout></RequireAuth>} />
+      <Route path="/team/:team_id" element={<RequireAuth><Layout><TaskBoard /></Layout></RequireAuth>} />
+      <Route path="/personal" element={<RequireAuth><Layout><Navigate to="/dashboard" replace /></Layout></RequireAuth>} />
+      <Route path="/task/new" element={<RequireAuth><Layout><TaskView /></Layout></RequireAuth>} />
+      <Route path="/task/:taskId" element={<RequireAuth><Layout><TaskView /></Layout></RequireAuth>} />
     </Routes>
   </Suspense>
   </ErrorBoundary>
 );
+
+const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [ready, setReady] = React.useState(false);
+  const [authed, setAuthed] = React.useState(authService.isAuthenticated());
+
+  React.useEffect(() => {
+    let mounted = true;
+    const init = async () => {
+      if (authService.isAuthenticated()) {
+        if (mounted) {
+          setAuthed(true);
+          setReady(true);
+        }
+        return;
+      }
+      try {
+        const ok = await apiClient.initialize();
+        if (mounted) {
+          setAuthed(ok);
+          setReady(true);
+        }
+      } catch {
+        if (mounted) {
+          setAuthed(false);
+          setReady(true);
+        }
+      }
+    };
+    init();
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  if (!ready) return <Fallback />;
+  if (!authed) return <Navigate to="/" replace />;
+  return <>{children}</>;
+};

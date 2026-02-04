@@ -14,6 +14,11 @@ export const teamService = {
     return response.data;
   },
 
+  async updateTeam(teamId: string, data: { name?: string }): Promise<TeamDTO> {
+    const response = await httpClient.put<TeamDTO>(`/api/teams/${teamId}`, data);
+    return response.data;
+  },
+
   async getTeamUsers(teamId: string): Promise<UserDTO[]> {
     const response = await httpClient.get<UserDTO[]>(`/api/teams/${teamId}/users`);
     return response.data;

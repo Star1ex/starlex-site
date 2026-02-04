@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ChevronRight, Plus } from 'lucide-react';
 import FolderItem from './FolderItem.js';
 import TaskItem from './TaskItem.js';
@@ -8,6 +8,7 @@ import { useContextMenu } from '@/hooks/useContextMenu.js';
 import { useAuth } from '@/contexts/AuthContext.js';
 import type { FolderDTO, TaskDTO } from '@/types/dto.js';
 import { DndContext, PointerSensor, useDroppable, useSensor, useSensors } from '@dnd-kit/core';
+import InlineEdit from '@/components/shared/InlineEdit.js';
 
 interface SidebarSectionProps {
   title: string;
@@ -18,6 +19,8 @@ interface SidebarSectionProps {
   onTeamClick?: (teamId: string) => void;
   onAddTeam?: () => void;
   activeTeamId?: string | null;
+  onRenameTeam?: (id: string, name: string) => Promise<void> | void;
+  onDeleteTeam?: (id: string) => Promise<void> | void;
   foldersHook?: ReturnType<typeof useFolders>;
   tasksHook?: ReturnType<typeof useTasks>;
 }
@@ -31,6 +34,8 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
   onTeamClick,
   onAddTeam,
   activeTeamId,
+  onRenameTeam,
+  onDeleteTeam,
   foldersHook: foldersHookProp,
   tasksHook: tasksHookProp,
 }) => {
@@ -136,6 +141,25 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
     onTeamClick?.(teamId);
   }, [onTeamClick]);
 
+  const [teamMenu, setTeamMenu] = useState<{ show: boolean; x: number; y: number; teamId: string | null }>({
+    show: false,
+    x: 0,
+    y: 0,
+    teamId: null,
+  });
+  const [renamingTeamId, setRenamingTeamId] = useState<string | null>(null);
+
+  const closeTeamMenu = useCallback(() => {
+    setTeamMenu({ show: false, x: 0, y: 0, teamId: null });
+  }, []);
+
+  useEffect(() => {
+    if (!teamMenu.show) return;
+    const onClick = () => closeTeamMenu();
+    document.addEventListener('mousedown', onClick);
+    return () => document.removeEventListener('mousedown', onClick);
+  }, [teamMenu.show, closeTeamMenu]);
+
   return (
     <div className="py-1">
       <div
@@ -214,6 +238,21 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
                     name={team.name}
                     isActive={activeTeamId === team.id}
                     onClick={handleTeamClick}
+                    onOpenMenu={(e, teamId) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setTeamMenu({ show: true, x: e.clientX, y: e.clientY, teamId });
+                    }}
+                    isRenaming={renamingTeamId === team.id}
+                    onRename={async (newName) => {
+                      if (!newName.trim()) {
+                        setRenamingTeamId(null);
+                        return;
+                      }
+                      await onRenameTeam?.(team.id, newName.trim());
+                      setRenamingTeamId(null);
+                    }}
+                    onCancelRename={() => setRenamingTeamId(null)}
                   />
                 ))}
               </>
@@ -221,27 +260,80 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
           </div>
         </DndContext>
       )}
+
+      {teamMenu.show && teamMenu.teamId && (
+        <>
+          <div className="fixed inset-0 z-40" onClick={closeTeamMenu} />
+          <div
+            className="fixed z-50 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-xl py-1 min-w-[160px]"
+            style={{ left: teamMenu.x, top: teamMenu.y }}
+            onMouseDown={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => {
+                setRenamingTeamId(teamMenu.teamId);
+                closeTeamMenu();
+              }}
+              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-dark-border text-gray-700 dark:text-dark-text"
+            >
+              Rename
+            </button>
+            <button
+              onClick={async () => {
+                await onDeleteTeam?.(teamMenu.teamId as string);
+                closeTeamMenu();
+              }}
+              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-dark-border text-red-600"
+            >
+              Delete
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 };
 
 export default SidebarSection;
 
-const TeamItem: React.FC<{ id: string; name: string; isActive: boolean; onClick: (id: string) => void }> = React.memo(
-  ({ id, name, isActive, onClick }) => {
+const TeamItem: React.FC<{
+  id: string;
+  name: string;
+  isActive: boolean;
+  onClick: (id: string) => void;
+  onOpenMenu: (e: React.MouseEvent, id: string) => void;
+  isRenaming: boolean;
+  onRename: (name: string) => void;
+  onCancelRename: () => void;
+}> = React.memo(
+  ({ id, name, isActive, onClick, onOpenMenu, isRenaming, onRename, onCancelRename }) => {
     const handleClick = useCallback(() => onClick(id), [id, onClick]);
     return (
-      <button
+      <div
         onClick={handleClick}
-        className={`w-full flex items-center gap-2 pl-4 pr-2 py-1.5 rounded text-sm transition-colors text-left ${
+        onContextMenu={(e) => onOpenMenu(e, id)}
+        className={`w-full flex items-center gap-2 pl-4 pr-2 py-1.5 rounded text-sm transition-colors text-left cursor-pointer ${
           isActive
             ? 'bg-gray-100 dark:bg-dark-border text-gray-900 dark:text-dark-text'
             : 'text-gray-700 dark:text-dark-text-muted hover:bg-gray-100 dark:hover:bg-dark-border'
         }`}
       >
-        <span className="truncate flex-1">{name}</span>
-      </button>
+        {isRenaming ? (
+          <InlineEdit
+            value={name}
+            onSave={onRename}
+            onCancel={onCancelRename}
+            className="w-full text-sm bg-transparent border-0 outline-none p-0 focus:outline-none"
+          />
+        ) : (
+          <span className="truncate flex-1">{name}</span>
+        )}
+      </div>
     );
   },
-  (prev, next) => prev.id === next.id && prev.name === next.name && prev.isActive === next.isActive,
+  (prev, next) =>
+    prev.id === next.id &&
+    prev.name === next.name &&
+    prev.isActive === next.isActive &&
+    prev.isRenaming === next.isRenaming,
 );

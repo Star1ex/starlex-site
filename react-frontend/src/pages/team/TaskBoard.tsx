@@ -2,12 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import TaskCard from '@/widgets/TaskCard/TaskCard.js';
 import MembersPanel from '@/widgets/MembersPanel/MembersPanel.js';
 import CreateTaskModal from '@/widgets/CreateTaskModal/CreateTaskModal.js';
-import EditTaskModal from '@/widgets/EditTaskModal/EditTaskModal.js';
-import TaskDetailModal from '@/widgets/TaskDetailModal/TaskDetailModal.js';
+import TeamTaskPanel from '@/widgets/TeamTaskPanel/TeamTaskPanel.js';
 import AddUserModal from '@/widgets/AddUserModal/AddUserModal.js';
 import type { Task, User } from '@/entities/types.js';
 import { useParams, useNavigate } from 'react-router-dom';
-import { taskService, teamService, authService } from '@/services/api/index.js';
+import { taskService, teamService } from '@/services/api/index.js';
 
 const TaskBoard: React.FC = () => {
   const { team_id } = useParams<{ team_id: string }>();
@@ -18,18 +17,13 @@ const TaskBoard: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showMembersPanel, setShowMembersPanel] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [showTaskPanel, setShowTaskPanel] = useState(false);
   const [showAddUserModal, setShowAddUserModal] = useState(false);
 
   useEffect(() => {
-    if (!authService.isAuthenticated()) {
-      navigate('/sign-in');
-      return;
-    }
-  }, [navigate]);
+    // Auth gate handled by routing; no redirect here
+  }, []);
 
   const fetchTasks = useCallback(async () => {
     try {
@@ -90,7 +84,7 @@ const TaskBoard: React.FC = () => {
 
   const handleTaskClick = useCallback((task: Task) => {
     setSelectedTask(task);
-    setShowDetailModal(true);
+    setShowTaskPanel(true);
   }, []);
 
   const handleTaskDelete = useCallback(async (taskId: string) => {
@@ -117,13 +111,11 @@ const TaskBoard: React.FC = () => {
     );
   }, []);
 
-  const handleEditFromDetail = useCallback(() => {
-    if (selectedTask) {
-      setEditingTask(selectedTask);
-      setShowDetailModal(false);
-      setShowEditModal(true);
-    }
-  }, [selectedTask]);
+  const handleTaskTitleChange = useCallback((id: string, title: string) => {
+    setTasks(prevTasks =>
+      prevTasks.map(t => t.id === id ? { ...t, task: title } : t)
+    );
+  }, []);
 
   // Defensive checks to prevent white screen
   if (loading) {
@@ -153,32 +145,33 @@ const TaskBoard: React.FC = () => {
 
   return (
     <div className="min-h-full bg-white dark:bg-dark-bg text-black dark:text-dark-text font-sans transition-colors">
-      <nav className="sticky top-0 bg-white/95 dark:bg-dark-surface/95 backdrop-blur-sm border-b border-gray-100 dark:border-dark-border px-4 sm:px-6 py-3 sm:py-4 z-20">
-        <div className="flex flex-col sm:flex-row sm:justify-between max-w-[1600px] mx-auto items-start sm:items-center gap-3">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 pt-6 sm:pt-8">
+        <div className="flex items-center justify-between gap-4">
           <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-dark-text truncate">Team Tasks</h1>
-          <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 items-stretch sm:items-center w-full sm:w-auto">
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="px-3 sm:px-5 py-2 sm:py-2.5 bg-black dark:bg-white text-white dark:text-black rounded-lg text-xs sm:text-sm hover:bg-gray-900 dark:hover:bg-gray-200 transition-all duration-200 font-medium whitespace-nowrap w-full sm:w-auto"
-            >
-              + Add Task
-            </button>
+          <div className="flex items-center gap-4">
             <button
               onClick={() => setShowAddUserModal(true)}
-              className="hidden sm:block px-3 sm:px-5 py-2 sm:py-2.5 bg-gray-100 dark:bg-dark-surface text-gray-900 dark:text-dark-text rounded-lg text-xs sm:text-sm hover:bg-gray-200 dark:hover:bg-dark-border transition-all duration-200 font-medium whitespace-nowrap w-full sm:w-auto"
+              className="text-sm text-gray-600 dark:text-dark-text-muted hover:text-gray-900 dark:hover:text-dark-text transition-colors"
             >
-              + Add User
+              Invite
             </button>
             <button
               onClick={() => setShowMembersPanel(true)}
-              className="px-3 sm:px-5 py-2 sm:py-2.5 bg-gray-100 dark:bg-dark-surface text-gray-900 dark:text-dark-text rounded-lg text-xs sm:text-sm hover:bg-gray-200 dark:hover:bg-dark-border transition-all duration-200 font-medium whitespace-nowrap w-full sm:w-auto"
+              className="text-sm text-gray-600 dark:text-dark-text-muted hover:text-gray-900 dark:hover:text-dark-text transition-colors"
             >
               Members
             </button>
-
           </div>
         </div>
-      </nav>
+        <div className="mt-3">
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="text-sm text-gray-700 dark:text-dark-text-muted hover:text-gray-900 dark:hover:text-dark-text transition-colors"
+          >
+            + Add Task
+          </button>
+        </div>
+      </div>
 
       {error && (
         <div className="max-w-[1600px] mx-auto px-4 sm:px-6 pt-4">
@@ -273,28 +266,17 @@ const TaskBoard: React.FC = () => {
         teamId={team_id}
       />
       
-      <EditTaskModal
-        isOpen={showEditModal}
-        onClose={() => {
-          setShowEditModal(false);
-          setEditingTask(null);
-        }}
-        task={editingTask}
-        users={users}
-        onSuccess={loadData}
-        teamId={team_id}
-      />
-      
       {selectedTask && (
-        <TaskDetailModal
-          isOpen={showDetailModal}
+        <TeamTaskPanel
+          isOpen={showTaskPanel}
           onClose={() => {
-            setShowDetailModal(false);
+            setShowTaskPanel(false);
             setSelectedTask(null);
           }}
           task={selectedTask}
-          users={users}
-          onEdit={handleEditFromDetail}
+          teamId={team_id}
+          onUpdated={handleTaskUpdate}
+          onTitleChange={handleTaskTitleChange}
         />
       )}
       

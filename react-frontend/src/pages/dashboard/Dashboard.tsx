@@ -3,7 +3,7 @@ import { NewTabModal } from '@/widgets/NewTabModal/NewTabModal.js';
 import { useModal } from '@/shared/hooks/useModal.js';
 import { useNavigate } from 'react-router-dom';
 import { getAuthUser } from '@/shared/lib/authManager.js';
-import { userService, authService } from '@/services/api/index.js';
+import { userService } from '@/services/api/index.js';
 
 type Team = {
   id: string;
@@ -58,11 +58,6 @@ export const Dashboard: React.FC = () => {
   const [recentTasks, setRecentTasks] = useState<RecentTask[]>([]);
 
   useEffect(() => {
-    if (!authService.isAuthenticated()) {
-      navigate('/sign-in');
-      return;
-    }
-
     const storedUser = getAuthUser();
     const userId = storedUser?.id || storedUser?.user_id || null;
     setCanEdit(userId === ALLOWED_USER_ID);
