@@ -1,22 +1,47 @@
-import React, { useState } from 'react';
-import { usePersonalTasksActions } from '@/contexts/PersonalTasksContext.js';
+import React, { useRef, useState } from 'react';
+import { ChevronRight } from 'lucide-react';
+import type { CreateFolderRequest } from '@/types/dto.js';
+import { useAuth } from '@/contexts/AuthContext.js';
 
-const FolderInlineCreate = React.memo(function FolderInlineCreate({ parentId, onClose }: { parentId?: string | null; onClose?: () => void }) {
-  const { createFolder } = usePersonalTasksActions();
+const FolderInlineCreate = React.memo(function FolderInlineCreate({
+  parentId,
+  onClose,
+  onCreate,
+  ownerId,
+}: {
+  parentId?: string | null;
+  onClose?: () => void;
+  onCreate: (data: CreateFolderRequest) => Promise<any>;
+  ownerId?: string | null;
+}) {
+  const { userId } = useAuth();
   const [name, setName] = useState('');
-  const [icon, setIcon] = useState('code');
-  const [color, setColor] = useState('#3B82F6');
   const [isCreating, setIsCreating] = useState(false);
-
-  const iconOptions = ['code', 'health', 'finance', 'study'];
+  const hasSubmittedRef = useRef(false);
 
   const handleCreate = async (e?: React.FormEvent) => {
     e?.preventDefault();
+    if (hasSubmittedRef.current) return;
+    if (!name.trim()) {
+      onClose?.();
+      return;
+    }
+    hasSubmittedRef.current = true;
     setIsCreating(true);
     try {
-      await createFolder({ name: name || 'New Folder', icon, color, parent_id: parentId ?? null });
+      const resolvedOwnerId = ownerId ?? userId ?? '';
+      await onCreate({
+        name: name.trim(),
+        icon: 'code',
+        color: '#3B82F6',
+        parent_id: parentId ?? null,
+        owner_id: resolvedOwnerId,
+        team_id: null,
+        position: 0,
+      });
       if (onClose) onClose();
     } catch (err) {
+      hasSubmittedRef.current = false;
       console.error('Inline create folder failed', err);
     } finally {
       setIsCreating(false);
@@ -24,32 +49,31 @@ const FolderInlineCreate = React.memo(function FolderInlineCreate({ parentId, on
   };
 
   return (
-    <form onSubmit={handleCreate} className="inline-create p-2 bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-md shadow-sm max-w-xs">
-      <div className="flex items-center gap-2 mb-2">
+    <form onSubmit={handleCreate} className="inline-create flex items-center gap-2 px-2 py-1">
+      <ChevronRight className="w-3 h-3 text-gray-400 flex-shrink-0" />
+      <div className="flex items-center gap-2 flex-1">
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Folder name"
-          className="flex-1 p-2 border rounded text-sm"
+          className="flex-1 text-sm bg-transparent border-0 outline-none p-0 focus:outline-none"
           autoFocus
+          onBlur={() => {
+            if (!name.trim()) {
+              onClose?.();
+              return;
+            }
+            handleCreate();
+          }}
         />
-        <button type="button" onClick={() => { if (onClose) onClose(); }} className="text-sm px-2 py-1">✕</button>
-      </div>
-
-      <div className="flex items-center gap-2 mb-2">
-        {iconOptions.map(i => (
-          <button key={i} type="button" onClick={() => setIcon(i)} className={`p-1 rounded ${icon === i ? 'ring-2 ring-blue-400' : ''}`}>
-            <img src={`/assets/${i}.svg`} alt={i} className="w-5 h-5" />
-          </button>
-        ))}
-      </div>
-
-      <div className="flex items-center justify-between gap-2">
-        <input type="color" value={color} onChange={(e) => setColor(e.target.value)} className="w-10 h-8 p-0 border-0" />
-        <div className="flex gap-2">
-          <button type="button" onClick={() => { if (onClose) onClose(); }} className="px-3 py-1 border rounded text-sm">Cancel</button>
-          <button type="submit" disabled={isCreating || !name.trim()} className="px-3 py-1 bg-black text-white rounded text-sm">{isCreating ? 'Creating...' : 'Create'}</button>
-        </div>
+        <button
+          type="button"
+          onClick={() => { if (onClose) onClose(); }}
+          className="text-xs text-gray-400 hover:text-gray-600"
+          aria-label="Cancel"
+        >
+          ✕
+        </button>
       </div>
     </form>
   );

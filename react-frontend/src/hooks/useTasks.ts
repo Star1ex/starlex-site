@@ -144,6 +144,19 @@ export const useTasks = () => {
     }
   }, [refreshTasks]);
 
+  const moveTaskToFolder = useCallback(async (id: string, folderId: string | null) => {
+    const snapshotById = tasksByIdRef.current;
+    const snapshotIds = taskIdsRef.current;
+    setTasksById((prev) => (prev[id] ? { ...prev, [id]: { ...prev[id], folder_id: folderId } as TaskDTO } : prev));
+    try {
+      await taskService.moveTaskToFolder(id, folderId);
+    } catch (err) {
+      setTasksById(snapshotById);
+      setTaskIds(snapshotIds);
+      throw err;
+    }
+  }, []);
+
   const deleteTask = useCallback(async (id: string) => {
     const snapshotById = tasksByIdRef.current;
     const snapshotIds = taskIdsRef.current;
@@ -189,6 +202,7 @@ export const useTasks = () => {
     createTask,
     updateTask,
     deleteTask,
+    moveTaskToFolder,
     removingTaskIds,
     getFolderTasks,
     refreshTasks,

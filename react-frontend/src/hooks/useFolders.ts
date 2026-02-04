@@ -150,6 +150,19 @@ export const useFolders = () => {
     }
   }, [refreshFolders]);
 
+  const moveFolder = useCallback(async (id: string, parentId: string | null) => {
+    const snapshotById = foldersByIdRef.current;
+    const snapshotIds = folderIdsRef.current;
+    setFoldersById((prev) => (prev[id] ? { ...prev, [id]: { ...prev[id], parent_id: parentId } as FolderDTO } : prev));
+    try {
+      await folderService.moveFolder(id, parentId);
+    } catch (err) {
+      setFoldersById(snapshotById);
+      setFolderIds(snapshotIds);
+      throw err;
+    }
+  }, []);
+
   const deleteFolder = useCallback(async (id: string) => {
     const snapshotById = foldersByIdRef.current;
     const snapshotIds = folderIdsRef.current;
@@ -195,6 +208,7 @@ export const useFolders = () => {
     createFolder,
     updateFolder,
     deleteFolder,
+    moveFolder,
     removingFolderIds,
     getSubfolders,
     refreshFolders,

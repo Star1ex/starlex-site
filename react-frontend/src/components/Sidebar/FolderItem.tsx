@@ -6,6 +6,7 @@ import { useContextMenu } from '@/hooks/useContextMenu.js';
 import InlineEdit from '@/components/shared/InlineEdit.js';
 import TaskItem from './TaskItem.js';
 import { taskService } from '@/services/api/index.js';
+import { useDraggable, useDroppable } from '@dnd-kit/core';
 
 interface FolderItemProps {
   folder: FolderDTO;
@@ -75,6 +76,30 @@ export const FolderItem: React.FC<FolderItemProps> = React.memo(({ folder, level
 
   const paddingLeft = level * 12 + 8;
   const isRemoving = !!removingFolderIds[folder.id];
+  const {
+    attributes,
+    listeners,
+    setNodeRef: setDragRef,
+    transform,
+    isDragging,
+  } = useDraggable({
+    id: `folder-${folder.id}`,
+    data: { type: 'folder', id: folder.id },
+  });
+  const { setNodeRef: setDropRef, isOver } = useDroppable({
+    id: `drop-folder-${folder.id}`,
+    data: { type: 'folder', id: folder.id },
+  });
+  const setRefs = useCallback(
+    (node: HTMLElement | null) => {
+      setDragRef(node);
+      setDropRef(node);
+    },
+    [setDragRef, setDropRef]
+  );
+  const dragStyle = transform
+    ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)` }
+    : undefined;
   const handleToggleExpand = useCallback(() => {
     setIsExpanded((prev) => !prev);
   }, []);
@@ -86,12 +111,21 @@ export const FolderItem: React.FC<FolderItemProps> = React.memo(({ folder, level
   }, [navigate, folder.id]);
 
   return (
-    <div className={`transition-all duration-200 ${isRemoving ? 'opacity-0 -translate-y-1 pointer-events-none' : 'opacity-100 translate-y-0'}`}>
+    <div
+      className={`transition-all duration-200 ${
+        isRemoving ? 'opacity-0 -translate-y-1 pointer-events-none' : 'opacity-100 translate-y-0'
+      } ${isDragging ? 'opacity-60' : ''}`}
+    >
       <div
-        className="flex items-center gap-1 px-2 py-1 hover:bg-gray-100 dark:hover:bg-dark-border rounded-md cursor-pointer group transition-colors"
-        style={{ paddingLeft }}
+        ref={setRefs}
+        className={`flex items-center gap-1 px-2 py-1 rounded-md cursor-pointer group transition-colors ${
+          isOver ? 'bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-300 dark:ring-blue-700' : 'hover:bg-gray-100 dark:hover:bg-dark-border'
+        }`}
+        style={{ paddingLeft, ...(dragStyle || {}) }}
         onClick={handleToggleExpand}
         onContextMenu={handleOpenContextMenu}
+        {...attributes}
+        {...listeners}
       >
         {hasChildren ? (
           <ChevronRight
