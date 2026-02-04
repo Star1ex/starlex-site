@@ -40,8 +40,9 @@ export const TaskItem: React.FC<TaskItemProps> = React.memo(({ task, level, onUp
   }, [openContextMenu, task.id]);
 
   const handleNavigate = useCallback(() => {
+    if (isRenaming) return;
     navigate(`/task/${task.id}`);
-  }, [navigate, task.id]);
+  }, [navigate, task.id, isRenaming]);
 
 
   return (
@@ -62,11 +63,17 @@ export const TaskItem: React.FC<TaskItemProps> = React.memo(({ task, level, onUp
             onChange={(value) => {
               window.dispatchEvent(new CustomEvent('personalTaskTitleChange', { detail: { id: task.id, task: value } }));
             }}
-            className="w-full text-sm px-2 py-1 rounded border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-surface"
+            className="w-full text-sm bg-transparent border-0 outline-none p-0 focus:outline-none"
           />
         </div>
       ) : (
-        <span className="text-sm text-gray-600 dark:text-dark-text-muted truncate flex-1">
+        <span
+          className="text-sm text-gray-600 dark:text-dark-text-muted truncate flex-1"
+          onDoubleClick={(e) => {
+            e.stopPropagation();
+            setIsRenaming(true);
+          }}
+        >
           {task.task || 'Untitled'}
         </span>
       )}

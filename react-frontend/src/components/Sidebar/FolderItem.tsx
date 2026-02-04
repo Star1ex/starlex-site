@@ -114,13 +114,16 @@ export const FolderItem: React.FC<FolderItemProps> = React.memo(({ folder, level
               onChange={(value) => {
                 window.dispatchEvent(new CustomEvent('personalFolderNameChange', { detail: { id: folder.id, name: value } }));
               }}
-              className="w-full text-sm px-2 py-1 rounded border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-surface"
+              className="w-full text-sm bg-transparent border-0 outline-none p-0 focus:outline-none"
             />
           </div>
         ) : (
           <span
             className="text-sm text-gray-700 dark:text-dark-text truncate flex-1"
-            onDoubleClick={handleNavigate}
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              setIsRenaming(true);
+            }}
           >
             {folder.name}
           </span>
