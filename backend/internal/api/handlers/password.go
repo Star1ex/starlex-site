@@ -100,7 +100,7 @@ func (h *Handlers) ChangePassword(ctx *fiber.Ctx) error {
 
 	ip := ctx.IP()
 	userAgent := ctx.Get("User-Agent")
-	err := h.passwordService.ChangePassword(ctx.Context(), userID, req.CurrentPassword, req.NewPassword, ip, userAgent)
+	err = h.passwordService.ChangePassword(ctx.Context(), userID, req.CurrentPassword, req.NewPassword, ip, userAgent)
 	if err != nil {
 		if errors.Is(err, service.ErrInvalidCurrentPass) {
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
