@@ -37,6 +37,16 @@ type oauthProfile struct {
 	AvatarURL     string
 }
 
+type oauthAccessToken struct {
+	AccessToken string `json:"access_token"`
+}
+
+type githubTokenResponse struct {
+	AccessToken      string `json:"access_token"`
+	Error            string `json:"error"`
+	ErrorDescription string `json:"error_description"`
+}
+
 func (h *Handlers) OAuthRateLimit(ctx *fiber.Ctx) error {
 	if h.oauthLimiter == nil {
 		return ctx.Next()
@@ -441,23 +451,17 @@ func (h *Handlers) findByProvider(ctx context.Context, provider, providerID stri
 
 func mergeAuthProviders(userEntity *entity.User, provider string) []string {
 	providers := map[string]bool{}
+	if userEntity.Password != "" {
+		providers[user.ProviderLocal] = true
+	}
 	for _, p := range userEntity.AuthProviders {
 		providers[p] = true
 	}
-	if userEntity.Password != "" {
-		providers[user.ProviderLocal] = true
-	} else {
-		delete(providers, user.ProviderLocal)
-	}
 	if userEntity.GoogleID != nil && *userEntity.GoogleID != "" {
 		providers[user.ProviderGoogle] = true
-	} else {
-		delete(providers, user.ProviderGoogle)
 	}
 	if userEntity.GithubID != nil && *userEntity.GithubID != "" {
 		providers[user.ProviderGithub] = true
-	} else {
-		delete(providers, user.ProviderGithub)
 	}
 	if provider != "" {
 		providers[provider] = true
@@ -706,21 +710,17 @@ func (h *Handlers) exchangeGithubCode(ctx context.Context, code string) (struct 
 		}{}, fmt.Errorf("github token status %d", resp.StatusCode)
 	}
 
-	var tokenResp struct {
-		AccessToken      string `json:"access_token"`
-		Error            string `json:"error"`
-		ErrorDescription string `json:"error_description"`
-	}
+	var tokenResp githubTokenResponse
 	if err := json.NewDecoder(resp.Body).Decode(&tokenResp); err != nil {
-		return tokenResp, err
+		return oauthAccessToken{}, err
 	}
 	if tokenResp.Error != "" {
-		return tokenResp, fmt.Errorf("github token error: %s", tokenResp.Error)
+		return oauthAccessToken{}, fmt.Errorf("github token error: %s", tokenResp.Error)
 	}
 	if tokenResp.AccessToken == "" {
-		return tokenResp, errors.New("missing access token")
+		return oauthAccessToken{}, errors.New("missing access token")
 	}
-	return tokenResp, nil
+	return oauthAccessToken{AccessToken: tokenResp.AccessToken}, nil
 }
 
 func (h *Handlers) fetchGithubPrimaryEmail(ctx context.Context, accessToken string) (string, error) {
