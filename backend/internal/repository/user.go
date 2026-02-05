@@ -375,10 +375,10 @@ func (r *UserRepository) UpdateOAuthFields(ctx context.Context, userID string, u
 		updates["avatar_url"] = *update.AvatarURL
 	}
 	if update.FirstName != nil {
-		updates["firstName"] = *update.FirstName
+		updates["first_name"] = *update.FirstName
 	}
 	if update.LastName != nil {
-		updates["lastName"] = *update.LastName
+		updates["last_name"] = *update.LastName
 	}
 	if update.Email != nil {
 		updates["email"] = *update.Email

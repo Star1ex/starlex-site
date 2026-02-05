@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/Team-Tracks/team-track-site/internal/api/dto"
+	"github.com/Team-Tracks/team-track-site/internal/repository"
 	"github.com/Team-Tracks/team-track-site/internal/service"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
@@ -107,16 +108,8 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to generate refresh token")
 	}
 
-	// Set refresh token in httpOnly cookie (secure and httpOnly for production)
-	ctx.Cookie(&fiber.Cookie{
-		Name:     "refreshToken",
-		Value:    refreshTokenStr,
-		Expires:  time.Now().Add(7 * 24 * time.Hour),
-		HTTPOnly: true,
-		Secure:   false, // Set to true in production with HTTPS
-		SameSite: "Lax",
-		Path:     "/",
-	})
+	// Set refresh token in httpOnly cookie (secure for production)
+	h.setRefreshCookie(ctx, refreshTokenStr)
 
 	// Return access token and user data
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
@@ -258,6 +251,26 @@ func (h *Handlers) Register(ctx *fiber.Ctx) error {
 	if input.Email == "" || input.Password == "" || input.FirstName == "" || input.LastName == "" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "All fields are required",
+		})
+	}
+
+	existingUser, err := h.userService.GetByEmail(ctx.Context(), input.Email)
+	if err == nil && existingUser != nil {
+		if existingUser.Password == "" {
+			return ctx.Status(fiber.StatusConflict).JSON(fiber.Map{
+				"error":          "email already registered with oauth",
+				"auth_providers": existingUser.AuthProviders,
+				"message":        "Email already registered with Google or GitHub. Would you like to link accounts?",
+			})
+		}
+		return ctx.Status(fiber.StatusConflict).JSON(fiber.Map{
+			"error":   "email already registered",
+			"message": "Email already registered. Please sign in.",
+		})
+	}
+	if err != nil && !errors.Is(err, repository.ErrUserNotFound) {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to validate user",
 		})
 	}
 

@@ -125,15 +125,7 @@ func (h *Handlers) ChangePassword(ctx *fiber.Ctx) error {
 		})
 	}
 
-	ctx.Cookie(&fiber.Cookie{
-		Name:     "refreshToken",
-		Value:    refreshTokenStr,
-		Expires:  time.Now().Add(7 * 24 * time.Hour),
-		HTTPOnly: true,
-		Secure:   false,
-		SameSite: "Lax",
-		Path:     "/",
-	})
+	h.setRefreshCookie(ctx, refreshTokenStr)
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message":      "Password updated successfully",

@@ -260,6 +260,8 @@ func (h *Handlers) completeOAuth(ctx *fiber.Ctx, provider string, profile oauthP
 		return h.redirectOAuthError(ctx, provider, "account_error", returnTo)
 	}
 
+	h.userService.PublishUserLogin(userEntity)
+
 	accessTokenStr, refreshTokenStr, err := h.issueTokens(userEntity)
 	if err != nil {
 		log.Printf("oauth %s token error: ip=%s err=%v", provider, ctx.IP(), err)
