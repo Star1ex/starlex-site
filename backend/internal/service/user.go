@@ -55,10 +55,30 @@ func (s *UserService) Get(ctx context.Context, id string) (*entity.User, error) 
 	return s.repo.Get(ctx, id)
 }
 
+func (s *UserService) GetByEmail(ctx context.Context, email string) (*entity.User, error) {
+	return s.repo.GetByEmail(ctx, email)
+}
+
+func (s *UserService) GetByGoogleID(ctx context.Context, googleID string) (*entity.User, error) {
+	return s.repo.GetByGoogleID(ctx, googleID)
+}
+
+func (s *UserService) GetByGithubID(ctx context.Context, githubID string) (*entity.User, error) {
+	return s.repo.GetByGithubID(ctx, githubID)
+}
+
+func (s *UserService) UpdateOAuthFields(ctx context.Context, userID string, update user.OAuthUpdate) error {
+	return s.repo.UpdateOAuthFields(ctx, userID, update)
+}
+
 func (s *UserService) Login(ctx context.Context, email, password string) (*entity.User, error) {
 	user, err := s.repo.GetByEmail(ctx, email)
 	if err != nil {
 		return nil, err
+	}
+
+	if user.Password == "" {
+		return nil, errors.New("password not set")
 	}
 
 	ok, err := security.VerifyPassword(user.Password, password)
@@ -110,6 +130,9 @@ func (s *UserService) GetPhoto(ctx context.Context, userID string) (string, erro
 }
 
 func (s *UserService) Update(ctx context.Context, u *entity.User, id string) error {
+	if u.FirstName != "" || u.LastName != "" {
+		u.NameOverridden = true
+	}
 	return s.repo.Update(ctx, u, id)
 }
 

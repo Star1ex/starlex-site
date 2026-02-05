@@ -15,6 +15,10 @@ type Service interface {
 	Create(ctx context.Context, u *dto.UserApi) error
 	Update(ctx context.Context, u *entity.User, id string) error
 	Get(ctx context.Context, id string) (*entity.User, error)
+	GetByEmail(ctx context.Context, email string) (*entity.User, error)
+	GetByGoogleID(ctx context.Context, googleID string) (*entity.User, error)
+	GetByGithubID(ctx context.Context, githubID string) (*entity.User, error)
+	UpdateOAuthFields(ctx context.Context, userID string, update OAuthUpdate) error
 
 	// Auth
 	Login(ctx context.Context, email, password string) (*entity.User, error)
