@@ -5,6 +5,7 @@ import { SettingsSidebar } from '@/widgets/SettingsSidebar/SettingsSidebar.js';
 import { Contributing } from '@/pages/settings/Contributing.js';
 import { Appearance } from '@/pages/settings/Appearance.js';
 import { ChangePassword } from '@/pages/settings/ChangePassword.js';
+import { ConnectedAccounts } from '@/pages/settings/ConnectedAccounts.js';
 import { Support } from '@/pages/settings/Support.js';
 import AboutUs from '@/pages/about-us/AboutUs.js';
 
@@ -13,7 +14,7 @@ export const GeneralSettings: React.FC = () => {
   const location = useLocation();
   const [isAuthenticated, setIsAuthenticated] = useState(authService.isAuthenticated());
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activeTab, setActiveTab] = useState<'contributing' | 'appearance' | 'password' | 'about' | 'support'>('appearance');
+  const [activeTab, setActiveTab] = useState<'contributing' | 'appearance' | 'password' | 'accounts' | 'about' | 'support'>('appearance');
 
   useEffect(() => {
     // Auth gate handled by routing; no redirect here
@@ -41,7 +42,7 @@ export const GeneralSettings: React.FC = () => {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const tab = params.get('tab');
-    if (tab === 'contributing' || tab === 'appearance' || tab === 'password' || tab === 'about' || tab === 'support') {
+    if (tab === 'contributing' || tab === 'appearance' || tab === 'password' || tab === 'accounts' || tab === 'about' || tab === 'support') {
       setActiveTab(tab);
     }
   }, [location.search]);
@@ -67,6 +68,8 @@ export const GeneralSettings: React.FC = () => {
         return <Appearance />;
       case 'password':
         return <ChangePassword />;
+      case 'accounts':
+        return <ConnectedAccounts />;
       case 'about':
         return <AboutUs variant="settings" />;
       case 'support':
