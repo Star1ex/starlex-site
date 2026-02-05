@@ -49,11 +49,5 @@ jobs:
 
       - name: Build and Deploy
         run: |
-          docker compose down --remove-orphans
-          docker compose build --no-cache backend
-          docker compose up -d
-          sleep 10
-          echo "=== ALL CONTAINERS ==="
-          docker compose ps
-          echo "=== ALL LOGS ==="
-          docker compose logs --timestamps
+          docker compose down
+          docker compose up -d --build
