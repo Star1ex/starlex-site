@@ -14,12 +14,17 @@ type UserApi struct {
 }
 
 type UserResponse struct {
-	ID        string  `json:"id"`
-	Email     string  `json:"email"`
-	FirstName string  `json:"firstName"`
-	LastName  string  `json:"lastName"`
-	Role      string  `json:"role"`
-	Photo_URL *string `json:"photo_url"` // Keep snake_case for photo_url as it's used in frontend
+	ID            string   `json:"id"`
+	Email         string   `json:"email"`
+	FirstName     string   `json:"firstName"`
+	LastName      string   `json:"lastName"`
+	Role          string   `json:"role"`
+	Photo_URL     *string  `json:"photo_url"` // Keep snake_case for photo_url as it's used in frontend
+	AvatarURL     *string  `json:"avatar_url"`
+	AuthProviders []string `json:"auth_providers"`
+	GoogleID      *string  `json:"google_id"`
+	GithubID      *string  `json:"github_id"`
+	IsVerified    bool     `json:"email_verified"`
 }
 
 type UserUpdate struct {
@@ -31,21 +36,30 @@ type UserUpdate struct {
 }
 
 type User struct {
-	ID         string  `json:"id"`
-	Email      string  `json:"email"`
-	FirstName  string  `json:"first_name"`
-	LastName   string  `json:"last_name"`
-	Role       string  `json:"role"`
-	PhotoURL   *string `json:"photo_url"`
-	IsVerified bool    `json:"is_verified"`
+	ID            string   `json:"id"`
+	Email         string   `json:"email"`
+	FirstName     string   `json:"first_name"`
+	LastName      string   `json:"last_name"`
+	Role          string   `json:"role"`
+	PhotoURL      *string  `json:"photo_url"`
+	AvatarURL     *string  `json:"avatar_url"`
+	AuthProviders []string `json:"auth_providers"`
+	GoogleID      *string  `json:"google_id"`
+	GithubID      *string  `json:"github_id"`
+	IsVerified    bool     `json:"is_verified"`
 }
 
 type UserProfile struct {
-	Email     string  `json:"email"`
-	FirstName string  `json:"first_name"`
-	LastName  string  `json:"last_name"`
-	Role      string  `json:"role"`
-	Photo_URL *string `json:"photo_url"`
+	Email         string   `json:"email"`
+	FirstName     string   `json:"first_name"`
+	LastName      string   `json:"last_name"`
+	Role          string   `json:"role"`
+	Photo_URL     *string  `json:"photo_url"`
+	AvatarURL     *string  `json:"avatar_url"`
+	AuthProviders []string `json:"auth_providers"`
+	GoogleID      *string  `json:"google_id"`
+	GithubID      *string  `json:"github_id"`
+	IsVerified    bool     `json:"email_verified"`
 }
 
 type AddUserToTeam struct {
@@ -75,24 +89,33 @@ func FromUserApi(u *UserApi) *entity.User {
 
 func ToUserResponseIsVerified(u *entity.User) *User {
 	return &User{
-		ID:         u.ID,
-		Email:      u.Email,
-		FirstName:  u.FirstName,
-		LastName:   u.LastName,
-		Role:       u.Role,
-		PhotoURL:   u.Photo_URL,
-		IsVerified: u.IsVerified,
+		ID:            u.ID,
+		Email:         u.Email,
+		FirstName:     u.FirstName,
+		LastName:      u.LastName,
+		Role:          u.Role,
+		PhotoURL:      u.Photo_URL,
+		AvatarURL:     u.AvatarURL,
+		AuthProviders: u.AuthProviders,
+		GoogleID:      u.GoogleID,
+		GithubID:      u.GithubID,
+		IsVerified:    u.IsVerified,
 	}
 }
 
 func ToUserResponse(u *entity.User) *UserResponse {
 	return &UserResponse{
-		ID:        u.ID,
-		Email:     u.Email,
-		FirstName: u.FirstName,
-		LastName:  u.LastName,
-		Role:      u.Role,
-		Photo_URL: u.Photo_URL,
+		ID:            u.ID,
+		Email:         u.Email,
+		FirstName:     u.FirstName,
+		LastName:      u.LastName,
+		Role:          u.Role,
+		Photo_URL:     u.Photo_URL,
+		AvatarURL:     u.AvatarURL,
+		AuthProviders: u.AuthProviders,
+		GoogleID:      u.GoogleID,
+		GithubID:      u.GithubID,
+		IsVerified:    u.IsVerified,
 	}
 }
 
@@ -117,10 +140,15 @@ func FromUseUpdate(u *UserUpdate) *entity.User {
 }
 func ToUserProfile(u *entity.User) *UserProfile {
 	return &UserProfile{
-		Email:     u.Email,
-		FirstName: u.FirstName,
-		LastName:  u.LastName,
-		Role:      u.Role,
-		Photo_URL: u.Photo_URL,
+		Email:         u.Email,
+		FirstName:     u.FirstName,
+		LastName:      u.LastName,
+		Role:          u.Role,
+		Photo_URL:     u.Photo_URL,
+		AvatarURL:     u.AvatarURL,
+		AuthProviders: u.AuthProviders,
+		GoogleID:      u.GoogleID,
+		GithubID:      u.GithubID,
+		IsVerified:    u.IsVerified,
 	}
 }
