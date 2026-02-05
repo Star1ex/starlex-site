@@ -98,6 +98,11 @@ export interface UserDTO {
   lastName: string;
   role: string;
   photo_url: string | null;
+  avatar_url?: string | null;
+  auth_providers?: string[];
+  google_id?: string | null;
+  github_id?: string | null;
+  email_verified?: boolean;
 }
 
 export interface UserProfileDTO {
@@ -106,6 +111,11 @@ export interface UserProfileDTO {
   lastName: string;
   role: string;
   photo_url: string | null;
+  avatar_url?: string | null;
+  auth_providers?: string[];
+  google_id?: string | null;
+  github_id?: string | null;
+  email_verified?: boolean;
 }
 
 export interface UpdateUserRequest {
