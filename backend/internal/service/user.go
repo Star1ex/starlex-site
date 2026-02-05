@@ -21,6 +21,8 @@ type UserService struct {
 	bus     *events.Bus
 }
 
+var ErrPasswordNotSet = errors.New("password not set")
+
 func NewUserService(repo user.Repository, storage storage.Storage, bus *events.Bus) *UserService {
 	return &UserService{
 		repo: repo, storage: storage, bus: bus,
@@ -85,7 +87,7 @@ func (s *UserService) Login(ctx context.Context, email, password string) (*entit
 	}
 
 	if user.Password == "" {
-		return nil, errors.New("password not set")
+		return user, ErrPasswordNotSet
 	}
 
 	ok, err := security.VerifyPassword(user.Password, password)

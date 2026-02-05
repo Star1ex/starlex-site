@@ -2,11 +2,13 @@ package handlers
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log"
 	"time"
 
 	"github.com/Team-Tracks/team-track-site/internal/api/dto"
+	"github.com/Team-Tracks/team-track-site/internal/service"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 )
@@ -57,6 +59,13 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 	user, err := h.userService.Login(ctx.Context(), loginInput.Email, loginInput.Password)
 	if err != nil {
 		log.Println(err)
+		if errors.Is(err, service.ErrPasswordNotSet) {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error":          "password not set for this account",
+				"auth_providers": user.AuthProviders,
+				"message":        "This email is linked to an OAuth provider. Please sign in with Google or GitHub to link a password.",
+			})
+		}
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "invalid email or password",
 		})

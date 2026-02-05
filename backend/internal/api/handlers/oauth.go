@@ -359,7 +359,7 @@ func (h *Handlers) buildOAuthUpdate(userEntity *entity.User, profile oauthProfil
 	if !userEntity.NameOverridden {
 		first, last := profile.FirstName, profile.LastName
 		if first == "" && last == "" {
-			first, last = splitName(profile.Email)
+			first, last = fallbackNameFromEmail(profile.Email)
 		}
 		if first != "" {
 			update.FirstName = &first
@@ -393,7 +393,7 @@ func (h *Handlers) createOAuthUser(ctx context.Context, profile oauthProfile) (*
 	firstName := profile.FirstName
 	lastName := profile.LastName
 	if firstName == "" && lastName == "" {
-		firstName, lastName = splitName(profile.Email)
+		firstName, lastName = fallbackNameFromEmail(profile.Email)
 	}
 	newUser := &entity.User{
 		ID:            security.GenerateNewID(),
@@ -547,7 +547,7 @@ func (h *Handlers) fetchGoogleProfile(ctx context.Context, code string) (oauthPr
 
 	first, last := userinfo.GivenName, userinfo.FamilyName
 	if first == "" && last == "" {
-		first, last = splitName(userinfo.Email)
+		first, last = fallbackNameFromEmail(userinfo.Email)
 	}
 
 	return oauthProfile{
@@ -891,6 +891,23 @@ func splitName(full string) (string, string) {
 	parts := strings.Fields(full)
 	if len(parts) == 0 {
 		return "", ""
+	}
+	if len(parts) == 1 {
+		return parts[0], ""
+	}
+	return parts[0], strings.Join(parts[1:], " ")
+}
+
+func fallbackNameFromEmail(email string) (string, string) {
+	local := strings.Split(strings.TrimSpace(email), "@")
+	if len(local) == 0 || local[0] == "" {
+		return "", ""
+	}
+	parts := strings.FieldsFunc(local[0], func(r rune) bool {
+		return r == '.' || r == '_' || r == '-'
+	})
+	if len(parts) == 0 {
+		return local[0], ""
 	}
 	if len(parts) == 1 {
 		return parts[0], ""
