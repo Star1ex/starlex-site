@@ -10,6 +10,7 @@ require (
 	github.com/joho/godotenv v1.5.1
 	github.com/swaggo/fiber-swagger v1.3.0
 	github.com/swaggo/swag v1.16.6
+	gorm.io/datatypes v1.2.5
 	gorm.io/driver/postgres v1.6.0
 	gorm.io/gorm v1.31.1
 )

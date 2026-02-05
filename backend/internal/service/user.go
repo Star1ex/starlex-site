@@ -51,6 +51,13 @@ func (s *UserService) Create(ctx context.Context, u *dto.UserApi) error {
 	return err
 }
 
+func (s *UserService) CreateOAuth(ctx context.Context, u *entity.User) error {
+	if u == nil {
+		return errors.New("missing user")
+	}
+	return s.repo.Create(ctx, u)
+}
+
 func (s *UserService) Get(ctx context.Context, id string) (*entity.User, error) {
 	return s.repo.Get(ctx, id)
 }

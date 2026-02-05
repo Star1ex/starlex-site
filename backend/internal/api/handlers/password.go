@@ -80,9 +80,21 @@ func (h *Handlers) ChangePassword(ctx *fiber.Ctx) error {
 		})
 	}
 
-	if req.CurrentPassword == "" || req.NewPassword == "" {
+	userEntity, err := h.userService.Get(ctx.Context(), userID)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to load user",
+		})
+	}
+	passwordRequired := userEntity.Password != ""
+	if passwordRequired && (req.CurrentPassword == "" || req.NewPassword == "") {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "current password and new password are required",
+		})
+	}
+	if !passwordRequired && req.NewPassword == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "new password is required",
 		})
 	}
 
@@ -103,13 +115,6 @@ func (h *Handlers) ChangePassword(ctx *fiber.Ctx) error {
 		log.Println("change password error:", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to change password",
-		})
-	}
-
-	userEntity, err := h.userService.Get(ctx.Context(), userID)
-	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "failed to load user",
 		})
 	}
 
