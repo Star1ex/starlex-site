@@ -79,7 +79,7 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 		"exp":           time.Now().Add(1 * time.Hour).Unix(),
 	})
 
-	accessTokenStr, err := accessToken.SignedString([]byte(jwtSecret))
+	accessTokenStr, err := accessToken.SignedString([]byte(h.jwtSecret))
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to generate access token")
 	}
@@ -93,7 +93,7 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 		"exp":           time.Now().Add(7 * 24 * time.Hour).Unix(),
 	})
 
-	refreshTokenStr, err := refreshToken.SignedString([]byte(jwtSecret))
+	refreshTokenStr, err := refreshToken.SignedString([]byte(h.jwtSecret))
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to generate refresh token")
 	}
@@ -150,7 +150,7 @@ func (h *Handlers) Refresh(ctx *fiber.Ctx) error {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fiber.NewError(fiber.StatusUnauthorized, "invalid token signing method")
 		}
-		return []byte(jwtSecret), nil
+	return []byte(h.jwtSecret), nil
 	})
 
 	if err != nil || !token.Valid {
@@ -213,7 +213,7 @@ func (h *Handlers) Refresh(ctx *fiber.Ctx) error {
 		"exp":           time.Now().Add(1 * time.Hour).Unix(),
 	})
 
-	accessTokenStr, err := accessToken.SignedString([]byte(jwtSecret))
+	accessTokenStr, err := accessToken.SignedString([]byte(h.jwtSecret))
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to generate access token")
 	}

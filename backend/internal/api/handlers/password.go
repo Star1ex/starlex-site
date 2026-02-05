@@ -266,7 +266,7 @@ func (h *Handlers) issueTokens(userEntity *entity.User) (string, string, error) 
 		"token_version": userEntity.TokenVersion,
 		"exp":           time.Now().Add(1 * time.Hour).Unix(),
 	})
-	accessTokenStr, err := accessToken.SignedString([]byte(jwtSecret))
+	accessTokenStr, err := accessToken.SignedString([]byte(h.jwtSecret))
 	if err != nil {
 		return "", "", fmt.Errorf("access token: %w", err)
 	}
@@ -278,7 +278,7 @@ func (h *Handlers) issueTokens(userEntity *entity.User) (string, string, error) 
 		"token_version": userEntity.TokenVersion,
 		"exp":           time.Now().Add(7 * 24 * time.Hour).Unix(),
 	})
-	refreshTokenStr, err := refreshToken.SignedString([]byte(jwtSecret))
+	refreshTokenStr, err := refreshToken.SignedString([]byte(h.jwtSecret))
 	if err != nil {
 		return "", "", fmt.Errorf("refresh token: %w", err)
 	}

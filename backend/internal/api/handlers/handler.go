@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"time"
+
 	"github.com/Team-Tracks/team-track-site/internal/domain/folder"
 	"github.com/Team-Tracks/team-track-site/internal/domain/password"
 	"github.com/Team-Tracks/team-track-site/internal/domain/task"
@@ -16,6 +18,10 @@ type Handlers struct {
 	folderService       folder.Service
 	verificationService verification.Service
 	passwordService     password.Service
+	jwtSecret           string
+	frontendBaseURL     string
+	oauthConfig         OAuthConfig
+	oauthLimiter        *rateLimiter
 }
 
 func NewHandlers(userService user.Service,
@@ -23,7 +29,9 @@ func NewHandlers(userService user.Service,
 	taskService task.Service,
 	folderService folder.Service,
 	verificationService verification.Service,
-	passwordService password.Service) *Handlers {
+	passwordService password.Service,
+	authConfig AuthConfig,
+) *Handlers {
 
 	return &Handlers{
 		userService:         userService,
@@ -32,5 +40,9 @@ func NewHandlers(userService user.Service,
 		folderService:       folderService,
 		verificationService: verificationService,
 		passwordService:     passwordService,
+		jwtSecret:           authConfig.JWTSecret,
+		frontendBaseURL:     authConfig.FrontendBaseURL,
+		oauthConfig:         authConfig.OAuth,
+		oauthLimiter:        newRateLimiter(30, time.Minute*5),
 	}
 }

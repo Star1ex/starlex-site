@@ -233,22 +233,22 @@ func (r *UserRepository) Update(ctx context.Context, updates *entity.User, id st
 		updatedUser["password"] = updates.Password
 	}
 	if updates.FirstName != "" {
-		updatedUser["firstName"] = updates.FirstName
+		updatedUser["first_name"] = updates.FirstName
 	}
 	if updates.LastName != "" {
-		updatedUser["lastName"] = updates.LastName
+		updatedUser["last_name"] = updates.LastName
 	}
 	if updates.Photo_URL != nil {
-		updatedUser["photo_url"] = updates.Photo_URL
+		updatedUser["photo_url"] = *updates.Photo_URL
 	}
 	if updates.AvatarURL != nil {
-		updatedUser["avatar_url"] = updates.AvatarURL
+		updatedUser["avatar_url"] = *updates.AvatarURL
 	}
 	if updates.GoogleID != nil {
-		updatedUser["google_id"] = updates.GoogleID
+		updatedUser["google_id"] = *updates.GoogleID
 	}
 	if updates.GithubID != nil {
-		updatedUser["github_id"] = updates.GithubID
+		updatedUser["github_id"] = *updates.GithubID
 	}
 	if updates.AuthProviders != nil {
 		updatedUser["auth_providers"] = marshalAuthProviders(updates.AuthProviders)
