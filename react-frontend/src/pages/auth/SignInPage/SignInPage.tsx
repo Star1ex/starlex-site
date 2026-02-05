@@ -13,6 +13,7 @@ export const SignInPage = () => {
   const [errorMessage, setErrorMessage] = useState("");
   const [successMessage, setSuccessMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState<string | null>(null);
 
   const { isAuthenticated, isLoading, login } = useAuth();
 
@@ -107,6 +108,14 @@ export const SignInPage = () => {
     }
   };
 
+  const handleOAuth = (provider: 'google' | 'github') => {
+    setErrorMessage("");
+    setSuccessMessage("");
+    setOauthLoading(provider);
+    const redirectPath = localStorage.getItem('redirectPath') || '/dashboard';
+    window.location.href = `/api/auth/${provider}?redirect=${encodeURIComponent(redirectPath)}`;
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-white transition-colors duration-300">
       <div className="flex flex-col md:flex-row w-full max-w-5xl overflow-hidden bg-white">
@@ -185,6 +194,31 @@ export const SignInPage = () => {
             >
               {isSubmitting ? "Signing In..." : "Sign In"}
             </button>
+
+            <div className="flex items-center gap-3 pt-2">
+              <div className="flex-1 h-px bg-gray-200" />
+              <span className="text-xs uppercase tracking-widest text-gray-500">or</span>
+              <div className="flex-1 h-px bg-gray-200" />
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <button
+                type="button"
+                onClick={() => handleOAuth('google')}
+                disabled={isSubmitting || oauthLoading !== null}
+                className="w-full py-3 border border-black text-black font-semibold rounded-md shadow-sm hover:bg-gray-50 transition-colors duration-200 disabled:opacity-60"
+              >
+                {oauthLoading === 'google' ? 'Connecting to Google...' : 'Continue with Google'}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleOAuth('github')}
+                disabled={isSubmitting || oauthLoading !== null}
+                className="w-full py-3 border border-black text-black font-semibold rounded-md shadow-sm hover:bg-gray-50 transition-colors duration-200 disabled:opacity-60"
+              >
+                {oauthLoading === 'github' ? 'Connecting to GitHub...' : 'Continue with GitHub'}
+              </button>
+            </div>
 
             <p className="text-center text-sm text-black pt-4 transition-colors duration-300">
               New to Team Track?{" "}

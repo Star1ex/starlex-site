@@ -8,6 +8,8 @@ type UserProfile = {
   lastName: string;
   role?: string;
   photo_url?: string | null;
+  avatar_url?: string | null;
+  auth_providers?: string[];
 };
 
 const ProfilePage: React.FC = () => {
@@ -151,9 +153,9 @@ const ProfilePage: React.FC = () => {
               <div className="lg:w-1/3">
                 <div className="flex items-center gap-4">
                   <div className="w-20 h-20 rounded-2xl overflow-hidden border border-gray-200 dark:border-dark-border bg-gray-100 dark:bg-dark-border flex items-center justify-center flex-shrink-0 transition-all duration-300">
-                    {user.photo_url ? (
+                    {(user.photo_url || user.avatar_url) ? (
                       <img
-                        src={user.photo_url}
+                        src={user.photo_url || user.avatar_url || ''}
                         alt="Avatar"
                         className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                       />
@@ -164,6 +166,11 @@ const ProfilePage: React.FC = () => {
                   <div>
                     <div className="text-sm font-medium text-gray-900 dark:text-dark-text">{form.firstName} {form.lastName}</div>
                     <div className="text-xs text-gray-500 dark:text-dark-text-muted">{form.email}</div>
+                    {user.auth_providers && user.auth_providers.length > 0 && (
+                      <div className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-dark-text-muted mt-1">
+                        Signed in with {user.auth_providers.join(', ')}
+                      </div>
+                    )}
                   </div>
                 </div>
 

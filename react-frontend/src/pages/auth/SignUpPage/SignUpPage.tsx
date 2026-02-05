@@ -11,6 +11,8 @@ export const SignUpPage = () => {
   const [formFirstName, setFirstName] = useState("");
   const [formLastName, setLastName] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState<string | null>(null);
+  const [linkProviders, setLinkProviders] = useState<string[]>([]);
 
   function handleToSignIn() {
     navigate("/sign-in");
@@ -34,6 +36,7 @@ export const SignUpPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     setErrorMessage('');  
+    setLinkProviders([]);
     e.preventDefault();
 
     if (!formEmail || !formPassword || !formFirstName || !formLastName) {
@@ -81,6 +84,10 @@ export const SignUpPage = () => {
 
       if (status === 400) {
         setErrorMessage(data?.error || 'Registration failed');
+      } else if (status === 409) {
+        const providers = Array.isArray(data?.auth_providers) ? data.auth_providers : [];
+        setLinkProviders(providers);
+        setErrorMessage(data?.message || 'Email already registered. Please sign in or link accounts.');
       } else if (status === 500) {
         setErrorMessage(data?.error || 'Server error. Please try again.');
       } else {
@@ -92,6 +99,13 @@ export const SignUpPage = () => {
       setIsLoading(false);
     }
   }
+
+  const handleOAuth = (provider: 'google' | 'github') => {
+    setErrorMessage('');
+    setOauthLoading(provider);
+    const redirectPath = '/dashboard';
+    window.location.href = `/api/auth/${provider}?redirect=${encodeURIComponent(redirectPath)}`;
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-white transition-colors duration-300">
@@ -160,6 +174,60 @@ export const SignUpPage = () => {
               <p className="text-center text-sm text-red-600 font-medium transition-colors duration-300">
                 {errorMessage}
               </p>
+            )}
+
+            {linkProviders.length > 0 && (
+              <div className="flex flex-col gap-3">
+                <p className="text-center text-xs uppercase tracking-widest text-gray-500">Link existing account</p>
+                {linkProviders.includes('google') && (
+                  <button
+                    type="button"
+                    onClick={() => handleOAuth('google')}
+                    disabled={isLoading || oauthLoading !== null}
+                    className="w-full py-3 border border-black text-black font-semibold rounded-md shadow-sm hover:bg-gray-50 transition-colors duration-200 disabled:opacity-60"
+                  >
+                    {oauthLoading === 'google' ? 'Connecting to Google...' : 'Continue with Google'}
+                  </button>
+                )}
+                {linkProviders.includes('github') && (
+                  <button
+                    type="button"
+                    onClick={() => handleOAuth('github')}
+                    disabled={isLoading || oauthLoading !== null}
+                    className="w-full py-3 border border-black text-black font-semibold rounded-md shadow-sm hover:bg-gray-50 transition-colors duration-200 disabled:opacity-60"
+                  >
+                    {oauthLoading === 'github' ? 'Connecting to GitHub...' : 'Continue with GitHub'}
+                  </button>
+                )}
+              </div>
+            )}
+
+            {linkProviders.length === 0 && (
+              <>
+                <div className="flex items-center gap-3 pt-1">
+                  <div className="flex-1 h-px bg-gray-200" />
+                  <span className="text-xs uppercase tracking-widest text-gray-500">or</span>
+                  <div className="flex-1 h-px bg-gray-200" />
+                </div>
+                <div className="flex flex-col gap-3">
+                  <button
+                    type="button"
+                    onClick={() => handleOAuth('google')}
+                    disabled={isLoading || oauthLoading !== null}
+                    className="w-full py-3 border border-black text-black font-semibold rounded-md shadow-sm hover:bg-gray-50 transition-colors duration-200 disabled:opacity-60"
+                  >
+                    {oauthLoading === 'google' ? 'Connecting to Google...' : 'Continue with Google'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleOAuth('github')}
+                    disabled={isLoading || oauthLoading !== null}
+                    className="w-full py-3 border border-black text-black font-semibold rounded-md shadow-sm hover:bg-gray-50 transition-colors duration-200 disabled:opacity-60"
+                  >
+                    {oauthLoading === 'github' ? 'Connecting to GitHub...' : 'Continue with GitHub'}
+                  </button>
+                </div>
+              </>
             )}
 
             <button
