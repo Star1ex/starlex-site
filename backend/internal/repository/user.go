@@ -2,23 +2,31 @@ package repository
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 
 	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
+	"github.com/Team-Tracks/team-track-site/internal/domain/user"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
 type UserModel struct {
-	ID           string      `gorm:"primaryKey"`
-	Email        string      `gorm:"unique;not null"`
-	Password     string      `gorm:"not null"`
-	FirstName    string      `gorm:"not null;size:50"`
-	LastName     string      `gorm:"not null;size:50"`
-	PhotoURL     string      `gorm:"default:null"`
-	Role         string      `gorm:"default:'member'"`
-	IsVerified   bool        `gorm:"default:false"`
-	TokenVersion int         `gorm:"default:1"`
-	Teams        []TeamModel `gorm:"many2many:users_teams"`
+	ID             string         `gorm:"primaryKey"`
+	Email          string         `gorm:"unique;not null"`
+	Password       *string        `gorm:"default:null"`
+	FirstName      string         `gorm:"not null;size:50"`
+	LastName       string         `gorm:"not null;size:50"`
+	PhotoURL       *string        `gorm:"default:null"`
+	AvatarURL      *string        `gorm:"default:null"`
+	GoogleID       *string        `gorm:"uniqueIndex;default:null"`
+	GithubID       *string        `gorm:"uniqueIndex;default:null"`
+	AuthProviders  datatypes.JSON `gorm:"type:jsonb;default:'[]'"`
+	NameOverridden bool           `gorm:"default:false"`
+	Role           string         `gorm:"default:'member'"`
+	IsVerified     bool           `gorm:"default:false"`
+	TokenVersion   int            `gorm:"default:1"`
+	Teams          []TeamModel    `gorm:"many2many:users_teams"`
 }
 
 type UserRepository struct {
@@ -27,42 +35,60 @@ type UserRepository struct {
 
 // factory from domain structure
 func fromDomain(u *entity.User) *UserModel {
+	authProviders := normalizeAuthProviders(u)
 	model := &UserModel{
-		ID:           u.ID,
-		Email:        u.Email,
-		Password:     u.Password,
-		FirstName:    u.FirstName,
-		LastName:     u.LastName,
-		Role:         u.Role,
-		TokenVersion: u.TokenVersion,
+		ID:             u.ID,
+		Email:          u.Email,
+		FirstName:      u.FirstName,
+		LastName:       u.LastName,
+		Role:           u.Role,
+		TokenVersion:   u.TokenVersion,
+		AvatarURL:      u.AvatarURL,
+		GoogleID:       u.GoogleID,
+		GithubID:       u.GithubID,
+		NameOverridden: u.NameOverridden,
+		AuthProviders:  marshalAuthProviders(authProviders),
+	}
+	if u.Password != "" {
+		model.Password = &u.Password
 	}
 	// Handle nil pointer for Photo_URL
 	if u.Photo_URL != nil {
-		model.PhotoURL = *u.Photo_URL
+		model.PhotoURL = u.Photo_URL
 	}
 	return model
 }
 
 // factory to domain structure
 func toDomain(u *UserModel) *entity.User {
-	var photoURL *string
-	if u.PhotoURL != "" {
-		photoURL = &u.PhotoURL
+	authProviders := unmarshalAuthProviders(u.AuthProviders)
+	if len(authProviders) == 0 {
+		authProviders = deriveAuthProvidersFromModel(u)
 	}
+	photoURL := u.PhotoURL
 	tokenVersion := u.TokenVersion
 	if tokenVersion == 0 {
 		tokenVersion = 1
 	}
+	password := ""
+	if u.Password != nil {
+		password = *u.Password
+	}
 	return &entity.User{
-		ID:           u.ID,
-		Email:        u.Email,
-		Password:     u.Password,
-		FirstName:    u.FirstName,
-		LastName:     u.LastName,
-		Role:         u.Role,
-		Photo_URL:    photoURL,
-		IsVerified:   u.IsVerified,
-		TokenVersion: tokenVersion,
+		ID:             u.ID,
+		Email:          u.Email,
+		Password:       password,
+		FirstName:      u.FirstName,
+		LastName:       u.LastName,
+		Role:           u.Role,
+		Photo_URL:      photoURL,
+		AvatarURL:      u.AvatarURL,
+		GoogleID:       u.GoogleID,
+		GithubID:       u.GithubID,
+		AuthProviders:  authProviders,
+		NameOverridden: u.NameOverridden,
+		IsVerified:     u.IsVerified,
+		TokenVersion:   tokenVersion,
 	}
 }
 
@@ -112,6 +138,34 @@ func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*entity.
 		return nil, err
 	}
 
+	return toDomain(&model), nil
+}
+
+func (r *UserRepository) GetByGoogleID(ctx context.Context, googleID string) (*entity.User, error) {
+	var model UserModel
+	err := r.db.WithContext(ctx).
+		Where("google_id = ?", googleID).
+		First(&model).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrUserNotFound
+		}
+		return nil, err
+	}
+	return toDomain(&model), nil
+}
+
+func (r *UserRepository) GetByGithubID(ctx context.Context, githubID string) (*entity.User, error) {
+	var model UserModel
+	err := r.db.WithContext(ctx).
+		Where("github_id = ?", githubID).
+		First(&model).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrUserNotFound
+		}
+		return nil, err
+	}
 	return toDomain(&model), nil
 }
 
@@ -187,6 +241,24 @@ func (r *UserRepository) Update(ctx context.Context, updates *entity.User, id st
 	if updates.Photo_URL != nil {
 		updatedUser["photo_url"] = updates.Photo_URL
 	}
+	if updates.AvatarURL != nil {
+		updatedUser["avatar_url"] = updates.AvatarURL
+	}
+	if updates.GoogleID != nil {
+		updatedUser["google_id"] = updates.GoogleID
+	}
+	if updates.GithubID != nil {
+		updatedUser["github_id"] = updates.GithubID
+	}
+	if updates.AuthProviders != nil {
+		updatedUser["auth_providers"] = marshalAuthProviders(updates.AuthProviders)
+	}
+	if updates.NameOverridden {
+		updatedUser["name_overridden"] = updates.NameOverridden
+	}
+	if updates.IsVerified {
+		updatedUser["is_verified"] = updates.IsVerified
+	}
 	if updates.TokenVersion != 0 {
 		updatedUser["token_version"] = updates.TokenVersion
 	}
@@ -207,12 +279,19 @@ func (r *UserRepository) Update(ctx context.Context, updates *entity.User, id st
 }
 
 func (r *UserRepository) UpdatePasswordAndTokenVersion(ctx context.Context, userID, hashedPassword string, tokenVersion int) error {
+	userEntity, err := r.Get(ctx, userID)
+	if err != nil {
+		return err
+	}
+	userEntity.Password = hashedPassword
+	authProviders := normalizeAuthProviders(userEntity)
 	return r.db.WithContext(ctx).
 		Model(&UserModel{}).
 		Where("id = ?", userID).
 		Updates(map[string]interface{}{
-			"password":      hashedPassword,
-			"token_version": tokenVersion,
+			"password":       hashedPassword,
+			"token_version":  tokenVersion,
+			"auth_providers": marshalAuthProviders(authProviders),
 		}).Error
 }
 
@@ -274,4 +353,106 @@ func (r *UserRepository) IsVerified(ctx context.Context, userID string) (bool, e
 	}
 
 	return user.IsVerified, nil
+}
+
+func (r *UserRepository) UpdateOAuthFields(ctx context.Context, userID string, update user.OAuthUpdate) error {
+	updates := map[string]interface{}{}
+	if update.GoogleIDSet {
+		if update.GoogleID == nil {
+			updates["google_id"] = nil
+		} else {
+			updates["google_id"] = *update.GoogleID
+		}
+	}
+	if update.GithubIDSet {
+		if update.GithubID == nil {
+			updates["github_id"] = nil
+		} else {
+			updates["github_id"] = *update.GithubID
+		}
+	}
+	if update.AvatarURL != nil {
+		updates["avatar_url"] = *update.AvatarURL
+	}
+	if update.FirstName != nil {
+		updates["firstName"] = *update.FirstName
+	}
+	if update.LastName != nil {
+		updates["lastName"] = *update.LastName
+	}
+	if update.Email != nil {
+		updates["email"] = *update.Email
+	}
+	if update.IsVerified != nil {
+		updates["is_verified"] = *update.IsVerified
+	}
+	if update.NameOverridden != nil {
+		updates["name_overridden"] = *update.NameOverridden
+	}
+	if update.AuthProvidersSet {
+		updates["auth_providers"] = marshalAuthProviders(update.AuthProviders)
+	}
+	if len(updates) == 0 {
+		return nil
+	}
+	return r.db.WithContext(ctx).
+		Model(&UserModel{}).
+		Where("id = ?", userID).
+		Updates(updates).Error
+}
+
+func marshalAuthProviders(providers []string) datatypes.JSON {
+	if len(providers) == 0 {
+		return datatypes.JSON([]byte("[]"))
+	}
+	data, err := json.Marshal(providers)
+	if err != nil {
+		return datatypes.JSON([]byte("[]"))
+	}
+	return datatypes.JSON(data)
+}
+
+func unmarshalAuthProviders(data datatypes.JSON) []string {
+	if len(data) == 0 {
+		return []string{}
+	}
+	var providers []string
+	if err := json.Unmarshal(data, &providers); err != nil {
+		return []string{}
+	}
+	return providers
+}
+
+func deriveAuthProvidersFromModel(u *UserModel) []string {
+	providers := []string{}
+	if u.Password != nil && *u.Password != "" {
+		providers = append(providers, "local")
+	}
+	if u.GoogleID != nil && *u.GoogleID != "" {
+		providers = append(providers, "google")
+	}
+	if u.GithubID != nil && *u.GithubID != "" {
+		providers = append(providers, "github")
+	}
+	return providers
+}
+
+func normalizeAuthProviders(u *entity.User) []string {
+	if u == nil {
+		return []string{}
+	}
+	providers := []string{}
+	if u.Password != "" {
+		providers = append(providers, "local")
+	}
+	if u.GoogleID != nil && *u.GoogleID != "" {
+		providers = append(providers, "google")
+	}
+	if u.GithubID != nil && *u.GithubID != "" {
+		providers = append(providers, "github")
+	}
+	if len(u.AuthProviders) > 0 {
+		return u.AuthProviders
+	}
+	return providers
 }

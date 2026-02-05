@@ -16,6 +16,8 @@ type Repository interface {
 
 	// Get user by email
 	GetByEmail(ctx context.Context, email string) (*entity.User, error)
+	GetByGoogleID(ctx context.Context, googleID string) (*entity.User, error)
+	GetByGithubID(ctx context.Context, githubID string) (*entity.User, error)
 	GetUserTeams(ctx context.Context, userID string) ([]*entity.Team, error)
 	GetByIDs(ctx context.Context, ids []string) ([]*entity.User, error)
 
@@ -35,4 +37,7 @@ type Repository interface {
 	// password/session
 	UpdatePasswordAndTokenVersion(ctx context.Context, userID, hashedPassword string, tokenVersion int) error
 	GetTokenVersion(ctx context.Context, userID string) (int, error)
+
+	// oauth updates
+	UpdateOAuthFields(ctx context.Context, userID string, update OAuthUpdate) error
 }
