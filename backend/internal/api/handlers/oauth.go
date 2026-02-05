@@ -205,9 +205,9 @@ func (h *Handlers) UnlinkGoogle(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "cannot unlink the last authentication method"})
 	}
 	update := user.OAuthUpdate{
-		GoogleIDSet:     true,
-		GoogleID:        nil,
-		AuthProviders:   remaining,
+		GoogleIDSet:      true,
+		GoogleID:         nil,
+		AuthProviders:    remaining,
 		AuthProvidersSet: true,
 	}
 	if err := h.userService.UpdateOAuthFields(ctx.Context(), userID, update); err != nil {
@@ -233,9 +233,9 @@ func (h *Handlers) UnlinkGithub(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "cannot unlink the last authentication method"})
 	}
 	update := user.OAuthUpdate{
-		GithubIDSet:     true,
-		GithubID:        nil,
-		AuthProviders:   remaining,
+		GithubIDSet:      true,
+		GithubID:         nil,
+		AuthProviders:    remaining,
 		AuthProvidersSet: true,
 	}
 	if err := h.userService.UpdateOAuthFields(ctx.Context(), userID, update); err != nil {

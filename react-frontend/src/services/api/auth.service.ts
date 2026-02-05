@@ -81,6 +81,26 @@ export const authService = {
     return response.data;
   },
 
+  async linkGoogle(): Promise<{ auth_url: string }> {
+    const response = await httpClient.post<{ auth_url: string }>('/api/auth/link-google');
+    return response.data;
+  },
+
+  async linkGithub(): Promise<{ auth_url: string }> {
+    const response = await httpClient.post<{ auth_url: string }>('/api/auth/link-github');
+    return response.data;
+  },
+
+  async unlinkGoogle(): Promise<AuthResponse> {
+    const response = await httpClient.delete<AuthResponse>('/api/auth/unlink-google');
+    return response.data;
+  },
+
+  async unlinkGithub(): Promise<AuthResponse> {
+    const response = await httpClient.delete<AuthResponse>('/api/auth/unlink-github');
+    return response.data;
+  },
+
   logout() {
     apiClient.clearAccessToken();
     window.location.href = '/sign-in';

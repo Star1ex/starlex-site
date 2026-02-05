@@ -12,6 +12,11 @@ export const userService = {
       lastName: d.lastName ?? d.last_name,
       role: d.role,
       photo_url: d.photo_url ?? null,
+      avatar_url: d.avatar_url ?? null,
+      auth_providers: d.auth_providers ?? [],
+      google_id: d.google_id ?? null,
+      github_id: d.github_id ?? null,
+      email_verified: d.email_verified ?? d.is_verified ?? false,
     } as UserProfileDTO;
   },
 
@@ -59,6 +64,7 @@ export const userService = {
       firstName: d.firstName ?? d.first_name,
       lastName: d.lastName ?? d.last_name,
       photo_url: d.photo_url ?? null,
+      avatar_url: d.avatar_url ?? null,
       role: d.role,
     };
   },
@@ -72,6 +78,7 @@ export const userService = {
       firstName: d.firstName ?? d.first_name,
       lastName: d.lastName ?? d.last_name,
       photo_url: d.photo_url ?? null,
+      avatar_url: d.avatar_url ?? null,
       role: d.role,
     };
   },
