@@ -46,11 +46,11 @@ const AnimatedRoutes = () => {
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path="/about-us" element={<AboutUs />} />
 
       {/* Protected routes with Layout */}
       <Route path="/dashboard" element={<RequireAuth><Layout><Dashboard /></Layout></RequireAuth>} />
       <Route path="/settings" element={<RequireAuth><Layout><GeneralSettings /></Layout></RequireAuth>} />
-      <Route path="/about-us" element={<RequireAuth><Layout><AboutUs /></Layout></RequireAuth>} />
       <Route path="/profile" element={<RequireAuth><Layout><ProfilePage /></Layout></RequireAuth>} />
       <Route path="/profile/:userId" element={<RequireAuth><Layout><UserProfilePage /></Layout></RequireAuth>} />
       <Route path="/team/:team_id" element={<RequireAuth><Layout><TaskBoard /></Layout></RequireAuth>} />

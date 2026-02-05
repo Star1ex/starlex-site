@@ -156,14 +156,6 @@ const TaskBoard: React.FC = () => {
             </button>
           </div>
         </div>
-        <div className="mt-3">
-          <button
-            onClick={() => setShowCreateModal(true)}
-            className="text-sm text-gray-700 dark:text-dark-text-muted hover:text-gray-900 dark:hover:text-dark-text transition-colors"
-          >
-            + Add Task
-          </button>
-        </div>
       </div>
 
       {error && (
@@ -186,7 +178,18 @@ const TaskBoard: React.FC = () => {
       <div className="flex flex-col lg:flex-row max-w-[1600px] mx-auto px-2 sm:px-4 lg:px-6 py-4 sm:py-6 gap-4 sm:gap-6">
         {/* Tasks - Full width */}
         {/* Tasks - Right */}
-        <main className="flex-1 min-w-0 order-1">
+        <main className="flex-1 min-w-0 order-1 mt-2 sm:mt-4">
+          <div className="flex items-center justify-between px-2 sm:px-4 mb-2 sm:mb-3">
+            <span className="text-xs sm:text-sm font-medium text-gray-500 dark:text-dark-text-muted">
+              Tasks
+            </span>
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="text-sm font-medium text-gray-700 dark:text-dark-text hover:text-gray-900 dark:hover:text-white transition-colors"
+            >
+              + Add Task
+            </button>
+          </div>
           {tasks.length === 0 ? (
             <div className="text-center py-12 sm:py-24">
               {loading ? (

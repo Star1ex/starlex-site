@@ -4,6 +4,7 @@ import { GlobalSidebar } from '@/widgets/GlobalSidebar/GlobalSidebar.js';
 import { NewTabModal } from '@/widgets/NewTabModal/NewTabModal.js';
 import { useModal } from '@/shared/hooks/useModal.js';
 import { Menu, X } from 'lucide-react';
+import { ToastHost } from '@/shared/ui/ToastHost.js';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -81,6 +82,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       <main className="flex-1 overflow-y-auto lg:ml-0">
         {children}
       </main>
+
+      <ToastHost />
 
       {open && (
         <NewTabModal

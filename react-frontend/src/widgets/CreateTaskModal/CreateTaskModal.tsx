@@ -4,6 +4,8 @@ import Avatar from '@/shared/ui/Avatar.js';
 import type { User, CreateTaskFormData } from '@/entities/types.js';
 import { taskService } from '@/services/api/index.js';
 import { useAuth } from '@/contexts/AuthContext.js';
+import { apiClient } from '@/services/api/client.js';
+import { getAuthUser } from '@/shared/lib/authManager.js';
 import { EditorContent, useEditor } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -99,12 +101,17 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
 
     setIsLoading(true);
     try {
-      // Ensure we have owner id
+      // Attempt to resolve owner id, but never block submission on it.
       let ownerId = userId;
       if (!ownerId) {
         await refreshUser();
-        // Try to decode newly acquired access token
-        const token = (await import('@/services/api/client.js')).apiClient.getAccessToken();
+      }
+      if (!ownerId) {
+        const storedUser = getAuthUser();
+        ownerId = storedUser?.id ?? null;
+      }
+      if (!ownerId) {
+        const token = apiClient.getAccessToken();
         if (token) {
           try {
             const decoded = JSON.parse(atob(token.split('.')[1]));
@@ -120,30 +127,12 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         return;
       }
 
-      if (!ownerId) {
-        // fallback to decoding access token
-        const token = (await import('@/services/api/client.js')).apiClient.getAccessToken();
-        if (token) {
-          try {
-            const decoded = JSON.parse(atob(token.split('.')[1]));
-            ownerId = decoded.user_id || decoded.id || decoded.sub || null;
-          } catch (err) {
-            // ignore
-          }
-        }
-      }
-
-      if (!ownerId) {
-        console.error('Unable to determine owner id');
-        return;
-      }
-
       await taskService.createTeamTask(teamId, {
         task: formData.task,
         description: formData.description,
         progress: formData.progress,
         user_ids: formData.user_ids,
-        owner_id: ownerId,
+        owner_id: ownerId || '',
       });
 
       onSuccess();

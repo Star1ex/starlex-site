@@ -18,7 +18,11 @@ type TeamTaskPanelProps = {
 
 export const TeamTaskPanel: React.FC<TeamTaskPanelProps> = ({ task, isOpen, teamId, onClose, onUpdated, onTitleChange }) => {
   const minWidth = 420;
-  const [panelWidth, setPanelWidth] = useState(minWidth);
+  const getMaxWidth = () => Math.max(minWidth, Math.floor(window.innerWidth * 0.5));
+  const [panelWidth, setPanelWidth] = useState(() => {
+    if (typeof window === 'undefined') return minWidth;
+    return getMaxWidth();
+  });
   const [isDragging, setIsDragging] = useState(false);
   const dragStartX = useRef(0);
   const dragStartWidth = useRef(minWidth);
@@ -94,7 +98,7 @@ export const TeamTaskPanel: React.FC<TeamTaskPanelProps> = ({ task, isOpen, team
 
   useEffect(() => {
     const updateBounds = () => {
-      const maxWidth = Math.max(minWidth, Math.floor(window.innerWidth / 2));
+      const maxWidth = getMaxWidth();
       setPanelWidth((prev) => Math.min(maxWidth, Math.max(minWidth, prev)));
     };
     updateBounds();
@@ -106,7 +110,7 @@ export const TeamTaskPanel: React.FC<TeamTaskPanelProps> = ({ task, isOpen, team
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
       if (!isDragging) return;
-      const maxWidth = Math.max(minWidth, Math.floor(window.innerWidth / 2));
+      const maxWidth = getMaxWidth();
       const delta = dragStartX.current - e.clientX;
       const nextWidth = Math.max(minWidth, Math.min(maxWidth, dragStartWidth.current + delta));
       setPanelWidth(nextWidth);

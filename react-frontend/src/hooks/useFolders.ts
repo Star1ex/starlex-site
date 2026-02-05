@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { folderService } from '@/services/api/index.js';
+import { showToast } from '@/shared/lib/toast.js';
 import type { CreateFolderRequest, FolderDTO } from '@/types/dto.js';
 
 const REMOVE_ANIMATION_MS = 220;
@@ -8,11 +9,16 @@ export const useFolders = () => {
   const [foldersById, setFoldersById] = useState<Record<string, FolderDTO>>({});
   const [folderIds, setFolderIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [savingFolderIds, setSavingFolderIds] = useState<Record<string, boolean>>({});
+  const [recentFolderIds, setRecentFolderIds] = useState<Record<string, boolean>>({});
+  const [createError, setCreateError] = useState<string | null>(null);
   const [removingFolderIds, setRemovingFolderIds] = useState<Record<string, boolean>>({});
   const refreshControllerRef = useRef<AbortController | null>(null);
   const refreshTimeoutRef = useRef<number | null>(null);
+  const createErrorTimeoutRef = useRef<number | null>(null);
   const foldersByIdRef = useRef(foldersById);
   const folderIdsRef = useRef(folderIds);
+  const savingFolderIdsRef = useRef(savingFolderIds);
 
   useEffect(() => {
     foldersByIdRef.current = foldersById;
@@ -21,6 +27,11 @@ export const useFolders = () => {
   useEffect(() => {
     folderIdsRef.current = folderIds;
   }, [folderIds]);
+
+  useEffect(() => {
+    savingFolderIdsRef.current = savingFolderIds;
+  }, [savingFolderIds]);
+
 
   const refreshFolders = useCallback(async () => {
     setLoading(true);
@@ -38,6 +49,17 @@ export const useFolders = () => {
         nextById[folder.id] = folder;
         nextIds.push(folder.id);
       }
+
+      const pending = Object.values(foldersByIdRef.current).filter(
+        (folder) => folder?.id?.startsWith('temp-') || savingFolderIdsRef.current[folder?.id || '']
+      );
+      for (const folder of pending) {
+        if (!nextById[folder.id]) {
+          nextById[folder.id] = folder;
+          nextIds.push(folder.id);
+        }
+      }
+
       setFoldersById(nextById);
       setFolderIds(nextIds);
     } catch (err: any) {
@@ -74,6 +96,9 @@ export const useFolders = () => {
       if (refreshTimeoutRef.current) {
         window.clearTimeout(refreshTimeoutRef.current);
       }
+      if (createErrorTimeoutRef.current) {
+        window.clearTimeout(createErrorTimeoutRef.current);
+      }
       if (refreshControllerRef.current) {
         refreshControllerRef.current.abort();
       }
@@ -81,7 +106,13 @@ export const useFolders = () => {
   }, [refreshFolders, debouncedRefresh]);
 
   const createFolder = useCallback(async (data: CreateFolderRequest) => {
-    const tempId = `temp-${Date.now()}`;
+    if (createErrorTimeoutRef.current) {
+      window.clearTimeout(createErrorTimeoutRef.current);
+      createErrorTimeoutRef.current = null;
+    }
+    setCreateError(null);
+
+    const tempId = `temp-${typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now()}`;
     const now = new Date().toISOString();
     const optimisticFolder: FolderDTO = {
       id: tempId,
@@ -97,7 +128,8 @@ export const useFolders = () => {
     };
 
     setFoldersById((prev) => ({ ...prev, [tempId]: optimisticFolder }));
-    setFolderIds((prev) => [...prev, tempId]);
+    setFolderIds((prev) => (prev.includes(tempId) ? prev : [...prev, tempId]));
+    setSavingFolderIds((prev) => ({ ...prev, [tempId]: true }));
 
     const payload: CreateFolderRequest = {
       name: data.name || 'New Folder',
@@ -111,19 +143,47 @@ export const useFolders = () => {
 
     try {
       const created = await folderService.createFolder(payload);
-      // If API returns a string, refresh to reconcile. Otherwise replace temp.
-      if (typeof created === 'string') {
+      const real = created as FolderDTO;
+      if (!real || !real.id) {
         await refreshFolders();
-      } else {
-        const real = created as FolderDTO;
         setFoldersById((prev) => {
           const next = { ...prev };
           delete next[tempId];
-          next[real.id] = real;
           return next;
         });
-        setFolderIds((prev) => prev.map((id) => (id === tempId ? real.id : id)));
+        setFolderIds((prev) => prev.filter((id) => id !== tempId));
+        setSavingFolderIds((prev) => {
+          const next = { ...prev };
+          delete next[tempId];
+          return next;
+        });
+        return created;
       }
+      const mergedFolder = { ...optimisticFolder, ...real, id: real.id };
+      setFoldersById((prev) => {
+        const next = { ...prev };
+        delete next[tempId];
+        next[mergedFolder.id] = mergedFolder;
+        return next;
+      });
+      setFolderIds((prev) => {
+        const next = prev.map((id) => (id === tempId ? mergedFolder.id : id));
+        return Array.from(new Set(next));
+      });
+      setSavingFolderIds((prev) => {
+        const next = { ...prev };
+        delete next[tempId];
+        return next;
+      });
+      setRecentFolderIds((prev) => ({ ...prev, [mergedFolder.id]: true }));
+      window.setTimeout(() => {
+        setRecentFolderIds((prev) => {
+          if (!prev[mergedFolder.id]) return prev;
+          const next = { ...prev };
+          delete next[mergedFolder.id];
+          return next;
+        });
+      }, 160);
       return created;
     } catch (err) {
       setFoldersById((prev) => {
@@ -132,11 +192,22 @@ export const useFolders = () => {
         return next;
       });
       setFolderIds((prev) => prev.filter((id) => id !== tempId));
+      setSavingFolderIds((prev) => {
+        const next = { ...prev };
+        delete next[tempId];
+        return next;
+      });
+      setCreateError('Failed to create folder. Please try again.');
+      showToast('Failed to create folder. Please try again.');
+      createErrorTimeoutRef.current = window.setTimeout(() => {
+        setCreateError(null);
+      }, 4000);
       throw err;
     }
   }, [refreshFolders]);
 
   const updateFolder = useCallback(async (id: string, data: Partial<CreateFolderRequest>) => {
+    const previous = foldersByIdRef.current[id];
     setFoldersById((prev) => ({ ...prev, [id]: { ...prev[id], ...data } as FolderDTO }));
     try {
       const updated = await folderService.updateFolder(id, data as any);
@@ -145,7 +216,12 @@ export const useFolders = () => {
       }
       return updated;
     } catch (err) {
-      await refreshFolders();
+      if (previous) {
+        setFoldersById((prev) => ({ ...prev, [id]: previous }));
+      } else {
+        await refreshFolders();
+      }
+      showToast('Failed to save folder changes.');
       throw err;
     }
   }, [refreshFolders]);
@@ -184,6 +260,7 @@ export const useFolders = () => {
         delete next[id];
         return next;
       });
+      showToast('Failed to delete folder.');
       throw err;
     } finally {
       setRemovingFolderIds((prev) => {
@@ -205,10 +282,13 @@ export const useFolders = () => {
     folders,
     rootFolders,
     loading,
+    createError,
     createFolder,
     updateFolder,
     deleteFolder,
     moveFolder,
+    savingFolderIds,
+    recentFolderIds,
     removingFolderIds,
     getSubfolders,
     refreshFolders,

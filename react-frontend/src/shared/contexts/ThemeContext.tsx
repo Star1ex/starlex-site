@@ -14,6 +14,8 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 const THEME_STORAGE_KEY = 'teamtrack-theme';
 const THEME_COOKIE_KEY = 'teamtrack-theme';
 const THEME_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
+const LIGHT_FAVICON = '/favicon.png';
+const DARK_FAVICON = '/favicon-white.png';
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>(() => {
@@ -46,6 +48,23 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     }
     if (theme === 'solarized') {
       root.classList.add('theme-solarized');
+    }
+
+    const isDarkTheme = theme === 'dark' || theme === 'ultra-dark';
+    const faviconHref = isDarkTheme ? DARK_FAVICON : LIGHT_FAVICON;
+    const faviconLink =
+      document.querySelector<HTMLLinkElement>('#app-favicon') ||
+      document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+    if (faviconLink) {
+      faviconLink.href = faviconHref;
+      faviconLink.type = 'image/png';
+    } else {
+      const link = document.createElement('link');
+      link.id = 'app-favicon';
+      link.rel = 'icon';
+      link.type = 'image/png';
+      link.href = faviconHref;
+      document.head.appendChild(link);
     }
 
     localStorage.setItem(THEME_STORAGE_KEY, theme);

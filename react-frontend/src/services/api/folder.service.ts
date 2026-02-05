@@ -22,8 +22,8 @@ export const folderService = {
     return response.data;
   },
 
-  async createFolder(data: CreateFolderRequest): Promise<string> {
-    const response = await httpClient.post<string>('/api/folders', data);
+  async createFolder(data: CreateFolderRequest): Promise<FolderDTO> {
+    const response = await httpClient.post<FolderDTO>('/api/folders', data);
     return response.data;
   },
 

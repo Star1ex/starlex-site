@@ -7,11 +7,11 @@ module.exports = {
       colors: {
         // Custom dark theme colors
         dark: {
-          bg: '#0f172a',
-          surface: '#1e293b',
-          border: '#334155',
-          text: '#f1f5f9',
-          'text-muted': '#cbd5e1',
+          bg: '#0a1929',
+          surface: '#0f2238',
+          border: '#1b3550',
+          text: '#e6edf5',
+          'text-muted': '#b6c4d6',
         },
       },
     },

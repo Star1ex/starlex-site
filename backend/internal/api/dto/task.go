@@ -78,6 +78,8 @@ func ToTaskResponse(task *entity.Task) *TaskResponse {
 		Description: task.Description,
 		AssignedTo:  assignedIDs,
 		TeamID:      task.TeamID,
+		FolderID:    task.FolderID,
+		OwnerID:     task.OwnerID,
 		Priority:    task.Priority,
 		Progress:    task.Progress,
 		CreatedAt:   createdAt,

@@ -196,7 +196,7 @@ func (r *FolderRepository) Move(ctx context.Context, folderID string, newParentI
 
 	result := r.db.WithContext(ctx).
 		Where("id = ?", folderID).
-		First(folder)
+		First(&folder)
 
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {

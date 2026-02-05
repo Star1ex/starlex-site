@@ -41,12 +41,17 @@ func toTaskDomain(m TaskModel) *entity.Task {
 		users[i] = user
 	}
 
+	teamID := ""
+	if m.TeamID != nil {
+		teamID = *m.TeamID
+	}
+
 	return &entity.Task{
 		ID:          m.ID,
 		Task:        m.Task,
 		Description: m.Description,
 		AssignedTo:  users,
-		TeamID:      *m.TeamID,
+		TeamID:      teamID,
 		OwnerID:     m.OwnerID,
 		FolderID:    m.FolderID,
 		Priority:    m.Priority,
