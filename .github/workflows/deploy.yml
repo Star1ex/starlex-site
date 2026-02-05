@@ -39,7 +39,14 @@ jobs:
           echo "SMTP_FROM_EMAIL=${{ secrets.SMTP_FROM_EMAIL }}" >> backend/.env
           echo "SMTP_FROM_NAME=${{ secrets.SMTP_FROM_NAME }}" >> backend/.env
           echo "FRONTEND_BASE_URL=${{ secrets.FRONTEND_BASE_URL }}" >> backend/.env
-
+          echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> backend/.env
+          echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> backend/.env
+          echo "CLIENT_ID_GITHUB=${{ secrets.CLIENT_ID_GITHUB }}" >> backend/.env
+          echo "CLIENT_SECRET_GITHUB=${{ secrets.CLIENT_SECRET_GITHUB }}" >> backend/.env
+          echo "GOOGLE_CALLBACK_URL=${{ secrets.GOOGLE_CALLBACK_URL }}" >> backend/.env
+          echo "CALLBACK_URL_GITHUB=${{ secrets.CALLBACK_URL_GITHUB }}" >> backend/.env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> backend/.env
+          
       - name: Create .env File
         run: |
           echo "DB_USER=${{ secrets.DB_USER }}" > .env
