@@ -161,6 +161,17 @@ export const SignInPage = () => {
               />
             </div>
 
+            <div className="flex items-center justify-between">
+              <button
+                type="button"
+                onClick={() => navigate('/forgot-password')}
+                disabled={isSubmitting}
+                className="text-xs uppercase tracking-wider text-black/70 hover:text-black transition-colors duration-200"
+              >
+                Forgot Password?
+              </button>
+            </div>
+
             {errorMessage && (
               <p className="text-center text-sm text-red-600 font-medium transition-colors duration-300">
                 {errorMessage}

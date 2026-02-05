@@ -9,6 +9,8 @@ import { apiClient } from '@/services/api/client.js';
 const HomePage = React.lazy(() => import('@/pages/home/HomePage.js').then(m => ({ default: m.HomePage })));
 const SignInPage = React.lazy(() => import('@/pages/auth/SignInPage/SignInPage.js').then(m => ({ default: m.SignInPage })));
 const SignUpPage = React.lazy(() => import('@/pages/auth/SignUpPage/SignUpPage.js').then(m => ({ default: m.SignUpPage })));
+const ForgotPasswordPage = React.lazy(() => import('@/pages/auth/ForgotPasswordPage/ForgotPasswordPage.js').then(m => ({ default: m.ForgotPasswordPage })));
+const ResetPasswordPage = React.lazy(() => import('@/pages/auth/ResetPasswordPage/ResetPasswordPage.js').then(m => ({ default: m.ResetPasswordPage })));
 const Dashboard = React.lazy(() => import('@/pages/dashboard/Dashboard.js').then(m => ({ default: m.Dashboard })));
 const VerifyEmailPage = React.lazy(() => import('@/pages/verify/VerifyEmailPage.js').then(m => ({ default: m.VerifyEmailPage })));
 const GeneralSettings = React.lazy(() => import('@/pages/settings/GeneralSettings.js').then(m => ({ default: m.GeneralSettings })));
@@ -38,6 +40,9 @@ const AnimatedRoutes = () => {
       <Route path="/" element={<HomePage />} />
       <Route path="/sign-in" element={<SignInPage />} />
       <Route path="/sign-up" element={<SignUpPage />} />
+      <Route path="/login" element={<Navigate to="/sign-in" replace />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
 
       {/* Protected routes with Layout */}

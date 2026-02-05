@@ -1,7 +1,9 @@
 package app
 
 import (
+	"context"
 	"fmt"
+	"time"
 
 	"github.com/Team-Tracks/team-track-site/internal/api/handlers"
 	"github.com/Team-Tracks/team-track-site/internal/api/routes"
@@ -32,7 +34,7 @@ func StartServer() {
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     "http://teamtrackwebsite.duckdns.org:8888",
 		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
-		AllowHeaders:     "Origin,Content-Type,Accept,Authorization",
+		AllowHeaders:     "Origin,Content-Type,Accept,Authorization,X-CSRF-Token",
 		AllowCredentials: true,
 	}))
 
@@ -56,6 +58,8 @@ func StartServer() {
 	taskRepo := repository.NewTaskRepository(db.DB)
 	folderRepo := repository.NewFolderRepository(db.DB)
 	verificationRepo := repository.NewVerificationRepository(db.DB)
+	passwordResetRepo := repository.NewPasswordResetRepository(db.DB)
+	passwordAuditRepo := repository.NewPasswordAuditRepository(db.DB)
 
 	emailService := emailService.NewEmailService(emailService.EmailConfig{
 		SMTPHost:     config.EmailConfig.SMTPHost,
@@ -68,12 +72,23 @@ func StartServer() {
 
 	fmt.Println("Check", config.EmailConfig.SMTPHost, config.EmailConfig.SMTPPort, config.EmailConfig.SMTPUsername, config.EmailConfig.SMTPPassword, config.EmailConfig.FromEmail, config.EmailConfig.FromName)
 	verificationService := service.NewVerificationService(verificationRepo, userRepo, emailService)
+	passwordService := service.NewPasswordService(userRepo, passwordResetRepo, passwordAuditRepo, emailService, config.FrontendBaseURL)
 	userService := service.NewUserService(userRepo, storage, bus)
 	teamService := service.NewTeamService(teamRepo, userRepo)
 	taskService := service.NewTaskService(taskRepo, userRepo, teamRepo)
 	folderService := service.NewFolderService(folderRepo)
-	httpHandlers := handlers.NewHandlers(userService, teamService, taskService, folderService, verificationService)
+	httpHandlers := handlers.NewHandlers(userService, teamService, taskService, folderService, verificationService, passwordService)
 	routes.InitRoutes(app, httpHandlers)
+
+	go func() {
+		ticker := time.NewTicker(30 * time.Minute)
+		defer ticker.Stop()
+		for range ticker.C {
+			if _, err := passwordService.CleanupExpiredTokens(context.Background()); err != nil {
+				fmt.Println("password reset cleanup error:", err)
+			}
+		}
+	}()
 
 	app.Listen(":3000")
 }

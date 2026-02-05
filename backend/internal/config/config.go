@@ -14,6 +14,7 @@ type Config struct {
 	StorageConfig         StorageConfig
 	TelegramNotifications TelegramNotifications
 	EmailConfig           EmailConfig
+	FrontendBaseURL       string
 }
 
 type EmailConfig struct {
@@ -84,6 +85,8 @@ func LoadConfig() *Config {
 			Token:  os.Getenv("TOKEN_TELEGRAM_NOTIFICATIONS"),
 			ChatID: os.Getenv("CHAT_ID_TELEGRAM_BOT_NOTIFICATIONS"),
 		},
+
+		FrontendBaseURL: os.Getenv("FRONTEND_BASE_URL"),
 	}
 }
 

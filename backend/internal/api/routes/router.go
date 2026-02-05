@@ -22,6 +22,7 @@ func InitRoutes(app *fiber.App, h *handlers.Handlers) {
 
 	protected := api.Group("", h.UserIndentity)
 	{
+		protected.Post("/auth/password-change", h.ChangePassword)
 		setupUserRoutes(protected, h)
 		setupSearchRoutes(protected, h)
 		setupFolderRoutes(protected, h)
@@ -32,11 +33,15 @@ func InitRoutes(app *fiber.App, h *handlers.Handlers) {
 
 func setupAuthRoutes(api fiber.Router, h *handlers.Handlers) {
 	auth := api.Group("/auth")
+	auth.Get("/csrf", h.GetCSRFToken)
 	auth.Post("/login", h.Login)
 	auth.Post("/register", h.Register)
 	auth.Post("refresh", h.Refresh)
 	auth.Post("/resend-code", h.ResendCode)
 	auth.Post("/verify", h.VerifyEmail)
+	auth.Post("/password-reset/request", h.RequestPasswordReset)
+	auth.Post("/password-reset/verify", h.VerifyPasswordReset)
+	auth.Post("/password-reset/confirm", h.ResetPassword)
 }
 
 func setupUserRoutes(api fiber.Router, h *handlers.Handlers) {

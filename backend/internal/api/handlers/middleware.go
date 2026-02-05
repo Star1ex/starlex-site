@@ -74,14 +74,40 @@ func (h *Handlers) UserIndentity(c *fiber.Ctx) error {
 		})
 	}
 
+	tokenVersionClaim, ok := claims["token_version"].(float64)
+	if !ok {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "invalid token version",
+		})
+	}
+
 	if exp, ok := claims["exp"].(float64); ok && int64(exp) < time.Now().Unix() {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "token expired",
 		})
 	}
 
+	userIDStr := ""
+	switch v := userID.(type) {
+	case string:
+		userIDStr = v
+	case float64:
+		userIDStr = fmt.Sprintf("%.0f", v)
+	default:
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "invalid user_id in token",
+		})
+	}
+
+	currentVersion, err := h.userService.GetTokenVersion(c.Context(), userIDStr)
+	if err != nil || int(tokenVersionClaim) != currentVersion {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "token invalidated",
+		})
+	}
+
 	// Saved email in local storage
-	c.Locals("user_id", userID)
+	c.Locals("user_id", userIDStr)
 
 	// Next proccess
 	return c.Next()

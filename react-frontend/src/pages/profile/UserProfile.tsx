@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { userService } from '@/services/api/index.js';
 
 type UserProfile = {
@@ -10,6 +11,7 @@ type UserProfile = {
 };
 
 const ProfilePage: React.FC = () => {
+  const navigate = useNavigate();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [editable, setEditable] = useState(false);
   const [form, setForm] = useState<UserProfile | null>(null);
@@ -126,12 +128,20 @@ const ProfilePage: React.FC = () => {
                 <p className="text-sm text-gray-600 dark:text-dark-text-muted mt-1">Manage your account details</p>
               </div>
               {!editable && (
-                <button
-                  onClick={() => setEditable(true)}
-                  className="px-5 py-2 rounded-full bg-black dark:bg-white text-white dark:text-black text-xs tracking-wide hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors duration-200 w-full sm:w-auto"
-                >
-                  Edit Profile
-                </button>
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                  <button
+                    onClick={() => navigate('/settings?tab=password')}
+                    className="px-5 py-2 rounded-full border border-black dark:border-white text-black dark:text-white text-xs tracking-wide bg-transparent hover:bg-gray-100 dark:hover:bg-dark-border transition-colors duration-200 w-full sm:w-auto"
+                  >
+                    Change Password
+                  </button>
+                  <button
+                    onClick={() => setEditable(true)}
+                    className="px-5 py-2 rounded-full bg-black dark:bg-white text-white dark:text-black text-xs tracking-wide hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors duration-200 w-full sm:w-auto"
+                  >
+                    Edit Profile
+                  </button>
+                </div>
               )}
             </div>
           </div>

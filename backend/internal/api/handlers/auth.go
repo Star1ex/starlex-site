@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
@@ -71,10 +72,11 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 
 	// Generate access token - short-lived (1 hour)
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"email":   loginInput.Email,
-		"user_id": user.ID,
-		"type":    "access",
-		"exp":     time.Now().Add(1 * time.Hour).Unix(),
+		"email":         loginInput.Email,
+		"user_id":       user.ID,
+		"type":          "access",
+		"token_version": user.TokenVersion,
+		"exp":           time.Now().Add(1 * time.Hour).Unix(),
 	})
 
 	accessTokenStr, err := accessToken.SignedString([]byte(jwtSecret))
@@ -84,10 +86,11 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 
 	// Generate refresh token - long-lived (7 days)
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"email":   loginInput.Email,
-		"user_id": user.ID,
-		"type":    "refresh",
-		"exp":     time.Now().Add(7 * 24 * time.Hour).Unix(),
+		"email":         loginInput.Email,
+		"user_id":       user.ID,
+		"type":          "refresh",
+		"token_version": user.TokenVersion,
+		"exp":           time.Now().Add(7 * 24 * time.Hour).Unix(),
 	})
 
 	refreshTokenStr, err := refreshToken.SignedString([]byte(jwtSecret))
@@ -187,12 +190,27 @@ func (h *Handlers) Refresh(ctx *fiber.Ctx) error {
 
 	email, _ := claims["email"].(string)
 
+	tokenVersionClaim, ok := claims["token_version"].(float64)
+	if !ok {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "invalid token version",
+		})
+	}
+
+	currentVersion, err := h.userService.GetTokenVersion(ctx.Context(), fmt.Sprintf("%v", userID))
+	if err != nil || int(tokenVersionClaim) != currentVersion {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "refresh token invalidated",
+		})
+	}
+
 	// Generate new access token
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"email":   email,
-		"user_id": userID,
-		"type":    "access",
-		"exp":     time.Now().Add(1 * time.Hour).Unix(),
+		"email":         email,
+		"user_id":       userID,
+		"type":          "access",
+		"token_version": tokenVersionClaim,
+		"exp":           time.Now().Add(1 * time.Hour).Unix(),
 	})
 
 	accessTokenStr, err := accessToken.SignedString([]byte(jwtSecret))
