@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
-import { authService } from '@/services/api/index.js';
+import { authService, userService } from '@/services/api/index.js';
 import { useAuth } from '@/contexts/AuthContext.js';
 import { PasswordStrengthMeter } from '@/shared/ui/PasswordStrengthMeter.js';
 
@@ -22,12 +22,26 @@ export const ChangePassword: React.FC<ChangePasswordProps> = ({ onSubmit }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [requiresCurrent, setRequiresCurrent] = useState(true);
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const profile = await userService.getProfile();
+        const providers = Array.isArray(profile.auth_providers) ? profile.auth_providers : [];
+        setRequiresCurrent(providers.includes('local'));
+      } catch (err) {
+        setRequiresCurrent(true);
+      }
+    };
+    loadProfile();
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     // Validation
-    if (!currentPassword || !newPassword || !confirmPassword) {
+    if ((!currentPassword && requiresCurrent) || !newPassword || !confirmPassword) {
       setMessage({ type: 'error', text: 'All fields are required' });
       return;
     }
@@ -47,7 +61,7 @@ export const ChangePassword: React.FC<ChangePasswordProps> = ({ onSubmit }) => {
       return;
     }
 
-    if (currentPassword === newPassword) {
+    if (requiresCurrent && currentPassword === newPassword) {
       setMessage({ type: 'error', text: 'New password must be different from current password' });
       return;
     }
@@ -116,15 +130,15 @@ export const ChangePassword: React.FC<ChangePasswordProps> = ({ onSubmit }) => {
     <div className="space-y-8 text-center max-w-3xl mx-auto">
       <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text mb-2">
-          Change Password
+          {requiresCurrent ? 'Change Password' : 'Set Password'}
         </h3>
         <p className="text-sm text-gray-600 dark:text-dark-text-muted">
-          Update your password to keep your account secure
+          {requiresCurrent ? 'Update your password to keep your account secure' : 'Create a password for email sign-in'}
         </p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4 text-left max-w-2xl mx-auto">
-        {passwordField(
+        {requiresCurrent && passwordField(
           'Current Password',
           currentPassword,
           setCurrentPassword,
@@ -176,7 +190,7 @@ export const ChangePassword: React.FC<ChangePasswordProps> = ({ onSubmit }) => {
               Updating...
             </>
           ) : (
-            'Update Password'
+            requiresCurrent ? 'Update Password' : 'Set Password'
           )}
         </button>
       </form>

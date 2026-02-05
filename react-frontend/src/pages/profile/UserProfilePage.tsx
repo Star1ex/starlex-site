@@ -12,6 +12,7 @@ interface PublicUserProfile {
   firstName?: string;
   lastName?: string;
   photo_url?: string | null;
+  avatar_url?: string | null;
 }
 
 export const UserProfilePage: React.FC = () => {
@@ -48,6 +49,7 @@ export const UserProfilePage: React.FC = () => {
             lastName: userFromState.lastName || '',
             email: userFromState.email || '',
             photo_url: userFromState.photo_url || null,
+            avatar_url: userFromState.avatar_url || null,
             role: userFromState.role,
           };
           setUser(normalizedUser);
@@ -65,6 +67,7 @@ export const UserProfilePage: React.FC = () => {
             lastName: userData.lastName || '',
             email: userData.email || '',
             photo_url: userData.photo_url || null,
+            avatar_url: userData.avatar_url || null,
             role: userData.role,
           };
           setUser(normalizedUser);
@@ -79,6 +82,7 @@ export const UserProfilePage: React.FC = () => {
               lastName: userData.lastName || '',
               email: userData.email || '',
               photo_url: userData.photo_url || null,
+              avatar_url: userData.avatar_url || null,
               role: userData.role,
             };
             setUser(normalizedUser);
@@ -95,6 +99,7 @@ export const UserProfilePage: React.FC = () => {
                     lastName: userData.lastName || '',
                     email: userData.email || '',
                     photo_url: userData.photo_url || null,
+                    avatar_url: userData.avatar_url || null,
                     role: userData.role,
                   };
                   setUser(normalizedUser);
