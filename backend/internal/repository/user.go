@@ -441,18 +441,24 @@ func normalizeAuthProviders(u *entity.User) []string {
 	if u == nil {
 		return []string{}
 	}
-	providers := []string{}
+	providers := map[string]bool{}
+	for _, p := range u.AuthProviders {
+		if p != "" {
+			providers[p] = true
+		}
+	}
 	if u.Password != "" {
-		providers = append(providers, "local")
+		providers["local"] = true
 	}
 	if u.GoogleID != nil && *u.GoogleID != "" {
-		providers = append(providers, "google")
+		providers["google"] = true
 	}
 	if u.GithubID != nil && *u.GithubID != "" {
-		providers = append(providers, "github")
+		providers["github"] = true
 	}
-	if len(u.AuthProviders) > 0 {
-		return u.AuthProviders
+	result := make([]string, 0, len(providers))
+	for p := range providers {
+		result = append(result, p)
 	}
-	return providers
+	return result
 }

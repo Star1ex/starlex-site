@@ -441,17 +441,23 @@ func (h *Handlers) findByProvider(ctx context.Context, provider, providerID stri
 
 func mergeAuthProviders(userEntity *entity.User, provider string) []string {
 	providers := map[string]bool{}
-	if userEntity.Password != "" {
-		providers[user.ProviderLocal] = true
-	}
 	for _, p := range userEntity.AuthProviders {
 		providers[p] = true
 	}
+	if userEntity.Password != "" {
+		providers[user.ProviderLocal] = true
+	} else {
+		delete(providers, user.ProviderLocal)
+	}
 	if userEntity.GoogleID != nil && *userEntity.GoogleID != "" {
 		providers[user.ProviderGoogle] = true
+	} else {
+		delete(providers, user.ProviderGoogle)
 	}
 	if userEntity.GithubID != nil && *userEntity.GithubID != "" {
 		providers[user.ProviderGithub] = true
+	} else {
+		delete(providers, user.ProviderGithub)
 	}
 	if provider != "" {
 		providers[provider] = true

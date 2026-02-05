@@ -88,7 +88,12 @@ export const SignInPage = () => {
       const status = response?.status;
 
       if (status === 400 || status === 401) {
-        setErrorMessage(err?.response?.data?.error || 'Invalid email or password');
+        const data = err?.response?.data;
+        if (data?.auth_providers) {
+          setErrorMessage(data?.message || 'This email is linked to an OAuth provider. Please continue with Google or GitHub.');
+        } else {
+          setErrorMessage(data?.error || 'Invalid email or password');
+        }
       } else if (status === 403) {
         setErrorMessage(err?.response?.data?.message || 'Please verify your email first');
         if (err?.response?.data?.user_id) {

@@ -55,14 +55,7 @@ func ToTeamsResponse(teams []*entity.Team) []TeamResponse {
 func ToUsersResponse(users []*entity.User) []UserResponse {
 	response := make([]UserResponse, len(users))
 	for i, user := range users {
-		response[i] = UserResponse{
-			ID:        user.ID,
-			Email:     user.Email,
-			FirstName: user.FirstName,
-			LastName:  user.LastName,
-			Role:      user.Role,
-			Photo_URL: user.Photo_URL,
-		}
+		response[i] = *ToUserResponse(user)
 	}
 	return response
 }

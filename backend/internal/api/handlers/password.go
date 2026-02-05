@@ -118,7 +118,14 @@ func (h *Handlers) ChangePassword(ctx *fiber.Ctx) error {
 		})
 	}
 
-	accessTokenStr, refreshTokenStr, err := h.issueTokens(userEntity)
+	updatedUser, err := h.userService.Get(ctx.Context(), userID)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to load user",
+		})
+	}
+
+	accessTokenStr, refreshTokenStr, err := h.issueTokens(updatedUser)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to create session",
