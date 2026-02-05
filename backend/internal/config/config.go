@@ -103,9 +103,9 @@ func LoadConfig() *Config {
 			GoogleClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
 			GoogleClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
 			GoogleCallbackURL:  os.Getenv("GOOGLE_CALLBACK_URL"),
-			GithubClientID:     os.Getenv("GITHUB_CLIENT_ID"),
-			GithubClientSecret: os.Getenv("GITHUB_CLIENT_SECRET"),
-			GithubCallbackURL:  os.Getenv("GITHUB_CALLBACK_URL"),
+			GithubClientID:     os.Getenv("CLIENT_ID_GITHUB"),
+			GithubClientSecret: os.Getenv("CLIENT_SECRET_GITHUB"),
+			GithubCallbackURL:  os.Getenv("CALLBACK_URL_GITHUB"),
 		},
 	}
 }
