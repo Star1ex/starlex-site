@@ -81,13 +81,15 @@ export const authService = {
     return response.data;
   },
 
-  async linkGoogle(): Promise<{ auth_url: string }> {
-    const response = await httpClient.post<{ auth_url: string }>('/api/auth/link-google');
+  async linkGoogle(redirectTo?: string): Promise<{ auth_url: string }> {
+    const url = redirectTo ? `/api/auth/link-google?redirect=${encodeURIComponent(redirectTo)}` : '/api/auth/link-google';
+    const response = await httpClient.post<{ auth_url: string }>(url);
     return response.data;
   },
 
-  async linkGithub(): Promise<{ auth_url: string }> {
-    const response = await httpClient.post<{ auth_url: string }>('/api/auth/link-github');
+  async linkGithub(redirectTo?: string): Promise<{ auth_url: string }> {
+    const url = redirectTo ? `/api/auth/link-github?redirect=${encodeURIComponent(redirectTo)}` : '/api/auth/link-github';
+    const response = await httpClient.post<{ auth_url: string }>(url);
     return response.data;
   },
 

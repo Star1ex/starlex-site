@@ -40,12 +40,12 @@ export const ConnectedAccounts: React.FC = () => {
     setActionLoading(provider);
     try {
       if (provider === 'google') {
-        const { auth_url } = await authService.linkGoogle();
+        const { auth_url } = await authService.linkGoogle('/settings?tab=accounts');
         window.location.href = auth_url;
         return;
       }
       if (provider === 'github') {
-        const { auth_url } = await authService.linkGithub();
+        const { auth_url } = await authService.linkGithub('/settings?tab=accounts');
         window.location.href = auth_url;
         return;
       }
@@ -176,4 +176,3 @@ const AccountRow: React.FC<AccountRowProps> = ({
     </div>
   );
 };
-
