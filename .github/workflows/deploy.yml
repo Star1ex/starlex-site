@@ -38,6 +38,7 @@ jobs:
           echo "SMTP_PASSWORD=${{ secrets.SMTP_PASSWORD }}" >> backend/.env
           echo "SMTP_FROM_EMAIL=${{ secrets.SMTP_FROM_EMAIL }}" >> backend/.env
           echo "SMTP_FROM_NAME=${{ secrets.SMTP_FROM_NAME }}" >> backend/.env
+          echo "FRONTEND_BASE_URL=${{ secrets.FRONTEND_BASE_URL }}" >> backend/.env
 
       - name: Create .env File
         run: |
