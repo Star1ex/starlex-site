@@ -5,6 +5,7 @@ import { authService } from '@/services/api/index.js';
 import { setAuthUser } from '@/shared/lib/authManager.js';
 import { useAuth } from '@/contexts/AuthContext.js';
 import { useTheme } from '@/shared/contexts/ThemeContext.js';
+import { FaGoogle, FaGithub } from 'react-icons/fa';
 
 export const SignInPage = () => {
   const navigate = useNavigate();
@@ -225,7 +226,10 @@ export const SignInPage = () => {
                 disabled={isSubmitting || oauthLoading !== null}
                 className="w-full py-3 border border-black dark:border-dark-border text-black dark:text-dark-text font-semibold rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-dark-border transition-colors duration-200 disabled:opacity-60"
               >
-                {oauthLoading === 'google' ? 'Connecting to Google...' : 'Continue with Google'}
+                <span className="inline-flex items-center justify-center gap-2">
+                  <FaGoogle className="w-4 h-4 text-gray-900 dark:text-white" />
+                  {oauthLoading === 'google' ? 'Connecting to Google...' : 'Continue with Google'}
+                </span>
               </button>
               <button
                 type="button"
@@ -233,7 +237,10 @@ export const SignInPage = () => {
                 disabled={isSubmitting || oauthLoading !== null}
                 className="w-full py-3 border border-black dark:border-dark-border text-black dark:text-dark-text font-semibold rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-dark-border transition-colors duration-200 disabled:opacity-60"
               >
-                {oauthLoading === 'github' ? 'Connecting to GitHub...' : 'Continue with GitHub'}
+                <span className="inline-flex items-center justify-center gap-2">
+                  <FaGithub className="w-4 h-4 text-gray-900 dark:text-white" />
+                  {oauthLoading === 'github' ? 'Connecting to GitHub...' : 'Continue with GitHub'}
+                </span>
               </button>
             </div>
 

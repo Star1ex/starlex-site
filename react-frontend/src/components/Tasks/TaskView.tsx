@@ -10,6 +10,7 @@ import { useAuth } from '@/contexts/AuthContext.js';
 import type { TaskDTO, CreateTaskRequest } from '@/types/dto.js';
 import { useTasks } from '@/hooks/useTasks.js';
 import { showToast } from '@/shared/lib/toast.js';
+import BreadcrumbBack from '@/shared/ui/BreadcrumbBack.js';
 
 const RECENT_TASKS_KEY = 'recentTasks';
 
@@ -284,15 +285,21 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
       {/* Main Content */}
       <div className="w-full px-4 sm:px-6 md:px-16 pt-12 sm:pt-14 md:pt-16 pb-16">
         <div className="max-w-5xl mx-auto">
-        {/* Title Input - Notion Style */}
-        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Untitled" className="w-full text-5xl font-bold text-gray-900 dark:text-dark-text placeholder-gray-300 dark:placeholder-dark-text-muted bg-transparent border-none outline-none mb-6" style={{ fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.02em' }} />
+          <div className="mb-4">
+            <BreadcrumbBack
+              label={sessionStorage.getItem('prevRouteLabel') || 'Dashboard'}
+              to={sessionStorage.getItem('prevRoutePath') || '/dashboard'}
+            />
+          </div>
+          {/* Title Input - Notion Style */}
+          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Untitled" className="w-full text-5xl font-bold text-gray-900 dark:text-dark-text placeholder-gray-300 dark:placeholder-dark-text-muted bg-transparent border-none outline-none mb-6" style={{ fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.02em' }} />
 
-        {/* Description - WYSIWYG Markdown */}
-        <div className="mt-6">
-          <EditorContent editor={editor} />
-        </div>
+          {/* Description - WYSIWYG Markdown */}
+          <div className="mt-6">
+            <EditorContent editor={editor} />
+          </div>
 
-        {/* Create Button (only for new tasks) */}
+          {/* Create Button (only for new tasks) */}
           {isNew && (
             <div className="mt-10">
               <button

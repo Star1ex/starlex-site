@@ -14,12 +14,12 @@ export const Support: React.FC = () => {
       <div className="grid sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
         <a
           href="mailto:teamtracktech@gmail.com"
-          className="group flex items-center justify-center gap-3 rounded-xl p-4 hover:bg-gray-50 dark:hover:bg-dark-border/40 transition-colors text-left"
+          className="group flex items-center gap-4 rounded-xl p-4 w-full hover:bg-gray-50 dark:hover:bg-dark-border/40 transition-colors text-left"
         >
           <span className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-dark-border flex items-center justify-center text-gray-700 dark:text-dark-text">
             <Mail className="w-5 h-5" />
           </span>
-          <div>
+          <div className="min-w-0">
             <div className="text-sm font-semibold text-gray-900 dark:text-dark-text">Email Support</div>
             <div className="text-xs text-gray-600 dark:text-dark-text-muted">teamtracktech@gmail.com</div>
           </div>
@@ -29,12 +29,12 @@ export const Support: React.FC = () => {
           href="https://t.me/critiq1"
           target="_blank"
           rel="noopener noreferrer"
-          className="group flex items-center justify-center gap-3 rounded-xl p-4 hover:bg-gray-50 dark:hover:bg-dark-border/40 transition-colors text-left"
+          className="group flex items-center gap-4 rounded-xl p-4 w-full hover:bg-gray-50 dark:hover:bg-dark-border/40 transition-colors text-left"
         >
           <span className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-dark-border flex items-center justify-center text-gray-700 dark:text-dark-text">
             <MessageCircle className="w-5 h-5" />
           </span>
-          <div>
+          <div className="min-w-0">
             <div className="text-sm font-semibold text-gray-900 dark:text-dark-text">Telegram</div>
             <div className="text-xs text-gray-600 dark:text-dark-text-muted">@critiq1 (bug reports)</div>
           </div>

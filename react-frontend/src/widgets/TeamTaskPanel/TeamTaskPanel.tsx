@@ -6,6 +6,7 @@ import Link from '@tiptap/extension-link';
 import { useDebounce } from '@/shared/hooks/useDebounce.js';
 import { taskService } from '@/services/api/index.js';
 import type { Task } from '@/entities/types.js';
+import BreadcrumbBack from '@/shared/ui/BreadcrumbBack.js';
 
 type TeamTaskPanelProps = {
   task: Task | null;
@@ -21,7 +22,7 @@ export const TeamTaskPanel: React.FC<TeamTaskPanelProps> = ({ task, isOpen, team
   const getMaxWidth = () => Math.max(minWidth, Math.floor(window.innerWidth * 0.5));
   const [panelWidth, setPanelWidth] = useState(() => {
     if (typeof window === 'undefined') return minWidth;
-    return getMaxWidth();
+    return window.innerWidth < 768 ? window.innerWidth : getMaxWidth();
   });
   const [isDragging, setIsDragging] = useState(false);
   const dragStartX = useRef(0);
@@ -98,6 +99,10 @@ export const TeamTaskPanel: React.FC<TeamTaskPanelProps> = ({ task, isOpen, team
 
   useEffect(() => {
     const updateBounds = () => {
+      if (window.innerWidth < 768) {
+        setPanelWidth(window.innerWidth);
+        return;
+      }
       const maxWidth = getMaxWidth();
       setPanelWidth((prev) => Math.min(maxWidth, Math.max(minWidth, prev)));
     };
@@ -110,6 +115,7 @@ export const TeamTaskPanel: React.FC<TeamTaskPanelProps> = ({ task, isOpen, team
   useEffect(() => {
     const onMove = (e: PointerEvent) => {
       if (!isDragging) return;
+      if (window.innerWidth < 768) return;
       const maxWidth = getMaxWidth();
       const delta = dragStartX.current - e.clientX;
       const nextWidth = Math.max(minWidth, Math.min(maxWidth, dragStartWidth.current + delta));
@@ -178,9 +184,10 @@ export const TeamTaskPanel: React.FC<TeamTaskPanelProps> = ({ task, isOpen, team
       style={{ width: panelWidth }}
       aria-label="Task details"
     >
-      <div className="h-full bg-white dark:bg-dark-surface rounded-2xl shadow-[0_20px_60px_rgba(0,0,0,0.18)] border border-gray-100 dark:border-dark-border flex flex-col">
+      <div className="h-full bg-white dark:bg-dark-surface md:rounded-2xl rounded-none shadow-[0_20px_60px_rgba(0,0,0,0.18)] border border-gray-100 dark:border-dark-border flex flex-col">
         <div className="flex items-center justify-between px-4 pt-3 pb-2">
-          <div className="w-full flex items-center justify-center">
+          <BreadcrumbBack label="Tasks" onClick={onClose} className="text-xs sm:text-sm" />
+          <div className="flex-1 flex items-center justify-center">
             <div className="w-10 h-1.5 rounded-full bg-gray-200 dark:bg-dark-border" />
           </div>
           <button
@@ -212,7 +219,7 @@ export const TeamTaskPanel: React.FC<TeamTaskPanelProps> = ({ task, isOpen, team
       </div>
 
       <div
-        className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize"
+        className="absolute left-0 top-0 bottom-0 w-2 cursor-ew-resize hidden md:block"
         onPointerDown={handleDragStart}
         aria-hidden="true"
       />

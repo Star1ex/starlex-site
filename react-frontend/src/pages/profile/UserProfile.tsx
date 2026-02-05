@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { userService } from '@/services/api/index.js';
+import BreadcrumbBack from '@/shared/ui/BreadcrumbBack.js';
 
 type UserProfile = {
   email: string;
@@ -122,6 +123,12 @@ const ProfilePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-white dark:bg-dark-bg transition-colors duration-300 px-4 sm:px-8 py-10">
       <div className="max-w-5xl mx-auto">
+        <div className="mb-4">
+          <BreadcrumbBack
+            label={sessionStorage.getItem('prevRouteLabel') || 'Dashboard'}
+            to={sessionStorage.getItem('prevRoutePath') || '/dashboard'}
+          />
+        </div>
         <div className="rounded-2xl overflow-hidden border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-surface shadow-sm">
           <div className="px-8 py-6 border-b border-gray-100 dark:border-dark-border bg-gray-50 dark:bg-dark-bg/40">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">

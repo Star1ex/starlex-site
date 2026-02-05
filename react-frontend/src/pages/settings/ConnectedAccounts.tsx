@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService, userService } from '@/services/api/index.js';
+import { FaGoogle, FaGithub } from 'react-icons/fa';
 
 type Provider = 'local' | 'google' | 'github';
 
@@ -105,6 +106,7 @@ export const ConnectedAccounts: React.FC = () => {
 
         <AccountRow
           title="Google"
+          icon={<FaGoogle className="w-4 h-4 text-gray-900 dark:text-white" />}
           description="Use your Google account to sign in"
           status={hasProvider('google') ? 'Connected' : 'Not connected'}
           actionLabel={hasProvider('google') ? 'Disconnect' : 'Connect'}
@@ -120,6 +122,7 @@ export const ConnectedAccounts: React.FC = () => {
 
         <AccountRow
           title="GitHub"
+          icon={<FaGithub className="w-4 h-4 text-gray-900 dark:text-white" />}
           description="Use your GitHub account to sign in"
           status={hasProvider('github') ? 'Connected' : 'Not connected'}
           actionLabel={hasProvider('github') ? 'Disconnect' : 'Connect'}
@@ -139,6 +142,7 @@ export const ConnectedAccounts: React.FC = () => {
 
 type AccountRowProps = {
   title: string;
+  icon?: React.ReactNode;
   description: string;
   status: string;
   actionLabel: string;
@@ -150,6 +154,7 @@ type AccountRowProps = {
 
 const AccountRow: React.FC<AccountRowProps> = ({
   title,
+  icon,
   description,
   status,
   actionLabel,
@@ -161,7 +166,10 @@ const AccountRow: React.FC<AccountRowProps> = ({
   return (
     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 rounded-xl border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-surface">
       <div>
-        <p className="text-sm font-semibold text-gray-900 dark:text-dark-text">{title}</p>
+        <div className="flex items-center gap-2">
+          {icon && <span className="inline-flex items-center justify-center">{icon}</span>}
+          <p className="text-sm font-semibold text-gray-900 dark:text-dark-text">{title}</p>
+        </div>
         <p className="text-xs text-gray-500 dark:text-dark-text-muted mt-1">{description}</p>
         <p className="text-[11px] uppercase tracking-widest text-gray-400 dark:text-dark-text-muted mt-2">{status}</p>
         {helper && <p className="text-[11px] text-gray-500 dark:text-dark-text-muted mt-2">{helper}</p>}

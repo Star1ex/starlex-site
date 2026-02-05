@@ -7,6 +7,7 @@ import AddUserModal from '@/widgets/AddUserModal/AddUserModal.js';
 import type { Task, User } from '@/entities/types.js';
 import { useParams, useNavigate } from 'react-router-dom';
 import { taskService, teamService } from '@/services/api/index.js';
+import BreadcrumbBack from '@/shared/ui/BreadcrumbBack.js';
 
 const TaskBoard: React.FC = () => {
   const { team_id } = useParams<{ team_id: string }>();
@@ -134,6 +135,12 @@ const TaskBoard: React.FC = () => {
   return (
     <div className="min-h-full bg-white dark:bg-dark-bg text-black dark:text-dark-text font-sans transition-colors">
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 pt-6 sm:pt-8">
+        <div className="mb-3">
+          <BreadcrumbBack
+            label={sessionStorage.getItem('prevRouteLabel') || 'Dashboard'}
+            to={sessionStorage.getItem('prevRoutePath') || '/dashboard'}
+          />
+        </div>
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-dark-text truncate">Team Tasks</h1>
@@ -218,12 +225,12 @@ const TaskBoard: React.FC = () => {
             </div>
           ) : (
             <div className="space-y-px">
-              <div className="hidden sm:flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 text-xs sm:text-sm font-medium text-gray-500 dark:text-dark-text-muted border-b border-gray-200 dark:border-dark-border mb-1 sticky top-[73px] bg-white dark:bg-dark-bg z-10">
-                <div className="flex-1 min-w-[120px] sm:min-w-[200px]">Task</div>
-                <div className="flex-shrink-0 min-w-[60px] sm:min-w-[80px] text-center">Assignee</div>
-                <div className="flex-shrink-0 min-w-[90px] sm:min-w-[100px] text-center">Status</div>
-                <div className="flex-shrink-0 min-w-[70px] sm:min-w-[80px] text-center">Priority</div>
-                <div className="flex-shrink-0 min-w-[28px] sm:min-w-[32px]"></div>
+              <div className="hidden sm:flex items-center gap-2 sm:gap-2.5 px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-gray-500 dark:text-dark-text-muted border-b border-gray-200 dark:border-dark-border mb-1 sticky top-[73px] bg-white dark:bg-dark-bg z-10">
+                <div className="flex-1 min-w-[120px] sm:min-w-[180px]">Task</div>
+                <div className="flex-shrink-0 min-w-[60px] sm:min-w-[72px] text-center">Assignee</div>
+                <div className="flex-shrink-0 min-w-[80px] sm:min-w-[90px] text-center">Status</div>
+                <div className="flex-shrink-0 min-w-[64px] sm:min-w-[72px] text-center">Priority</div>
+                <div className="flex-shrink-0 min-w-[28px] sm:min-w-[30px]"></div>
               </div>
               <div className="overflow-x-auto -mx-2 sm:mx-0 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
                 <div className="inline-block min-w-full align-middle">

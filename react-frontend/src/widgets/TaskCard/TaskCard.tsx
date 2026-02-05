@@ -92,6 +92,8 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
   const [assigneeDropdownPosition, setAssigneeDropdownPosition] = useState<{ top: number; left: number } | null>(null);
   const [statusDropdownPosition, setStatusDropdownPosition] = useState<{ top: number; left: number } | null>(null);
   const [priorityDropdownPosition, setPriorityDropdownPosition] = useState<{ top: number; left: number } | null>(null);
+  const [isMobileView, setIsMobileView] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 768 : false));
+  const [swipeOffset, setSwipeOffset] = useState(0);
   const assigneeRef = useRef<HTMLDivElement>(null);
   const statusRef = useRef<HTMLDivElement>(null);
   const priorityRef = useRef<HTMLDivElement>(null);
@@ -102,6 +104,10 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
   const assigneeCloseTimeoutRef = useRef<number | null>(null);
   const statusCloseTimeoutRef = useRef<number | null>(null);
   const priorityCloseTimeoutRef = useRef<number | null>(null);
+  const touchStartXRef = useRef(0);
+  const touchStartYRef = useRef(0);
+  const longPressTimeoutRef = useRef<number | null>(null);
+  const touchMovedRef = useRef(false);
   const contextMenuWidth = 180;
   const contextMenuHeight = 112;
   const contextMenuPadding = 8;
@@ -109,6 +115,13 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
   useEffect(() => {
     setTitleDraft(task.task || '');
   }, [task.id, task.task]);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobileView(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     if (!isRenaming) return;
@@ -397,9 +410,12 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
       target.closest('.dropdown-menu') ||
       target.closest('.editable-field') ||
       target.closest('.context-menu') ||
-      target.closest('button') ||
       target.closest('select')
     ) {
+      return;
+    }
+    if (isMobileView && swipeOffset !== 0) {
+      setSwipeOffset(0);
       return;
     }
     onClick();
@@ -472,6 +488,52 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
     }
   };
 
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!isMobileView) return;
+    const touch = e.touches[0];
+    touchStartXRef.current = touch.clientX;
+    touchStartYRef.current = touch.clientY;
+    touchMovedRef.current = false;
+    if (longPressTimeoutRef.current) {
+      window.clearTimeout(longPressTimeoutRef.current);
+    }
+    longPressTimeoutRef.current = window.setTimeout(() => {
+      if (!touchMovedRef.current) {
+        openContextMenuAt(touch.clientX, touch.clientY);
+      }
+    }, 520);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isMobileView) return;
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - touchStartXRef.current;
+    const deltaY = touch.clientY - touchStartYRef.current;
+
+    if (Math.abs(deltaY) > 10) {
+      touchMovedRef.current = true;
+      if (longPressTimeoutRef.current) window.clearTimeout(longPressTimeoutRef.current);
+    }
+
+    if (deltaX < -10 && Math.abs(deltaY) < 30) {
+      touchMovedRef.current = true;
+      if (longPressTimeoutRef.current) window.clearTimeout(longPressTimeoutRef.current);
+      setSwipeOffset(Math.max(deltaX, -88));
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isMobileView) return;
+    if (longPressTimeoutRef.current) {
+      window.clearTimeout(longPressTimeoutRef.current);
+    }
+    if (swipeOffset < -60) {
+      setSwipeOffset(-88);
+    } else {
+      setSwipeOffset(0);
+    }
+  };
+
   const toggleUserAssignment = (userId: string) => {
     const newUserIds = userIds.includes(userId)
       ? userIds.filter(id => id !== userId)
@@ -487,11 +549,29 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
     <div
       onClick={handleCardClick}
       onContextMenu={handleCardContextMenu}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
       className="group relative bg-transparent dark:bg-transparent hover:bg-gray-50/50 dark:hover:bg-dark-border/30 transition-colors duration-150 cursor-pointer"
     >
-      <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 min-w-[600px] sm:min-w-0">
+      {isMobileView && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+            setSwipeOffset(0);
+          }}
+          className="absolute right-0 top-0 bottom-0 w-16 bg-red-500 text-white text-xs font-semibold flex items-center justify-center"
+        >
+          Delete
+        </button>
+      )}
+      <div
+        className="flex items-center gap-2 sm:gap-2.5 px-2 sm:px-3 py-1.5 min-w-0 md:min-w-[540px] sm:min-w-0 transition-transform duration-200"
+        style={isMobileView ? { transform: `translateX(${swipeOffset}px)` } : undefined}
+      >
         {/* Task Name */}
-        <div className="flex-1 min-w-[120px] sm:min-w-[200px] max-w-[200px] sm:max-w-none">
+        <div className="flex-1 min-w-[120px] sm:min-w-[180px] max-w-[180px] sm:max-w-none">
           {isRenaming ? (
             <input
               ref={titleInputRef}
@@ -527,7 +607,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
         </div>
 
         {/* Assignee */}
-        <div className="flex-shrink-0 min-w-[80px] sm:min-w-[100px]" ref={assigneeRef}>
+        <div className="flex-shrink-0 min-w-[72px] sm:min-w-[88px]" ref={assigneeRef}>
           <div className="relative">
             <div
               onClick={(e) => {
@@ -638,7 +718,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
         </div>
 
         {/* Status */}
-        <div className="flex-shrink-0 min-w-[90px] sm:min-w-[100px]" ref={statusRef}>
+        <div className="flex-shrink-0 min-w-[80px] sm:min-w-[90px]" ref={statusRef}>
           <div className="relative">
             <div
               onClick={(e) => {
@@ -696,7 +776,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
         </div>
 
         {/* Priority */}
-        <div className="flex-shrink-0 min-w-[70px] sm:min-w-[80px]" ref={priorityRef}>
+        <div className="flex-shrink-0 min-w-[64px] sm:min-w-[72px]" ref={priorityRef}>
           <div className="relative">
             <div
               onClick={(e) => {
@@ -754,7 +834,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
         </div>
 
         {/* Context Menu Button */}
-        <div className="flex-shrink-0 min-w-[28px] sm:min-w-[32px] relative" ref={contextMenuRef}>
+        <div className="flex-shrink-0 min-w-[28px] sm:min-w-[30px] relative" ref={contextMenuRef}>
           <button
             onClick={handleContextMenuClick}
             className="context-menu p-1 sm:p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100"

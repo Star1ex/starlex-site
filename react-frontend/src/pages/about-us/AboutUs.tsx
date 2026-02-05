@@ -133,13 +133,13 @@ export default function AboutUs({ variant = "page" }: AboutUsProps) {
               </a>
             ) : null}
           </motion.div>
-          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 w-full items-stretch">
             {teamMembers.map((member) => (
               <motion.div
                 key={member.github}
                 variants={fadeUp}
                 transition={{ duration: 0.5 }}
-                className="rounded-2xl bg-[color:var(--bg-secondary)]/80 p-6 text-left"
+                className="rounded-2xl bg-[color:var(--bg-secondary)]/80 p-6 text-left h-full w-full"
               >
                 <img
                   src={`https://github.com/${member.github}.png`}

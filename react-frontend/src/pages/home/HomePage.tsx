@@ -4,8 +4,6 @@ import { motion } from "framer-motion";
 import { isAuthenticated } from "@/shared/lib/authManager.js";
 import { useTheme } from "@/shared/contexts/ThemeContext.js";
 import iconTeamtrack from "@/assets/icon-teamtrack.png";
-import editorShotOne from "@/assets/s.png";
-import editorShotTwo from "@/assets/s.png";
 
 export const HomePage = () => {
   const navigate = useNavigate();
@@ -109,7 +107,17 @@ export const HomePage = () => {
           <header className="flex flex-col gap-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               <img src={iconTeamtrack} alt="TeamTrack" className="w-9 h-9 object-contain" />
-              <div className="text-sm tracking-[0.2em] uppercase text-[color:var(--text-secondary)]">TeamTrack</div>
+              <div className="flex items-center gap-2 text-sm tracking-[0.2em] uppercase text-[color:var(--text-secondary)]">
+                <span
+                  className={`text-xs ${
+                    theme === 'dark' || theme === 'ultra-dark' ? 'text-white' : 'text-[#0A1929]'
+                  }`}
+                  aria-hidden="true"
+                >
+                  ✦
+                </span>
+                <span>TeamTrack</span>
+              </div>
             </div>
             <div className="flex flex-col sm:flex-row sm:items-center gap-3">
               <button onClick={toggleTheme} className="tt-button text-xs uppercase tracking-[0.3em]">
@@ -218,43 +226,6 @@ export const HomePage = () => {
           <motion.section
             initial="hidden"
             whileInView="visible"
-            viewport={{ once: true, amount: 0.25 }}
-            variants={stagger}
-            className="mt-24 sm:mt-32"
-          >
-            <motion.div variants={fadeUp} className="flex flex-col gap-4 mb-10">
-              <p className="text-xs uppercase tracking-[0.4em] text-[color:var(--text-secondary)]">Editor Showcase</p>
-              <h2 className="tt-font-display text-3xl sm:text-4xl">
-                A workspace that feels light and deliberate.
-              </h2>
-              <p className="text-[color:var(--text-secondary)] max-w-2xl">
-                Drop in your own editor screenshots here. Each image fades in softly as you scroll.
-              </p>
-            </motion.div>
-
-            <div className="grid gap-8 lg:grid-cols-2">
-              {[editorShotOne, editorShotTwo].map((shot, index) => (
-                <motion.div
-                  key={index}
-                  variants={fadeUp}
-                  transition={{ duration: 0.5, delay: index * 0.08 }}
-                  className="relative"
-                >
-                  <img
-                    src={shot}
-                    alt={`TeamTrack editor preview ${index + 1}`}
-                    loading="lazy"
-                    decoding="async"
-                    className="w-full rounded-2xl shadow-[0_30px_80px_rgba(15,23,42,0.18)] dark:shadow-[0_30px_80px_rgba(0,0,0,0.45)]"
-                  />
-                </motion.div>
-              ))}
-            </div>
-          </motion.section>
-
-          <motion.section
-            initial="hidden"
-            whileInView="visible"
             viewport={{ once: true, amount: 0.3 }}
             variants={stagger}
             className="mt-24 sm:mt-32"
@@ -302,7 +273,7 @@ export const HomePage = () => {
               </div>
               <div>
                 <div className="text-xs uppercase tracking-[0.3em] text-[color:var(--text-secondary)] mb-4">Links</div>
-                <div className="space-y-3 text-sm">
+                <div className="flex flex-col items-start gap-2 text-sm">
                   <a href="https://github.com/Team-Tracks" target="_blank" rel="noopener noreferrer" className="tt-link">
                     GitHub Organization
                   </a>
