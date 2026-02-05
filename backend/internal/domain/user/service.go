@@ -32,4 +32,6 @@ type Service interface {
 	GetPhoto(ctx context.Context, userID string) (string, error)
 
 	PublishUserRegistered(user *entity.User)
+
+	GetTokenVersion(ctx context.Context, userID string) (int, error)
 }

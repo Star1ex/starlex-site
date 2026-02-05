@@ -152,3 +152,31 @@ export interface ResendCodeRequest {
 export interface AuthResponse {
   message: string;
 }
+
+export interface PasswordChangeRequest {
+  current_password: string;
+  new_password: string;
+}
+
+export interface PasswordChangeResponse {
+  message: string;
+  access_token: string;
+  token?: string;
+}
+
+export interface PasswordResetRequest {
+  email: string;
+}
+
+export interface PasswordResetVerifyRequest {
+  email?: string;
+  token?: string;
+  code?: string;
+}
+
+export interface PasswordResetConfirmRequest {
+  email?: string;
+  token?: string;
+  code?: string;
+  new_password: string;
+}

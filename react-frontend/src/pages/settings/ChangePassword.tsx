@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
+import { authService } from '@/services/api/index.js';
+import { useAuth } from '@/contexts/AuthContext.js';
+import { PasswordStrengthMeter } from '@/shared/ui/PasswordStrengthMeter.js';
 
 interface ChangePasswordProps {
   onSubmit?: (data: {
@@ -10,6 +13,7 @@ interface ChangePasswordProps {
 }
 
 export const ChangePassword: React.FC<ChangePasswordProps> = ({ onSubmit }) => {
+  const { login } = useAuth();
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -38,6 +42,11 @@ export const ChangePassword: React.FC<ChangePasswordProps> = ({ onSubmit }) => {
       return;
     }
 
+    if (!/[A-Z]/.test(newPassword) || !/[a-z]/.test(newPassword) || !/[0-9]/.test(newPassword) || !/[^A-Za-z0-9]/.test(newPassword)) {
+      setMessage({ type: 'error', text: 'Password must include uppercase, lowercase, number, and symbol' });
+      return;
+    }
+
     if (currentPassword === newPassword) {
       setMessage({ type: 'error', text: 'New password must be different from current password' });
       return;
@@ -45,13 +54,25 @@ export const ChangePassword: React.FC<ChangePasswordProps> = ({ onSubmit }) => {
 
     setLoading(true);
     try {
-      // TODO: Implement API call to change password
-      // For now, this is just a prototype
+      const result = await authService.changePassword({
+        current_password: currentPassword,
+        new_password: newPassword,
+      });
       onSubmit?.({ currentPassword, newPassword, confirmPassword });
-      setMessage({ type: 'success', text: 'Password change feature coming soon!' });
+      if (result?.access_token) {
+        await login(result.access_token);
+      }
+      setMessage({ type: 'success', text: result?.message || 'Password updated successfully' });
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
+    } catch (err: any) {
+      const status = err?.response?.status;
+      if (status === 400) {
+        setMessage({ type: 'error', text: err?.response?.data?.error || 'Invalid password details' });
+      } else {
+        setMessage({ type: 'error', text: err?.response?.data?.error || 'Failed to update password' });
+      }
     } finally {
       setLoading(false);
     }
@@ -121,6 +142,8 @@ export const ChangePassword: React.FC<ChangePasswordProps> = ({ onSubmit }) => {
           'Enter your new password (min 8 characters)'
         )}
 
+        <PasswordStrengthMeter password={newPassword} />
+
         {passwordField(
           'Confirm New Password',
           confirmPassword,
@@ -157,12 +180,6 @@ export const ChangePassword: React.FC<ChangePasswordProps> = ({ onSubmit }) => {
           )}
         </button>
       </form>
-
-      <div className="text-left max-w-2xl mx-auto">
-        <p className="text-sm text-gray-600 dark:text-dark-text-muted">
-          <strong>Note:</strong> This is a prototype for the password change feature. Implementation coming soon!
-        </p>
-      </div>
     </div>
   );
 };

@@ -46,6 +46,92 @@ func (s *EmailService) SendVerificationCode(to, firstName, code string) error {
 	return s.sendEmail(to, subject, body)
 }
 
+func (s *EmailService) SendPasswordResetEmail(to, firstName, code, resetLink string, expiresMinutes int) error {
+	subject := "Reset Your Password - TeamTrack"
+	linkSection := ""
+	if resetLink != "" {
+		linkSection = fmt.Sprintf(`
+			<p style="margin: 20px 0;">Or use this secure link:</p>
+			<p style="text-align: center;">
+				<a href="%s" style="display: inline-block; padding: 12px 20px; background: #000; color: #fff; text-decoration: none; border-radius: 6px;">
+					Reset Password
+				</a>
+			</p>
+		`, resetLink)
+	}
+	body := fmt.Sprintf(`
+		<html>
+		<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+			<div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+				<h2 style="color: #000;">Hi %s,</h2>
+				<p>We received a request to reset your Team Track password.</p>
+				<div style="background-color: #f4f4f4; padding: 20px; border-radius: 5px; text-align: center; margin: 30px 0;">
+					<p style="font-size: 14px; color: #666; margin-bottom: 10px;">Your reset code is:</p>
+					<h1 style="font-size: 36px; letter-spacing: 8px; color: #000; margin: 0;">%s</h1>
+				</div>
+				%s
+				<p style="color: #666; font-size: 14px;">This code expires in %d minutes and can only be used once.</p>
+				<p style="color: #666; font-size: 14px;">If you didn’t request this, you can safely ignore this email.</p>
+				<ul style="color: #666; font-size: 13px;">
+					<li>Never share your reset code with anyone.</li>
+					<li>Team Track support will never ask for your password.</li>
+				</ul>
+				<hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+				<p style="color: #999; font-size: 12px;">Team Track - Securely manage your projects</p>
+			</div>
+		</body>
+		</html>
+	`, firstName, code, linkSection, expiresMinutes)
+
+	return s.sendEmail(to, subject, body)
+}
+
+func (s *EmailService) SendPasswordResetConfirmation(to, firstName string) error {
+	subject := "Your Password Was Reset - TeamTrack"
+	body := fmt.Sprintf(`
+		<html>
+		<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+			<div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+				<h2 style="color: #000;">Hi %s,</h2>
+				<p>Your Team Track password was successfully reset.</p>
+				<p>If you did not perform this action, please reset your password immediately and contact support.</p>
+				<ul style="color: #666; font-size: 13px;">
+					<li>Review recent account activity.</li>
+					<li>Enable multi-factor authentication if available.</li>
+				</ul>
+				<hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+				<p style="color: #999; font-size: 12px;">Team Track - Securely manage your projects</p>
+			</div>
+		</body>
+		</html>
+	`, firstName)
+
+	return s.sendEmail(to, subject, body)
+}
+
+func (s *EmailService) SendPasswordChangedConfirmation(to, firstName string) error {
+	subject := "Your Password Was Changed - TeamTrack"
+	body := fmt.Sprintf(`
+		<html>
+		<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
+			<div style="max-width: 600px; margin: 0 auto; padding: 20px;">
+				<h2 style="color: #000;">Hi %s,</h2>
+				<p>Your Team Track password was changed successfully.</p>
+				<p>If you did not perform this action, please reset your password immediately and contact support.</p>
+				<ul style="color: #666; font-size: 13px;">
+					<li>Use a strong, unique password.</li>
+					<li>Enable multi-factor authentication if available.</li>
+				</ul>
+				<hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
+				<p style="color: #999; font-size: 12px;">Team Track - Securely manage your projects</p>
+			</div>
+		</body>
+		</html>
+	`, firstName)
+
+	return s.sendEmail(to, subject, body)
+}
+
 func (s *EmailService) sendEmail(to, subject, body string) error {
 	from := s.config.FromEmail
 	password := s.config.SMTPPassword

@@ -113,6 +113,10 @@ func (s *UserService) Update(ctx context.Context, u *entity.User, id string) err
 	return s.repo.Update(ctx, u, id)
 }
 
+func (s *UserService) GetTokenVersion(ctx context.Context, userID string) (int, error) {
+	return s.repo.GetTokenVersion(ctx, userID)
+}
+
 func (s *UserService) PublishUserRegistered(user *entity.User) {
 	s.bus.Publish(events.UserRegisteredEvent{
 		UserID:     user.ID,

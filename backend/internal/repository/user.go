@@ -9,15 +9,16 @@ import (
 )
 
 type UserModel struct {
-	ID         string      `gorm:"primaryKey"`
-	Email      string      `gorm:"unique;not null"`
-	Password   string      `gorm:"not null"`
-	FirstName  string      `gorm:"not null;size:50"`
-	LastName   string      `gorm:"not null;size:50"`
-	PhotoURL   string      `gorm:"default:null"`
-	Role       string      `gorm:"default:'member'"`
-	IsVerified bool        `gorm:"default:false"`
-	Teams      []TeamModel `gorm:"many2many:users_teams"`
+	ID           string      `gorm:"primaryKey"`
+	Email        string      `gorm:"unique;not null"`
+	Password     string      `gorm:"not null"`
+	FirstName    string      `gorm:"not null;size:50"`
+	LastName     string      `gorm:"not null;size:50"`
+	PhotoURL     string      `gorm:"default:null"`
+	Role         string      `gorm:"default:'member'"`
+	IsVerified   bool        `gorm:"default:false"`
+	TokenVersion int         `gorm:"default:1"`
+	Teams        []TeamModel `gorm:"many2many:users_teams"`
 }
 
 type UserRepository struct {
@@ -27,12 +28,13 @@ type UserRepository struct {
 // factory from domain structure
 func fromDomain(u *entity.User) *UserModel {
 	model := &UserModel{
-		ID:        u.ID,
-		Email:     u.Email,
-		Password:  u.Password,
-		FirstName: u.FirstName,
-		LastName:  u.LastName,
-		Role:      u.Role,
+		ID:           u.ID,
+		Email:        u.Email,
+		Password:     u.Password,
+		FirstName:    u.FirstName,
+		LastName:     u.LastName,
+		Role:         u.Role,
+		TokenVersion: u.TokenVersion,
 	}
 	// Handle nil pointer for Photo_URL
 	if u.Photo_URL != nil {
@@ -47,15 +49,20 @@ func toDomain(u *UserModel) *entity.User {
 	if u.PhotoURL != "" {
 		photoURL = &u.PhotoURL
 	}
+	tokenVersion := u.TokenVersion
+	if tokenVersion == 0 {
+		tokenVersion = 1
+	}
 	return &entity.User{
-		ID:         u.ID,
-		Email:      u.Email,
-		Password:   u.Password,
-		FirstName:  u.FirstName,
-		LastName:   u.LastName,
-		Role:       u.Role,
-		Photo_URL:  photoURL,
-		IsVerified: u.IsVerified,
+		ID:           u.ID,
+		Email:        u.Email,
+		Password:     u.Password,
+		FirstName:    u.FirstName,
+		LastName:     u.LastName,
+		Role:         u.Role,
+		Photo_URL:    photoURL,
+		IsVerified:   u.IsVerified,
+		TokenVersion: tokenVersion,
 	}
 }
 
@@ -100,7 +107,7 @@ func (r *UserRepository) GetByEmail(ctx context.Context, email string) (*entity.
 
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("user not found")
+			return nil, ErrUserNotFound
 		}
 		return nil, err
 	}
@@ -180,6 +187,9 @@ func (r *UserRepository) Update(ctx context.Context, updates *entity.User, id st
 	if updates.Photo_URL != nil {
 		updatedUser["photo_url"] = updates.Photo_URL
 	}
+	if updates.TokenVersion != 0 {
+		updatedUser["token_version"] = updates.TokenVersion
+	}
 
 	var user UserModel
 	err := r.db.WithContext(ctx).Model(&user).Where("id = ?", id).Updates(updatedUser).Error
@@ -194,6 +204,31 @@ func (r *UserRepository) Update(ctx context.Context, updates *entity.User, id st
 		return err
 	}
 	return nil
+}
+
+func (r *UserRepository) UpdatePasswordAndTokenVersion(ctx context.Context, userID, hashedPassword string, tokenVersion int) error {
+	return r.db.WithContext(ctx).
+		Model(&UserModel{}).
+		Where("id = ?", userID).
+		Updates(map[string]interface{}{
+			"password":      hashedPassword,
+			"token_version": tokenVersion,
+		}).Error
+}
+
+func (r *UserRepository) GetTokenVersion(ctx context.Context, userID string) (int, error) {
+	var user UserModel
+	err := r.db.WithContext(ctx).
+		Select("token_version").
+		Where("id = ?", userID).
+		First(&user).Error
+	if err != nil {
+		return 0, err
+	}
+	if user.TokenVersion == 0 {
+		return 1, nil
+	}
+	return user.TokenVersion, nil
 }
 
 func (r *UserRepository) GetPhoto(ctx context.Context, userID string) (string, error) {

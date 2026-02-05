@@ -4,6 +4,7 @@ class ApiClient {
   private client: AxiosInstance;
   private accessToken: string | null = null;
   private refreshing: Promise<string> | null = null;
+  private csrfToken: string | null = null;
 
   constructor() {
     this.client = axios.create({
@@ -19,6 +20,9 @@ class ApiClient {
     this.client.interceptors.request.use((config: InternalAxiosRequestConfig) => {
       if (this.accessToken && config.headers) {
         config.headers.Authorization = `Bearer ${this.accessToken}`;
+      }
+      if (this.csrfToken && config.headers && config.method && config.method.toLowerCase() !== 'get') {
+        config.headers['X-CSRF-Token'] = this.csrfToken;
       }
       return config;
     }, (error) => Promise.reject(error));
@@ -43,8 +47,8 @@ class ApiClient {
           return this.client(originalRequest);
         } catch (refreshError) {
           this.clearAccessToken();
-          if (!window.location.pathname.includes('/login')) {
-            window.location.href = '/login';
+          if (!window.location.pathname.includes('/sign-in')) {
+            window.location.href = '/sign-in';
           }
           return Promise.reject(refreshError);
         }
@@ -117,6 +121,14 @@ class ApiClient {
   public clearAccessToken() {
     this.accessToken = null;
     console.debug('Access token cleared');
+  }
+
+  public setCsrfToken(token: string) {
+    this.csrfToken = token;
+  }
+
+  public getCsrfToken(): string | null {
+    return this.csrfToken;
   }
 
   public getClient() {

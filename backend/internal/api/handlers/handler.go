@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"github.com/Team-Tracks/team-track-site/internal/domain/folder"
+	"github.com/Team-Tracks/team-track-site/internal/domain/password"
 	"github.com/Team-Tracks/team-track-site/internal/domain/task"
 	"github.com/Team-Tracks/team-track-site/internal/domain/team"
 	"github.com/Team-Tracks/team-track-site/internal/domain/user"
@@ -14,13 +15,15 @@ type Handlers struct {
 	taskService         task.Service
 	folderService       folder.Service
 	verificationService verification.Service
+	passwordService     password.Service
 }
 
 func NewHandlers(userService user.Service,
 	teamService team.Service,
 	taskService task.Service,
 	folderService folder.Service,
-	verificationService verification.Service) *Handlers {
+	verificationService verification.Service,
+	passwordService password.Service) *Handlers {
 
 	return &Handlers{
 		userService:         userService,
@@ -28,5 +31,6 @@ func NewHandlers(userService user.Service,
 		taskService:         taskService,
 		folderService:       folderService,
 		verificationService: verificationService,
+		passwordService:     passwordService,
 	}
 }
