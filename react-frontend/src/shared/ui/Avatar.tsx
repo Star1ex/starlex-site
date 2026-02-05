@@ -51,6 +51,8 @@ const Avatar: React.FC<AvatarProps> = ({
     (e.target as HTMLImageElement).style.display = 'none';
   };
 
+  const imageUrl = user?.photo_url || user?.avatar_url || '';
+
   return (
     <div 
       className={`
@@ -75,9 +77,9 @@ const Avatar: React.FC<AvatarProps> = ({
       aria-label={`${firstName} ${lastName} avatar`}
       title={`${firstName} ${lastName}`}
     >
-      {user?.photo_url ? (
+      {imageUrl ? (
         <img
-          src={user.photo_url}
+          src={imageUrl}
           alt={`${firstName} ${lastName}`}
           className="w-full h-full object-cover object-center rounded-full block"
           onError={handleImageError}

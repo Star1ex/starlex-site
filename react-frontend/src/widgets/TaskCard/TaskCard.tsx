@@ -61,6 +61,8 @@ const priorityConfig: Record<string, { label: string; color: string; bgColor: st
   },
 };
 
+const DROPDOWN_ANIMATION_MS = 240;
+
 const TaskCardComponent: React.FC<TaskCardProps> = ({
   task,
   users,
@@ -75,30 +77,128 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
   const [isRenaming, setIsRenaming] = useState(false);
   const [titleDraft, setTitleDraft] = useState(task.task || '');
   const [showContextMenu, setShowContextMenu] = useState(false);
+  const [contextMenuPosition, setContextMenuPosition] = useState<{ top: number; left: number } | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [assigneeDropdownVisible, setAssigneeDropdownVisible] = useState(false);
+  const [statusDropdownVisible, setStatusDropdownVisible] = useState(false);
+  const [priorityDropdownVisible, setPriorityDropdownVisible] = useState(false);
+  const [assigneeDropdownClosing, setAssigneeDropdownClosing] = useState(false);
+  const [statusDropdownClosing, setStatusDropdownClosing] = useState(false);
+  const [priorityDropdownClosing, setPriorityDropdownClosing] = useState(false);
   const [assigneeDropdownUp, setAssigneeDropdownUp] = useState(false);
   const [statusDropdownUp, setStatusDropdownUp] = useState(false);
   const [priorityDropdownUp, setPriorityDropdownUp] = useState(false);
   const [assigneeDropdownPosition, setAssigneeDropdownPosition] = useState<{ top: number; left: number } | null>(null);
   const [statusDropdownPosition, setStatusDropdownPosition] = useState<{ top: number; left: number } | null>(null);
   const [priorityDropdownPosition, setPriorityDropdownPosition] = useState<{ top: number; left: number } | null>(null);
+  const [isMobileView, setIsMobileView] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 768 : false));
+  const [swipeOffset, setSwipeOffset] = useState(0);
   const assigneeRef = useRef<HTMLDivElement>(null);
   const statusRef = useRef<HTMLDivElement>(null);
   const priorityRef = useRef<HTMLDivElement>(null);
   const contextMenuRef = useRef<HTMLDivElement>(null);
+  const contextMenuPanelRef = useRef<HTMLDivElement>(null);
   const assigneeDropdownRef = useRef<HTMLDivElement>(null);
   const titleInputRef = useRef<HTMLInputElement>(null);
+  const assigneeCloseTimeoutRef = useRef<number | null>(null);
+  const statusCloseTimeoutRef = useRef<number | null>(null);
+  const priorityCloseTimeoutRef = useRef<number | null>(null);
+  const touchStartXRef = useRef(0);
+  const touchStartYRef = useRef(0);
+  const longPressTimeoutRef = useRef<number | null>(null);
+  const touchMovedRef = useRef(false);
+  const contextMenuWidth = 180;
+  const contextMenuHeight = 112;
+  const contextMenuPadding = 8;
 
   useEffect(() => {
     setTitleDraft(task.task || '');
   }, [task.id, task.task]);
 
   useEffect(() => {
+    const handleResize = () => setIsMobileView(window.innerWidth < 768);
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
     if (!isRenaming) return;
     titleInputRef.current?.focus();
     titleInputRef.current?.select();
   }, [isRenaming]);
+
+  useEffect(() => {
+    if (isEditingAssignee) {
+      if (assigneeCloseTimeoutRef.current) {
+        window.clearTimeout(assigneeCloseTimeoutRef.current);
+        assigneeCloseTimeoutRef.current = null;
+      }
+      setAssigneeDropdownVisible(true);
+      setAssigneeDropdownClosing(false);
+      return;
+    }
+
+    if (assigneeDropdownVisible) {
+      setAssigneeDropdownClosing(true);
+      assigneeCloseTimeoutRef.current = window.setTimeout(() => {
+        setAssigneeDropdownVisible(false);
+        setAssigneeDropdownClosing(false);
+        setAssigneeDropdownPosition(null);
+      }, DROPDOWN_ANIMATION_MS);
+    }
+  }, [isEditingAssignee, assigneeDropdownVisible]);
+
+  useEffect(() => {
+    if (isEditingStatus) {
+      if (statusCloseTimeoutRef.current) {
+        window.clearTimeout(statusCloseTimeoutRef.current);
+        statusCloseTimeoutRef.current = null;
+      }
+      setStatusDropdownVisible(true);
+      setStatusDropdownClosing(false);
+      return;
+    }
+
+    if (statusDropdownVisible) {
+      setStatusDropdownClosing(true);
+      statusCloseTimeoutRef.current = window.setTimeout(() => {
+        setStatusDropdownVisible(false);
+        setStatusDropdownClosing(false);
+        setStatusDropdownPosition(null);
+      }, DROPDOWN_ANIMATION_MS);
+    }
+  }, [isEditingStatus, statusDropdownVisible]);
+
+  useEffect(() => {
+    if (isEditingPriority) {
+      if (priorityCloseTimeoutRef.current) {
+        window.clearTimeout(priorityCloseTimeoutRef.current);
+        priorityCloseTimeoutRef.current = null;
+      }
+      setPriorityDropdownVisible(true);
+      setPriorityDropdownClosing(false);
+      return;
+    }
+
+    if (priorityDropdownVisible) {
+      setPriorityDropdownClosing(true);
+      priorityCloseTimeoutRef.current = window.setTimeout(() => {
+        setPriorityDropdownVisible(false);
+        setPriorityDropdownClosing(false);
+        setPriorityDropdownPosition(null);
+      }, DROPDOWN_ANIMATION_MS);
+    }
+  }, [isEditingPriority, priorityDropdownVisible]);
+
+  useEffect(() => {
+    return () => {
+      if (assigneeCloseTimeoutRef.current) window.clearTimeout(assigneeCloseTimeoutRef.current);
+      if (statusCloseTimeoutRef.current) window.clearTimeout(statusCloseTimeoutRef.current);
+      if (priorityCloseTimeoutRef.current) window.clearTimeout(priorityCloseTimeoutRef.current);
+    };
+  }, []);
 
   // Handle user_ids - can be array of TaskUser objects or strings
   const userIds = React.useMemo(() => {
@@ -170,8 +270,6 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
       }
       
       setAssigneeDropdownPosition({ top, left });
-    } else {
-      setAssigneeDropdownPosition(null);
     }
   }, [isEditingAssignee]);
 
@@ -208,8 +306,6 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
       }
       
       setStatusDropdownPosition({ top, left });
-    } else {
-      setStatusDropdownPosition(null);
     }
   }, [isEditingStatus]);
 
@@ -246,8 +342,6 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
       }
       
       setPriorityDropdownPosition({ top, left });
-    } else {
-      setPriorityDropdownPosition(null);
     }
   }, [isEditingPriority]);
 
@@ -256,9 +350,14 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent | TouchEvent) => {
       const target = event.target as Node;
-      
-      if (showContextMenu && contextMenuRef.current && !contextMenuRef.current.contains(target)) {
-        setShowContextMenu(false);
+
+      if (showContextMenu) {
+        const inButton = contextMenuRef.current?.contains(target) ?? false;
+        const inPanel = contextMenuPanelRef.current?.contains(target) ?? false;
+        if (!inButton && !inPanel) {
+          setShowContextMenu(false);
+          setContextMenuPosition(null);
+        }
       }
     };
 
@@ -311,17 +410,68 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
       target.closest('.dropdown-menu') ||
       target.closest('.editable-field') ||
       target.closest('.context-menu') ||
-      target.closest('button') ||
       target.closest('select')
     ) {
+      return;
+    }
+    if (isMobileView && swipeOffset !== 0) {
+      setSwipeOffset(0);
       return;
     }
     onClick();
   };
 
+  const openContextMenuAt = (x: number, y: number) => {
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    let left = x;
+    let top = y;
+
+    if (left + contextMenuWidth > viewportWidth - contextMenuPadding) {
+      left = viewportWidth - contextMenuWidth - contextMenuPadding;
+    }
+    if (left < contextMenuPadding) {
+      left = contextMenuPadding;
+    }
+
+    if (top + contextMenuHeight > viewportHeight - contextMenuPadding) {
+      top = Math.max(contextMenuPadding, top - contextMenuHeight - contextMenuPadding);
+    }
+
+    setContextMenuPosition({ top, left });
+    setShowContextMenu(true);
+  };
+
   const handleContextMenuClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setShowContextMenu(!showContextMenu);
+    if (showContextMenu) {
+      setShowContextMenu(false);
+      setContextMenuPosition(null);
+      return;
+    }
+    const rect = contextMenuRef.current?.getBoundingClientRect();
+    if (rect) {
+      openContextMenuAt(rect.right - contextMenuWidth, rect.bottom + 6);
+      return;
+    }
+    openContextMenuAt(e.clientX, e.clientY);
+  };
+
+  const handleCardContextMenu = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const target = e.target as HTMLElement;
+    if (
+      target.closest('.dropdown-menu') ||
+      target.closest('.editable-field') ||
+      target.closest('.context-menu') ||
+      target.closest('select') ||
+      target.closest('input') ||
+      target.closest('textarea')
+    ) {
+      return;
+    }
+    openContextMenuAt(e.clientX, e.clientY);
   };
 
   const handleOpenClick = (e: React.MouseEvent) => {
@@ -335,6 +485,52 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
     setShowContextMenu(false);
     if (confirm('Are you sure you want to delete this task?')) {
       onDelete();
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (!isMobileView) return;
+    const touch = e.touches[0];
+    touchStartXRef.current = touch.clientX;
+    touchStartYRef.current = touch.clientY;
+    touchMovedRef.current = false;
+    if (longPressTimeoutRef.current) {
+      window.clearTimeout(longPressTimeoutRef.current);
+    }
+    longPressTimeoutRef.current = window.setTimeout(() => {
+      if (!touchMovedRef.current) {
+        openContextMenuAt(touch.clientX, touch.clientY);
+      }
+    }, 520);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isMobileView) return;
+    const touch = e.touches[0];
+    const deltaX = touch.clientX - touchStartXRef.current;
+    const deltaY = touch.clientY - touchStartYRef.current;
+
+    if (Math.abs(deltaY) > 10) {
+      touchMovedRef.current = true;
+      if (longPressTimeoutRef.current) window.clearTimeout(longPressTimeoutRef.current);
+    }
+
+    if (deltaX < -10 && Math.abs(deltaY) < 30) {
+      touchMovedRef.current = true;
+      if (longPressTimeoutRef.current) window.clearTimeout(longPressTimeoutRef.current);
+      setSwipeOffset(Math.max(deltaX, -88));
+    }
+  };
+
+  const handleTouchEnd = () => {
+    if (!isMobileView) return;
+    if (longPressTimeoutRef.current) {
+      window.clearTimeout(longPressTimeoutRef.current);
+    }
+    if (swipeOffset < -60) {
+      setSwipeOffset(-88);
+    } else {
+      setSwipeOffset(0);
     }
   };
 
@@ -352,11 +548,30 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
   return (
     <div
       onClick={handleCardClick}
+      onContextMenu={handleCardContextMenu}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
       className="group relative bg-transparent dark:bg-transparent hover:bg-gray-50/50 dark:hover:bg-dark-border/30 transition-colors duration-150 cursor-pointer"
     >
-      <div className="flex items-center gap-2 sm:gap-3 px-2 sm:px-4 py-2 min-w-[600px] sm:min-w-0">
+      {isMobileView && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+            setSwipeOffset(0);
+          }}
+          className="absolute right-0 top-0 bottom-0 w-16 bg-red-500 text-white text-xs font-semibold flex items-center justify-center"
+        >
+          Delete
+        </button>
+      )}
+      <div
+        className="flex items-center gap-2 sm:gap-2.5 px-2 sm:px-3 py-1.5 min-w-0 md:min-w-[540px] sm:min-w-0 transition-transform duration-200"
+        style={isMobileView ? { transform: `translateX(${swipeOffset}px)` } : undefined}
+      >
         {/* Task Name */}
-        <div className="flex-1 min-w-[120px] sm:min-w-[200px] max-w-[200px] sm:max-w-none">
+        <div className="flex-1 min-w-[120px] sm:min-w-[180px] max-w-[180px] sm:max-w-none">
           {isRenaming ? (
             <input
               ref={titleInputRef}
@@ -392,7 +607,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
         </div>
 
         {/* Assignee */}
-        <div className="flex-shrink-0 min-w-[80px] sm:min-w-[100px]" ref={assigneeRef}>
+        <div className="flex-shrink-0 min-w-[72px] sm:min-w-[88px]" ref={assigneeRef}>
           <div className="relative">
             <div
               onClick={(e) => {
@@ -425,11 +640,12 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
               )}
             </div>
 
-            {isEditingAssignee && assigneeDropdownPosition && createPortal(
+            {assigneeDropdownVisible && assigneeDropdownPosition && createPortal(
               <>
                 {/* Backdrop overlay */}
                 <div 
-                  className="fixed inset-0 bg-black/10 dark:bg-black/30 z-[9998] backdrop-blur-sm"
+                  className="fixed inset-0 bg-black/10 dark:bg-black/30 z-[9998] dropdown-overlay"
+                  data-state={assigneeDropdownClosing ? 'closed' : 'open'}
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsEditingAssignee(false);
@@ -438,7 +654,9 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
                 {/* Dropdown menu */}
                 <div 
                   ref={assigneeDropdownRef}
-                  className="fixed bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-2xl z-[9999] overflow-hidden w-[280px] max-h-[400px] flex flex-col"
+                  className="fixed bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-2xl z-[9999] overflow-hidden w-[280px] max-h-[400px] flex flex-col dropdown-panel"
+                  data-state={assigneeDropdownClosing ? 'closed' : 'open'}
+                  data-direction={assigneeDropdownUp ? 'up' : 'down'}
                   style={{
                     top: `${assigneeDropdownPosition.top}px`,
                     left: `${assigneeDropdownPosition.left}px`,
@@ -500,7 +718,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
         </div>
 
         {/* Status */}
-        <div className="flex-shrink-0 min-w-[90px] sm:min-w-[100px]" ref={statusRef}>
+        <div className="flex-shrink-0 min-w-[80px] sm:min-w-[90px]" ref={statusRef}>
           <div className="relative">
             <div
               onClick={(e) => {
@@ -514,11 +732,12 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
               </span>
             </div>
 
-            {isEditingStatus && statusDropdownPosition && createPortal(
+            {statusDropdownVisible && statusDropdownPosition && createPortal(
               <>
                 {/* Backdrop overlay */}
                 <div 
-                  className="fixed inset-0 bg-black/10 dark:bg-black/30 z-[9998]"
+                  className="fixed inset-0 bg-black/10 dark:bg-black/30 z-[9998] dropdown-overlay"
+                  data-state={statusDropdownClosing ? 'closed' : 'open'}
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsEditingStatus(false);
@@ -526,7 +745,9 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
                 />
                 {/* Dropdown menu */}
                 <div 
-                  className="fixed bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-2xl z-[9999] min-w-[140px]"
+                  className="fixed bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-2xl z-[9999] min-w-[140px] dropdown-panel"
+                  data-state={statusDropdownClosing ? 'closed' : 'open'}
+                  data-direction={statusDropdownUp ? 'up' : 'down'}
                   style={{
                     top: `${statusDropdownPosition.top}px`,
                     left: `${statusDropdownPosition.left}px`,
@@ -555,7 +776,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
         </div>
 
         {/* Priority */}
-        <div className="flex-shrink-0 min-w-[70px] sm:min-w-[80px]" ref={priorityRef}>
+        <div className="flex-shrink-0 min-w-[64px] sm:min-w-[72px]" ref={priorityRef}>
           <div className="relative">
             <div
               onClick={(e) => {
@@ -569,11 +790,12 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
               </span>
             </div>
 
-            {isEditingPriority && priorityDropdownPosition && createPortal(
+            {priorityDropdownVisible && priorityDropdownPosition && createPortal(
               <>
                 {/* Backdrop overlay */}
                 <div 
-                  className="fixed inset-0 bg-black/10 dark:bg-black/30 z-[9998]"
+                  className="fixed inset-0 bg-black/10 dark:bg-black/30 z-[9998] dropdown-overlay"
+                  data-state={priorityDropdownClosing ? 'closed' : 'open'}
                   onClick={(e) => {
                     e.stopPropagation();
                     setIsEditingPriority(false);
@@ -581,7 +803,9 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
                 />
                 {/* Dropdown menu */}
                 <div 
-                  className="fixed bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-2xl z-[9999] min-w-[120px]"
+                  className="fixed bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-2xl z-[9999] min-w-[120px] dropdown-panel"
+                  data-state={priorityDropdownClosing ? 'closed' : 'open'}
+                  data-direction={priorityDropdownUp ? 'up' : 'down'}
                   style={{
                     top: `${priorityDropdownPosition.top}px`,
                     left: `${priorityDropdownPosition.left}px`,
@@ -610,7 +834,7 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
         </div>
 
         {/* Context Menu Button */}
-        <div className="flex-shrink-0 min-w-[28px] sm:min-w-[32px] relative" ref={contextMenuRef}>
+        <div className="flex-shrink-0 min-w-[28px] sm:min-w-[30px] relative" ref={contextMenuRef}>
           <button
             onClick={handleContextMenuClick}
             className="context-menu p-1 sm:p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border transition-colors opacity-100 sm:opacity-0 sm:group-hover:opacity-100"
@@ -620,8 +844,11 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
             </svg>
           </button>
 
-          {showContextMenu && (
-            <div className="context-menu fixed sm:absolute top-auto bottom-0 sm:top-full sm:bottom-auto right-0 sm:right-0 mt-0 sm:mt-2 mb-2 sm:mb-0 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-2xl z-[100] w-full sm:w-auto sm:min-w-[140px] overflow-hidden"
+          {showContextMenu && contextMenuPosition && createPortal(
+            <div
+              ref={contextMenuPanelRef}
+              className="context-menu fixed bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-2xl z-[10000] w-[180px] overflow-hidden"
+              style={{ top: contextMenuPosition.top, left: contextMenuPosition.left }}
             >
               <button
                 onClick={handleOpenClick}
@@ -643,7 +870,8 @@ const TaskCardComponent: React.FC<TaskCardProps> = ({
                 </svg>
                 Delete
               </button>
-            </div>
+            </div>,
+            document.body
           )}
         </div>
       </div>

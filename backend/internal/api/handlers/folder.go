@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"time"
 
 	"github.com/Team-Tracks/team-track-site/internal/api/dto"
 	"github.com/gofiber/fiber/v2"
@@ -14,14 +15,14 @@ import (
 // @Accept       json
 // @Produce      json
 // @Param        folder       body      dto.FolderDTO             true  "Folder data"
-// @Success      200          {string}  string                    "Successfully created folder"
+// @Success      200          {object}  dto.FolderDTO             "Successfully created folder"
 // @Failure      400          {object}  map[string]string         "Invalid request body"
 // @Failure      401          {object}  map[string]string         "User not authorized"
 // @Failure      500          {object}  map[string]string         "Internal server error"
 // @Security     BearerAuth
 // @Router       /folder/ [post]
 func (h *Handlers) CreateFolder(ctx *fiber.Ctx) error {
-	_, authErr := h.getAuthenticatedUserID(ctx)
+	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized",
@@ -36,13 +37,27 @@ func (h *Handlers) CreateFolder(ctx *fiber.Ctx) error {
 		})
 	}
 
-	err := h.folderService.Create(context.Background(), dto.ToDomainFolder(&req))
+	folder := dto.ToDomainFolder(&req)
+	if folder.OwnerID == "" {
+		folder.OwnerID = userID
+	}
+	if folder.Name == "" {
+		folder.Name = "New Folder"
+	}
+	now := time.Now().UTC()
+	if folder.CreatedAt.IsZero() {
+		folder.CreatedAt = now
+	}
+	if folder.UpdatedAt.IsZero() {
+		folder.UpdatedAt = folder.CreatedAt
+	}
+	err := h.folderService.Create(context.Background(), folder)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
 		})
 	}
-	return ctx.Status(fiber.StatusOK).JSON("Successfully created folder")
+	return ctx.Status(fiber.StatusOK).JSON(dto.FromDomainFolder(folder))
 }
 
 // GetFolderByID godoc

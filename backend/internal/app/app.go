@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/Team-Tracks/team-track-site/internal/api/handlers"
@@ -22,6 +23,9 @@ import (
 func StartServer() {
 
 	config := config.LoadConfig()
+	if config.JWTSecret == "" {
+		log.Println("WARNING: JWT_SECRET is not set; tokens will be insecure.")
+	}
 
 	db := db.Must(&config.DatabaseConfig)
 
@@ -77,7 +81,19 @@ func StartServer() {
 	teamService := service.NewTeamService(teamRepo, userRepo)
 	taskService := service.NewTaskService(taskRepo, userRepo, teamRepo)
 	folderService := service.NewFolderService(folderRepo)
-	httpHandlers := handlers.NewHandlers(userService, teamService, taskService, folderService, verificationService, passwordService)
+	authConfig := handlers.AuthConfig{
+		JWTSecret:       config.JWTSecret,
+		FrontendBaseURL: config.FrontendBaseURL,
+		OAuth: handlers.OAuthConfig{
+			GoogleClientID:     config.OAuthConfig.GoogleClientID,
+			GoogleClientSecret: config.OAuthConfig.GoogleClientSecret,
+			GoogleCallbackURL:  config.OAuthConfig.GoogleCallbackURL,
+			GithubClientID:     config.OAuthConfig.GithubClientID,
+			GithubClientSecret: config.OAuthConfig.GithubClientSecret,
+			GithubCallbackURL:  config.OAuthConfig.GithubCallbackURL,
+		},
+	}
+	httpHandlers := handlers.NewHandlers(userService, teamService, taskService, folderService, verificationService, passwordService, authConfig)
 	routes.InitRoutes(app, httpHandlers)
 
 	go func() {

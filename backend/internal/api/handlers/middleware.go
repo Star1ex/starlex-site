@@ -12,7 +12,6 @@ import (
 
 const (
 	authHeader = "Authorization"
-	jwtSecret  = "super_secret_key_123"
 )
 
 // UserIndentity for indentiry user by jwt token session
@@ -42,7 +41,7 @@ func (h *Handlers) UserIndentity(c *fiber.Ctx) error {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fiber.NewError(fiber.StatusUnauthorized, "invalid token signing method")
 		}
-		return []byte(jwtSecret), nil
+		return []byte(h.jwtSecret), nil
 	})
 
 	if err != nil || !token.Valid {

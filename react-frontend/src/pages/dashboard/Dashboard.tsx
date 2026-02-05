@@ -128,6 +128,28 @@ export const Dashboard: React.FC = () => {
             )}
           </div>
 
+          {/* Mobile Quick Actions */}
+          <div className="md:hidden mb-6 grid gap-3">
+            <button
+              onClick={() => navigate('/task/new')}
+              className="w-full min-h-[44px] px-4 py-3 rounded-xl bg-gray-100 dark:bg-dark-surface text-gray-900 dark:text-dark-text text-sm font-medium text-left shadow-sm"
+            >
+              New Task
+            </button>
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('mobileCreateFolder'))}
+              className="w-full min-h-[44px] px-4 py-3 rounded-xl bg-gray-100 dark:bg-dark-surface text-gray-900 dark:text-dark-text text-sm font-medium text-left shadow-sm"
+            >
+              New Folder
+            </button>
+            <button
+              onClick={onOpen}
+              className="w-full min-h-[44px] px-4 py-3 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-black text-sm font-medium text-left shadow-sm"
+            >
+              New Team
+            </button>
+          </div>
+
           {recentTasks.length > 0 && (
             <div className="mb-10">
               <h2 className="text-sm uppercase tracking-[0.2em] text-gray-500 dark:text-dark-text-muted mb-3">

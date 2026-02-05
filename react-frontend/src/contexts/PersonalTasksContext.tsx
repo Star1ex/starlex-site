@@ -5,6 +5,7 @@ import { useAuth } from '@/contexts/AuthContext.js';
 import { Modal } from '@/shared/ui/Modal.js';
 import FolderCreateModal from '@/components/PersonalTasks/FolderCreateModal.js';
 import TaskCreateView from '@/components/PersonalTasks/TaskCreateView.js';
+import { showToast } from '@/shared/lib/toast.js';
 
 type PersonalTasksState = {
   folders: FolderDTO[];
@@ -103,29 +104,52 @@ export const PersonalTasksProvider = ({ children }: { children: React.ReactNode 
       window.dispatchEvent(new CustomEvent('personalTaskCreated'));
     } catch (err) {
       console.error('Failed to create task', err);
+      showToast('Failed to create task. Please try again.');
       throw err;
     }
   }, [refreshTasks]);
 
   const createFolder = React.useCallback(async (data: Partial<CreateFolderRequest>) => {
+    const tempId = `temp-${typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Date.now()}`;
     try {
+      if (!userId) {
+        throw new Error('User not authenticated');
+      }
+      const now = new Date().toISOString();
+      const optimisticFolder: FolderDTO = {
+        id: tempId,
+        name: data.name || 'New Folder',
+        color: data.color || '#3B82F6',
+        icon: data.icon || '📁',
+        parent_id: data.parent_id ?? null,
+        team_id: null,
+        owner_id: userId,
+        position: data.position ?? 0,
+        created_at: now,
+        updated_at: now,
+      };
+      setFolders((prev) => [...prev, optimisticFolder]);
+
       const payload = {
         name: data.name || 'New Folder',
         color: data.color || '#3B82F6',
         icon: data.icon || '📁',
         parent_id: data.parent_id ?? null,
         team_id: null,
-        owner_id: userId || '',
+        owner_id: userId,
         position: data.position ?? 0,
       };
-      await folderService.createFolder(payload as CreateFolderRequest);
-      await refreshFolders();
+      const created = await folderService.createFolder(payload as CreateFolderRequest);
+      const real = created as FolderDTO;
+      setFolders((prev) => prev.map((folder) => (folder.id === tempId ? { ...optimisticFolder, ...real } : folder)));
       window.dispatchEvent(new CustomEvent('personalFolderCreated'));
     } catch (err) {
+      setFolders((prev) => prev.filter((folder) => folder.id !== tempId));
       console.error('Failed to create folder', err);
+      showToast('Failed to create folder. Please try again.');
       throw err;
     }
-  }, [refreshFolders]);
+  }, [userId]);
 
   const actionsValue = React.useMemo(() => ({
     createTask,

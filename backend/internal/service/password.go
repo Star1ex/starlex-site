@@ -184,13 +184,15 @@ func (s *PasswordService) ChangePassword(ctx context.Context, userID, currentPas
 		return err
 	}
 
-	ok, err := security.VerifyPassword(userEntity.Password, currentPassword)
-	if err != nil || !ok {
-		_ = s.logAudit(ctx, userID, userEntity.Email, actionChange, false, "invalid_current_password", ip, userAgent)
-		return ErrInvalidCurrentPass
+	if userEntity.Password != "" {
+		ok, err := security.VerifyPassword(userEntity.Password, currentPassword)
+		if err != nil || !ok {
+			_ = s.logAudit(ctx, userID, userEntity.Email, actionChange, false, "invalid_current_password", ip, userAgent)
+			return ErrInvalidCurrentPass
+		}
 	}
 
-	if currentPassword == newPassword {
+	if currentPassword != "" && currentPassword == newPassword {
 		_ = s.logAudit(ctx, userID, userEntity.Email, actionChange, false, "password_reused", ip, userAgent)
 		return ErrPasswordPolicyFailed
 	}

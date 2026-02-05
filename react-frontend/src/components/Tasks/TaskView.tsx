@@ -8,6 +8,9 @@ import { useDebounce } from '@/shared/hooks/useDebounce.js';
 import { taskService } from '@/services/api/index.js';
 import { useAuth } from '@/contexts/AuthContext.js';
 import type { TaskDTO, CreateTaskRequest } from '@/types/dto.js';
+import { useTasks } from '@/hooks/useTasks.js';
+import { showToast } from '@/shared/lib/toast.js';
+import BreadcrumbBack from '@/shared/ui/BreadcrumbBack.js';
 
 const RECENT_TASKS_KEY = 'recentTasks';
 
@@ -30,6 +33,7 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { userId } = useAuth();
+  const tasksHook = useTasks();
 
   // State
   const [task, setTask] = useState<Partial<TaskDTO>>({
@@ -240,7 +244,7 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
   const [isCreating, setIsCreating] = useState(false);
   const handleCreate = async () => {
     if (!title.trim()) {
-      alert('Please enter a task title');
+      showToast('Please enter a task title');
       return;
     }
 
@@ -257,14 +261,20 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
         user_ids: [],
       };
 
-      const created = await taskService.createPersonalTask(payload);
+      const created = await tasksHook.createTask(payload);
 
       // Notify sidebar & navigate
       // (creation needs to inform other components)
       window.dispatchEvent(new CustomEvent('personalTaskCreated'));
-      navigate(`/task/${created.id}`);
+      if (created && typeof (created as TaskDTO).id === 'string') {
+        navigate(`/task/${(created as TaskDTO).id}`);
+      } else {
+        await tasksHook.refreshTasks();
+        showToast('Task created, but could not open it automatically.');
+      }
     } catch (err) {
       console.error('Failed to create task', err);
+      showToast('Failed to create task. Please try again.');
     } finally {
       setIsCreating(false);
     }
@@ -275,15 +285,21 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
       {/* Main Content */}
       <div className="w-full px-4 sm:px-6 md:px-16 pt-12 sm:pt-14 md:pt-16 pb-16">
         <div className="max-w-5xl mx-auto">
-        {/* Title Input - Notion Style */}
-        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Untitled" className="w-full text-5xl font-bold text-gray-900 dark:text-dark-text placeholder-gray-300 dark:placeholder-dark-text-muted bg-transparent border-none outline-none mb-6" style={{ fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.02em' }} />
+          <div className="mb-4">
+            <BreadcrumbBack
+              label={sessionStorage.getItem('prevRouteLabel') || 'Dashboard'}
+              to={sessionStorage.getItem('prevRoutePath') || '/dashboard'}
+            />
+          </div>
+          {/* Title Input - Notion Style */}
+          <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Untitled" className="w-full text-5xl font-bold text-gray-900 dark:text-dark-text placeholder-gray-300 dark:placeholder-dark-text-muted bg-transparent border-none outline-none mb-6" style={{ fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.02em' }} />
 
-        {/* Description - WYSIWYG Markdown */}
-        <div className="mt-6">
-          <EditorContent editor={editor} />
-        </div>
+          {/* Description - WYSIWYG Markdown */}
+          <div className="mt-6">
+            <EditorContent editor={editor} />
+          </div>
 
-        {/* Create Button (only for new tasks) */}
+          {/* Create Button (only for new tasks) */}
           {isNew && (
             <div className="mt-10">
               <button

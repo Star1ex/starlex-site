@@ -11,6 +11,7 @@ const SignInPage = React.lazy(() => import('@/pages/auth/SignInPage/SignInPage.j
 const SignUpPage = React.lazy(() => import('@/pages/auth/SignUpPage/SignUpPage.js').then(m => ({ default: m.SignUpPage })));
 const ForgotPasswordPage = React.lazy(() => import('@/pages/auth/ForgotPasswordPage/ForgotPasswordPage.js').then(m => ({ default: m.ForgotPasswordPage })));
 const ResetPasswordPage = React.lazy(() => import('@/pages/auth/ResetPasswordPage/ResetPasswordPage.js').then(m => ({ default: m.ResetPasswordPage })));
+const OAuthCallbackPage = React.lazy(() => import('@/pages/auth/OAuthCallbackPage/OAuthCallbackPage.js').then(m => ({ default: m.OAuthCallbackPage })));
 const Dashboard = React.lazy(() => import('@/pages/dashboard/Dashboard.js').then(m => ({ default: m.Dashboard })));
 const VerifyEmailPage = React.lazy(() => import('@/pages/verify/VerifyEmailPage.js').then(m => ({ default: m.VerifyEmailPage })));
 const GeneralSettings = React.lazy(() => import('@/pages/settings/GeneralSettings.js').then(m => ({ default: m.GeneralSettings })));
@@ -40,15 +41,16 @@ const AnimatedRoutes = () => {
       <Route path="/" element={<HomePage />} />
       <Route path="/sign-in" element={<SignInPage />} />
       <Route path="/sign-up" element={<SignUpPage />} />
+      <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
       <Route path="/login" element={<Navigate to="/sign-in" replace />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
+      <Route path="/about-us" element={<AboutUs />} />
 
       {/* Protected routes with Layout */}
       <Route path="/dashboard" element={<RequireAuth><Layout><Dashboard /></Layout></RequireAuth>} />
       <Route path="/settings" element={<RequireAuth><Layout><GeneralSettings /></Layout></RequireAuth>} />
-      <Route path="/about-us" element={<RequireAuth><Layout><AboutUs /></Layout></RequireAuth>} />
       <Route path="/profile" element={<RequireAuth><Layout><ProfilePage /></Layout></RequireAuth>} />
       <Route path="/profile/:userId" element={<RequireAuth><Layout><UserProfilePage /></Layout></RequireAuth>} />
       <Route path="/team/:team_id" element={<RequireAuth><Layout><TaskBoard /></Layout></RequireAuth>} />

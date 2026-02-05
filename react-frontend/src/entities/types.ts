@@ -5,6 +5,11 @@ export interface User {
   lastName: string;
   photo_url: string | null;
   email?: string;
+  avatar_url?: string | null;
+  auth_providers?: string[];
+  google_id?: string | null;
+  github_id?: string | null;
+  email_verified?: boolean;
 }
 
 export interface TaskUser extends User {

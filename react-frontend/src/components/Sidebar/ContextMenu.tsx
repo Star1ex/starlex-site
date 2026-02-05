@@ -1,6 +1,7 @@
 import React from 'react';
 import { Edit2, FilePlus, FolderPlus, Trash2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext.js';
+import { getAuthUser } from '@/shared/lib/authManager.js';
 import { useContextMenu } from '@/hooks/useContextMenu.js';
 import type { CreateFolderRequest, CreateTaskRequest } from '@/types/dto.js';
 
@@ -14,18 +15,23 @@ interface ContextMenuProps {
 export const ContextMenu: React.FC<ContextMenuProps> = ({ onCreateFolder, onCreateTask, onDeleteFolder, onDeleteTask }) => {
   const { contextMenu, closeContextMenu } = useContextMenu();
   const { userId } = useAuth();
+  const resolveOwnerId = () => {
+    const storedUser = getAuthUser();
+    return userId ?? storedUser?.id ?? '';
+  };
 
   if (!contextMenu.show) return null;
 
   const handleNewTask = async () => {
-    if (!contextMenu.folderId || !userId) return;
+    if (!contextMenu.folderId) return;
+    const ownerId = resolveOwnerId();
     await onCreateTask({
       task: 'New Task',
       description: '',
       priority: 'medium',
       progress: 'not_started',
       folder_id: contextMenu.folderId,
-      owner_id: userId,
+      owner_id: ownerId,
       team_id: null,
       user_ids: [],
     });
@@ -33,13 +39,14 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ onCreateFolder, onCrea
   };
 
   const handleNewSubfolder = async () => {
-    if (!contextMenu.folderId || !userId) return;
+    if (!contextMenu.folderId) return;
+    const ownerId = resolveOwnerId();
     await onCreateFolder({
       name: 'New Subfolder',
       icon: '📁',
       color: '#3B82F6',
       parent_id: contextMenu.folderId,
-      owner_id: userId,
+      owner_id: ownerId,
       team_id: null,
       position: 0,
     });
@@ -47,13 +54,13 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ onCreateFolder, onCrea
   };
 
   const handleNewRootFolder = async () => {
-    if (!userId) return;
+    const ownerId = resolveOwnerId();
     await onCreateFolder({
       name: 'New Folder',
       icon: '📁',
       color: '#3B82F6',
       parent_id: null,
-      owner_id: userId,
+      owner_id: ownerId,
       team_id: null,
       position: 0,
     });
@@ -61,14 +68,14 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ onCreateFolder, onCrea
   };
 
   const handleNewOrphanTask = async () => {
-    if (!userId) return;
+    const ownerId = resolveOwnerId();
     await onCreateTask({
       task: 'New Task',
       description: '',
       priority: 'medium',
       progress: 'not_started',
       folder_id: null,
-      owner_id: userId,
+      owner_id: ownerId,
       team_id: null,
       user_ids: [],
     });

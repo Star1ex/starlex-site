@@ -4,6 +4,7 @@ import Avatar from '@/shared/ui/Avatar.js';
 import { userService, authService } from '@/services/api/index.js';
 import { searchService } from '@/services/api/index.js';
 import type { User } from '@/entities/types.js';
+import BreadcrumbBack from '@/shared/ui/BreadcrumbBack.js';
 
 interface PublicUserProfile {
   id: string;
@@ -12,6 +13,7 @@ interface PublicUserProfile {
   firstName?: string;
   lastName?: string;
   photo_url?: string | null;
+  avatar_url?: string | null;
 }
 
 export const UserProfilePage: React.FC = () => {
@@ -48,6 +50,7 @@ export const UserProfilePage: React.FC = () => {
             lastName: userFromState.lastName || '',
             email: userFromState.email || '',
             photo_url: userFromState.photo_url || null,
+            avatar_url: userFromState.avatar_url || null,
             role: userFromState.role,
           };
           setUser(normalizedUser);
@@ -65,6 +68,7 @@ export const UserProfilePage: React.FC = () => {
             lastName: userData.lastName || '',
             email: userData.email || '',
             photo_url: userData.photo_url || null,
+            avatar_url: userData.avatar_url || null,
             role: userData.role,
           };
           setUser(normalizedUser);
@@ -79,6 +83,7 @@ export const UserProfilePage: React.FC = () => {
               lastName: userData.lastName || '',
               email: userData.email || '',
               photo_url: userData.photo_url || null,
+              avatar_url: userData.avatar_url || null,
               role: userData.role,
             };
             setUser(normalizedUser);
@@ -95,6 +100,7 @@ export const UserProfilePage: React.FC = () => {
                     lastName: userData.lastName || '',
                     email: userData.email || '',
                     photo_url: userData.photo_url || null,
+                    avatar_url: userData.avatar_url || null,
                     role: userData.role,
                   };
                   setUser(normalizedUser);
@@ -184,15 +190,10 @@ export const UserProfilePage: React.FC = () => {
     <div className="min-h-screen bg-white dark:bg-dark-bg transition-colors">
       <div className="max-w-5xl mx-auto px-4 sm:px-8 py-8 sm:py-10">
         <div className="mb-6 flex items-center justify-between">
-          <button
-            onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-gray-600 dark:text-dark-text-muted hover:text-gray-900 dark:hover:text-dark-text transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-            </svg>
-            <span className="text-sm font-medium">Back</span>
-          </button>
+          <BreadcrumbBack
+            label={sessionStorage.getItem('prevRouteLabel') || 'Dashboard'}
+            to={sessionStorage.getItem('prevRoutePath') || '/dashboard'}
+          />
           <span className="text-xs font-medium text-gray-500 dark:text-dark-text-muted">Public profile</span>
         </div>
 

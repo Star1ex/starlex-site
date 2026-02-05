@@ -80,15 +80,27 @@ func (h *Handlers) ChangePassword(ctx *fiber.Ctx) error {
 		})
 	}
 
-	if req.CurrentPassword == "" || req.NewPassword == "" {
+	userEntity, err := h.userService.Get(ctx.Context(), userID)
+	if err != nil {
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "failed to load user",
+		})
+	}
+	passwordRequired := userEntity.Password != ""
+	if passwordRequired && (req.CurrentPassword == "" || req.NewPassword == "") {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "current password and new password are required",
+		})
+	}
+	if !passwordRequired && req.NewPassword == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "new password is required",
 		})
 	}
 
 	ip := ctx.IP()
 	userAgent := ctx.Get("User-Agent")
-	err := h.passwordService.ChangePassword(ctx.Context(), userID, req.CurrentPassword, req.NewPassword, ip, userAgent)
+	err = h.passwordService.ChangePassword(ctx.Context(), userID, req.CurrentPassword, req.NewPassword, ip, userAgent)
 	if err != nil {
 		if errors.Is(err, service.ErrInvalidCurrentPass) {
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -106,29 +118,21 @@ func (h *Handlers) ChangePassword(ctx *fiber.Ctx) error {
 		})
 	}
 
-	userEntity, err := h.userService.Get(ctx.Context(), userID)
+	updatedUser, err := h.userService.Get(ctx.Context(), userID)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to load user",
 		})
 	}
 
-	accessTokenStr, refreshTokenStr, err := h.issueTokens(userEntity)
+	accessTokenStr, refreshTokenStr, err := h.issueTokens(updatedUser)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to create session",
 		})
 	}
 
-	ctx.Cookie(&fiber.Cookie{
-		Name:     "refreshToken",
-		Value:    refreshTokenStr,
-		Expires:  time.Now().Add(7 * 24 * time.Hour),
-		HTTPOnly: true,
-		Secure:   false,
-		SameSite: "Lax",
-		Path:     "/",
-	})
+	h.setRefreshCookie(ctx, refreshTokenStr)
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message":      "Password updated successfully",
@@ -266,7 +270,7 @@ func (h *Handlers) issueTokens(userEntity *entity.User) (string, string, error) 
 		"token_version": userEntity.TokenVersion,
 		"exp":           time.Now().Add(1 * time.Hour).Unix(),
 	})
-	accessTokenStr, err := accessToken.SignedString([]byte(jwtSecret))
+	accessTokenStr, err := accessToken.SignedString([]byte(h.jwtSecret))
 	if err != nil {
 		return "", "", fmt.Errorf("access token: %w", err)
 	}
@@ -278,7 +282,7 @@ func (h *Handlers) issueTokens(userEntity *entity.User) (string, string, error) 
 		"token_version": userEntity.TokenVersion,
 		"exp":           time.Now().Add(7 * 24 * time.Hour).Unix(),
 	})
-	refreshTokenStr, err := refreshToken.SignedString([]byte(jwtSecret))
+	refreshTokenStr, err := refreshToken.SignedString([]byte(h.jwtSecret))
 	if err != nil {
 		return "", "", fmt.Errorf("refresh token: %w", err)
 	}

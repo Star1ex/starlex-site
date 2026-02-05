@@ -196,7 +196,7 @@ export const RightSidebar: React.FC<Props> = ({ isMobile = false, onClose }) => 
             className="w-full flex items-center gap-3 p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-200"
           >
             <div className="flex-shrink-0">
-              {user && user.photo_url ? (
+              {user && (user.photo_url || user.avatar_url) ? (
                 <div className="w-10 h-10 rounded-lg overflow-hidden">
                   <Avatar user={user} size="sm" />
                 </div>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { taskService } from '@/services/api/index.js';
+import { showToast } from '@/shared/lib/toast.js';
 import type { CreateTaskRequest, TaskDTO } from '@/types/dto.js';
 
 const REMOVE_ANIMATION_MS = 220;
@@ -8,6 +9,7 @@ export const useTasks = () => {
   const [tasksById, setTasksById] = useState<Record<string, TaskDTO>>({});
   const [taskIds, setTaskIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [recentTaskIds, setRecentTaskIds] = useState<Record<string, boolean>>({});
   const [removingTaskIds, setRemovingTaskIds] = useState<Record<string, boolean>>({});
   const refreshControllerRef = useRef<AbortController | null>(null);
   const refreshTimeoutRef = useRef<number | null>(null);
@@ -97,7 +99,7 @@ export const useTasks = () => {
     };
 
     setTasksById((prev) => ({ ...prev, [tempId]: optimisticTask }));
-    setTaskIds((prev) => [...prev, tempId]);
+    setTaskIds((prev) => (prev.includes(tempId) ? prev : [...prev, tempId]));
 
     const payload: CreateTaskRequest = {
       task: data.task || 'New Task',
@@ -113,6 +115,16 @@ export const useTasks = () => {
     try {
       const created = await taskService.createPersonalTask(payload);
       const real = created as TaskDTO;
+      if (!real || !real.id) {
+        await refreshTasks();
+        setTasksById((prev) => {
+          const next = { ...prev };
+          delete next[tempId];
+          return next;
+        });
+        setTaskIds((prev) => prev.filter((id) => id !== tempId));
+        return created;
+      }
       setTasksById((prev) => {
         const next = { ...prev };
         delete next[tempId];
@@ -120,6 +132,15 @@ export const useTasks = () => {
         return next;
       });
       setTaskIds((prev) => prev.map((id) => (id === tempId ? real.id : id)));
+      setRecentTaskIds((prev) => ({ ...prev, [real.id]: true }));
+      window.setTimeout(() => {
+        setRecentTaskIds((prev) => {
+          if (!prev[real.id]) return prev;
+          const next = { ...prev };
+          delete next[real.id];
+          return next;
+        });
+      }, 180);
       return created;
     } catch (err) {
       setTasksById((prev) => {
@@ -128,11 +149,13 @@ export const useTasks = () => {
         return next;
       });
       setTaskIds((prev) => prev.filter((id) => id !== tempId));
+      showToast('Failed to create task. Please try again.');
       throw err;
     }
-  }, []);
+  }, [refreshTasks]);
 
   const updateTask = useCallback(async (id: string, data: Partial<CreateTaskRequest>) => {
+    const previous = tasksByIdRef.current[id];
     setTasksById((prev) => ({ ...prev, [id]: { ...prev[id], ...data } as TaskDTO }));
     try {
       const updates: Promise<void>[] = [];
@@ -156,7 +179,12 @@ export const useTasks = () => {
       }
       return;
     } catch (err) {
-      await refreshTasks();
+      if (previous) {
+        setTasksById((prev) => ({ ...prev, [id]: previous }));
+      } else {
+        await refreshTasks();
+      }
+      showToast('Failed to save task changes.');
       throw err;
     }
   }, [refreshTasks]);
@@ -195,6 +223,7 @@ export const useTasks = () => {
         delete next[id];
         return next;
       });
+      showToast('Failed to delete task.');
       throw err;
     } finally {
       setRemovingTaskIds((prev) => {
@@ -221,6 +250,7 @@ export const useTasks = () => {
     deleteTask,
     moveTaskToFolder,
     removingTaskIds,
+    recentTaskIds,
     getFolderTasks,
     refreshTasks,
   } as const;

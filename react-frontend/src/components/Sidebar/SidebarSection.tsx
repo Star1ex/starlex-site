@@ -6,6 +6,7 @@ import { useFolders } from '@/hooks/useFolders.js';
 import { useTasks } from '@/hooks/useTasks.js';
 import { useContextMenu } from '@/hooks/useContextMenu.js';
 import { useAuth } from '@/contexts/AuthContext.js';
+import { getAuthUser } from '@/shared/lib/authManager.js';
 import type { FolderDTO, TaskDTO } from '@/types/dto.js';
 import { DndContext, PointerSensor, useDroppable, useSensor, useSensors } from '@dnd-kit/core';
 import InlineEdit from '@/components/shared/InlineEdit.js';
@@ -55,6 +56,9 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
   );
   const removingFolderIds = foldersHook.removingFolderIds || {};
   const removingTaskIds = tasksHook.removingTaskIds || {};
+  const recentTaskIds = tasksHook.recentTaskIds || {};
+  const savingFolderIds = foldersHook.savingFolderIds || {};
+  const recentFolderIds = foldersHook.recentFolderIds || {};
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));
   const { setNodeRef: setRootDropRef, isOver: isRootOver } = useDroppable({
     id: 'drop-root',
@@ -117,13 +121,14 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
       return;
     }
 
-    if (!userId) return;
+    const storedUser = getAuthUser();
+    const resolvedOwnerId = userId ?? storedUser?.id ?? '';
     await foldersHook.createFolder({
       name: 'New Folder',
       icon: '📁',
       color: '#3B82F6',
       parent_id: null,
-      owner_id: userId,
+      owner_id: resolvedOwnerId,
       team_id: null,
       position: 0,
     });
@@ -209,15 +214,29 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
                       onUpdateFolder={foldersHook.updateFolder}
                       onDeleteFolder={foldersHook.deleteFolder}
                       onUpdateTask={tasksHook.updateTask}
+                      savingFolderIds={savingFolderIds}
+                      recentFolderIds={recentFolderIds}
+                      recentTaskIds={recentTaskIds}
                       removingFolderIds={removingFolderIds}
                       removingTaskIds={removingTaskIds}
                     />
                   ))}
 
+                  {type === 'tasks' && foldersHook.createError && (
+                    <div className="px-4 py-1 text-xs text-red-500">{foldersHook.createError}</div>
+                  )}
+
                   {orphanTasks.length > 0 && (
                     <div className="mt-1">
                       {orphanTasks.map((task: TaskDTO) => (
-                        <TaskItem key={task.id} task={task} level={0} onUpdateTask={tasksHook.updateTask} isRemoving={!!removingTaskIds[task.id]} />
+                        <TaskItem
+                          key={task.id}
+                          task={task}
+                          level={0}
+                          onUpdateTask={tasksHook.updateTask}
+                          isRemoving={!!removingTaskIds[task.id]}
+                          recentTaskIds={recentTaskIds}
+                        />
                       ))}
                     </div>
                   )}

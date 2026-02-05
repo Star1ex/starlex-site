@@ -81,6 +81,28 @@ export const authService = {
     return response.data;
   },
 
+  async linkGoogle(redirectTo?: string): Promise<{ auth_url: string }> {
+    const url = redirectTo ? `/api/auth/link-google?redirect=${encodeURIComponent(redirectTo)}` : '/api/auth/link-google';
+    const response = await httpClient.post<{ auth_url: string }>(url);
+    return response.data;
+  },
+
+  async linkGithub(redirectTo?: string): Promise<{ auth_url: string }> {
+    const url = redirectTo ? `/api/auth/link-github?redirect=${encodeURIComponent(redirectTo)}` : '/api/auth/link-github';
+    const response = await httpClient.post<{ auth_url: string }>(url);
+    return response.data;
+  },
+
+  async unlinkGoogle(): Promise<AuthResponse> {
+    const response = await httpClient.delete<AuthResponse>('/api/auth/unlink-google');
+    return response.data;
+  },
+
+  async unlinkGithub(): Promise<AuthResponse> {
+    const response = await httpClient.delete<AuthResponse>('/api/auth/unlink-github');
+    return response.data;
+  },
+
   logout() {
     apiClient.clearAccessToken();
     window.location.href = '/sign-in';

@@ -15,6 +15,8 @@ type Config struct {
 	TelegramNotifications TelegramNotifications
 	EmailConfig           EmailConfig
 	FrontendBaseURL       string
+	JWTSecret             string
+	OAuthConfig           OAuthConfig
 }
 
 type EmailConfig struct {
@@ -45,6 +47,15 @@ type StorageConfig struct {
 type TelegramNotifications struct {
 	Token  string
 	ChatID string
+}
+
+type OAuthConfig struct {
+	GoogleClientID     string
+	GoogleClientSecret string
+	GoogleCallbackURL  string
+	GithubClientID     string
+	GithubClientSecret string
+	GithubCallbackURL  string
 }
 
 // Loading full config with data from .env file
@@ -87,6 +98,15 @@ func LoadConfig() *Config {
 		},
 
 		FrontendBaseURL: os.Getenv("FRONTEND_BASE_URL"),
+		JWTSecret:       os.Getenv("JWT_SECRET"),
+		OAuthConfig: OAuthConfig{
+			GoogleClientID:     os.Getenv("GOOGLE_CLIENT_ID"),
+			GoogleClientSecret: os.Getenv("GOOGLE_CLIENT_SECRET"),
+			GoogleCallbackURL:  os.Getenv("GOOGLE_CALLBACK_URL"),
+			GithubClientID:     os.Getenv("CLIENT_ID_GITHUB"),
+			GithubClientSecret: os.Getenv("CLIENT_SECRET_GITHUB"),
+			GithubCallbackURL:  os.Getenv("CALLBACK_URL_GITHUB"),
+		},
 	}
 }
 

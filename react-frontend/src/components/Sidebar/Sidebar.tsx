@@ -89,6 +89,25 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
   }, [navigate]);
 
   useEffect(() => {
+    const handleMobileCreateFolder = () => {
+      const storedUser = getAuthUser();
+      const ownerId = storedUser?.id || storedUser?.user_id || '';
+      if (!ownerId) return;
+      foldersHook.createFolder({
+        name: 'New Folder',
+        icon: '📁',
+        color: '#3B82F6',
+        parent_id: null,
+        owner_id: ownerId,
+        team_id: null,
+        position: 0,
+      });
+    };
+    window.addEventListener('mobileCreateFolder', handleMobileCreateFolder);
+    return () => window.removeEventListener('mobileCreateFolder', handleMobileCreateFolder);
+  }, [foldersHook]);
+
+  useEffect(() => {
     if (!showProfileMenu) return;
     const handleClickOutside = (event: MouseEvent) => {
       if (profileMenuRef.current && !profileMenuRef.current.contains(event.target as Node)) {

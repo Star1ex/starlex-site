@@ -23,6 +23,10 @@ func InitRoutes(app *fiber.App, h *handlers.Handlers) {
 	protected := api.Group("", h.UserIndentity)
 	{
 		protected.Post("/auth/password-change", h.ChangePassword)
+		protected.Post("/auth/link-google", h.OAuthRateLimit, h.LinkGoogle)
+		protected.Post("/auth/link-github", h.OAuthRateLimit, h.LinkGithub)
+		protected.Delete("/auth/unlink-google", h.UnlinkGoogle)
+		protected.Delete("/auth/unlink-github", h.UnlinkGithub)
 		setupUserRoutes(protected, h)
 		setupSearchRoutes(protected, h)
 		setupFolderRoutes(protected, h)
@@ -42,6 +46,10 @@ func setupAuthRoutes(api fiber.Router, h *handlers.Handlers) {
 	auth.Post("/password-reset/request", h.RequestPasswordReset)
 	auth.Post("/password-reset/verify", h.VerifyPasswordReset)
 	auth.Post("/password-reset/confirm", h.ResetPassword)
+	auth.Get("/google", h.OAuthRateLimit, h.StartGoogleOAuth)
+	auth.Get("/google/callback", h.OAuthRateLimit, h.HandleGoogleCallback)
+	auth.Get("/github", h.OAuthRateLimit, h.StartGithubOAuth)
+	auth.Get("/github/callback", h.OAuthRateLimit, h.HandleGithubCallback)
 }
 
 func setupUserRoutes(api fiber.Router, h *handlers.Handlers) {

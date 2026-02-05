@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { apiClient } from '@/services/api/client.js';
 import { userService } from '@/services/api/index.js';
+import { setAuthUser } from '@/shared/lib/authManager.js';
 
 type AuthContextType = {
   userId: string | null;
@@ -49,6 +50,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUserId(id || (profile as any).id || null);
       setUserEmail(profile.email || null);
       setIsAuthenticated(true);
+      setAuthUser({
+        id: id || (profile as any).id || null,
+        email: profile.email,
+        firstName: profile.firstName,
+        lastName: profile.lastName,
+        photo_url: profile.photo_url ?? null,
+        avatar_url: (profile as any).avatar_url ?? null,
+        auth_providers: (profile as any).auth_providers ?? [],
+        google_id: (profile as any).google_id ?? null,
+        github_id: (profile as any).github_id ?? null,
+        email_verified: (profile as any).email_verified ?? false,
+      });
     } catch (err) {
       console.error('Auth refresh failed:', err);
       setUserId(null);
