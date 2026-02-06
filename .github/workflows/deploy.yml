@@ -54,13 +54,14 @@ jobs:
           echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
           echo "BACKEND_PORT=${{ secrets.BACKEND_PORT }}" >> .env
 
-      - name: Debug - Show BACKEND_PORT (UNSAFE - remove after debug)
-        run: |
-          echo "BACKEND_PORT from secret: ${{ secrets.BACKEND_PORT }}"
-          cat .env | grep BACKEND_PORT
-          cat backend/.env | grep BACKEND_PORT
-
       - name: Build and Deploy
         run: |
-          docker compose down
-          docker compose up -d --build
+          docker compose down --remove-orphans
+          docker compose build --no-cache backend
+          docker compose up -d
+          sleep 10
+          echo "=== ALL CONTAINERS ==="
+          docker compose ps
+          echo "=== ALL LOGS ==="
+          docker compose logs --timestamps
+
