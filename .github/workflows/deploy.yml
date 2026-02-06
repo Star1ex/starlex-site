@@ -54,15 +54,11 @@ jobs:
           echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
           echo "BACKEND_PORT=${{ secrets.BACKEND_PORT }}" >> .env
 
-      - name: Debug - Show BACKEND_PORT
+      - name: Debug - Show BACKEND_PORT (UNSAFE - remove after debug)
         run: |
-          echo "BACKEND_PORT value: ${{ secrets.BACKEND_PORT }}"
-          echo "---"
-          echo "Checking .env file:"
-          grep BACKEND_PORT .env || echo "BACKEND_PORT not found in .env"
-          echo "---"
-          echo "Checking backend/.env file:"
-          grep BACKEND_PORT backend/.env || echo "BACKEND_PORT not found in backend/.env"
+          echo "BACKEND_PORT from secret: ${{ secrets.BACKEND_PORT }}"
+          cat .env | grep BACKEND_PORT
+          cat backend/.env | grep BACKEND_PORT
 
       - name: Build and Deploy
         run: |
