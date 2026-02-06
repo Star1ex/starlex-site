@@ -1,5 +1,4 @@
 name: Website Deploy
-
 on:
   push:
     branches:
@@ -11,11 +10,11 @@ on:
 jobs:
   build:
     runs-on: self-hosted
-
+    
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
+      
       - name: Create Backend .env File
         run: |
           echo "DB_USER=${{ secrets.DB_USER }}" > backend/.env
@@ -46,7 +45,7 @@ jobs:
           echo "GOOGLE_CALLBACK_URL=${{ secrets.GOOGLE_CALLBACK_URL }}" >> backend/.env
           echo "CALLBACK_URL_GITHUB=${{ secrets.CALLBACK_URL_GITHUB }}" >> backend/.env
           echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> backend/.env
-          
+              
       - name: Create .env File
         run: |
           echo "DB_USER=${{ secrets.DB_USER }}" > .env
@@ -54,6 +53,16 @@ jobs:
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
           echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
           echo "BACKEND_PORT=${{ secrets.BACKEND_PORT }}" >> .env
+
+      - name: Debug - Show BACKEND_PORT
+        run: |
+          echo "BACKEND_PORT value: ${{ secrets.BACKEND_PORT }}"
+          echo "---"
+          echo "Checking .env file:"
+          grep BACKEND_PORT .env || echo "BACKEND_PORT not found in .env"
+          echo "---"
+          echo "Checking backend/.env file:"
+          grep BACKEND_PORT backend/.env || echo "BACKEND_PORT not found in backend/.env"
 
       - name: Build and Deploy
         run: |
