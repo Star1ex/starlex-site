@@ -1,16 +1,15 @@
 package routes
 
 import (
-	// ЗАКОМЕНТУВАТИ: _ "github.com/Team-Tracks/team-track-site/docs"
+	//  _ "github.com/Team-Tracks/team-track-site/docs"
 	"github.com/Team-Tracks/team-track-site/internal/api/handlers"
 	"github.com/gofiber/fiber/v2"
-	// ЗАКОМЕНТУВАТИ: fiberSwagger "github.com/swaggo/fiber-swagger"
+	// fiberSwagger "github.com/swaggo/fiber-swagger"
 )
 
 func InitRoutes(app *fiber.App, h *handlers.Handlers) {
 
 	app.Static("/uploads", "./uploads")
-	// ЗАКОМЕНТУВАТИ Swagger endpoint:
 	// app.Get("/swagger/*", fiberSwagger.WrapHandler)
 
 	api := app.Group("/api")
@@ -38,7 +37,6 @@ func InitRoutes(app *fiber.App, h *handlers.Handlers) {
 
 func setupAuthRoutes(api fiber.Router, h *handlers.Handlers) {
 	auth := api.Group("/auth")
-	// ДОДАНО: rate limiter for auth endpoints (5 requests per 15 minutes)
 	authRateLimiter := handlers.CreateAuthRateLimiter()
 
 	auth.Get("/csrf", h.GetCSRFToken)

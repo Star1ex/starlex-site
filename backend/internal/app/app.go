@@ -24,9 +24,8 @@ import (
 func StartServer() {
 
 	config := config.LoadConfig()
-	if config.JWTSecret == "" || len(config.JWTSecret) < 32 { // ДОДАНО: enforce strong JWT secret
-		log.Fatal("CRITICAL: JWT_SECRET must be set and at least 32 characters long!") // ДОДАНО: fail fast on weak secret
-	}
+	if config.JWTSecret == "" || len(config.JWTSecret) < 32 { 
+		log.Fatal("CRITICAL: JWT_SECRET must be set and at least 32 characters long!") 
 
 	db := db.Must(&config.DatabaseConfig)
 
@@ -37,7 +36,7 @@ func StartServer() {
 
 	app := fiber.New()
 
-	// ДОДАНО: security headers middleware
+	
 	app.Use(func(c *fiber.Ctx) error {
 		c.Set("X-Content-Type-Options", "nosniff")
 		c.Set("X-Frame-Options", "DENY")
@@ -47,7 +46,7 @@ func StartServer() {
 		return c.Next()
 	})
 
-	// ДОДАНО: improved CORS configuration
+	
 	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
 	if allowedOrigins == "" {
 		allowedOrigins = "http://localhost:3000,http://teamtrackwebsite.duckdns.org:8888"

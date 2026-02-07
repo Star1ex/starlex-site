@@ -34,16 +34,12 @@ type ResendCodeRequest struct {
 }
 
 // Login method
-
-// ДОДАНО: email validation helper
 var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
 
-// ДОДАНО: email validation helper
 func validateEmail(email string) bool {
 	return emailRegex.MatchString(email)
 }
 
-// ДОДАНО: security event logger
 func (h *Handlers) logSecurityEvent(ctx *fiber.Ctx, userID, email, event, details string) {
 	log.Printf("[SECURITY] Event=%s User=%s Email=%s IP=%s UserAgent=%s Details=%s",
 		event, userID, email, ctx.IP(), ctx.Get("User-Agent"), details)
@@ -72,7 +68,6 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 		})
 	}
 
-	// ДОДАНО: account lockout check
 	lockKey := fmt.Sprintf("login_attempts:%s", loginInput.Email)
 	attempts, _ := getLoginAttempts(lockKey)
 	if attempts >= 5 {
@@ -85,9 +80,7 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 	user, err := h.userService.Login(ctx.Context(), loginInput.Email, loginInput.Password)
 	if err != nil {
 		log.Println(err)
-		// ДОДАНО: increment failed attempts
 		incrementLoginAttempts(lockKey, time.Minute*15)
-		// ДОДАНО: log failed login
 		h.logSecurityEvent(ctx, "", loginInput.Email, "LOGIN_FAILED", err.Error())
 		if errors.Is(err, service.ErrPasswordNotSet) {
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -109,9 +102,7 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 		})
 	}
 
-	// ДОДАНО: clear failed attempts on success
 	clearLoginAttempts(lockKey)
-	// ДОДАНО: log successful login
 	h.logSecurityEvent(ctx, user.ID, user.Email, "LOGIN_SUCCESS", "")
 
 	// Generate access token - short-lived (1 hour)
@@ -282,7 +273,6 @@ func (h *Handlers) Register(ctx *fiber.Ctx) error {
 		})
 	}
 
-	// ДОДАНО: email format validation
 	if !validateEmail(input.Email) {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "invalid email format",

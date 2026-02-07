@@ -46,8 +46,6 @@ func (r *rateLimiter) Allow(key string) bool {
 	r.requests[key] = pruned
 	return true
 }
-
-// ДОДАНО: rate limiter for auth endpoints
 func createAuthRateLimiter() fiber.Handler {
 	limiter := newRateLimiter(5, time.Minute*15)
 	return func(c *fiber.Ctx) error {
@@ -61,7 +59,6 @@ func createAuthRateLimiter() fiber.Handler {
 	}
 }
 
-// ДОДАНО: exported wrapper for router usage
 func CreateAuthRateLimiter() fiber.Handler {
 	return createAuthRateLimiter()
 }

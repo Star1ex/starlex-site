@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/Team-Tracks/team-track-site/internal/app"
-	// ДОДАНО: Swagger docs import disabled
 	// _ "github.com/Team-Tracks/team-track-site/docs"
 )
 
