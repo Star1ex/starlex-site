@@ -2,18 +2,20 @@ package main
 
 import (
 	"github.com/Team-Tracks/team-track-site/internal/app"
+	// ДОДАНО: Swagger docs import disabled
+	// _ "github.com/Team-Tracks/team-track-site/docs"
 )
 
-// @title TeamTrack API
-// @version 1.0
-// @description This is the API for TeamTrack web-site
-// @host localhost:3000
-// @BasePath /api
-// @schemes http
-// @securityDefinitions.apikey BearerAuth
-// @in header
-// @name Authorization
-// @description Type "Bearer {your_token}"
+// Swagger disabled: title TeamTrack API
+// Swagger disabled: version 1.0
+// Swagger disabled: description This is the API for TeamTrack web-site
+// Swagger disabled: host localhost:3000
+// Swagger disabled: BasePath /api
+// Swagger disabled: schemes http
+// Swagger disabled: securityDefinitions.apikey BearerAuth
+// Swagger disabled: in header
+// Swagger disabled: name Authorization
+// Swagger disabled: description Type "Bearer {your_token}"
 func main() {
 	app.StartServer()
 }

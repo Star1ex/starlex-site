@@ -12,20 +12,20 @@ import (
 	"gorm.io/gorm"
 )
 
-// CreateTask godoc
-// @Summary      Create task
-// @Description  Creates a new task within the specified team. Requires JWT authentication.
-// @Tags         tasks
-// @Accept       json
-// @Produce      json
-// @Param        team_id         path      string       true   "Team ID"
-// @Param        task_data       body      dto.TaskApi  true   "Task data"
-// @Success      201  {object}   map[string]interface{}    "Task created successfully"
-// @Failure      400  {object}   map[string]string         "Bad request or invalid JSON"
-// @Failure      401  {object}   map[string]string         "User not authorized"
-// @Failure      500  {object}   map[string]string         "Internal server error"
-// @Security BearerAuth
-// @Router       /team/{team_id}/tasks [post]
+// Swagger disabled: CreateTask godoc
+// Swagger disabled: Summary      Create task
+// Swagger disabled: Description  Creates a new task within the specified team. Requires JWT authentication.
+// Swagger disabled: Tags         tasks
+// Swagger disabled: Accept       json
+// Swagger disabled: Produce      json
+// Swagger disabled: Param        team_id         path      string       true   "Team ID"
+// Swagger disabled: Param        task_data       body      dto.TaskApi  true   "Task data"
+// Swagger disabled: Success      201  {object}   map[string]interface{}    "Task created successfully"
+// Swagger disabled: Failure      400  {object}   map[string]string         "Bad request or invalid JSON"
+// Swagger disabled: Failure      401  {object}   map[string]string         "User not authorized"
+// Swagger disabled: Failure      500  {object}   map[string]string         "Internal server error"
+// Swagger disabled: Security BearerAuth
+// Swagger disabled: Router       /team/{team_id}/tasks [post]
 func (h *Handlers) CreateTeamTask(ctx *fiber.Ctx) error {
 	teamID := ctx.Params("team_id")
 
@@ -300,15 +300,15 @@ func (h *Handlers) GetPersonalTasks(ctx *fiber.Ctx) error {
 	return ctx.Status(200).JSON(dto.TeamTasksList(tasks))
 }
 
-// GetTeamTasks godoc
-// @Summary      Get all tasks from team
-// @Description  Returns a list of all tasks for a given team.
-// @Tags         tasks
-// @Param        team_id  path      string       true  "Team ID"
-// @Success      200      {array}   dto.TaskResponse "List of tasks"
-// @Failure      500      {object}  map[string]string "Server error"
-// @Security BearerAuth
-// @Router       /team/{team_id}/tasks [get]
+// Swagger disabled: GetTeamTasks godoc
+// Swagger disabled: Summary      Get all tasks from team
+// Swagger disabled: Description  Returns a list of all tasks for a given team.
+// Swagger disabled: Tags         tasks
+// Swagger disabled: Param        team_id  path      string       true  "Team ID"
+// Swagger disabled: Success      200      {array}   dto.TaskResponse "List of tasks"
+// Swagger disabled: Failure      500      {object}  map[string]string "Server error"
+// Swagger disabled: Security BearerAuth
+// Swagger disabled: Router       /team/{team_id}/tasks [get]
 func (h *Handlers) GetTeamTasks(ctx *fiber.Ctx) error {
 	var teamID string = ctx.Params("team_id")
 	tasks, err := h.taskService.GetTeamTasks(ctx.Context(), teamID)
@@ -322,15 +322,15 @@ func (h *Handlers) GetTeamTasks(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(response)
 }
 
-// GetUserTasks godoc
-// @Summary      Get user's tasks
-// @Description  Returns a list of all tasks assigned to a specific user.
-// @Tags         tasks
-// @Param        user_id  path      string       true  "User ID"
-// @Success      200      {array}   dto.TaskResponse "List of user's tasks"
-// @Failure      500      {object}  map[string]string "Server error"
-// @Security BearerAuth
-// @Router       /user/{user_id}/tasks [get]
+// Swagger disabled: GetUserTasks godoc
+// Swagger disabled: Summary      Get user's tasks
+// Swagger disabled: Description  Returns a list of all tasks assigned to a specific user.
+// Swagger disabled: Tags         tasks
+// Swagger disabled: Param        user_id  path      string       true  "User ID"
+// Swagger disabled: Success      200      {array}   dto.TaskResponse "List of user's tasks"
+// Swagger disabled: Failure      500      {object}  map[string]string "Server error"
+// Swagger disabled: Security BearerAuth
+// Swagger disabled: Router       /user/{user_id}/tasks [get]
 func (h *Handlers) GetUserTasks(ctx *fiber.Ctx) error {
 	id := ctx.Params("user_id")
 
@@ -345,22 +345,22 @@ func (h *Handlers) GetUserTasks(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(response)
 }
 
-// UpdateTaskProgress godoc
-// @Summary      Update task progress
-// @Description  Updates the 'Progress' field of an existing task by ID. Requires JWT authentication.
-// @Tags         tasks
-// @Accept       json
-// @Produce      json
-// @Param        team_id      path      string                     true  "Team ID"
-// @Param        task_id      path      string                     true  "Task ID"
-// @Param        updates      body      dto.UpdateDto              true  "Updated progress value"
-// @Success      200      {object}  dto.TaskResponse           "Task progress updated successfully"
-// @Failure      400      {object}  map[string]string           "Bad request, missing fields, or invalid progress value"
-// @Failure      401      {object}  map[string]string           "User not authorized"
-// @Failure      404      {object}  map[string]string           "Task not found"
-// @Failure      500      {object}  map[string]string           "Internal server error"
-// @Security BearerAuth
-// @Router       /team/{team_id}/tasks/{task_id} [put]
+// Swagger disabled: UpdateTaskProgress godoc
+// Swagger disabled: Summary      Update task progress
+// Swagger disabled: Description  Updates the 'Progress' field of an existing task by ID. Requires JWT authentication.
+// Swagger disabled: Tags         tasks
+// Swagger disabled: Accept       json
+// Swagger disabled: Produce      json
+// Swagger disabled: Param        team_id      path      string                     true  "Team ID"
+// Swagger disabled: Param        task_id      path      string                     true  "Task ID"
+// Swagger disabled: Param        updates      body      dto.UpdateDto              true  "Updated progress value"
+// Swagger disabled: Success      200      {object}  dto.TaskResponse           "Task progress updated successfully"
+// Swagger disabled: Failure      400      {object}  map[string]string           "Bad request, missing fields, or invalid progress value"
+// Swagger disabled: Failure      401      {object}  map[string]string           "User not authorized"
+// Swagger disabled: Failure      404      {object}  map[string]string           "Task not found"
+// Swagger disabled: Failure      500      {object}  map[string]string           "Internal server error"
+// Swagger disabled: Security BearerAuth
+// Swagger disabled: Router       /team/{team_id}/tasks/{task_id} [put]
 func (h *Handlers) UpdateTaskProgress(ctx *fiber.Ctx) error {
 	taskId := ctx.Params("id")
 	if taskId == "" {
@@ -407,15 +407,15 @@ func (h *Handlers) DeleteTask(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON("Successfuly deleted task")
 }
 
-// GetTasksWithoutFolder godoc
-// @Summary      Get tasks without folder
-// @Description  Returns a list of all tasks without a folder.
-// @Tags         tasks
-// @Param        user_id  path      string       true  "User ID"
-// @Success      200      {array}   dto.TaskResponse "List of tasks without folder"
-// @Failure      500      {object}  map[string]string "Server error"
-// @Security BearerAuth
-// @Router       /tasks/without-folder [get]
+// Swagger disabled: GetTasksWithoutFolder godoc
+// Swagger disabled: Summary      Get tasks without folder
+// Swagger disabled: Description  Returns a list of all tasks without a folder.
+// Swagger disabled: Tags         tasks
+// Swagger disabled: Param        user_id  path      string       true  "User ID"
+// Swagger disabled: Success      200      {array}   dto.TaskResponse "List of tasks without folder"
+// Swagger disabled: Failure      500      {object}  map[string]string "Server error"
+// Swagger disabled: Security BearerAuth
+// Swagger disabled: Router       /tasks/without-folder [get]
 func (h *Handlers) GetTasksWithoutFolder(ctx *fiber.Ctx) error {
 	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {

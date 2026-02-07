@@ -30,15 +30,15 @@ func (h *Handlers) GetUser(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(dto.ToUserProfile(user))
 }
 
-// GetTeams godoc
-// @Summary      Get teams by user
-// @Description  Returns a list of all tasks for a given team.
-// @Tags         users
-// @Param        user_id  path      string       true  "User ID"
-// @Success      200      {array}   dto.TeamResponse "List of teams"
-// @Failure      500      {object}  map[string]string "Server error"
-// @Security BearerAuth
-// @Router       /team/:id [get]
+// Swagger disabled: GetTeams godoc
+// Swagger disabled: Summary      Get teams by user
+// Swagger disabled: Description  Returns a list of all tasks for a given team.
+// Swagger disabled: Tags         users
+// Swagger disabled: Param        user_id  path      string       true  "User ID"
+// Swagger disabled: Success      200      {array}   dto.TeamResponse "List of teams"
+// Swagger disabled: Failure      500      {object}  map[string]string "Server error"
+// Swagger disabled: Security BearerAuth
+// Swagger disabled: Router       /team/:id [get]
 func (h *Handlers) GetTeams(ctx *fiber.Ctx) error {
 	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
@@ -53,19 +53,19 @@ func (h *Handlers) GetTeams(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(response)
 }
 
-// UploadPhoto godoc
-// @Summary Upload user photo
-// @Description Uploads a photo file for a specific user
-// @Tags users
-// @Accept multipart/form-data
-// @Produce json
-// @Param id path string true "User ID"
-// @Param photo formData file true "Photo file"
-// @Success 200 {object} map[string]string
-// @Failure 400 {object} map[string]string
-// @Failure 500 {object} map[string]string
-// @Security BearerAuth
-// @Router /users/{id}/photo [post]
+// Swagger disabled: UploadPhoto godoc
+// Swagger disabled: Summary Upload user photo
+// Swagger disabled: Description Uploads a photo file for a specific user
+// Swagger disabled: Tags users
+// Swagger disabled: Accept multipart/form-data
+// Swagger disabled: Produce json
+// Swagger disabled: Param id path string true "User ID"
+// Swagger disabled: Param photo formData file true "Photo file"
+// Swagger disabled: Success 200 {object} map[string]string
+// Swagger disabled: Failure 400 {object} map[string]string
+// Swagger disabled: Failure 500 {object} map[string]string
+// Swagger disabled: Security BearerAuth
+// Swagger disabled: Router /users/{id}/photo [post]
 func (h *Handlers) UploadPhoto(c *fiber.Ctx) error {
 	userID, authErr := h.getAuthenticatedUserID(c)
 	if authErr != nil {
