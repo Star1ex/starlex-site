@@ -1,16 +1,16 @@
 package routes
 
 import (
-	_ "github.com/Team-Tracks/team-track-site/docs"
+	//  _ "github.com/Team-Tracks/team-track-site/docs"
 	"github.com/Team-Tracks/team-track-site/internal/api/handlers"
 	"github.com/gofiber/fiber/v2"
-	fiberSwagger "github.com/swaggo/fiber-swagger"
+	// fiberSwagger "github.com/swaggo/fiber-swagger"
 )
 
 func InitRoutes(app *fiber.App, h *handlers.Handlers) {
 
 	app.Static("/uploads", "./uploads")
-	app.Get("/swagger/*", fiberSwagger.WrapHandler)
+	// app.Get("/swagger/*", fiberSwagger.WrapHandler)
 
 	api := app.Group("/api")
 
@@ -37,13 +37,15 @@ func InitRoutes(app *fiber.App, h *handlers.Handlers) {
 
 func setupAuthRoutes(api fiber.Router, h *handlers.Handlers) {
 	auth := api.Group("/auth")
+	authRateLimiter := handlers.CreateAuthRateLimiter()
+
 	auth.Get("/csrf", h.GetCSRFToken)
-	auth.Post("/login", h.Login)
-	auth.Post("/register", h.Register)
+	auth.Post("/login", authRateLimiter, h.Login)
+	auth.Post("/register", authRateLimiter, h.Register)
 	auth.Post("refresh", h.Refresh)
-	auth.Post("/resend-code", h.ResendCode)
+	auth.Post("/resend-code", authRateLimiter, h.ResendCode)
 	auth.Post("/verify", h.VerifyEmail)
-	auth.Post("/password-reset/request", h.RequestPasswordReset)
+	auth.Post("/password-reset/request", authRateLimiter, h.RequestPasswordReset)
 	auth.Post("/password-reset/verify", h.VerifyPasswordReset)
 	auth.Post("/password-reset/confirm", h.ResetPassword)
 	auth.Get("/google", h.OAuthRateLimit, h.StartGoogleOAuth)

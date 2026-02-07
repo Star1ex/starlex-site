@@ -8,19 +8,19 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// CreateFolder godoc
-// @Summary      Create a new folder
-// @Description  Creates a new folder for the authenticated user. Requires JWT authentication.
-// @Tags         folders
-// @Accept       json
-// @Produce      json
-// @Param        folder       body      dto.FolderDTO             true  "Folder data"
-// @Success      200          {object}  dto.FolderDTO             "Successfully created folder"
-// @Failure      400          {object}  map[string]string         "Invalid request body"
-// @Failure      401          {object}  map[string]string         "User not authorized"
-// @Failure      500          {object}  map[string]string         "Internal server error"
-// @Security     BearerAuth
-// @Router       /folder/ [post]
+// Swagger disabled: CreateFolder godoc
+// Swagger disabled: Summary      Create a new folder
+// Swagger disabled: Description  Creates a new folder for the authenticated user. Requires JWT authentication.
+// Swagger disabled: Tags         folders
+// Swagger disabled: Accept       json
+// Swagger disabled: Produce      json
+// Swagger disabled: Param        folder       body      dto.FolderDTO             true  "Folder data"
+// Swagger disabled: Success      200          {object}  dto.FolderDTO             "Successfully created folder"
+// Swagger disabled: Failure      400          {object}  map[string]string         "Invalid request body"
+// Swagger disabled: Failure      401          {object}  map[string]string         "User not authorized"
+// Swagger disabled: Failure      500          {object}  map[string]string         "Internal server error"
+// Swagger disabled: Security     BearerAuth
+// Swagger disabled: Router       /folder/ [post]
 func (h *Handlers) CreateFolder(ctx *fiber.Ctx) error {
 	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
@@ -60,19 +60,19 @@ func (h *Handlers) CreateFolder(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(dto.FromDomainFolder(folder))
 }
 
-// GetFolderByID godoc
-// @Summary      Get folder by ID
-// @Description  Retrieves a single folder by its unique identifier passed as a query parameter. Requires JWT authentication.
-// @Tags         folders
-// @Accept       json
-// @Produce      json
-// @Param        id           query     string                    true  "Folder ID"
-// @Success      200          {object}  dto.FolderDTO             "Folder data"
-// @Failure      400          {object}  map[string]string         "Missing or invalid 'id' query parameter"
-// @Failure      401          {object}  map[string]string         "User not authorized"
-// @Failure      500          {object}  map[string]string         "Internal server error"
-// @Security     BearerAuth
-// @Router       /folder/ [get]
+// Swagger disabled: GetFolderByID godoc
+// Swagger disabled: Summary      Get folder by ID
+// Swagger disabled: Description  Retrieves a single folder by its unique identifier passed as a query parameter. Requires JWT authentication.
+// Swagger disabled: Tags         folders
+// Swagger disabled: Accept       json
+// Swagger disabled: Produce      json
+// Swagger disabled: Param        id           query     string                    true  "Folder ID"
+// Swagger disabled: Success      200          {object}  dto.FolderDTO             "Folder data"
+// Swagger disabled: Failure      400          {object}  map[string]string         "Missing or invalid 'id' query parameter"
+// Swagger disabled: Failure      401          {object}  map[string]string         "User not authorized"
+// Swagger disabled: Failure      500          {object}  map[string]string         "Internal server error"
+// Swagger disabled: Security     BearerAuth
+// Swagger disabled: Router       /folder/ [get]
 func (h *Handlers) GetFolderByID(ctx *fiber.Ctx) error {
 	_, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
@@ -88,17 +88,17 @@ func (h *Handlers) GetFolderByID(ctx *fiber.Ctx) error {
 	return ctx.Status(200).JSON(dto.FromDomainFolder(folder))
 }
 
-// GetFoldersByUserID godoc
-// @Summary      Get folders of the authenticated user
-// @Description  Returns all folders owned by the currently authenticated user. User ID is extracted from the JWT token.
-// @Tags         folders
-// @Accept       json
-// @Produce      json
-// @Success      200          {array}   dto.FolderDTO             "List of user folders"
-// @Failure      401          {object}  map[string]string         "User not authorized"
-// @Failure      500          {object}  map[string]string         "Internal server error"
-// @Security     BearerAuth
-// @Router       /folder/direct [get]
+// Swagger disabled: GetFoldersByUserID godoc
+// Swagger disabled: Summary      Get folders of the authenticated user
+// Swagger disabled: Description  Returns all folders owned by the currently authenticated user. User ID is extracted from the JWT token.
+// Swagger disabled: Tags         folders
+// Swagger disabled: Accept       json
+// Swagger disabled: Produce      json
+// Swagger disabled: Success      200          {array}   dto.FolderDTO             "List of user folders"
+// Swagger disabled: Failure      401          {object}  map[string]string         "User not authorized"
+// Swagger disabled: Failure      500          {object}  map[string]string         "Internal server error"
+// Swagger disabled: Security     BearerAuth
+// Swagger disabled: Router       /folder/direct [get]
 func (h *Handlers) GetFoldersByUserID(ctx *fiber.Ctx) error {
 	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
@@ -117,18 +117,18 @@ func (h *Handlers) GetFoldersByUserID(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(dto.FromDomainFolders(folders))
 }
 
-// GetFoldersByTeam godoc
-// @Summary      Get folders by team ID
-// @Description  Returns all folders belonging to a specific team. Requires JWT authentication.
-// @Tags         folders
-// @Accept       json
-// @Produce      json
-// @Param        team_id      path      string                    true  "Team ID"
-// @Success      200          {array}   dto.FolderDTO             "List of team folders"
-// @Failure      401          {object}  map[string]string         "User not authorized"
-// @Failure      500          {object}  map[string]string         "Internal server error"
-// @Security     BearerAuth
-// @Router       /folder/team/{team_id} [get]
+// Swagger disabled: GetFoldersByTeam godoc
+// Swagger disabled: Summary      Get folders by team ID
+// Swagger disabled: Description  Returns all folders belonging to a specific team. Requires JWT authentication.
+// Swagger disabled: Tags         folders
+// Swagger disabled: Accept       json
+// Swagger disabled: Produce      json
+// Swagger disabled: Param        team_id      path      string                    true  "Team ID"
+// Swagger disabled: Success      200          {array}   dto.FolderDTO             "List of team folders"
+// Swagger disabled: Failure      401          {object}  map[string]string         "User not authorized"
+// Swagger disabled: Failure      500          {object}  map[string]string         "Internal server error"
+// Swagger disabled: Security     BearerAuth
+// Swagger disabled: Router       /folder/team/{team_id} [get]
 func (h *Handlers) GetFoldersByTeam(ctx *fiber.Ctx) error {
 	_, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
@@ -149,19 +149,19 @@ func (h *Handlers) GetFoldersByTeam(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(dto.FromDomainFolders(folders))
 }
 
-// GetFoldersByParentID godoc
-// @Summary      Get sub-folders by parent folder ID
-// @Description  Returns all child folders of a given parent folder passed as a query parameter. Requires JWT authentication.
-// @Tags         folders
-// @Accept       json
-// @Produce      json
-// @Param        parent_id    query     string                    true  "Parent folder ID"
-// @Success      200          {array}   dto.FolderDTO             "List of sub-folders"
-// @Failure      400          {object}  map[string]string         "Missing or invalid 'parent_id' query parameter"
-// @Failure      401          {object}  map[string]string         "User not authorized"
-// @Failure      500          {object}  map[string]string         "Internal server error"
-// @Security     BearerAuth
-// @Router       /folder/sub [get]
+// Swagger disabled: GetFoldersByParentID godoc
+// Swagger disabled: Summary      Get sub-folders by parent folder ID
+// Swagger disabled: Description  Returns all child folders of a given parent folder passed as a query parameter. Requires JWT authentication.
+// Swagger disabled: Tags         folders
+// Swagger disabled: Accept       json
+// Swagger disabled: Produce      json
+// Swagger disabled: Param        parent_id    query     string                    true  "Parent folder ID"
+// Swagger disabled: Success      200          {array}   dto.FolderDTO             "List of sub-folders"
+// Swagger disabled: Failure      400          {object}  map[string]string         "Missing or invalid 'parent_id' query parameter"
+// Swagger disabled: Failure      401          {object}  map[string]string         "User not authorized"
+// Swagger disabled: Failure      500          {object}  map[string]string         "Internal server error"
+// Swagger disabled: Security     BearerAuth
+// Swagger disabled: Router       /folder/sub [get]
 func (h *Handlers) GetFoldersByParentID(ctx *fiber.Ctx) error {
 	_, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
@@ -187,19 +187,19 @@ func (h *Handlers) GetFoldersByParentID(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(dto.FromDomainFolders(folders))
 }
 
-// UpdateFolder godoc
-// @Summary      Update an existing folder
-// @Description  Updates folder fields (name, color, icon, position, etc.) by providing the full folder payload with the target ID. Requires JWT authentication.
-// @Tags         folders
-// @Accept       json
-// @Produce      json
-// @Param        folder       body      dto.FolderDTO             true  "Updated folder data (must include id)"
-// @Success      200          {string}  string                    "Successfully updated folder"
-// @Failure      400          {object}  map[string]string         "Invalid request body"
-// @Failure      401          {object}  map[string]string         "User not authorized"
-// @Failure      500          {object}  map[string]string         "Internal server error"
-// @Security     BearerAuth
-// @Router       /folder/update [put]
+// Swagger disabled: UpdateFolder godoc
+// Swagger disabled: Summary      Update an existing folder
+// Swagger disabled: Description  Updates folder fields (name, color, icon, position, etc.) by providing the full folder payload with the target ID. Requires JWT authentication.
+// Swagger disabled: Tags         folders
+// Swagger disabled: Accept       json
+// Swagger disabled: Produce      json
+// Swagger disabled: Param        folder       body      dto.FolderDTO             true  "Updated folder data (must include id)"
+// Swagger disabled: Success      200          {string}  string                    "Successfully updated folder"
+// Swagger disabled: Failure      400          {object}  map[string]string         "Invalid request body"
+// Swagger disabled: Failure      401          {object}  map[string]string         "User not authorized"
+// Swagger disabled: Failure      500          {object}  map[string]string         "Internal server error"
+// Swagger disabled: Security     BearerAuth
+// Swagger disabled: Router       /folder/update [put]
 func (h *Handlers) UpdateFolder(ctx *fiber.Ctx) error {
 	_, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
@@ -228,19 +228,19 @@ func (h *Handlers) UpdateFolder(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON("Successfully updated folder")
 }
 
-// DeleteFolder godoc
-// @Summary      Delete a folder by ID
-// @Description  Permanently deletes a folder by the provided folder ID. Requires JWT authentication.
-// @Tags         folders
-// @Accept       json
-// @Produce      json
-// @Param        folder_id    body      dto.FolderDeleteDTO       true  "Folder ID to delete"
-// @Success      200          {string}  string                    "Successfully deleted folder"
-// @Failure      400          {object}  map[string]string         "Invalid request body"
-// @Failure      401          {object}  map[string]string         "User not authorized"
-// @Failure      500          {object}  map[string]string         "Internal server error"
-// @Security     BearerAuth
-// @Router       /folder/delete [delete]
+// Swagger disabled: DeleteFolder godoc
+// Swagger disabled: Summary      Delete a folder by ID
+// Swagger disabled: Description  Permanently deletes a folder by the provided folder ID. Requires JWT authentication.
+// Swagger disabled: Tags         folders
+// Swagger disabled: Accept       json
+// Swagger disabled: Produce      json
+// Swagger disabled: Param        folder_id    body      dto.FolderDeleteDTO       true  "Folder ID to delete"
+// Swagger disabled: Success      200          {string}  string                    "Successfully deleted folder"
+// Swagger disabled: Failure      400          {object}  map[string]string         "Invalid request body"
+// Swagger disabled: Failure      401          {object}  map[string]string         "User not authorized"
+// Swagger disabled: Failure      500          {object}  map[string]string         "Internal server error"
+// Swagger disabled: Security     BearerAuth
+// Swagger disabled: Router       /folder/delete [delete]
 func (h *Handlers) DeleteFolder(ctx *fiber.Ctx) error {
 	_, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
@@ -268,19 +268,19 @@ func (h *Handlers) DeleteFolder(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON("Successfully deleted folder")
 }
 
-// MoveFolder godoc
-// @Summary      Move a folder to a new parent
-// @Description  Changes the parent folder of an existing folder, effectively moving it in the folder tree. Requires JWT authentication.
-// @Tags         folders
-// @Accept       json
-// @Produce      json
-// @Param        move         body      dto.FolderMoveDTO         true  "Folder ID and target parent folder ID"
-// @Success      200          {string}  string                    "Successfully moved folder"
-// @Failure      400          {object}  map[string]string         "Invalid request body"
-// @Failure      401          {object}  map[string]string         "User not authorized"
-// @Failure      500          {object}  map[string]string         "Internal server error"
-// @Security     BearerAuth
-// @Router       /folder/move [put]
+// Swagger disabled: MoveFolder godoc
+// Swagger disabled: Summary      Move a folder to a new parent
+// Swagger disabled: Description  Changes the parent folder of an existing folder, effectively moving it in the folder tree. Requires JWT authentication.
+// Swagger disabled: Tags         folders
+// Swagger disabled: Accept       json
+// Swagger disabled: Produce      json
+// Swagger disabled: Param        move         body      dto.FolderMoveDTO         true  "Folder ID and target parent folder ID"
+// Swagger disabled: Success      200          {string}  string                    "Successfully moved folder"
+// Swagger disabled: Failure      400          {object}  map[string]string         "Invalid request body"
+// Swagger disabled: Failure      401          {object}  map[string]string         "User not authorized"
+// Swagger disabled: Failure      500          {object}  map[string]string         "Internal server error"
+// Swagger disabled: Security     BearerAuth
+// Swagger disabled: Router       /folder/move [put]
 func (h *Handlers) MoveFolder(ctx *fiber.Ctx) error {
 	_, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {

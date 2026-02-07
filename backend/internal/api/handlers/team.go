@@ -11,18 +11,18 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// CreateTeam godoc
-// @Summary      Created team
-// @Description  Created new team
-// @Tags         team
-// @Accept       json
-// @Produce      json
-// @Param        user            body      dto.TeamApi  true  "Team data"
-// @Success      201  {object}   map[string]interface{}    "team created successfuly"
-// @Failure      400  {object}   map[string]string         "bad request"
-// @Failure      500  {object}   map[string]string         "internal server error"
-// @Security BearerAuth
-// @Router       /team [post]
+// Swagger disabled: CreateTeam godoc
+// Swagger disabled: Summary      Created team
+// Swagger disabled: Description  Created new team
+// Swagger disabled: Tags         team
+// Swagger disabled: Accept       json
+// Swagger disabled: Produce      json
+// Swagger disabled: Param        user            body      dto.TeamApi  true  "Team data"
+// Swagger disabled: Success      201  {object}   map[string]interface{}    "team created successfuly"
+// Swagger disabled: Failure      400  {object}   map[string]string         "bad request"
+// Swagger disabled: Failure      500  {object}   map[string]string         "internal server error"
+// Swagger disabled: Security BearerAuth
+// Swagger disabled: Router       /team [post]
 func (h *Handlers) CreateTeam(ctx *fiber.Ctx) error {
 
 	userID, authErr := h.getAuthenticatedUserID(ctx)
@@ -159,15 +159,15 @@ func (h *Handlers) PatchTeamDescription(ctx *fiber.Ctx) error {
 	return ctx.SendStatus(fiber.StatusNoContent)
 }
 
-// GetUsers godoc
-// @Summary 		Get all users from team
-// @Description 	Return all users from team
-// @Tags team
-// @Param id path string true "Team ID"
-// @Success 200 {array} dto.UserResponse "List of users"
-// @Failure 500 {object} map[string]string "Server error"
-// @Security BearerAuth
-// @Router /team/{id} [get]
+// Swagger disabled: GetUsers godoc
+// Swagger disabled: Summary 		Get all users from team
+// Swagger disabled: Description 	Return all users from team
+// Swagger disabled: Tags team
+// Swagger disabled: Param id path string true "Team ID"
+// Swagger disabled: Success 200 {array} dto.UserResponse "List of users"
+// Swagger disabled: Failure 500 {object} map[string]string "Server error"
+// Swagger disabled: Security BearerAuth
+// Swagger disabled: Router /team/{id} [get]
 func (h *Handlers) GetUsers(ctx *fiber.Ctx) error {
 	var id string = ctx.Params("id")
 
@@ -184,21 +184,21 @@ func (h *Handlers) GetUsers(ctx *fiber.Ctx) error {
 
 // internal/api/handlers/team_handler.go
 
-// AddUserToTeam godoc
-// @Summary      Add user to team
-// @Description  Add user to team by email (only team owner)
-// @Tags         team
-// @Accept       json
-// @Produce      json
-// @Param        id   path      string                    true  "Team ID"
-// @Param        user body      dto.AddUserToTeam  true  "User email"
-// @Success      200  {object}  map[string]interface{}    "user added successfully"
-// @Failure      400  {object}  map[string]string         "bad request"
-// @Failure      403  {object}  map[string]string         "forbidden"
-// @Failure      404  {object}  map[string]string         "not found"
-// @Failure      500  {object}  map[string]string         "internal server error"
-// @Security     BearerAuth
-// @Router       /team/{id}/users [post]
+// Swagger disabled: AddUserToTeam godoc
+// Swagger disabled: Summary      Add user to team
+// Swagger disabled: Description  Add user to team by email (only team owner)
+// Swagger disabled: Tags         team
+// Swagger disabled: Accept       json
+// Swagger disabled: Produce      json
+// Swagger disabled: Param        id   path      string                    true  "Team ID"
+// Swagger disabled: Param        user body      dto.AddUserToTeam  true  "User email"
+// Swagger disabled: Success      200  {object}  map[string]interface{}    "user added successfully"
+// Swagger disabled: Failure      400  {object}  map[string]string         "bad request"
+// Swagger disabled: Failure      403  {object}  map[string]string         "forbidden"
+// Swagger disabled: Failure      404  {object}  map[string]string         "not found"
+// Swagger disabled: Failure      500  {object}  map[string]string         "internal server error"
+// Swagger disabled: Security     BearerAuth
+// Swagger disabled: Router       /team/{id}/users [post]
 func (h *Handlers) AddUserToTeam(ctx *fiber.Ctx) error {
 	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
@@ -245,21 +245,21 @@ func (h *Handlers) AddUserToTeam(ctx *fiber.Ctx) error {
 	})
 }
 
-// RemoveUserFromTeam godoc
-// @Summary      Remove user from team
-// @Description  Remove user from team by userId (only team owner)
-// @Tags         team
-// @Accept       json
-// @Produce      json
-// @Param        id   path      string                       true  "Team ID"
-// @Param        user body      dto.RemoveUserFromTeamRequest true  "User ID to remove"
-// @Success      200  {object}  map[string]interface{}       "user removed successfully"
-// @Failure      400  {object}  map[string]string            "bad request"
-// @Failure      403  {object}  map[string]string            "forbidden"
-// @Failure      404  {object}  map[string]string            "not found"
-// @Failure      500  {object}  map[string]string            "internal server error"
-// @Security     BearerAuth
-// @Router       /team/{id}/remove-user [post]
+// Swagger disabled: RemoveUserFromTeam godoc
+// Swagger disabled: Summary      Remove user from team
+// Swagger disabled: Description  Remove user from team by userId (only team owner)
+// Swagger disabled: Tags         team
+// Swagger disabled: Accept       json
+// Swagger disabled: Produce      json
+// Swagger disabled: Param        id   path      string                       true  "Team ID"
+// Swagger disabled: Param        user body      dto.RemoveUserFromTeamRequest true  "User ID to remove"
+// Swagger disabled: Success      200  {object}  map[string]interface{}       "user removed successfully"
+// Swagger disabled: Failure      400  {object}  map[string]string            "bad request"
+// Swagger disabled: Failure      403  {object}  map[string]string            "forbidden"
+// Swagger disabled: Failure      404  {object}  map[string]string            "not found"
+// Swagger disabled: Failure      500  {object}  map[string]string            "internal server error"
+// Swagger disabled: Security     BearerAuth
+// Swagger disabled: Router       /team/{id}/remove-user [post]
 func (h *Handlers) RemoveUserFromTeam(ctx *fiber.Ctx) error {
 	// Get current authenticated user
 	currentUserID, authErr := h.getAuthenticatedUserID(ctx)

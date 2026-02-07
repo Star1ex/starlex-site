@@ -3,6 +3,8 @@ package handlers
 import (
 	"sync"
 	"time"
+
+	"github.com/gofiber/fiber/v2"
 )
 
 type rateLimiter struct {
@@ -43,4 +45,20 @@ func (r *rateLimiter) Allow(key string) bool {
 	pruned = append(pruned, now)
 	r.requests[key] = pruned
 	return true
+}
+func createAuthRateLimiter() fiber.Handler {
+	limiter := newRateLimiter(5, time.Minute*15)
+	return func(c *fiber.Ctx) error {
+		key := c.IP()
+		if !limiter.Allow(key) {
+			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
+				"error": "too many attempts, please try again later",
+			})
+		}
+		return c.Next()
+	}
+}
+
+func CreateAuthRateLimiter() fiber.Handler {
+	return createAuthRateLimiter()
 }

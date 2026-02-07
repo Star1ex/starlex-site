@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"regexp"
 	"time"
 
 	"github.com/Team-Tracks/team-track-site/internal/api/dto"
@@ -33,20 +34,30 @@ type ResendCodeRequest struct {
 }
 
 // Login method
+var emailRegex = regexp.MustCompile(`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`)
 
-// Login godoc:
-// @Summary      Auth
-// @Description  Auth if user created and verified
-// @Tags         auth
-// @Accept       json
-// @Produce      json
-// @Param        user            body      SignIn  true  "User data"
-// @Success      200  {object}   map[string]interface{}    "user auth successfully"
-// @Failure      400  {object}   map[string]string         "bad request"
-// @Failure      401  {object}   map[string]string         "unauthorized"
-// @Failure      403  {object}   map[string]string         "email not verified"
-// @Failure      500  {object}   map[string]string         "internal server error"
-// @Router       /auth/login [post]
+func validateEmail(email string) bool {
+	return emailRegex.MatchString(email)
+}
+
+func (h *Handlers) logSecurityEvent(ctx *fiber.Ctx, userID, email, event, details string) {
+	log.Printf("[SECURITY] Event=%s User=%s Email=%s IP=%s UserAgent=%s Details=%s",
+		event, userID, email, ctx.IP(), ctx.Get("User-Agent"), details)
+}
+
+// Swagger disabled: Login godoc
+// Swagger disabled: Summary      Auth
+// Swagger disabled: Description  Auth if user created and verified
+// Swagger disabled: Tags         auth
+// Swagger disabled: Accept       json
+// Swagger disabled: Produce      json
+// Swagger disabled: Param        user            body      SignIn  true  "User data"
+// Swagger disabled: Success      200  {object}   map[string]interface{}    "user auth successfully"
+// Swagger disabled: Failure      400  {object}   map[string]string         "bad request"
+// Swagger disabled: Failure      401  {object}   map[string]string         "unauthorized"
+// Swagger disabled: Failure      403  {object}   map[string]string         "email not verified"
+// Swagger disabled: Failure      500  {object}   map[string]string         "internal server error"
+// Swagger disabled: Router       /auth/login [post]
 func (h *Handlers) Login(ctx *fiber.Ctx) error {
 	var loginInput SignIn
 
@@ -57,9 +68,20 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 		})
 	}
 
+	lockKey := fmt.Sprintf("login_attempts:%s", loginInput.Email)
+	attempts, _ := getLoginAttempts(lockKey)
+	if attempts >= 5 {
+		return ctx.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
+			"error":       "account temporarily locked due to too many failed attempts",
+			"retry_after": "15 minutes",
+		})
+	}
+
 	user, err := h.userService.Login(ctx.Context(), loginInput.Email, loginInput.Password)
 	if err != nil {
 		log.Println(err)
+		incrementLoginAttempts(lockKey, time.Minute*15)
+		h.logSecurityEvent(ctx, "", loginInput.Email, "LOGIN_FAILED", err.Error())
 		if errors.Is(err, service.ErrPasswordNotSet) {
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error":          "password not set for this account",
@@ -79,6 +101,9 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 			"message": "Please verify your email before login in",
 		})
 	}
+
+	clearLoginAttempts(lockKey)
+	h.logSecurityEvent(ctx, user.ID, user.Email, "LOGIN_SUCCESS", "")
 
 	// Generate access token - short-lived (1 hour)
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
@@ -119,17 +144,17 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 	})
 }
 
-// Refresh godoc:
-// @Summary      Refresh Access Token
-// @Description  Refresh access token using refresh token
-// @Tags         auth
-// @Accept       json
-// @Produce      json
-// @Param        request         body      RefreshTokenRequest  true  "Refresh token data"
-// @Success      200  {object}   map[string]string    "access token refreshed successfully"
-// @Failure      400  {object}   map[string]string    "bad request"
-// @Failure      401  {object}   map[string]string    "invalid or expired refresh token"
-// @Router       /auth/refresh [post]
+// Swagger disabled: Refresh godoc
+// Swagger disabled: Summary      Refresh Access Token
+// Swagger disabled: Description  Refresh access token using refresh token
+// Swagger disabled: Tags         auth
+// Swagger disabled: Accept       json
+// Swagger disabled: Produce      json
+// Swagger disabled: Param        request         body      RefreshTokenRequest  true  "Refresh token data"
+// Swagger disabled: Success      200  {object}   map[string]string    "access token refreshed successfully"
+// Swagger disabled: Failure      400  {object}   map[string]string    "bad request"
+// Swagger disabled: Failure      401  {object}   map[string]string    "invalid or expired refresh token"
+// Swagger disabled: Router       /auth/refresh [post]
 func (h *Handlers) Refresh(ctx *fiber.Ctx) error {
 	// Try to get refresh token from cookie first, then from request body
 	refreshTokenStr := ctx.Cookies("refreshToken")
@@ -227,17 +252,17 @@ func (h *Handlers) Refresh(ctx *fiber.Ctx) error {
 
 // Register method
 
-// Register godoc
-// @Summary      Register
-// @Description  Register new user and send verification email
-// @Tags         auth
-// @Accept       json
-// @Produce      json
-// @Param        user            body      dto.UserApi  true  "User data"
-// @Success      201  {object}   map[string]interface{}    "user created successfully"
-// @Failure      400  {object}   map[string]string         "bad request"
-// @Failure      500  {object}   map[string]string         "internal server error"
-// @Router       /auth/register [post]
+// Swagger disabled: Register godoc
+// Swagger disabled: Summary      Register
+// Swagger disabled: Description  Register new user and send verification email
+// Swagger disabled: Tags         auth
+// Swagger disabled: Accept       json
+// Swagger disabled: Produce      json
+// Swagger disabled: Param        user            body      dto.UserApi  true  "User data"
+// Swagger disabled: Success      201  {object}   map[string]interface{}    "user created successfully"
+// Swagger disabled: Failure      400  {object}   map[string]string         "bad request"
+// Swagger disabled: Failure      500  {object}   map[string]string         "internal server error"
+// Swagger disabled: Router       /auth/register [post]
 func (h *Handlers) Register(ctx *fiber.Ctx) error {
 	var input dto.UserApi
 
@@ -245,6 +270,12 @@ func (h *Handlers) Register(ctx *fiber.Ctx) error {
 		log.Println(err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": err.Error(),
+		})
+	}
+
+	if !validateEmail(input.Email) {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "invalid email format",
 		})
 	}
 
@@ -297,17 +328,17 @@ func (h *Handlers) Register(ctx *fiber.Ctx) error {
 	})
 }
 
-// VerifyEmail godoc
-// @Summary      Verify Email
-// @Description  Verify user email with code
-// @Tags         auth
-// @Accept       json
-// @Produce      json
-// @Param        request         body      VerifyEmailRequest  true  "Verification data"
-// @Success      200  {object}   map[string]string    "email verified successfully"
-// @Failure      400  {object}   map[string]string    "bad request"
-// @Failure      500  {object}   map[string]string    "internal server error"
-// @Router       /auth/verify [post]
+// Swagger disabled: VerifyEmail godoc
+// Swagger disabled: Summary      Verify Email
+// Swagger disabled: Description  Verify user email with code
+// Swagger disabled: Tags         auth
+// Swagger disabled: Accept       json
+// Swagger disabled: Produce      json
+// Swagger disabled: Param        request         body      VerifyEmailRequest  true  "Verification data"
+// Swagger disabled: Success      200  {object}   map[string]string    "email verified successfully"
+// Swagger disabled: Failure      400  {object}   map[string]string    "bad request"
+// Swagger disabled: Failure      500  {object}   map[string]string    "internal server error"
+// Swagger disabled: Router       /auth/verify [post]
 func (h *Handlers) VerifyEmail(ctx *fiber.Ctx) error {
 	var input VerifyEmailRequest
 	if err := ctx.BodyParser(&input); err != nil {
@@ -348,17 +379,17 @@ func (h *Handlers) notifyUserRegistered(user *dto.User) {
 	// impl needs
 }
 
-// ResendCode godoc
-// @Summary      Resend Verification Code
-// @Description  Resend verification code to user email
-// @Tags         auth
-// @Accept       json
-// @Produce      json
-// @Param        request         body      ResendCodeRequest  true  "User ID"
-// @Success      200  {object}   map[string]string    "code resent successfully"
-// @Failure      400  {object}   map[string]string    "bad request"
-// @Failure      500  {object}   map[string]string    "internal server error"
-// @Router       /auth/resend-code [post]
+// Swagger disabled: ResendCode godoc
+// Swagger disabled: Summary      Resend Verification Code
+// Swagger disabled: Description  Resend verification code to user email
+// Swagger disabled: Tags         auth
+// Swagger disabled: Accept       json
+// Swagger disabled: Produce      json
+// Swagger disabled: Param        request         body      ResendCodeRequest  true  "User ID"
+// Swagger disabled: Success      200  {object}   map[string]string    "code resent successfully"
+// Swagger disabled: Failure      400  {object}   map[string]string    "bad request"
+// Swagger disabled: Failure      500  {object}   map[string]string    "internal server error"
+// Swagger disabled: Router       /auth/resend-code [post]
 func (h *Handlers) ResendCode(ctx *fiber.Ctx) error {
 	var input ResendCodeRequest
 	if err := ctx.BodyParser(&input); err != nil {

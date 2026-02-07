@@ -7,15 +7,15 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// @Summary      Search users
-// @Description  Search user by email
-// @Tags         search
-// @Accept       json
-// @Produce      json
-// @Param        email   path      string  true  "User Email"
-// @Success      200     {array}   dto.UserResponse
-// @Security BearerAuth
-// @Router       /search/{email} [get]
+// Swagger disabled: Summary      Search users
+// Swagger disabled: Description  Search user by email
+// Swagger disabled: Tags         search
+// Swagger disabled: Accept       json
+// Swagger disabled: Produce      json
+// Swagger disabled: Param        email   path      string  true  "User Email"
+// Swagger disabled: Success      200     {array}   dto.UserResponse
+// Swagger disabled: Security BearerAuth
+// Swagger disabled: Router       /search/{email} [get]
 func (h *Handlers) Search(ctx *fiber.Ctx) error {
 	email := ctx.Params("email")
 	if email == "" {

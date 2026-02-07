@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/Team-Tracks/team-track-site/internal/api/handlers"
@@ -23,9 +24,8 @@ import (
 func StartServer() {
 
 	config := config.LoadConfig()
-	if config.JWTSecret == "" {
-		log.Println("WARNING: JWT_SECRET is not set; tokens will be insecure.")
-	}
+	if config.JWTSecret == "" || len(config.JWTSecret) < 32 { 
+		log.Fatal("CRITICAL: JWT_SECRET must be set and at least 32 characters long!") 
 
 	db := db.Must(&config.DatabaseConfig)
 
@@ -35,11 +35,28 @@ func StartServer() {
 	}
 
 	app := fiber.New()
+
+	
+	app.Use(func(c *fiber.Ctx) error {
+		c.Set("X-Content-Type-Options", "nosniff")
+		c.Set("X-Frame-Options", "DENY")
+		c.Set("X-XSS-Protection", "1; mode=block")
+		c.Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+		c.Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'")
+		return c.Next()
+	})
+
+	
+	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
+	if allowedOrigins == "" {
+		allowedOrigins = "http://localhost:3000,http://teamtrackwebsite.duckdns.org:8888"
+	}
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "http://teamtrackwebsite.duckdns.org:8888",
-		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
+		AllowOrigins:     allowedOrigins,
+		AllowMethods:     "GET,POST,PUT,DELETE,PATCH,OPTIONS",
 		AllowHeaders:     "Origin,Content-Type,Accept,Authorization,X-CSRF-Token",
 		AllowCredentials: true,
+		MaxAge:           86400,
 	}))
 
 	bus := events.NewBus()
