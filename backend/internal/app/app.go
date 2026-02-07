@@ -49,7 +49,7 @@ func StartServer() {
 	
 	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
 	if allowedOrigins == "" {
-		allowedOrigins = "http://localhost:3000,http://teamtrackwebsite.duckdns.org:8888"
+		allowedOrigins = "http://teamtrackwebsite.duckdns.org:8888"
 	}
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     allowedOrigins,
