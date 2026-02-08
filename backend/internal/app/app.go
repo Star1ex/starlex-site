@@ -24,8 +24,9 @@ import (
 func StartServer() {
 
 	config := config.LoadConfig()
-	if config.JWTSecret == "" || len(config.JWTSecret) < 32 { 
+	if config.JWTSecret == "" || len(config.JWTSecret) < 32 {
 		log.Fatal("CRITICAL: JWT_SECRET must be set and at least 32 characters long!") 
+	}
 
 	db := db.Must(&config.DatabaseConfig)
 
@@ -36,7 +37,6 @@ func StartServer() {
 
 	app := fiber.New()
 
-	
 	app.Use(func(c *fiber.Ctx) error {
 		c.Set("X-Content-Type-Options", "nosniff")
 		c.Set("X-Frame-Options", "DENY")
@@ -123,6 +123,7 @@ func StartServer() {
 		}
 	}()
 
-	app.Listen(":3000")
-}
+	if err := app.Listen(":3000"); err != nil { 
+		log.Fatalf("server failed to start: %v", err) 
+	}
 }
