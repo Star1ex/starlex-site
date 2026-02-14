@@ -41,6 +41,7 @@ func setupAuthRoutes(api fiber.Router, h *handlers.Handlers) {
 
 	auth.Get("/csrf", h.GetCSRFToken)
 	auth.Post("/login", authRateLimiter, h.Login)
+	auth.Post("/logout", h.Logout)
 	auth.Post("/register", authRateLimiter, h.Register)
 	auth.Post("refresh", h.Refresh)
 	auth.Post("/resend-code", authRateLimiter, h.ResendCode)

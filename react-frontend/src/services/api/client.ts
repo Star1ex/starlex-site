@@ -5,6 +5,7 @@ class ApiClient {
   private accessToken: string | null = null;
   private refreshing: Promise<string> | null = null;
   private csrfToken: string | null = null;
+  private initialized = false;
 
   constructor() {
     this.client = axios.create({
@@ -47,8 +48,8 @@ class ApiClient {
           return this.client(originalRequest);
         } catch (refreshError) {
           this.clearAccessToken();
-          if (!window.location.pathname.includes('/sign-in')) {
-            window.location.href = '/sign-in';
+          if (!window.location.pathname.includes('/login') && !window.location.pathname.includes('/sign-in')) {
+            window.location.replace('/login');
           }
           return Promise.reject(refreshError);
         }
@@ -89,11 +90,11 @@ class ApiClient {
 
   // Try to initialize session by using refresh cookie to get a new access token
   public async initialize(): Promise<boolean> {
-    if ((this as any).isInitialized) {
+    if (this.initialized) {
       return this.accessToken !== null;
     }
 
-    (this as any).isInitialized = true;
+    this.initialized = true;
 
     try {
       console.debug('Initializing session...');
@@ -120,6 +121,8 @@ class ApiClient {
 
   public clearAccessToken() {
     this.accessToken = null;
+    this.csrfToken = null;
+    this.initialized = false;
     console.debug('Access token cleared');
   }
 

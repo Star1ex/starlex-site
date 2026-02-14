@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { apiClient } from '@/services/api/client.js';
-import { userService } from '@/services/api/index.js';
-import { setAuthUser } from '@/shared/lib/authManager.js';
+import { authService, userService } from '@/services/api/index.js';
+import { clearAuthStorage, setAuthUser } from '@/shared/lib/authManager.js';
 
 type AuthContextType = {
   userId: string | null;
@@ -9,7 +9,7 @@ type AuthContextType = {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (accessToken: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
 };
 
@@ -77,13 +77,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await refreshUser();
   };
 
-  const logout = () => {
+  const logout = async () => {
     apiClient.clearAccessToken();
+    clearAuthStorage();
     setUserId(null);
     setUserEmail(null);
     setIsAuthenticated(false);
-    // Ensure frontend navigates to sign-in
-    window.location.href = '/sign-in';
+
+    // Fire server-side cookie invalidation and token revocation.
+    void authService.logout();
+    window.location.replace('/login');
   };
 
   useEffect(() => {

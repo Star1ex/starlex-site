@@ -1,4 +1,5 @@
 import { apiClient, httpClient } from './client.js';
+import { clearAuthStorage } from '@/shared/lib/authManager.js';
 import {
   LoginRequest,
   LoginResponse,
@@ -103,9 +104,20 @@ export const authService = {
     return response.data;
   },
 
-  logout() {
-    apiClient.clearAccessToken();
-    window.location.href = '/sign-in';
+  async logout(): Promise<void> {
+    try {
+      // keepalive allows the request to finish even during navigation
+      await fetch('/api/auth/logout', {
+        method: 'POST',
+        credentials: 'include',
+        keepalive: true,
+      });
+    } catch (err) {
+      console.error('Logout request failed:', err);
+    } finally {
+      apiClient.clearAccessToken();
+      clearAuthStorage();
+    }
   },
 
   isAuthenticated(): boolean {

@@ -55,6 +55,24 @@ export const clearAllAuthData = (): void => {
   clearAuthUser();
 };
 
+export const clearAuthStorage = (): void => {
+  try {
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    localStorage.removeItem('redirectPath');
+  } catch (err) {
+    console.error('Failed to clear local auth storage:', err);
+  }
+
+  try {
+    sessionStorage.removeItem('prevRoutePath');
+    sessionStorage.removeItem('prevRouteLabel');
+    sessionStorage.removeItem('lastNonSettingsRoute');
+  } catch (err) {
+    console.error('Failed to clear session auth storage:', err);
+  }
+};
+
 // Refresh access token using httpOnly refresh token cookie
 export const refreshAccessToken = async (): Promise<string | null> => {
   try {
@@ -73,5 +91,4 @@ export const refreshAccessToken = async (): Promise<string | null> => {
     return null;
   }
 };
-
 
