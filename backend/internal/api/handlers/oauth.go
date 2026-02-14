@@ -272,7 +272,7 @@ func (h *Handlers) completeOAuth(ctx *fiber.Ctx, provider string, profile oauthP
 
 	h.userService.PublishUserLogin(userEntity)
 
-	accessTokenStr, refreshTokenStr, err := h.issueTokens(userEntity)
+	_, refreshTokenStr, err := h.issueTokens(userEntity)
 	if err != nil {
 		log.Printf("oauth %s token error: ip=%s err=%v", provider, ctx.IP(), err)
 		return h.redirectOAuthError(ctx, provider, "token_error", returnTo)
@@ -280,7 +280,7 @@ func (h *Handlers) completeOAuth(ctx *fiber.Ctx, provider string, profile oauthP
 
 	h.setRefreshCookie(ctx, refreshTokenStr)
 
-	return h.redirectOAuthSuccess(ctx, provider, action, accessTokenStr, returnTo)
+	return h.redirectOAuthSuccess(ctx, returnTo)
 }
 
 func (h *Handlers) resolveOAuthUser(ctx context.Context, provider, action, linkUserID string, profile oauthProfile) (*entity.User, error) {
@@ -808,15 +808,8 @@ func (h *Handlers) clearOAuthCookies(ctx *fiber.Ctx, provider string) {
 	h.setCookie(ctx, oauthCookieName(provider, oauthReturnCookieSuffix), "", exp)
 }
 
-func (h *Handlers) redirectOAuthSuccess(ctx *fiber.Ctx, provider, action, token, returnTo string) error {
-	values := url.Values{}
-	values.Set("token", token)
-	values.Set("provider", provider)
-	values.Set("mode", action)
-	if returnTo != "" {
-		values.Set("return_to", returnTo)
-	}
-	return ctx.Redirect(h.frontendCallbackURL(values), fiber.StatusFound)
+func (h *Handlers) redirectOAuthSuccess(ctx *fiber.Ctx, returnTo string) error {
+	return ctx.Redirect(h.frontendAppURL(returnTo), fiber.StatusFound)
 }
 
 func (h *Handlers) redirectOAuthError(ctx *fiber.Ctx, provider, errorCode, returnTo string) error {
@@ -835,6 +828,15 @@ func (h *Handlers) frontendCallbackURL(values url.Values) string {
 		base = ""
 	}
 	return base + "/oauth/callback?" + values.Encode()
+}
+
+func (h *Handlers) frontendAppURL(returnTo string) string {
+	base := strings.TrimRight(h.frontendBaseURL, "/")
+	target := sanitizeReturnTo(returnTo)
+	if base == "" {
+		return target
+	}
+	return base + target
 }
 
 func (h *Handlers) setCookie(ctx *fiber.Ctx, name, value string, expires time.Time) {
