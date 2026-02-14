@@ -83,6 +83,15 @@ func (h *Handlers) CreatePersonalTask(ctx *fiber.Ctx) error {
 		TeamID:      "",
 		FolderID:    input.FolderID,
 	}
+	if input.FolderID != nil && *input.FolderID != "" {
+		folderEntity, err := h.requireFolderAccess(ctx, *input.FolderID, userID)
+		if err != nil {
+			return err
+		}
+		if folderEntity.TeamID != nil && *folderEntity.TeamID != "" {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "personal tasks cannot be created in team folders"})
+		}
+	}
 
 	err := h.taskService.CreatePersonalTask(ctx.Context(), entityTask)
 	if err != nil {
@@ -95,11 +104,14 @@ func (h *Handlers) CreatePersonalTask(ctx *fiber.Ctx) error {
 func (h *Handlers) UpdateTask(c *fiber.Ctx) error {
 	taskID := c.Params("id")
 
-	_, authErr := h.getAuthenticatedUserID(c)
+	userID, authErr := h.getAuthenticatedUserID(c)
 	if authErr != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized",
 		})
+	}
+	if _, err := h.requireTaskAccess(c, taskID, userID); err != nil {
+		return err
 	}
 
 	var updateTask dto.UpdateTask
@@ -128,7 +140,7 @@ func (h *Handlers) UpdateTask(c *fiber.Ctx) error {
 }
 
 func (h *Handlers) PatchTaskTitle(ctx *fiber.Ctx) error {
-	_, authErr := h.getAuthenticatedUserID(ctx)
+	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
 		return authErr
 	}
@@ -136,6 +148,9 @@ func (h *Handlers) PatchTaskTitle(ctx *fiber.Ctx) error {
 	taskID := ctx.Params("id")
 	if taskID == "" || taskID == "nil" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
+	}
+	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+		return err
 	}
 
 	var input dto.UpdateTaskTitle
@@ -161,7 +176,7 @@ func (h *Handlers) PatchTaskTitle(ctx *fiber.Ctx) error {
 }
 
 func (h *Handlers) PatchTaskDescription(ctx *fiber.Ctx) error {
-	_, authErr := h.getAuthenticatedUserID(ctx)
+	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
 		return authErr
 	}
@@ -169,6 +184,9 @@ func (h *Handlers) PatchTaskDescription(ctx *fiber.Ctx) error {
 	taskID := ctx.Params("id")
 	if taskID == "" || taskID == "nil" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
+	}
+	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+		return err
 	}
 
 	var input dto.UpdateTaskDescription
@@ -190,7 +208,7 @@ func (h *Handlers) PatchTaskDescription(ctx *fiber.Ctx) error {
 }
 
 func (h *Handlers) PatchTaskPriority(ctx *fiber.Ctx) error {
-	_, authErr := h.getAuthenticatedUserID(ctx)
+	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
 		return authErr
 	}
@@ -198,6 +216,9 @@ func (h *Handlers) PatchTaskPriority(ctx *fiber.Ctx) error {
 	taskID := ctx.Params("id")
 	if taskID == "" || taskID == "nil" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
+	}
+	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+		return err
 	}
 
 	var input dto.UpdateTaskPriority
@@ -224,7 +245,7 @@ func (h *Handlers) PatchTaskPriority(ctx *fiber.Ctx) error {
 }
 
 func (h *Handlers) PatchTaskProgress(ctx *fiber.Ctx) error {
-	_, authErr := h.getAuthenticatedUserID(ctx)
+	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
 		return authErr
 	}
@@ -232,6 +253,9 @@ func (h *Handlers) PatchTaskProgress(ctx *fiber.Ctx) error {
 	taskID := ctx.Params("id")
 	if taskID == "" || taskID == "nil" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
+	}
+	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+		return err
 	}
 
 	var input dto.UpdateTaskProgress
@@ -258,7 +282,7 @@ func (h *Handlers) PatchTaskProgress(ctx *fiber.Ctx) error {
 }
 
 func (h *Handlers) PatchTaskAssignees(ctx *fiber.Ctx) error {
-	_, authErr := h.getAuthenticatedUserID(ctx)
+	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
 		return authErr
 	}
@@ -266,6 +290,9 @@ func (h *Handlers) PatchTaskAssignees(ctx *fiber.Ctx) error {
 	taskID := ctx.Params("id")
 	if taskID == "" || taskID == "nil" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
+	}
+	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+		return err
 	}
 
 	var input dto.UpdateTaskAssignees
@@ -310,7 +337,14 @@ func (h *Handlers) GetPersonalTasks(ctx *fiber.Ctx) error {
 // Swagger disabled: Security BearerAuth
 // Swagger disabled: Router       /team/{team_id}/tasks [get]
 func (h *Handlers) GetTeamTasks(ctx *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
 	var teamID string = ctx.Params("team_id")
+	if err := h.requireTeamMember(ctx, teamID, userID); err != nil {
+		return err
+	}
 	tasks, err := h.taskService.GetTeamTasks(ctx.Context(), teamID)
 	if err != nil {
 		log.Println(err)
@@ -332,16 +366,34 @@ func (h *Handlers) GetTeamTasks(ctx *fiber.Ctx) error {
 // Swagger disabled: Security BearerAuth
 // Swagger disabled: Router       /user/{user_id}/tasks [get]
 func (h *Handlers) GetUserTasks(ctx *fiber.Ctx) error {
-	id := ctx.Params("user_id")
+	currentUserID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+	teamID := ctx.Params("team_id")
+	if err := h.requireTeamMember(ctx, teamID, currentUserID); err != nil {
+		return err
+	}
 
-	tasks, err := h.taskService.GetUserTasks(ctx.Context(), id)
+	id := ctx.Params("user_id")
+	tasks, err := h.taskService.GetTeamTasks(ctx.Context(), teamID)
 	if err != nil {
 		log.Println(err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to get tasks",
 		})
 	}
-	response := dto.TeamTasksList(tasks)
+	filtered := make([]*entity.Task, 0, len(tasks))
+	for _, taskItem := range tasks {
+		for _, assignedUser := range taskItem.AssignedTo {
+			if assignedUser.ID == id {
+				filtered = append(filtered, taskItem)
+				break
+			}
+		}
+	}
+
+	response := dto.TeamTasksList(filtered)
 	return ctx.Status(fiber.StatusOK).JSON(response)
 }
 
@@ -362,9 +414,16 @@ func (h *Handlers) GetUserTasks(ctx *fiber.Ctx) error {
 // Swagger disabled: Security BearerAuth
 // Swagger disabled: Router       /team/{team_id}/tasks/{task_id} [put]
 func (h *Handlers) UpdateTaskProgress(ctx *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
 	taskId := ctx.Params("id")
 	if taskId == "" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
+	}
+	if _, err := h.requireTaskAccess(ctx, taskId, userID); err != nil {
+		return err
 	}
 	var updates dto.UpdateDto
 	if err := ctx.BodyParser(&updates); err != nil {
@@ -392,9 +451,16 @@ func (h *Handlers) UpdateTaskProgress(ctx *fiber.Ctx) error {
 }
 
 func (h *Handlers) DeleteTask(c *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(c)
+	if authErr != nil {
+		return authErr
+	}
 	taskID := c.Params("id")
 	if taskID == "nil" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
+	}
+	if _, err := h.requireTaskAccess(c, taskID, userID); err != nil {
+		return err
 	}
 
 	err := h.taskService.Delete(context.Background(), taskID)
@@ -435,16 +501,19 @@ func (h *Handlers) GetTasksWithoutFolder(ctx *fiber.Ctx) error {
 
 func (h *Handlers) GetFolderTasks(ctx *fiber.Ctx) error {
 
-	_, authErr := h.getAuthenticatedUserID(ctx)
+	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized",
 		})
 	}
 
-	folderID := ctx.Query("folder_id")
-	if folderID == "nil" {
+	folderID := ctx.Params("folder_id")
+	if folderID == "nil" || folderID == "" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "folder ID is required in URL"})
+	}
+	if _, err := h.requireFolderAccess(ctx, folderID, userID); err != nil {
+		return err
 	}
 
 	tasks, err := h.taskService.GetFolderTasks(ctx.Context(), folderID)
@@ -457,13 +526,31 @@ func (h *Handlers) GetFolderTasks(ctx *fiber.Ctx) error {
 }
 
 func (h *Handlers) MoveTaskToFolder(ctx *fiber.Ctx) error {
-	taskID := ctx.Params("task_id")
-	folderID := ctx.Query("folder_id")
-	if taskID == "nil" || folderID == "nil" {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID and folder ID are required in URL"})
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
 	}
 
-	err := h.taskService.MoveTaskToFolder(ctx.Context(), taskID, folderID)
+	taskID := ctx.Params("id")
+	folderID := ctx.Query("folder_id")
+	if taskID == "nil" || folderID == "nil" || taskID == "" || folderID == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID and folder ID are required in URL"})
+	}
+	taskEntity, err := h.requireTaskAccess(ctx, taskID, userID)
+	if err != nil {
+		return err
+	}
+	folderEntity, err := h.requireFolderAccess(ctx, folderID, userID)
+	if err != nil {
+		return err
+	}
+	if taskEntity.TeamID != "" {
+		if folderEntity.TeamID == nil || *folderEntity.TeamID != taskEntity.TeamID {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "team task must remain in same team folder"})
+		}
+	}
+
+	err = h.taskService.MoveTaskToFolder(ctx.Context(), taskID, folderID)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err.Error(),
@@ -473,7 +560,7 @@ func (h *Handlers) MoveTaskToFolder(ctx *fiber.Ctx) error {
 }
 
 func (h *Handlers) GetTaskByID(ctx *fiber.Ctx) error {
-	_, authErr := h.getAuthenticatedUserID(ctx)
+	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "unauthorized",
@@ -483,6 +570,9 @@ func (h *Handlers) GetTaskByID(ctx *fiber.Ctx) error {
 	taskID := ctx.Params("id")
 	if taskID == "nil" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
+	}
+	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+		return err
 	}
 
 	task, err := h.taskService.GetTaskByID(ctx.Context(), taskID)

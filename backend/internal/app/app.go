@@ -2,9 +2,9 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/Team-Tracks/team-track-site/internal/api/handlers"
@@ -19,37 +19,50 @@ import (
 	"github.com/Team-Tracks/team-track-site/internal/storage"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 )
 
 func StartServer() {
 
 	config := config.LoadConfig()
 	if config.JWTSecret == "" || len(config.JWTSecret) < 32 {
-		log.Fatal("CRITICAL: JWT_SECRET must be set and at least 32 characters long!") 
+		log.Fatal("CRITICAL: JWT_SECRET must be set and at least 32 characters long!")
 	}
 
 	db := db.Must(&config.DatabaseConfig)
 
 	storage, err := storage.NewStorageByEnv(&config.StorageConfig)
 	if err != nil {
-		fmt.Println("Error init storage")
+		log.Println("Error init storage")
 	}
 
-	app := fiber.New()
+	app := fiber.New(fiber.Config{
+		BodyLimit:         2 * 1024 * 1024, // 2MB
+		ReadTimeout:       10 * time.Second,
+		WriteTimeout:      20 * time.Second,
+		IdleTimeout:       30 * time.Second,
+		ReduceMemoryUsage: true,
+	})
+
+	app.Use(recover.New())
+	app.Use(handlers.CreateGlobalRateLimiter())
 
 	app.Use(func(c *fiber.Ctx) error {
 		c.Set("X-Content-Type-Options", "nosniff")
 		c.Set("X-Frame-Options", "DENY")
-		c.Set("X-XSS-Protection", "1; mode=block")
-		c.Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
-		c.Set("Content-Security-Policy", "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'")
+		c.Set("Referrer-Policy", "no-referrer")
+		c.Set("Permissions-Policy", "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()")
+		c.Set("Cross-Origin-Resource-Policy", "same-origin")
+		c.Set("Content-Security-Policy", "default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
+		if strings.EqualFold(c.Protocol(), "https") {
+			c.Set("Strict-Transport-Security", "max-age=31536000; includeSubDomains")
+		}
 		return c.Next()
 	})
 
-	
-	allowedOrigins := os.Getenv("ALLOWED_ORIGINS")
+	allowedOrigins := strings.TrimSpace(os.Getenv("ALLOWED_ORIGINS"))
 	if allowedOrigins == "" {
-		allowedOrigins = "http://teamtrackwebsite.duckdns.org:8888"
+		log.Fatal("CRITICAL: ALLOWED_ORIGINS must be configured explicitly")
 	}
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     allowedOrigins,
@@ -91,7 +104,6 @@ func StartServer() {
 		FromName:     config.EmailConfig.FromName,
 	})
 
-	fmt.Println("Check", config.EmailConfig.SMTPHost, config.EmailConfig.SMTPPort, config.EmailConfig.SMTPUsername, config.EmailConfig.SMTPPassword, config.EmailConfig.FromEmail, config.EmailConfig.FromName)
 	verificationService := service.NewVerificationService(verificationRepo, userRepo, emailService)
 	passwordService := service.NewPasswordService(userRepo, passwordResetRepo, passwordAuditRepo, emailService, config.FrontendBaseURL)
 	userService := service.NewUserService(userRepo, storage, bus)
@@ -118,12 +130,12 @@ func StartServer() {
 		defer ticker.Stop()
 		for range ticker.C {
 			if _, err := passwordService.CleanupExpiredTokens(context.Background()); err != nil {
-				fmt.Println("password reset cleanup error:", err)
+				log.Println("password reset cleanup error:", err)
 			}
 		}
 	}()
 
-	if err := app.Listen(":3000"); err != nil { 
-		log.Fatalf("server failed to start: %v", err) 
+	if err := app.Listen(":3000"); err != nil {
+		log.Fatalf("server failed to start: %v", err)
 	}
 }

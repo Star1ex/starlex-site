@@ -43,7 +43,7 @@ func setupAuthRoutes(api fiber.Router, h *handlers.Handlers) {
 	auth.Post("/login", authRateLimiter, h.Login)
 	auth.Post("/logout", h.Logout)
 	auth.Post("/register", authRateLimiter, h.Register)
-	auth.Post("refresh", h.Refresh)
+	auth.Post("/refresh", h.Refresh)
 	auth.Post("/resend-code", authRateLimiter, h.ResendCode)
 	auth.Post("/verify", h.VerifyEmail)
 	auth.Post("/password-reset/request", authRateLimiter, h.RequestPasswordReset)

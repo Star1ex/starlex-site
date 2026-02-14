@@ -44,7 +44,7 @@ func (s TeamService) Delete(ctx context.Context, teamID, userID string) error {
 		return err
 	}
 	if userID != team.OwnerID {
-		return err
+		return errors.New("only team owner can delete team")
 	}
 
 	return s.teamRepo.Delete(ctx, teamID)

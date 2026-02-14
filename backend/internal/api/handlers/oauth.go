@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"context"
+	"crypto/subtle"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -262,7 +263,7 @@ func (h *Handlers) completeOAuth(ctx *fiber.Ctx, provider string, profile oauthP
 	linkUserID := h.getOAuthLinkUser(ctx, provider)
 	returnTo := h.getOAuthReturnTo(ctx, provider)
 
-	log.Printf("oauth %s callback: ip=%s action=%s email=%s", provider, ctx.IP(), action, profile.Email)
+	log.Printf("oauth %s callback: ip=%s action=%s", provider, ctx.IP(), action)
 
 	userEntity, err := h.resolveOAuthUser(ctx.Context(), provider, action, linkUserID, profile)
 	if err != nil {
@@ -766,7 +767,7 @@ func (h *Handlers) fetchGithubPrimaryEmail(ctx context.Context, accessToken stri
 
 func (h *Handlers) validateOAuthState(ctx *fiber.Ctx, provider, state string) error {
 	cookieState := ctx.Cookies(oauthCookieName(provider, oauthStateCookieSuffix))
-	if cookieState == "" || cookieState != state {
+	if cookieState == "" || state == "" || subtle.ConstantTimeCompare([]byte(cookieState), []byte(state)) != 1 {
 		return errors.New("state mismatch")
 	}
 	return nil

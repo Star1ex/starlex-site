@@ -17,6 +17,11 @@ import (
 // Swagger disabled: Security BearerAuth
 // Swagger disabled: Router       /search/{email} [get]
 func (h *Handlers) Search(ctx *fiber.Ctx) error {
+	_, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+
 	email := ctx.Params("email")
 	if email == "" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
