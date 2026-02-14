@@ -55,14 +55,14 @@ func (h *Handlers) DeleteTeam(ctx *fiber.Ctx) error {
 	if authErr != nil {
 		return authErr
 	}
-	var req dto.DeleteTeam
-	if err := ctx.BodyParser(&req); err != nil {
+	teamID := ctx.Params("id")
+	if teamID == "" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "missing team_id in request",
+			"error": "missing team_id in path",
 		})
 	}
 
-	err := h.teamService.Delete(context.Background(), req.TeamID, userID)
+	err := h.teamService.Delete(context.Background(), teamID, userID)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": err,
@@ -169,7 +169,14 @@ func (h *Handlers) PatchTeamDescription(ctx *fiber.Ctx) error {
 // Swagger disabled: Security BearerAuth
 // Swagger disabled: Router /team/{id} [get]
 func (h *Handlers) GetUsers(ctx *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
 	var id string = ctx.Params("id")
+	if err := h.requireTeamMember(ctx, id, userID); err != nil {
+		return err
+	}
 
 	users, err := h.teamService.GetUsers(ctx.Context(), id)
 	if err != nil {

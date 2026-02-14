@@ -55,7 +55,7 @@ func (h *Handlers) GetCSRFToken(ctx *fiber.Ctx) error {
 		Value:    token,
 		Expires:  time.Now().Add(24 * time.Hour),
 		HTTPOnly: false,
-		Secure:   false,
+		Secure:   h.isSecureCookie(),
 		SameSite: "Lax",
 		Path:     "/",
 	})

@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"mime/multipart"
@@ -46,8 +47,23 @@ func (s *LocalStorage) UploadFile(ctx context.Context,
 
 	// normalize path (no leading slash)
 	path = strings.TrimPrefix(path, "/")
+	cleanPath := filepath.Clean(path)
+	if cleanPath == "." || cleanPath == "/" || strings.HasPrefix(cleanPath, "..") {
+		return "", errors.New("invalid upload path")
+	}
 
-	dst := filepath.Join(s.BasePath, path)
+	dst := filepath.Join(s.BasePath, cleanPath)
+	baseAbs, err := filepath.Abs(s.BasePath)
+	if err != nil {
+		return "", fmt.Errorf("resolve storage base: %w", err)
+	}
+	dstAbs, err := filepath.Abs(dst)
+	if err != nil {
+		return "", fmt.Errorf("resolve upload path: %w", err)
+	}
+	if !strings.HasPrefix(dstAbs, baseAbs+string(filepath.Separator)) && dstAbs != baseAbs {
+		return "", errors.New("path traversal blocked")
+	}
 	if err := os.MkdirAll(filepath.Dir(dst), os.ModePerm); err != nil {
 		return "", fmt.Errorf("create dir: %w", err)
 	}
@@ -73,11 +89,26 @@ func (s *LocalStorage) UploadFile(ctx context.Context,
 	// Build URL by concatenating base URL and path. BaseURL is normalized
 	// to always end with '/' and path does not start with '/', so this
 	// produces correct results for both absolute and relative base URLs.
-	url := fmt.Sprintf("%s%s", s.BaseURL, path)
+	url := fmt.Sprintf("%s%s", s.BaseURL, cleanPath)
 	return url, nil
 }
 
 func (s *LocalStorage) DeleteFile(ctx context.Context, path string) error {
-	dst := filepath.Join(s.BasePath, path)
-	return os.Remove(dst)
+	cleanPath := filepath.Clean(strings.TrimPrefix(path, "/"))
+	if cleanPath == "." || cleanPath == "/" || strings.HasPrefix(cleanPath, "..") {
+		return errors.New("invalid delete path")
+	}
+	dst := filepath.Join(s.BasePath, cleanPath)
+	baseAbs, err := filepath.Abs(s.BasePath)
+	if err != nil {
+		return err
+	}
+	dstAbs, err := filepath.Abs(dst)
+	if err != nil {
+		return err
+	}
+	if !strings.HasPrefix(dstAbs, baseAbs+string(filepath.Separator)) && dstAbs != baseAbs {
+		return errors.New("path traversal blocked")
+	}
+	return os.Remove(dstAbs)
 }

@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -28,7 +27,7 @@ func (h *Handlers) UserIndentity(c *fiber.Ctx) error {
 
 	// Split header for give a two parts "Bearer" and "Token"
 	parts := strings.Split(header, " ")
-	if len(parts) != 2 || parts[0] != "Bearer" {
+	if len(parts) != 2 || !strings.EqualFold(parts[0], "Bearer") {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "invalid auth header format",
 		})
@@ -115,8 +114,6 @@ func (h *Handlers) UserIndentity(c *fiber.Ctx) error {
 func (h *Handlers) getAuthenticatedUserID(ctx *fiber.Ctx) (string, error) {
 	userInterfaceID := ctx.Locals("user_id")
 
-	log.Printf("DEBUG user_id from Locals: %#v (%T)", userInterfaceID, userInterfaceID)
-
 	if userInterfaceID == nil {
 		return "", ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "user not authenticated or token missing",
@@ -133,7 +130,6 @@ func (h *Handlers) getAuthenticatedUserID(ctx *fiber.Ctx) (string, error) {
 		return userID, nil
 	}
 
-	log.Printf("ERROR: failed to assert userID from context. Type found: %T", userInterfaceID)
 	return "", ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 		"error": "internal authentication error: invalid ID format",
 	})

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"sync"
 	"time"
 
@@ -61,4 +62,17 @@ func createAuthRateLimiter() fiber.Handler {
 
 func CreateAuthRateLimiter() fiber.Handler {
 	return createAuthRateLimiter()
+}
+
+func CreateGlobalRateLimiter() fiber.Handler {
+	limiter := newRateLimiter(120, time.Minute)
+	return func(c *fiber.Ctx) error {
+		key := fmt.Sprintf("%s:%s", c.IP(), c.Path())
+		if !limiter.Allow(key) {
+			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
+				"error": "rate limit exceeded",
+			})
+		}
+		return c.Next()
+	}
 }

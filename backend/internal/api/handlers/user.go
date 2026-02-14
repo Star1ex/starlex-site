@@ -2,7 +2,13 @@ package handlers
 
 import (
 	"context"
+	"io"
 	"log"
+	"mime"
+	"mime/multipart"
+	"net/http"
+	"path/filepath"
+	"strings"
 
 	"github.com/Team-Tracks/team-track-site/internal/api/dto"
 	"github.com/gofiber/fiber/v2"
@@ -23,7 +29,7 @@ func (h *Handlers) GetUser(c *fiber.Ctx) error {
 	user, err := h.userService.Get(context.Background(), userID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err,
+			"error": "failed to load user",
 		})
 	}
 
@@ -83,15 +89,63 @@ func (h *Handlers) UploadPhoto(c *fiber.Ctx) error {
 			"error": "invalid file",
 		})
 	}
+	const maxUploadSize = 2 * 1024 * 1024
+	if file.Size <= 0 || file.Size > maxUploadSize {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "file size must be between 1 byte and 2MB",
+		})
+	}
+	if !isAllowedImageUpload(file.Filename, file) {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": "unsupported file type",
+		})
+	}
 
 	url, err := h.userService.UploadUserPhoto(c.Context(), userID, file)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err,
+			"error": "failed to upload photo",
 		})
 	}
 
 	return c.JSON(fiber.Map{"url": url})
+}
+
+func isAllowedImageUpload(filename string, file *multipart.FileHeader) bool {
+	allowedExt := map[string]struct{}{
+		".jpg":  {},
+		".jpeg": {},
+		".png":  {},
+		".webp": {},
+	}
+
+	ext := strings.ToLower(filepath.Ext(filename))
+	if _, ok := allowedExt[ext]; !ok {
+		return false
+	}
+
+	src, err := file.Open()
+	if err != nil {
+		return false
+	}
+	defer src.Close()
+
+	header := make([]byte, 512)
+	n, err := io.ReadFull(src, header)
+	if err != nil && err != io.ErrUnexpectedEOF {
+		return false
+	}
+	contentType := http.DetectContentType(header[:n])
+	mediaType, _, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		return false
+	}
+	switch mediaType {
+	case "image/jpeg", "image/png", "image/webp":
+		return true
+	default:
+		return false
+	}
 }
 
 func (h *Handlers) GetPhoto(c *fiber.Ctx) error {
@@ -133,6 +187,8 @@ func (h *Handlers) UserUpdate(c *fiber.Ctx) error {
 	if err := c.BodyParser(&updates); err != nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad json"})
 	}
+	// Prevent privilege escalation via self-service profile update.
+	updates.Role = ""
 
 	err := h.userService.Update(context.Background(), dto.FromUseUpdate(&updates), userID)
 	if err != nil {
