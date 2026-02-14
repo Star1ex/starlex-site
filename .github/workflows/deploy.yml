@@ -45,6 +45,7 @@ jobs:
           echo "GOOGLE_CALLBACK_URL=${{ secrets.GOOGLE_CALLBACK_URL }}" >> backend/.env
           echo "CALLBACK_URL_GITHUB=${{ secrets.CALLBACK_URL_GITHUB }}" >> backend/.env
           echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> backend/.env
+          echo "ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }}" >> backend/.env
               
       - name: Create .env File
         run: |
