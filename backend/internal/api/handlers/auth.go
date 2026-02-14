@@ -6,9 +6,12 @@ import (
 	"fmt"
 	"log"
 	"regexp"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Team-Tracks/team-track-site/internal/api/dto"
+	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
 	"github.com/Team-Tracks/team-track-site/internal/repository"
 	"github.com/Team-Tracks/team-track-site/internal/service"
 	"github.com/gofiber/fiber/v2"
@@ -177,7 +180,7 @@ func (h *Handlers) Refresh(ctx *fiber.Ctx) error {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fiber.NewError(fiber.StatusUnauthorized, "invalid token signing method")
 		}
-	return []byte(h.jwtSecret), nil
+		return []byte(h.jwtSecret), nil
 	})
 
 	if err != nil || !token.Valid {
@@ -248,6 +251,68 @@ func (h *Handlers) Refresh(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
 		"access_token": accessTokenStr,
 	})
+}
+
+func (h *Handlers) Logout(ctx *fiber.Ctx) error {
+	userID := h.userIDFromRefreshCookie(ctx)
+
+	if userID != "" {
+		currentVersion, err := h.userService.GetTokenVersion(ctx.Context(), userID)
+		if err == nil {
+			nextVersion := currentVersion + 1
+			if nextVersion == 0 {
+				nextVersion = 1
+			}
+			_ = h.userService.Update(ctx.Context(), &entity.User{TokenVersion: nextVersion}, userID)
+		}
+	}
+
+	h.clearRefreshCookie(ctx)
+
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "logged out",
+	})
+}
+
+func (h *Handlers) userIDFromRefreshCookie(ctx *fiber.Ctx) string {
+	refreshTokenStr := ctx.Cookies("refreshToken")
+	if refreshTokenStr == "" {
+		return ""
+	}
+
+	token, err := jwt.Parse(refreshTokenStr, func(t *jwt.Token) (any, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fiber.NewError(fiber.StatusUnauthorized, "invalid token signing method")
+		}
+		return []byte(h.jwtSecret), nil
+	})
+	if err != nil || token == nil || !token.Valid {
+		return ""
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return ""
+	}
+
+	tokenType, ok := claims["type"].(string)
+	if !ok || tokenType != "refresh" {
+		return ""
+	}
+
+	raw, ok := claims["user_id"]
+	if !ok || raw == nil {
+		return ""
+	}
+
+	switch v := raw.(type) {
+	case string:
+		return strings.TrimSpace(v)
+	case float64:
+		return strconv.FormatInt(int64(v), 10)
+	default:
+		return fmt.Sprintf("%v", v)
+	}
 }
 
 // Register method

@@ -863,6 +863,18 @@ func (h *Handlers) setRefreshCookie(ctx *fiber.Ctx, token string) {
 	})
 }
 
+func (h *Handlers) clearRefreshCookie(ctx *fiber.Ctx) {
+	ctx.Cookie(&fiber.Cookie{
+		Name:     "refreshToken",
+		Value:    "",
+		Expires:  time.Now().Add(-1 * time.Hour),
+		HTTPOnly: true,
+		Secure:   h.isSecureCookie(),
+		SameSite: "Lax",
+		Path:     "/",
+	})
+}
+
 func (h *Handlers) isSecureCookie() bool {
 	return strings.HasPrefix(strings.ToLower(h.frontendBaseURL), "https://")
 }
