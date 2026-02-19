@@ -1,9 +1,5 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
-import { EditorContent, useEditor } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Placeholder from '@tiptap/extension-placeholder';
-import Link from '@tiptap/extension-link';
 import { useDebounce } from '@/shared/hooks/useDebounce.js';
 import { taskService } from '@/services/api/index.js';
 import { useAuth } from '@/contexts/AuthContext.js';
@@ -11,6 +7,7 @@ import type { TaskDTO, CreateTaskRequest } from '@/types/dto.js';
 import { useTasks } from '@/hooks/useTasks.js';
 import { showToast } from '@/shared/lib/toast.js';
 import BreadcrumbBack from '@/shared/ui/BreadcrumbBack.js';
+import { MarkdownEditor } from '@/components/MarkdownEditor.js';
 
 const RECENT_TASKS_KEY = 'recentTasks';
 
@@ -59,36 +56,6 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
     setTask((prev) => ({ ...prev, folder_id: locationFolderId }));
   }, [isNew, locationFolderId]);
 
-  const editorExtensions = useMemo(
-    () => [
-      StarterKit,
-      Link.configure({
-        openOnClick: true,
-        autolink: true,
-        linkOnPaste: true,
-      }),
-      Placeholder.configure({
-        placeholder: 'Description',
-        showOnlyWhenEditable: true,
-        showOnlyCurrent: false,
-      }),
-    ],
-    []
-  );
-
-  const editor = useEditor({
-    extensions: editorExtensions,
-    content: description || '',
-    onUpdate: ({ editor: tiptap }) => {
-      setDescription(tiptap.getHTML());
-    },
-    editorProps: {
-      attributes: {
-        class: 'task-editor',
-      },
-    },
-  });
-
   // Load task if editing
   useEffect(() => {
     let mounted = true;
@@ -123,19 +90,11 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
     };
   }, [taskIdParam, isNew]);
 
-  useEffect(() => {
-    if (!editor) return;
-    const current = editor.getHTML();
-    if ((description || '') !== current) {
-      editor.commands.setContent(description || '', false);
-    }
-  }, [description, editor]);
-
   // Combined save: debounced text + immediate state but saved together to prevent parallel requests
   const invalidTaskId = !taskIdParam || taskIdParam === 'new' || taskIdParam === '' || taskIdParam === 'without-folder';
 
   const debouncedTitle = useDebounce(title, 500);
-  const debouncedDescription = useDebounce(description, 500);
+  const debouncedDescription = useDebounce(description, 400);
   const debouncedPriority = useDebounce(priority, 300);
   const debouncedProgress = useDebounce(progress, 300);
 
@@ -294,9 +253,15 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
           {/* Title Input - Notion Style */}
           <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Untitled" className="w-full text-5xl font-bold text-gray-900 dark:text-dark-text placeholder-gray-300 dark:placeholder-dark-text-muted bg-transparent border-none outline-none mb-6" style={{ fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.02em' }} />
 
-          {/* Description - WYSIWYG Markdown */}
+          {/* Description */}
           <div className="mt-6">
-            <EditorContent editor={editor} />
+            <MarkdownEditor
+              key={taskIdParam || 'new'}
+              value={description ?? ''}
+              onChange={setDescription}
+              placeholder="Description"
+              className="task-editor"
+            />
           </div>
 
           {/* Create Button (only for new tasks) */}
@@ -316,89 +281,9 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
 
       <style>{`
         .task-editor {
-          min-height: 360px;
-          padding: 0;
-          outline: none;
-          border: none;
           color: inherit;
           font-size: 1rem;
           line-height: 1.7;
-          background: transparent;
-        }
-        .task-editor p {
-          margin: 0 0 0.9em 0;
-        }
-        .task-editor h1 {
-          font-size: 2.15rem;
-          font-weight: 700;
-          margin: 0.6em 0 0.4em 0;
-          line-height: 1.15;
-        }
-        .task-editor h2 {
-          font-size: 1.65rem;
-          font-weight: 700;
-          margin: 0.7em 0 0.4em 0;
-          line-height: 1.2;
-        }
-        .task-editor h3 {
-          font-size: 1.35rem;
-          font-weight: 700;
-          margin: 0.7em 0 0.35em 0;
-          line-height: 1.25;
-        }
-        .task-editor ul,
-        .task-editor ol {
-          padding-left: 1.5em;
-          margin: 0 0 0.9em 0;
-        }
-        .task-editor li {
-          margin: 0.2em 0;
-        }
-        .task-editor code {
-          background-color: #f3f4f6;
-          padding: 0.2em 0.35em;
-          border-radius: 0.25rem;
-          font-size: 0.95em;
-          font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-        }
-        .task-editor pre {
-          background-color: #f3f4f6;
-          padding: 1em;
-          border-radius: 0.5rem;
-          overflow-x: auto;
-          margin: 0 0 1em 0;
-        }
-        .task-editor blockquote {
-          border-left: 3px solid #e5e7eb;
-          padding-left: 1em;
-          margin: 0 0 1em 0;
-          color: #6b7280;
-        }
-        .task-editor a {
-          color: #2563eb;
-          text-decoration: underline;
-        }
-        .task-editor .is-empty::before {
-          content: attr(data-placeholder);
-          float: left;
-          color: #9ca3af;
-          pointer-events: none;
-          height: 0;
-        }
-        .dark .task-editor code {
-          background-color: #1e293b;
-          color: #f1f5f9;
-        }
-        .dark .task-editor pre {
-          background-color: #1e293b;
-          color: #f1f5f9;
-        }
-        .dark .task-editor blockquote {
-          border-left-color: #475569;
-          color: #cbd5e1;
-        }
-        .dark .task-editor a {
-          color: #60a5fa;
         }
       `}</style>
     </div>
