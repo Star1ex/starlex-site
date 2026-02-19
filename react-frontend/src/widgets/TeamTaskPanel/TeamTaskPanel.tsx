@@ -1,12 +1,9 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { EditorContent, useEditor } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Placeholder from '@tiptap/extension-placeholder';
-import Link from '@tiptap/extension-link';
+import React, { useEffect, useRef, useState } from 'react';
 import { useDebounce } from '@/shared/hooks/useDebounce.js';
 import { taskService } from '@/services/api/index.js';
 import type { Task } from '@/entities/types.js';
 import BreadcrumbBack from '@/shared/ui/BreadcrumbBack.js';
+import { MarkdownEditor } from '@/components/MarkdownEditor.js';
 
 type TeamTaskPanelProps = {
   task: Task | null;
@@ -33,7 +30,6 @@ export const TeamTaskPanel: React.FC<TeamTaskPanelProps> = ({ task, isOpen, team
   const [isInitialLoad, setIsInitialLoad] = useState(true);
   const currentTaskIdRef = useRef<string | null>(null);
   const isEditingTitleRef = useRef(false);
-  const isEditingDescRef = useRef(false);
 
   useEffect(() => {
     if (!task) return;
@@ -45,7 +41,10 @@ export const TeamTaskPanel: React.FC<TeamTaskPanelProps> = ({ task, isOpen, team
       setDescription(task.description || '');
       setIsInitialLoad(true);
       isEditingTitleRef.current = false;
-      isEditingDescRef.current = false;
+      lastSentRef.current = {
+        title: task.task || '',
+        description: task.description || '',
+      };
     }
   }, [task]);
 
@@ -62,40 +61,6 @@ export const TeamTaskPanel: React.FC<TeamTaskPanelProps> = ({ task, isOpen, team
     if (!task) return;
     onTitleChange?.(task.id, title);
   }, [title, task, onTitleChange]);
-
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Link.configure({
-        openOnClick: true,
-        autolink: true,
-        linkOnPaste: true,
-      }),
-      Placeholder.configure({
-        placeholder: 'Describe the task…',
-        showOnlyWhenEditable: true,
-        showOnlyCurrent: false,
-      }),
-    ],
-    content: description || '',
-    onUpdate: ({ editor: tiptap }) => {
-      isEditingDescRef.current = true;
-      setDescription(tiptap.getHTML());
-    },
-    editorProps: {
-      attributes: {
-        class: 'team-task-editor',
-      },
-    },
-  });
-
-  useEffect(() => {
-    if (!editor) return;
-    const current = editor.getHTML();
-    if ((description || '') !== current && !isEditingDescRef.current) {
-      editor.commands.setContent(description || '', false);
-    }
-  }, [description, editor]);
 
   useEffect(() => {
     const updateBounds = () => {
@@ -213,7 +178,13 @@ export const TeamTaskPanel: React.FC<TeamTaskPanelProps> = ({ task, isOpen, team
           />
 
           <div className="mt-2">
-            <EditorContent editor={editor} />
+            <MarkdownEditor
+              key={task.id}
+              value={description ?? ''}
+              onChange={setDescription}
+              placeholder="Describe the task..."
+              className="team-task-editor"
+            />
           </div>
         </div>
       </div>
@@ -226,30 +197,10 @@ export const TeamTaskPanel: React.FC<TeamTaskPanelProps> = ({ task, isOpen, team
 
       <style>{`
         .team-task-editor {
-          min-height: 360px;
-          padding: 0;
-          outline: none;
-          border: none;
           color: inherit;
           font-size: 1rem;
           line-height: 1.7;
-          background: transparent;
         }
-        .team-task-editor p { margin: 0 0 0.9em 0; }
-        .team-task-editor h1 { font-size: 2.05rem; font-weight: 700; margin: 0.6em 0 0.4em 0; line-height: 1.15; }
-        .team-task-editor h2 { font-size: 1.6rem; font-weight: 700; margin: 0.7em 0 0.4em 0; line-height: 1.2; }
-        .team-task-editor h3 { font-size: 1.3rem; font-weight: 700; margin: 0.7em 0 0.35em 0; line-height: 1.25; }
-        .team-task-editor ul, .team-task-editor ol { padding-left: 1.5em; margin: 0 0 0.9em 0; }
-        .team-task-editor li { margin: 0.2em 0; }
-        .team-task-editor code { background-color: #f3f4f6; padding: 0.2em 0.35em; border-radius: 0.25rem; font-size: 0.95em; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-        .team-task-editor pre { background-color: #f3f4f6; padding: 1em; border-radius: 0.5rem; overflow-x: auto; margin: 0 0 1em 0; }
-        .team-task-editor blockquote { border-left: 3px solid #e5e7eb; padding-left: 1em; margin: 0 0 1em 0; color: #6b7280; }
-        .team-task-editor a { color: #2563eb; text-decoration: underline; }
-        .team-task-editor .is-empty::before { content: attr(data-placeholder); float: left; color: #9ca3af; pointer-events: none; height: 0; }
-        .dark .team-task-editor code { background-color: #1e293b; color: #f1f5f9; }
-        .dark .team-task-editor pre { background-color: #1e293b; color: #f1f5f9; }
-        .dark .team-task-editor blockquote { border-left-color: #475569; color: #cbd5e1; }
-        .dark .team-task-editor a { color: #60a5fa; }
       `}</style>
     </aside>
   );
