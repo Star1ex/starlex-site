@@ -32,10 +32,11 @@ const TaskBoard: React.FC = () => {
       const data = await taskService.getTeamTasks(team_id);
       setTasks(Array.isArray(data) ? data : []);
       setError(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching tasks:', err);
       setTasks([]);
-      if (err?.response?.status === 404) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 404) {
         setError('Team not found');
       } else {
         setError('Failed to load tasks. Please try again.');
@@ -279,6 +280,7 @@ const TaskBoard: React.FC = () => {
       
       {selectedTask && (
         <TeamTaskPanel
+          key={selectedTask.id}
           isOpen={showTaskPanel}
           onClose={() => {
             setShowTaskPanel(false);
