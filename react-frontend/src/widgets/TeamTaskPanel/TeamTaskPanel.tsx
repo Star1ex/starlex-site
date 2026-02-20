@@ -25,28 +25,21 @@ export const TeamTaskPanel: React.FC<TeamTaskPanelProps> = ({ task, isOpen, team
   const dragStartX = useRef(0);
   const dragStartWidth = useRef(minWidth);
 
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const currentTaskIdRef = useRef<string | null>(null);
+  const [title, setTitle] = useState(task?.task || '');
+  const [description, setDescription] = useState(task?.description || '');
+  const isInitialLoadRef = useRef(true);
+  const currentTaskIdRef = useRef<string | null>(task?.id ?? null);
   const isEditingTitleRef = useRef(false);
 
   useEffect(() => {
-    if (!task) return;
-    const nextId = task.id;
-    const isNewTask = currentTaskIdRef.current !== nextId;
-    if (isNewTask) {
-      currentTaskIdRef.current = nextId;
-      setTitle(task.task || '');
-      setDescription(task.description || '');
-      setIsInitialLoad(true);
-      isEditingTitleRef.current = false;
-      lastSentRef.current = {
-        title: task.task || '',
-        description: task.description || '',
-      };
-    }
-  }, [task]);
+    currentTaskIdRef.current = task?.id ?? null;
+    isInitialLoadRef.current = true;
+    isEditingTitleRef.current = false;
+    lastSentRef.current = {
+      title: task?.task || '',
+      description: task?.description || '',
+    };
+  }, [task?.id, task?.task, task?.description]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -59,6 +52,8 @@ export const TeamTaskPanel: React.FC<TeamTaskPanelProps> = ({ task, isOpen, team
 
   useEffect(() => {
     if (!task) return;
+    if (!isEditingTitleRef.current) return;
+    if (title === (task.task || '')) return;
     onTitleChange?.(task.id, title);
   }, [title, task, onTitleChange]);
 
@@ -107,14 +102,25 @@ export const TeamTaskPanel: React.FC<TeamTaskPanelProps> = ({ task, isOpen, team
 
   useEffect(() => {
     if (!task) return;
-    if (isInitialLoad) {
-      setIsInitialLoad(false);
+    if (task.id !== currentTaskIdRef.current) return;
+    if (isInitialLoadRef.current) {
+      if (debouncedTitle === title && debouncedDescription === description) {
+        isInitialLoadRef.current = false;
+      }
       return;
     }
 
+    // Prevent cross-task writes: after task switch, debounced values can still
+    // hold the previous task's content for ~400ms.
+    if (debouncedTitle !== title || debouncedDescription !== description) {
+      return;
+    }
+
+    const activeTaskId = task.id;
     const controller = new AbortController();
     const save = async () => {
       try {
+        if (activeTaskId !== currentTaskIdRef.current) return;
         if (
           lastSentRef.current.title === debouncedTitle &&
           lastSentRef.current.description === debouncedDescription
@@ -123,15 +129,16 @@ export const TeamTaskPanel: React.FC<TeamTaskPanelProps> = ({ task, isOpen, team
         }
         const updates: Promise<void>[] = [];
         if (lastSentRef.current.title !== debouncedTitle) {
-          updates.push(taskService.updateTeamTaskTitle(teamId, task.id, debouncedTitle));
+          updates.push(taskService.updateTeamTaskTitle(teamId, activeTaskId, debouncedTitle));
         }
         if (lastSentRef.current.description !== debouncedDescription) {
-          updates.push(taskService.updateTeamTaskDescription(teamId, task.id, debouncedDescription));
+          updates.push(taskService.updateTeamTaskDescription(teamId, activeTaskId, debouncedDescription));
         }
         if (updates.length > 0) {
           await Promise.all(updates);
+          if (activeTaskId !== currentTaskIdRef.current) return;
           lastSentRef.current = { title: debouncedTitle, description: debouncedDescription };
-          onUpdated({ ...task, task: debouncedTitle, description: debouncedDescription });
+          onUpdated({ ...task, id: activeTaskId, task: debouncedTitle, description: debouncedDescription });
         }
       } catch (err) {
         console.error('Failed to update team task:', err);
@@ -139,7 +146,7 @@ export const TeamTaskPanel: React.FC<TeamTaskPanelProps> = ({ task, isOpen, team
     };
     save();
     return () => controller.abort();
-  }, [debouncedTitle, debouncedDescription, task, teamId, onUpdated, isInitialLoad]);
+  }, [debouncedTitle, debouncedDescription, title, description, task, teamId, onUpdated]);
 
   if (!isOpen || !task) return null;
 
