@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, useEffect, useState } from 'react';
 import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useDebounce } from '@/shared/hooks/useDebounce.js';
 import { taskService } from '@/services/api/index.js';
@@ -7,7 +7,10 @@ import type { TaskDTO, CreateTaskRequest } from '@/types/dto.js';
 import { useTasks } from '@/hooks/useTasks.js';
 import { showToast } from '@/shared/lib/toast.js';
 import BreadcrumbBack from '@/shared/ui/BreadcrumbBack.js';
-import { MarkdownEditor } from '@/components/MarkdownEditor.js';
+
+const MarkdownEditor = React.lazy(() =>
+  import('@/components/TaskView/MarkdownEditor.js').then((m) => ({ default: m.MarkdownEditor }))
+);
 
 const RECENT_TASKS_KEY = 'recentTasks';
 
@@ -114,32 +117,34 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
     if (taskIdParam && title) updateRecentTasks(taskIdParam, title);
   }, [title, taskIdParam, invalidTaskId]);
 
-  // Ensure we don't trigger on initial load
-  useEffect(() => {
-    if (!isInitialLoad) return;
-    setIsInitialLoad(false);
-    // We leave this early return to avoid saving immediately after loading
-  }, [taskIdParam]);
-
-  useEffect(() => {
-    if (isInitialLoad) return;
-    lastSentRef.current = {
-      title,
-      description,
-      priority,
-      progress,
-    };
-  }, [isInitialLoad]);
-
   useEffect(() => {
     // Strict ID validation (first priority)
     if (invalidTaskId) {
-      console.log('Skipping save - invalid task ID:', taskIdParam);
       return;
     }
 
     // Prevent initial-load trigger
     if (isInitialLoad) return;
+
+    // Prevent stale debounced values from previous task state from overwriting
+    // freshly loaded content (especially on page reload).
+    if (
+      debouncedTitle !== title ||
+      debouncedDescription !== description ||
+      debouncedPriority !== priority ||
+      debouncedProgress !== progress
+    ) {
+      return;
+    }
+
+    if (
+      debouncedTitle === lastSentRef.current.title &&
+      debouncedDescription === lastSentRef.current.description &&
+      debouncedPriority === lastSentRef.current.priority &&
+      debouncedProgress === lastSentRef.current.progress
+    ) {
+      return;
+    }
 
     // Throttle saves: enforce minimum gap
     const now = Date.now();
@@ -198,7 +203,19 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
     return () => {
       controller.abort();
     };
-  }, [debouncedTitle, debouncedDescription, debouncedPriority, debouncedProgress, taskIdParam, isInitialLoad]);
+  }, [
+    debouncedTitle,
+    debouncedDescription,
+    debouncedPriority,
+    debouncedProgress,
+    title,
+    description,
+    priority,
+    progress,
+    taskIdParam,
+    isInitialLoad,
+    invalidTaskId,
+  ]);
   // Create new task
   const [isCreating, setIsCreating] = useState(false);
   const handleCreate = async () => {
@@ -255,13 +272,18 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
 
           {/* Description */}
           <div className="mt-6">
-            <MarkdownEditor
-              key={taskIdParam || 'new'}
-              value={description ?? ''}
-              onChange={setDescription}
-              placeholder="Description"
-              className="task-editor"
-            />
+            <Suspense
+              fallback={
+                <div className="min-h-[240px] rounded-xl border border-gray-100 dark:border-dark-border bg-gray-50/40 dark:bg-dark-bg/40 animate-pulse" />
+              }
+            >
+              <MarkdownEditor
+                key={taskIdParam || 'new'}
+                value={description ?? ''}
+                onChange={setDescription}
+                containerClassName="task-editor"
+              />
+            </Suspense>
           </div>
 
           {/* Create Button (only for new tasks) */}
