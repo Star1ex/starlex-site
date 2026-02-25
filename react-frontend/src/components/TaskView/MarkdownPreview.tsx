@@ -10,9 +10,10 @@ import 'katex/dist/katex.min.css';
 
 interface MarkdownPreviewProps {
   value: string;
+  emptyText?: string;
 }
 
-export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({ value }) => {
+export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({ value, emptyText = '' }) => {
   return (
     <div className="prose prose-lg dark:prose-invert max-w-none">
       <ReactMarkdown
@@ -47,7 +48,7 @@ export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({ value }) => {
           },
         }}
       >
-        {value || '*No content*'}
+        {value || emptyText}
       </ReactMarkdown>
     </div>
   );

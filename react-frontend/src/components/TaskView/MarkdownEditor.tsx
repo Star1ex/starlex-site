@@ -1,107 +1,170 @@
-import React, { useState } from 'react';
-import { Bold, CheckSquare, Code, Edit2, Eye, FileCode, Italic, Link, List, Quote, Strikethrough } from 'lucide-react';
-import MarkdownPreview from './MarkdownPreview.js';
+import React, { useEffect, useRef, useState } from 'react';
+import { BlockNoteViewRaw, useCreateBlockNote } from '@blocknote/react';
+import type { PartialBlock } from '@blocknote/core';
+import '@blocknote/core/style.css';
+import '@blocknote/react/style.css';
 
 interface MarkdownEditorProps {
   value: string;
   onChange: (value: string) => void;
-  mode?: 'edit' | 'preview';
-  showToolbar?: boolean;
-  onTogglePreview?: () => void;
-  toolbarClassName?: string;
-  textareaClassName?: string;
-  previewClassName?: string;
+  placeholder?: string;
   containerClassName?: string;
-  onPreviewClick?: () => void;
-  textareaRef?: React.Ref<HTMLTextAreaElement>;
+}
+
+const EMPTY_DOC: PartialBlock[] = [{ type: 'paragraph' }];
+
+function normalizeMarkdownForCodeBlocks(markdown: string): string {
+  if (!markdown) return markdown;
+
+  // Convert a paragraph that contains only inline-code syntax (`code`)
+  // into a fenced code block.
+  const inlineCodeParagraphsToFences = markdown.replace(
+    /(^|\n)\s*`([^`\n]+)`\s*(?=\n|$)/g,
+    (_match, lineStart, code) => `${lineStart}\`\`\`\n${code}\n\`\`\``
+  );
+
+  return inlineCodeParagraphsToFences;
+}
+
+function isDarkTheme(): boolean {
+  if (typeof document === 'undefined') return false;
+  return document.documentElement.classList.contains('dark');
 }
 
 export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
   value,
   onChange,
-  mode,
-  showToolbar = true,
-  onTogglePreview,
-  toolbarClassName,
-  textareaClassName,
-  previewClassName,
   containerClassName,
-  onPreviewClick,
-  textareaRef,
 }) => {
-  const [showPreview, setShowPreview] = useState(false);
-  const isPreview = mode ? mode === 'preview' : showPreview;
+  const editor = useCreateBlockNote();
+  const lastSyncedMarkdownRef = useRef('');
+  const isApplyingProgrammaticChangeRef = useRef(false);
+  const emitFrameRef = useRef<number | null>(null);
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => (isDarkTheme() ? 'dark' : 'light'));
 
-  const insertMarkdown = (before: string, after = '') => {
-    const textarea = document.querySelector('textarea[data-markdown-editor="true"]') as HTMLTextAreaElement | null;
-    if (!textarea) return;
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+    const root = document.documentElement;
+    const observer = new MutationObserver(() => {
+      setTheme(isDarkTheme() ? 'dark' : 'light');
+    });
+    observer.observe(root, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
 
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = value.substring(start, end);
+  useEffect(() => {
+    return () => {
+      if (emitFrameRef.current !== null) {
+        cancelAnimationFrame(emitFrameRef.current);
+      }
+    };
+  }, []);
 
-    const newText = value.substring(0, start) + before + selectedText + after + value.substring(end);
-    onChange(newText);
+  useEffect(() => {
+    const nextMarkdown = value ?? '';
+    if (nextMarkdown === lastSyncedMarkdownRef.current) return;
 
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + before.length, end + before.length);
-    }, 0);
-  };
+    let nextBlocks: PartialBlock[] = EMPTY_DOC;
+    if (nextMarkdown.trim().length > 0) {
+      try {
+        nextBlocks = editor.tryParseMarkdownToBlocks(nextMarkdown);
+      } catch (error) {
+        console.error('Failed to parse markdown into blocks:', error);
+      }
+    }
+
+    isApplyingProgrammaticChangeRef.current = true;
+    editor.replaceBlocks(editor.document, nextBlocks);
+    isApplyingProgrammaticChangeRef.current = false;
+    lastSyncedMarkdownRef.current = nextMarkdown;
+  }, [editor, value]);
 
   return (
-    <div className={containerClassName || 'flex flex-col h-full'}>
-      {showToolbar && (
-        <div className={toolbarClassName || 'flex items-center gap-2 py-2'}>
-        <ToolbarButton onClick={() => insertMarkdown('# ')} title="Heading 1">H1</ToolbarButton>
-        <ToolbarButton onClick={() => insertMarkdown('## ')} title="Heading 2">H2</ToolbarButton>
-        <ToolbarButton onClick={() => insertMarkdown('**', '**')} title="Bold"><Bold className="w-4 h-4" /></ToolbarButton>
-        <ToolbarButton onClick={() => insertMarkdown('*', '*')} title="Italic"><Italic className="w-4 h-4" /></ToolbarButton>
-        <ToolbarButton onClick={() => insertMarkdown('~~', '~~')} title="Strikethrough"><Strikethrough className="w-4 h-4" /></ToolbarButton>
-        <div className="w-px h-6 bg-gray-200 dark:bg-dark-border" />
-        <ToolbarButton onClick={() => insertMarkdown('`', '`')} title="Inline Code"><Code className="w-4 h-4" /></ToolbarButton>
-        <ToolbarButton onClick={() => insertMarkdown('```\n', '\n```')} title="Code Block"><FileCode className="w-4 h-4" /></ToolbarButton>
-        <ToolbarButton onClick={() => insertMarkdown('[](', ')')} title="Link"><Link className="w-4 h-4" /></ToolbarButton>
-        <ToolbarButton onClick={() => insertMarkdown('- ')} title="List"><List className="w-4 h-4" /></ToolbarButton>
-        <ToolbarButton onClick={() => insertMarkdown('- [ ] ')} title="Checklist"><CheckSquare className="w-4 h-4" /></ToolbarButton>
-        <ToolbarButton onClick={() => insertMarkdown('> ')} title="Quote"><Quote className="w-4 h-4" /></ToolbarButton>
-        <div className="flex-1" />
-        <ToolbarButton onClick={() => (onTogglePreview ? onTogglePreview() : setShowPreview(!showPreview))} title={isPreview ? 'Edit' : 'Preview'}>
-          {isPreview ? <Edit2 className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-        </ToolbarButton>
-      </div>
-      )}
+    <div className={`${containerClassName || ''} notion-md-editor`}>
+      <BlockNoteViewRaw
+        editor={editor}
+        theme={theme}
+        formattingToolbar={false}
+        linkToolbar={false}
+        slashMenu={false}
+        emojiPicker={false}
+        sideMenu={false}
+        filePanel={false}
+        tableHandles={false}
+        comments={false}
+        onChange={() => {
+          if (isApplyingProgrammaticChangeRef.current) return;
 
-      <div className="flex-1 overflow-hidden">
-        {isPreview ? (
-          <div className={previewClassName || 'h-full overflow-y-auto'} onClick={onPreviewClick}>
-            <MarkdownPreview value={value} />
-          </div>
-        ) : (
-          <textarea
-            ref={textareaRef as any}
-            data-markdown-editor="true"
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder="Start typing... Use markdown for formatting"
-            className={textareaClassName || 'w-full h-full text-base leading-relaxed bg-transparent border-none outline-none resize-none font-normal'}
-            spellCheck
-          />
-        )}
-      </div>
+          const rawMarkdown = editor.blocksToMarkdownLossy(editor.document);
+          const normalizedMarkdown = normalizeMarkdownForCodeBlocks(rawMarkdown);
+          if (normalizedMarkdown === lastSyncedMarkdownRef.current) return;
+
+          if (normalizedMarkdown !== rawMarkdown) {
+            let normalizedBlocks: PartialBlock[] = EMPTY_DOC;
+            if (normalizedMarkdown.trim().length > 0) {
+              try {
+                normalizedBlocks = editor.tryParseMarkdownToBlocks(normalizedMarkdown);
+              } catch (error) {
+                console.error('Failed to parse normalized markdown into blocks:', error);
+              }
+            }
+
+            isApplyingProgrammaticChangeRef.current = true;
+            editor.replaceBlocks(editor.document, normalizedBlocks);
+            isApplyingProgrammaticChangeRef.current = false;
+          }
+
+          lastSyncedMarkdownRef.current = normalizedMarkdown;
+          if (emitFrameRef.current !== null) {
+            cancelAnimationFrame(emitFrameRef.current);
+          }
+          emitFrameRef.current = requestAnimationFrame(() => {
+            onChange(normalizedMarkdown);
+          });
+        }}
+      />
+      <style>{`
+        .notion-md-editor .bn-block-content[data-content-type="codeBlock"] {
+          border: 1px solid rgba(148, 163, 184, 0.35);
+          border-radius: 12px;
+          background: #0f172a;
+          box-shadow: 0 8px 24px rgba(2, 6, 23, 0.12);
+          overflow: hidden;
+        }
+
+        .notion-md-editor .bn-block-content[data-content-type="codeBlock"] > pre {
+          margin: 0;
+          padding: 14px 16px;
+          font-family: 'JetBrains Mono', 'Fira Code', Menlo, Consolas, monospace;
+          font-size: 0.9rem;
+          line-height: 1.65;
+          color: #e2e8f0;
+          overflow-x: auto;
+          scrollbar-width: thin;
+          scrollbar-color: rgba(148, 163, 184, 0.45) transparent;
+        }
+
+        .notion-md-editor .bn-block-content[data-content-type="codeBlock"] > div {
+          background: linear-gradient(180deg, rgba(15, 23, 42, 0.94), rgba(15, 23, 42, 0.8));
+          border-bottom: 1px solid rgba(148, 163, 184, 0.25);
+          padding: 6px 10px;
+        }
+
+        .notion-md-editor .bn-block-content[data-content-type="codeBlock"] > div > select {
+          color: #cbd5e1;
+          background: transparent;
+          font-size: 12px;
+          letter-spacing: 0.02em;
+        }
+
+        .dark .notion-md-editor .bn-block-content[data-content-type="codeBlock"] {
+          border-color: rgba(148, 163, 184, 0.24);
+          box-shadow: 0 10px 30px rgba(2, 6, 23, 0.35);
+        }
+
+      `}</style>
     </div>
   );
 };
 
-const ToolbarButton: React.FC<{ onClick: () => void; title: string; children: React.ReactNode }> = ({ onClick, title, children }) => (
-  <button
-    onClick={onClick}
-    title={title}
-    className="p-1.5 hover:bg-gray-200 dark:hover:bg-dark-border rounded transition-colors"
-    type="button"
-  >
-    {children}
-  </button>
-);
-
-export default MarkdownEditor;
+export default React.memo(MarkdownEditor);

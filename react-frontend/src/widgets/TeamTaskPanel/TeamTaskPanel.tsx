@@ -1,9 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { Suspense, useEffect, useRef, useState } from 'react';
 import { useDebounce } from '@/shared/hooks/useDebounce.js';
 import { taskService } from '@/services/api/index.js';
 import type { Task } from '@/entities/types.js';
 import BreadcrumbBack from '@/shared/ui/BreadcrumbBack.js';
-import { MarkdownEditor } from '@/components/MarkdownEditor.js';
+
+const MarkdownEditor = React.lazy(() =>
+  import('@/components/TaskView/MarkdownEditor.js').then((m) => ({ default: m.MarkdownEditor }))
+);
 
 type TeamTaskPanelProps = {
   task: Task | null;
@@ -116,17 +119,17 @@ export const TeamTaskPanel: React.FC<TeamTaskPanelProps> = ({ task, isOpen, team
       return;
     }
 
+    if (
+      lastSentRef.current.title === debouncedTitle &&
+      lastSentRef.current.description === debouncedDescription
+    ) {
+      return;
+    }
+
     const activeTaskId = task.id;
-    const controller = new AbortController();
     const save = async () => {
       try {
         if (activeTaskId !== currentTaskIdRef.current) return;
-        if (
-          lastSentRef.current.title === debouncedTitle &&
-          lastSentRef.current.description === debouncedDescription
-        ) {
-          return;
-        }
         const updates: Promise<void>[] = [];
         if (lastSentRef.current.title !== debouncedTitle) {
           updates.push(taskService.updateTeamTaskTitle(teamId, activeTaskId, debouncedTitle));
@@ -145,7 +148,6 @@ export const TeamTaskPanel: React.FC<TeamTaskPanelProps> = ({ task, isOpen, team
       }
     };
     save();
-    return () => controller.abort();
   }, [debouncedTitle, debouncedDescription, title, description, task, teamId, onUpdated]);
 
   if (!isOpen || !task) return null;
@@ -185,13 +187,18 @@ export const TeamTaskPanel: React.FC<TeamTaskPanelProps> = ({ task, isOpen, team
           />
 
           <div className="mt-2">
-            <MarkdownEditor
-              key={task.id}
-              value={description ?? ''}
-              onChange={setDescription}
-              placeholder="Describe the task..."
-              className="team-task-editor"
-            />
+            <Suspense
+              fallback={
+                <div className="min-h-[220px] rounded-xl border border-gray-100 dark:border-dark-border bg-gray-50/40 dark:bg-dark-bg/40 animate-pulse" />
+              }
+            >
+              <MarkdownEditor
+                key={task.id}
+                value={description ?? ''}
+                onChange={setDescription}
+                containerClassName="team-task-editor"
+              />
+            </Suspense>
           </div>
         </div>
       </div>
