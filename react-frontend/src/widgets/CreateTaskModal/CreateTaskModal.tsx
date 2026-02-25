@@ -66,9 +66,9 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         showOnlyWhenEditable: true,
         showOnlyCurrent: false,
       }),
-    ],
+    ] as any,
     content: formData.description || '',
-    onUpdate: ({ editor: tiptap }) => {
+    onUpdate: ({ editor: tiptap }: any) => {
       setFormData((prev) => ({ ...prev, description: tiptap.getHTML() }));
     },
     editorProps: {
@@ -76,13 +76,13 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         class: 'team-task-create-editor',
       },
     },
-  });
+  } as any);
 
   useEffect(() => {
     if (!editor) return;
     const current = editor.getHTML();
     if ((formData.description || '') !== current) {
-      editor.commands.setContent(formData.description || '', false);
+      editor.commands.setContent(formData.description || '', { emitUpdate: false } as any);
     }
   }, [formData.description, editor]);
 

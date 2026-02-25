@@ -60,7 +60,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
         placeholder,
         showOnlyWhenEditable: true,
       }),
-    ],
+    ] as any,
     content: textToHtml(value),
     editorProps: {
       attributes: {
@@ -68,18 +68,18 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
         spellcheck: 'true',
       },
     },
-    onUpdate: ({ editor: tiptapEditor }) => {
+    onUpdate: ({ editor: tiptapEditor }: any) => {
       const html = tiptapEditor.getHTML();
       const text = htmlToText(html);
       onChange(text);
     },
-  });
+  } as any);
 
   useEffect(() => {
     if (!editor) return;
     const currentText = htmlToText(editor.getHTML());
     if (currentText !== value) {
-      editor.commands.setContent(textToHtml(value), false);
+      editor.commands.setContent(textToHtml(value), { emitUpdate: false } as any);
     }
   }, [value, editor]);
 
