@@ -22,11 +22,12 @@ func InitRoutes(app *fiber.App, h *handlers.Handlers) {
 
 	protected := api.Group("", h.UserIndentity, h.CSRFProtect)
 	{
-		protected.Post("/auth/password-change", h.ChangePassword)
-		protected.Post("/auth/link-google", h.OAuthRateLimit, h.LinkGoogle)
-		protected.Post("/auth/link-github", h.OAuthRateLimit, h.LinkGithub)
-		protected.Delete("/auth/unlink-google", h.UnlinkGoogle)
-		protected.Delete("/auth/unlink-github", h.UnlinkGithub)
+	protected.Post("/auth/password-change", h.ChangePassword)
+	protected.Post("/auth/logout", h.Logout)
+	protected.Post("/auth/link-google", h.OAuthRateLimit, h.LinkGoogle)
+	protected.Post("/auth/link-github", h.OAuthRateLimit, h.LinkGithub)
+	protected.Delete("/auth/unlink-google", h.UnlinkGoogle)
+	protected.Delete("/auth/unlink-github", h.UnlinkGithub)
 		setupUserRoutes(protected, h)
 		setupSearchRoutes(protected, h)
 		setupFolderRoutes(protected, h)
@@ -41,7 +42,6 @@ func setupAuthRoutes(api fiber.Router, h *handlers.Handlers) {
 
 	auth.Get("/csrf", h.GetCSRFToken)
 	auth.Post("/login", authRateLimiter, h.Login)
-	auth.Post("/logout", h.Logout)
 	auth.Post("/register", authRateLimiter, h.Register)
 	auth.Post("/refresh", h.Refresh)
 	auth.Post("/resend-code", authRateLimiter, h.ResendCode)
