@@ -34,6 +34,7 @@ func InitRoutes(app *fiber.App, h *handlers.Handlers) {
 		setupTaskRoutes(protected, h)
 		setupTeamRoutes(protected, h)
 		setupSprintRoutes(protected, h)
+		setupDiscussionRoutes(protected, h)
 	}
 }
 
@@ -153,6 +154,19 @@ func setupSprintRoutes(api fiber.Router, h *handlers.Handlers) {
 		tasks.Patch("/:task_id/subtasks/:id", h.UpdateSubtask)
 		tasks.Delete("/:task_id/subtasks/:id", h.DeleteSubtask)
 	}
+}
+
+func setupDiscussionRoutes(api fiber.Router, h *handlers.Handlers) {
+	api.Post("/tasks/:id/discussions", h.CreateTaskDiscussion)
+	api.Post("/folders/:id/discussions", h.CreateFolderDiscussion)
+	api.Get("/tasks/:id/discussions", h.GetTaskDiscussions)
+	api.Get("/folders/:id/discussions", h.GetFolderDiscussions)
+	api.Get("/discussions/:id", h.GetDiscussionByID)
+	api.Patch("/discussions/:id", h.UpdateDiscussion)
+	api.Delete("/discussions/:id", h.DeleteDiscussion)
+	api.Post("/discussions/:id/messages", h.CreateDiscussionMessage)
+	api.Patch("/discussions/:did/messages/:mid", h.UpdateDiscussionMessage)
+	api.Delete("/discussions/:did/messages/:mid", h.DeleteDiscussionMessage)
 }
 
 //		----- OLD ROUTES -----

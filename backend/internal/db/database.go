@@ -80,6 +80,8 @@ func migrate(db *DB) error {
 		&repository.SprintModel{},
 		&repository.SubtaskModel{},
 		&repository.FolderModel{},
+		&repository.DiscussionModel{},
+		&repository.DiscussionMessageModel{},
 		&repository.VerificationCodeModel{},
 		&repository.PasswordResetTokenModel{},
 		&repository.PasswordAuditLogModel{},

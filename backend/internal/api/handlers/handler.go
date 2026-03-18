@@ -20,6 +20,7 @@ type Handlers struct {
 	verificationService verification.Service
 	passwordService     password.Service
 	sprintService       *service.SprintService
+	discussionService   *service.DiscussionService
 	jwtSecret           string
 	frontendBaseURL     string
 	oauthConfig         OAuthConfig
@@ -33,6 +34,7 @@ func NewHandlers(userService user.Service,
 	verificationService verification.Service,
 	passwordService password.Service,
 	sprintService *service.SprintService,
+	discussionService *service.DiscussionService,
 	authConfig AuthConfig,
 ) *Handlers {
 
@@ -44,6 +46,7 @@ func NewHandlers(userService user.Service,
 		verificationService: verificationService,
 		passwordService:     passwordService,
 		sprintService:       sprintService,
+		discussionService:   discussionService,
 		jwtSecret:           authConfig.JWTSecret,
 		frontendBaseURL:     authConfig.FrontendBaseURL,
 		oauthConfig:         authConfig.OAuth,

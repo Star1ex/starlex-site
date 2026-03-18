@@ -17,4 +17,5 @@ type Service interface {
 	GetUsers(ctx context.Context, teamId string) ([]*entity.User, error)
 	AddUserToTeam(ctx context.Context, teamID string, email string, requesterID string) error
 	RemoveUserFromTeam(ctx context.Context, teamID, userIDToRemove, currentUserID string) error
+	GetTeamByID(ctx context.Context, teamID string) (*entity.Team, error)
 }
