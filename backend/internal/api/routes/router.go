@@ -22,17 +22,18 @@ func InitRoutes(app *fiber.App, h *handlers.Handlers) {
 
 	protected := api.Group("", h.UserIndentity, h.CSRFProtect)
 	{
-	protected.Post("/auth/password-change", h.ChangePassword)
-	protected.Post("/auth/logout", h.Logout)
-	protected.Post("/auth/link-google", h.OAuthRateLimit, h.LinkGoogle)
-	protected.Post("/auth/link-github", h.OAuthRateLimit, h.LinkGithub)
-	protected.Delete("/auth/unlink-google", h.UnlinkGoogle)
-	protected.Delete("/auth/unlink-github", h.UnlinkGithub)
+		protected.Post("/auth/password-change", h.ChangePassword)
+		protected.Post("/auth/logout", h.Logout)
+		protected.Post("/auth/link-google", h.OAuthRateLimit, h.LinkGoogle)
+		protected.Post("/auth/link-github", h.OAuthRateLimit, h.LinkGithub)
+		protected.Delete("/auth/unlink-google", h.UnlinkGoogle)
+		protected.Delete("/auth/unlink-github", h.UnlinkGithub)
 		setupUserRoutes(protected, h)
 		setupSearchRoutes(protected, h)
 		setupFolderRoutes(protected, h)
 		setupTaskRoutes(protected, h)
 		setupTeamRoutes(protected, h)
+		setupSprintRoutes(protected, h)
 	}
 }
 
@@ -128,6 +129,29 @@ func setupTeamRoutes(api fiber.Router, h *handlers.Handlers) {
 		teamTasks.Patch("/:id/progress", h.PatchTaskProgress)
 		teamTasks.Patch("/:id/assignees", h.PatchTaskAssignees)
 		teamTasks.Delete("/:id", h.DeleteTask)
+	}
+}
+
+func setupSprintRoutes(api fiber.Router, h *handlers.Handlers) {
+	sprints := api.Group("/teams/:team_id/sprints")
+	{
+		sprints.Post("/", h.CreateSprint)
+		sprints.Get("/", h.GetTeamSprints)
+		sprints.Get("/:id", h.GetSprintByID)
+		sprints.Patch("/:id", h.UpdateSprint)
+		sprints.Post("/:id/start", h.StartSprint)
+		sprints.Post("/:id/complete", h.CompleteSprint)
+		sprints.Post("/:id/archive", h.ArchiveSprint)
+		sprints.Delete("/:id", h.DeleteSprint)
+	}
+
+	tasks := api.Group("/tasks")
+	{
+		tasks.Patch("/:id/sprint", h.MoveTaskToSprint)
+		tasks.Patch("/:id/position", h.UpdateTaskPosition)
+		tasks.Post("/:task_id/subtasks", h.CreateSubtask)
+		tasks.Patch("/:task_id/subtasks/:id", h.UpdateSubtask)
+		tasks.Delete("/:task_id/subtasks/:id", h.DeleteSubtask)
 	}
 }
 

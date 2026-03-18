@@ -17,9 +17,12 @@ type TaskModel struct {
 	Progress    string
 	Assigned    []UserModel `gorm:"many2many:task_users"`
 
-	TeamID    *string `gorm:"default:null"`
-	OwnerID   string  `gorm:"not null;index:idx_owner_folder"`
-	FolderID  *string `gorm:"default:null;index:idx_owner_folder"`
+	TeamID    *string        `gorm:"default:null"`
+	OwnerID   string         `gorm:"not null;index:idx_owner_folder"`
+	FolderID  *string        `gorm:"default:null;index:idx_owner_folder"`
+	SprintID  *string        `gorm:"default:null;index:idx_task_sprint"`
+	Position  int            `gorm:"not null;default:0"`
+	Subtasks  []SubtaskModel `gorm:"foreignKey:TaskID"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -54,6 +57,9 @@ func toTaskDomain(m TaskModel) *entity.Task {
 		TeamID:      teamID,
 		OwnerID:     m.OwnerID,
 		FolderID:    m.FolderID,
+		SprintID:    m.SprintID,
+		Position:    m.Position,
+		Subtasks:    toSubtaskDomains(m.Subtasks),
 		Priority:    m.Priority,
 		Progress:    m.Progress,
 		CreatedAt:   m.CreatedAt,
@@ -64,6 +70,26 @@ func toTaskDomains(tasks []TaskModel) []*entity.Task {
 	response := make([]*entity.Task, len(tasks))
 	for i, task := range tasks {
 		response[i] = toTaskDomain(task)
+	}
+	return response
+}
+
+func toSubtaskDomain(m SubtaskModel) *entity.Subtask {
+	return &entity.Subtask{
+		ID:        m.ID,
+		TaskID:    m.TaskID,
+		Title:     m.Title,
+		IsDone:    m.IsDone,
+		Position:  m.Position,
+		CreatedAt: m.CreatedAt,
+		UpdatedAt: m.UpdatedAt,
+	}
+}
+
+func toSubtaskDomains(models []SubtaskModel) []*entity.Subtask {
+	response := make([]*entity.Subtask, len(models))
+	for i, subtask := range models {
+		response[i] = toSubtaskDomain(subtask)
 	}
 	return response
 }
@@ -82,6 +108,8 @@ func fromTaskDomain(t *entity.Task) *TaskModel {
 		Priority:    t.Priority,
 		OwnerID:     t.OwnerID,
 		FolderID:    t.FolderID,
+		SprintID:    t.SprintID,
+		Position:    t.Position,
 		TeamID:      &t.TeamID,
 		CreatedAt:   t.CreatedAt,
 		UpdatedAt:   t.UpdatedAt,

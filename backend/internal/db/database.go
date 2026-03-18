@@ -77,6 +77,8 @@ func migrate(db *DB) error {
 		&repository.UserModel{},
 		&repository.TeamModel{},
 		&repository.TaskModel{},
+		&repository.SprintModel{},
+		&repository.SubtaskModel{},
 		&repository.FolderModel{},
 		&repository.VerificationCodeModel{},
 		&repository.PasswordResetTokenModel{},

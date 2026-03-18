@@ -9,6 +9,7 @@ import (
 	"github.com/Team-Tracks/team-track-site/internal/domain/team"
 	"github.com/Team-Tracks/team-track-site/internal/domain/user"
 	"github.com/Team-Tracks/team-track-site/internal/domain/verification"
+	"github.com/Team-Tracks/team-track-site/internal/service"
 )
 
 type Handlers struct {
@@ -18,6 +19,7 @@ type Handlers struct {
 	folderService       folder.Service
 	verificationService verification.Service
 	passwordService     password.Service
+	sprintService       *service.SprintService
 	jwtSecret           string
 	frontendBaseURL     string
 	oauthConfig         OAuthConfig
@@ -30,6 +32,7 @@ func NewHandlers(userService user.Service,
 	folderService folder.Service,
 	verificationService verification.Service,
 	passwordService password.Service,
+	sprintService *service.SprintService,
 	authConfig AuthConfig,
 ) *Handlers {
 
@@ -40,6 +43,7 @@ func NewHandlers(userService user.Service,
 		folderService:       folderService,
 		verificationService: verificationService,
 		passwordService:     passwordService,
+		sprintService:       sprintService,
 		jwtSecret:           authConfig.JWTSecret,
 		frontendBaseURL:     authConfig.FrontendBaseURL,
 		oauthConfig:         authConfig.OAuth,
