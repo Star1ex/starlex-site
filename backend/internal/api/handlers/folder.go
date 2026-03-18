@@ -37,6 +37,9 @@ func (h *Handlers) CreateFolder(ctx *fiber.Ctx) error {
 		})
 	}
 
+	req.Name = sanitizeStrict(req.Name)
+	req.Icon = sanitizeStrict(req.Icon)
+
 	folder := dto.ToDomainFolder(&req)
 	// Enforce ownership from auth context, never trust client-supplied owner_id.
 	folder.OwnerID = userID
@@ -242,6 +245,9 @@ func (h *Handlers) UpdateFolder(ctx *fiber.Ctx) error {
 			"error": "Invalid request body",
 		})
 	}
+
+	req.Name = sanitizeStrict(req.Name)
+	req.Icon = sanitizeStrict(req.Icon)
 
 	req.ID = folderIDParams
 	if _, err := h.requireFolderAccess(ctx, req.ID, userID); err != nil {

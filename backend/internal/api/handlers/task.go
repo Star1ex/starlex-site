@@ -38,6 +38,9 @@ func (h *Handlers) CreateTeamTask(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad json"})
 	}
 
+	input.Task = sanitizeStrict(input.Task)
+	input.Description = sanitizeMarkdown(input.Description)
+
 	entityTask := &entity.Task{
 		Task:        input.Task,
 		Description: input.Description,
@@ -73,6 +76,9 @@ func (h *Handlers) CreatePersonalTask(ctx *fiber.Ctx) error {
 	if err := ctx.BodyParser(&input); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad json"})
 	}
+
+	input.Task = sanitizeStrict(input.Task)
+	input.Description = sanitizeMarkdown(input.Description)
 
 	entityTask := &entity.Task{
 		Task:        input.Task,
@@ -120,6 +126,9 @@ func (h *Handlers) UpdateTask(c *fiber.Ctx) error {
 			"error": "invalid json",
 		})
 	}
+
+	updateTask.Task = sanitizeStrict(updateTask.Task)
+	updateTask.Description = sanitizeMarkdown(updateTask.Description)
 
 	taskEntity, assignedTo := dto.FromUpdateTask(&updateTask)
 
