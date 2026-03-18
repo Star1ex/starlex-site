@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
@@ -55,8 +56,8 @@ func (h *Handlers) GetCSRFToken(ctx *fiber.Ctx) error {
 		Value:    token,
 		Expires:  time.Now().Add(24 * time.Hour),
 		HTTPOnly: false,
-		Secure:   h.isSecureCookie(),
-		SameSite: "Lax",
+		Secure:   os.Getenv("APP_ENV") == "production",
+		SameSite: "Strict",
 		Path:     "/",
 	})
 

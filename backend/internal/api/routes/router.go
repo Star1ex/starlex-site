@@ -20,7 +20,7 @@ func InitRoutes(app *fiber.App, h *handlers.Handlers) {
 
 	setupAuthRoutes(api, h)
 
-	protected := api.Group("", h.UserIndentity)
+	protected := api.Group("", h.UserIndentity, h.CSRFProtect)
 	{
 		protected.Post("/auth/password-change", h.ChangePassword)
 		protected.Post("/auth/link-google", h.OAuthRateLimit, h.LinkGoogle)
