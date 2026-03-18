@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"log"
@@ -333,9 +332,9 @@ func (h *Handlers) Register(ctx *fiber.Ctx) error {
 	var input dto.UserApi
 
 	if err := ctx.BodyParser(&input); err != nil {
-		log.Println(err)
+		log.Printf("[ERROR] register body parse failed: %v", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": "invalid request body",
 		})
 	}
 
@@ -371,7 +370,7 @@ func (h *Handlers) Register(ctx *fiber.Ctx) error {
 		})
 	}
 
-	userID, err := h.userService.CreateUnverified(context.Background(), &input)
+	userID, err := h.userService.CreateUnverified(ctx.Context(), &input)
 	if err != nil {
 		log.Println(err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -379,7 +378,7 @@ func (h *Handlers) Register(ctx *fiber.Ctx) error {
 		})
 	}
 	// create user with service
-	err = h.verificationService.GenerateAndSendCode(context.Background(), userID, input.Email, input.FirstName)
+	err = h.verificationService.GenerateAndSendCode(ctx.Context(), userID, input.Email, input.FirstName)
 	if err != nil {
 		log.Println("Failed to send verification code: ", err)
 		ctx.Status(fiber.StatusCreated).JSON(fiber.Map{
@@ -420,15 +419,15 @@ func (h *Handlers) VerifyEmail(ctx *fiber.Ctx) error {
 		})
 	}
 
-	err := h.verificationService.VerifyCode(context.Background(), input.UserID, input.Code)
+	err := h.verificationService.VerifyCode(ctx.Context(), input.UserID, input.Code)
 	if err != nil {
-		log.Println(err)
+		log.Printf("[ERROR] verify email failed: %v", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": "invalid verification code",
 		})
 	}
 
-	user, err := h.userService.Get(context.Background(), input.UserID)
+	user, err := h.userService.Get(ctx.Context(), input.UserID)
 	if err != nil {
 		log.Println("Failed to get user for notification: ", err)
 	} else {
@@ -471,7 +470,7 @@ func (h *Handlers) ResendCode(ctx *fiber.Ctx) error {
 		})
 	}
 
-	user, err := h.userService.Get(context.Background(), input.UserID)
+	user, err := h.userService.Get(ctx.Context(), input.UserID)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "user not found",
@@ -484,7 +483,7 @@ func (h *Handlers) ResendCode(ctx *fiber.Ctx) error {
 		})
 	}
 
-	err = h.verificationService.GenerateAndSendCode(context.Background(), user.ID, user.Email, user.FirstName)
+	err = h.verificationService.GenerateAndSendCode(ctx.Context(), user.ID, user.Email, user.FirstName)
 	if err != nil {
 		log.Println(err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

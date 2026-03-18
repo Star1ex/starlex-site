@@ -63,7 +63,8 @@ func (h *Handlers) OAuthRateLimit(ctx *fiber.Ctx) error {
 
 func (h *Handlers) StartGoogleOAuth(ctx *fiber.Ctx) error {
 	if err := h.validateOAuthConfig("google"); err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		log.Printf("[ERROR] oauth config google: %v", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "oauth configuration error"})
 	}
 	returnTo := sanitizeReturnTo(ctx.Query("redirect"))
 	state, err := security.GenerateSecureToken(32)
@@ -79,7 +80,8 @@ func (h *Handlers) StartGoogleOAuth(ctx *fiber.Ctx) error {
 
 func (h *Handlers) StartGithubOAuth(ctx *fiber.Ctx) error {
 	if err := h.validateOAuthConfig("github"); err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		log.Printf("[ERROR] oauth config github: %v", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "oauth configuration error"})
 	}
 	returnTo := sanitizeReturnTo(ctx.Query("redirect"))
 	state, err := security.GenerateSecureToken(32)
@@ -95,7 +97,8 @@ func (h *Handlers) StartGithubOAuth(ctx *fiber.Ctx) error {
 
 func (h *Handlers) LinkGoogle(ctx *fiber.Ctx) error {
 	if err := h.validateOAuthConfig("google"); err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		log.Printf("[ERROR] oauth config google: %v", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "oauth configuration error"})
 	}
 	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
@@ -116,7 +119,8 @@ func (h *Handlers) LinkGoogle(ctx *fiber.Ctx) error {
 
 func (h *Handlers) LinkGithub(ctx *fiber.Ctx) error {
 	if err := h.validateOAuthConfig("github"); err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		log.Printf("[ERROR] oauth config github: %v", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "oauth configuration error"})
 	}
 	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
@@ -328,7 +332,7 @@ func (h *Handlers) linkOAuthAccount(ctx context.Context, userID string, profile 
 		return nil, err
 	}
 
-	update := h.buildOAuthUpdate(userEntity, profile, true)
+	update := h.buildOAuthUpdate(ctx, userEntity, profile, true)
 	if err := h.userService.UpdateOAuthFields(ctx, userEntity.ID, update); err != nil {
 		return nil, err
 	}
@@ -344,7 +348,7 @@ func (h *Handlers) linkExistingByEmail(ctx context.Context, userEntity *entity.U
 		return nil, err
 	}
 
-	update := h.buildOAuthUpdate(userEntity, profile, true)
+	update := h.buildOAuthUpdate(ctx, userEntity, profile, true)
 	if err := h.userService.UpdateOAuthFields(ctx, userEntity.ID, update); err != nil {
 		return nil, err
 	}
@@ -352,20 +356,20 @@ func (h *Handlers) linkExistingByEmail(ctx context.Context, userEntity *entity.U
 }
 
 func (h *Handlers) updateOAuthUser(ctx context.Context, userEntity *entity.User, profile oauthProfile) (*entity.User, error) {
-	update := h.buildOAuthUpdate(userEntity, profile, false)
+	update := h.buildOAuthUpdate(ctx, userEntity, profile, false)
 	if err := h.userService.UpdateOAuthFields(ctx, userEntity.ID, update); err != nil {
 		return nil, err
 	}
 	return h.userService.Get(ctx, userEntity.ID)
 }
 
-func (h *Handlers) buildOAuthUpdate(userEntity *entity.User, profile oauthProfile, ensureProvider bool) user.OAuthUpdate {
+func (h *Handlers) buildOAuthUpdate(ctx context.Context, userEntity *entity.User, profile oauthProfile, ensureProvider bool) user.OAuthUpdate {
 	update := user.OAuthUpdate{}
 	if profile.AvatarURL != "" {
 		update.AvatarURL = &profile.AvatarURL
 	}
 	if profile.Email != "" && !strings.EqualFold(profile.Email, userEntity.Email) {
-		if email := h.maybeUpdateEmail(profile.Email, userEntity.ID); email != "" {
+		if email := h.maybeUpdateEmail(ctx, profile.Email, userEntity.ID); email != "" {
 			update.Email = &email
 		}
 	}
@@ -488,11 +492,11 @@ func authProvidersAfterUnlink(userEntity *entity.User, provider string) []string
 	return providers
 }
 
-func (h *Handlers) maybeUpdateEmail(email, userID string) string {
+func (h *Handlers) maybeUpdateEmail(ctx context.Context, email, userID string) string {
 	if email == "" {
 		return ""
 	}
-	existing, err := h.userService.GetByEmail(context.Background(), email)
+	existing, err := h.userService.GetByEmail(ctx, email)
 	if err == nil && existing != nil && existing.ID != userID {
 		return ""
 	}
