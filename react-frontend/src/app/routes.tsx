@@ -1,7 +1,7 @@
 import React, { Suspense } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
 import { Layout } from "@/widgets/Layout/Layout.js";
-import { ErrorBoundary } from '@/shared/ui/ErrorBoundary.js';
+import { ErrorBoundary } from '@/components/ErrorBoundary.js';
 import { authService } from '@/services/api/index.js';
 import { apiClient } from '@/services/api/client.js';
 
@@ -27,36 +27,61 @@ import { Navigate } from 'react-router-dom';
 const Fallback = () => <div className="min-h-screen bg-white dark:bg-dark-bg" />;
 
 export const AppRoutes = () => (
-  <ErrorBoundary>
-    <Suspense fallback={<Fallback />}>
-      <AnimatedRoutes />
-    </Suspense>
-  </ErrorBoundary>
+  <Suspense fallback={<Fallback />}>
+    <AnimatedRoutes />
+  </Suspense>
 );
 
 const AnimatedRoutes = () => {
   const location = useLocation();
+  const withErrorBoundary = (element: React.ReactNode) => (
+    <ErrorBoundary>{element}</ErrorBoundary>
+  );
   return (
     <Routes location={location}>
-      <Route path="/" element={<HomePage />} />
-      <Route path="/sign-in" element={<SignInPage />} />
-      <Route path="/sign-up" element={<SignUpPage />} />
-      <Route path="/oauth/callback" element={<OAuthCallbackPage />} />
-      <Route path="/login" element={<Navigate to="/sign-in" replace />} />
-      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-      <Route path="/reset-password" element={<ResetPasswordPage />} />
-      <Route path="/verify-email" element={<VerifyEmailPage />} />
-      <Route path="/about-us" element={<AboutUs />} />
+      <Route path="/" element={withErrorBoundary(<HomePage />)} />
+      <Route path="/sign-in" element={withErrorBoundary(<SignInPage />)} />
+      <Route path="/sign-up" element={withErrorBoundary(<SignUpPage />)} />
+      <Route path="/oauth/callback" element={withErrorBoundary(<OAuthCallbackPage />)} />
+      <Route path="/login" element={withErrorBoundary(<Navigate to="/sign-in" replace />)} />
+      <Route path="/forgot-password" element={withErrorBoundary(<ForgotPasswordPage />)} />
+      <Route path="/reset-password" element={withErrorBoundary(<ResetPasswordPage />)} />
+      <Route path="/verify-email" element={withErrorBoundary(<VerifyEmailPage />)} />
+      <Route path="/about-us" element={withErrorBoundary(<AboutUs />)} />
 
       {/* Protected routes with Layout */}
-      <Route path="/dashboard" element={<RequireAuth><Layout><Dashboard /></Layout></RequireAuth>} />
-      <Route path="/settings" element={<RequireAuth><Layout><GeneralSettings /></Layout></RequireAuth>} />
-      <Route path="/profile" element={<RequireAuth><Layout><ProfilePage /></Layout></RequireAuth>} />
-      <Route path="/profile/:userId" element={<RequireAuth><Layout><UserProfilePage /></Layout></RequireAuth>} />
-      <Route path="/team/:team_id" element={<RequireAuth><Layout><TaskBoard /></Layout></RequireAuth>} />
-      <Route path="/personal" element={<RequireAuth><Layout><Navigate to="/dashboard" replace /></Layout></RequireAuth>} />
-      <Route path="/task/new" element={<RequireAuth><Layout><TaskView /></Layout></RequireAuth>} />
-      <Route path="/task/:taskId" element={<RequireAuth><Layout><TaskView /></Layout></RequireAuth>} />
+      <Route
+        path="/dashboard"
+        element={withErrorBoundary(<RequireAuth><Layout><Dashboard /></Layout></RequireAuth>)}
+      />
+      <Route
+        path="/settings"
+        element={withErrorBoundary(<RequireAuth><Layout><GeneralSettings /></Layout></RequireAuth>)}
+      />
+      <Route
+        path="/profile"
+        element={withErrorBoundary(<RequireAuth><Layout><ProfilePage /></Layout></RequireAuth>)}
+      />
+      <Route
+        path="/profile/:userId"
+        element={withErrorBoundary(<RequireAuth><Layout><UserProfilePage /></Layout></RequireAuth>)}
+      />
+      <Route
+        path="/team/:team_id"
+        element={withErrorBoundary(<RequireAuth><Layout><TaskBoard /></Layout></RequireAuth>)}
+      />
+      <Route
+        path="/personal"
+        element={withErrorBoundary(<RequireAuth><Layout><Navigate to="/dashboard" replace /></Layout></RequireAuth>)}
+      />
+      <Route
+        path="/task/new"
+        element={withErrorBoundary(<RequireAuth><Layout><TaskView /></Layout></RequireAuth>)}
+      />
+      <Route
+        path="/task/:taskId"
+        element={withErrorBoundary(<RequireAuth><Layout><TaskView /></Layout></RequireAuth>)}
+      />
     </Routes>
   );
 };

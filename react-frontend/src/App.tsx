@@ -1,7 +1,7 @@
 import React from "react";
 import { BrowserRouter } from "react-router-dom";
 import { AppRoutes } from "@/app/routes.js";
-import { ErrorBoundary } from "@/shared/ui/ErrorBoundary.js";
+import { ErrorBoundary } from "@/components/ErrorBoundary.js";
 import { ThemeProvider } from "@/shared/contexts/ThemeContext.js";
 import { LastVisitedManager } from "@/app/LastVisitedManager.js";
 
