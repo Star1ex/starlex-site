@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"io"
-	"log"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -10,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/Team-Tracks/team-track-site/internal/api/dto"
+	"github.com/Team-Tracks/team-track-site/internal/logger"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -51,7 +51,7 @@ func (h *Handlers) GetTeams(ctx *fiber.Ctx) error {
 	}
 	teams, err := h.userService.GetTeams(ctx.Context(), userID)
 	if err != nil {
-		log.Println(err)
+		logger.Log.Errorw("get teams failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{})
 	}
 	response := dto.ToTeamsResponse(teams)
@@ -191,7 +191,7 @@ func (h *Handlers) UserUpdate(c *fiber.Ctx) error {
 
 	err := h.userService.Update(c.Context(), dto.FromUseUpdate(&updates), userID)
 	if err != nil {
-		log.Println(err)
+		logger.Log.Errorw("update user failed", "error", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to update",
 		})

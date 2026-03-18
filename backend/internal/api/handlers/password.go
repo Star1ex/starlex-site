@@ -3,11 +3,11 @@ package handlers
 import (
 	"errors"
 	"fmt"
-	"log"
 	"os"
 	"time"
 
 	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
+	"github.com/Team-Tracks/team-track-site/internal/logger"
 	"github.com/Team-Tracks/team-track-site/internal/security"
 	"github.com/Team-Tracks/team-track-site/internal/service"
 	"github.com/gofiber/fiber/v2"
@@ -45,7 +45,7 @@ type CsrfTokenResponse struct {
 func (h *Handlers) GetCSRFToken(ctx *fiber.Ctx) error {
 	token, err := generateCSRFToken()
 	if err != nil {
-		log.Println("csrf token error:", err)
+		logger.Log.Errorw("csrf token error", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to generate csrf token",
 		})
@@ -113,7 +113,7 @@ func (h *Handlers) ChangePassword(ctx *fiber.Ctx) error {
 				"error": "password does not meet security requirements",
 			})
 		}
-		log.Println("change password error:", err)
+		logger.Log.Errorw("change password error", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to change password",
 		})
@@ -171,7 +171,7 @@ func (h *Handlers) RequestPasswordReset(ctx *fiber.Ctx) error {
 				"message": "If an account exists for that email, a reset code was sent. Please try again later.",
 			})
 		}
-		log.Println("password reset request error:", err)
+		logger.Log.Errorw("password reset request error", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to process reset request",
 		})

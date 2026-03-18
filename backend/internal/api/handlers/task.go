@@ -2,11 +2,11 @@ package handlers
 
 import (
 	"errors"
-	"log"
 	"strings"
 
 	"github.com/Team-Tracks/team-track-site/internal/api/dto"
 	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
+	"github.com/Team-Tracks/team-track-site/internal/logger"
 	"github.com/Team-Tracks/team-track-site/internal/repository"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -51,7 +51,7 @@ func (h *Handlers) CreateTeamTask(ctx *fiber.Ctx) error {
 	err := h.taskService.CreateTeamTask(ctx.Context(), teamID, input.AssignedToID, entityTask, userID)
 
 	if err != nil {
-		log.Printf("[ERROR] create team task failed: %v", err)
+		logger.Log.Errorw("create team task failed", "error", err)
 		return ctx.Status(500).JSON(fiber.Map{"error": "internal server error"})
 	}
 
@@ -60,7 +60,7 @@ func (h *Handlers) CreateTeamTask(ctx *fiber.Ctx) error {
 	createdTask, fetchErr := h.taskService.GetTaskByID(ctx.Context(), entityTask.ID)
 	if fetchErr != nil {
 		// If fetch fails, return basic task info
-		log.Printf("Warning: Failed to fetch created task: %v", fetchErr)
+		logger.Log.Warnw("Failed to fetch created task", "error", fetchErr)
 		return ctx.Status(201).JSON(dto.ToTaskResponse(entityTask))
 	}
 
@@ -102,7 +102,7 @@ func (h *Handlers) CreatePersonalTask(ctx *fiber.Ctx) error {
 
 	err := h.taskService.CreatePersonalTask(ctx.Context(), entityTask)
 	if err != nil {
-		log.Printf("[ERROR] create personal task failed: %v", err)
+		logger.Log.Errorw("create personal task failed", "error", err)
 		return ctx.Status(500).JSON(fiber.Map{"error": "internal server error"})
 	}
 
@@ -147,7 +147,7 @@ func (h *Handlers) UpdateTask(c *fiber.Ctx) error {
 				"error": "task was modified by someone else, please refresh",
 			})
 		}
-		log.Printf("[ERROR] update task failed: %v", err)
+		logger.Log.Errorw("update task failed", "error", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "internal server error",
 		})
@@ -186,7 +186,7 @@ func (h *Handlers) PatchTaskTitle(ctx *fiber.Ctx) error {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "task not found"})
 		}
-		log.Printf("[ERROR] update task title failed: %v", err)
+		logger.Log.Errorw("update task title failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
 	}
 
@@ -219,7 +219,7 @@ func (h *Handlers) PatchTaskDescription(ctx *fiber.Ctx) error {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "task not found"})
 		}
-		log.Printf("[ERROR] update task description failed: %v", err)
+		logger.Log.Errorw("update task description failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
 	}
 
@@ -257,7 +257,7 @@ func (h *Handlers) PatchTaskPriority(ctx *fiber.Ctx) error {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "task not found"})
 		}
-		log.Printf("[ERROR] update task priority failed: %v", err)
+		logger.Log.Errorw("update task priority failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
 	}
 
@@ -295,7 +295,7 @@ func (h *Handlers) PatchTaskProgress(ctx *fiber.Ctx) error {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "task not found"})
 		}
-		log.Printf("[ERROR] update task progress failed: %v", err)
+		logger.Log.Errorw("update task progress failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
 	}
 
@@ -328,7 +328,7 @@ func (h *Handlers) PatchTaskAssignees(ctx *fiber.Ctx) error {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "task not found"})
 		}
-		log.Printf("[ERROR] update task assignees failed: %v", err)
+		logger.Log.Errorw("update task assignees failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
 	}
 
@@ -343,7 +343,7 @@ func (h *Handlers) GetPersonalTasks(ctx *fiber.Ctx) error {
 
 	tasks, err := h.taskService.GetTasksWithoutFolder(ctx.Context(), userID)
 	if err != nil {
-		log.Printf("[ERROR] get personal tasks failed: %v", err)
+		logger.Log.Errorw("get personal tasks failed", "error", err)
 		return ctx.Status(500).JSON(fiber.Map{"error": "internal server error"})
 	}
 
@@ -370,7 +370,7 @@ func (h *Handlers) GetTeamTasks(ctx *fiber.Ctx) error {
 	}
 	tasks, err := h.taskService.GetTeamTasks(ctx.Context(), teamID)
 	if err != nil {
-		log.Println(err)
+		logger.Log.Errorw("update team task progress failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to get tasks",
 		})
@@ -401,7 +401,7 @@ func (h *Handlers) GetUserTasks(ctx *fiber.Ctx) error {
 	id := ctx.Params("user_id")
 	tasks, err := h.taskService.GetTeamTasks(ctx.Context(), teamID)
 	if err != nil {
-		log.Println(err)
+		logger.Log.Errorw("get team tasks failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to get tasks",
 		})
@@ -465,7 +465,7 @@ func (h *Handlers) UpdateTaskProgress(ctx *fiber.Ctx) error {
 
 	updatedTask, err := h.taskService.UpdateTaskProgress(ctx.Context(), taskId, progressValue)
 	if err != nil {
-		log.Println(err)
+		logger.Log.Errorw("get user tasks failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to get task",
 		})
@@ -488,7 +488,7 @@ func (h *Handlers) DeleteTask(c *fiber.Ctx) error {
 
 	err := h.taskService.Delete(c.Context(), taskID)
 	if err != nil {
-		log.Printf("[ERROR] delete task failed: %v", err)
+		logger.Log.Errorw("delete task failed", "error", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "internal server error",
 		})
@@ -516,7 +516,7 @@ func (h *Handlers) GetTasksWithoutFolder(ctx *fiber.Ctx) error {
 
 	tasks, err := h.taskService.GetTasksWithoutFolder(ctx.Context(), userID)
 	if err != nil {
-		log.Printf("[ERROR] get tasks without folder failed: %v", err)
+		logger.Log.Errorw("get tasks without folder failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "internal server error",
 		})
@@ -543,7 +543,7 @@ func (h *Handlers) GetFolderTasks(ctx *fiber.Ctx) error {
 
 	tasks, err := h.taskService.GetFolderTasks(ctx.Context(), folderID)
 	if err != nil {
-		log.Printf("[ERROR] get folder tasks failed: %v", err)
+		logger.Log.Errorw("get folder tasks failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "internal server error",
 		})
@@ -578,7 +578,7 @@ func (h *Handlers) MoveTaskToFolder(ctx *fiber.Ctx) error {
 
 	err = h.taskService.MoveTaskToFolder(ctx.Context(), taskID, folderID)
 	if err != nil {
-		log.Printf("[ERROR] move task to folder failed: %v", err)
+		logger.Log.Errorw("move task to folder failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "internal server error",
 		})
@@ -604,7 +604,7 @@ func (h *Handlers) GetTaskByID(ctx *fiber.Ctx) error {
 
 	task, err := h.taskService.GetTaskByID(ctx.Context(), taskID)
 	if err != nil {
-		log.Printf("[ERROR] get task by id failed: %v", err)
+		logger.Log.Errorw("get task by id failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "internal server error",
 		})

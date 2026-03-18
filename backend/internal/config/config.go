@@ -2,10 +2,10 @@ package config
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"strconv"
 
+	"github.com/Team-Tracks/team-track-site/internal/logger"
 	"github.com/joho/godotenv"
 )
 
@@ -62,7 +62,7 @@ type OAuthConfig struct {
 // If .env file is not found, uses environment variables (useful for Docker)
 func LoadConfig() *Config {
 	if err := godotenv.Load(); err != nil {
-		log.Printf("WARNING: .env file not found, using environment variables: %v", err)
+		logger.Log.Warnw(".env file not found, using environment variables", "error", err)
 		// Don't fail - in Docker, environment variables are set directly
 	}
 
@@ -119,7 +119,7 @@ func getEnvInt(key string, defaultValue int) int {
 
 	val, err := strconv.Atoi(valStr)
 	if err != nil {
-		log.Printf("warning: cannot parse %s=%s as int, using default %d", key, valStr, defaultValue)
+		logger.Log.Warnw("cannot parse int env var, using default", "key", key, "value", valStr, "default", defaultValue, "error", err)
 		return defaultValue
 	}
 	return val

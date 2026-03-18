@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"log"
 	"os"
 	"strings"
 	"time"
@@ -13,6 +12,7 @@ import (
 	"github.com/Team-Tracks/team-track-site/internal/db"
 	"github.com/Team-Tracks/team-track-site/internal/events"
 	emailService "github.com/Team-Tracks/team-track-site/internal/infra/email"
+	"github.com/Team-Tracks/team-track-site/internal/logger"
 	"github.com/Team-Tracks/team-track-site/internal/notifications/telegram"
 	"github.com/Team-Tracks/team-track-site/internal/repository"
 	"github.com/Team-Tracks/team-track-site/internal/service"
@@ -25,16 +25,17 @@ import (
 
 func StartServer() {
 
+	logger.Init(os.Getenv("APP_ENV"))
 	config := config.LoadConfig()
 	if config.JWTSecret == "" || len(config.JWTSecret) < 32 {
-		log.Fatal("CRITICAL: JWT_SECRET must be set and at least 32 characters long!")
+		logger.Log.Fatalw("CRITICAL: JWT_SECRET must be set and at least 32 characters long!")
 	}
 
 	db := db.Must(&config.DatabaseConfig)
 
 	storage, err := storage.NewStorageByEnv(&config.StorageConfig)
 	if err != nil {
-		log.Println("Error init storage")
+		logger.Log.Errorw("Error init storage", "error", err)
 	}
 
 	app := fiber.New(fiber.Config{
@@ -66,7 +67,7 @@ func StartServer() {
 
 	allowedOrigins := strings.TrimSpace(os.Getenv("ALLOWED_ORIGINS"))
 	if allowedOrigins == "" {
-		log.Fatal("CRITICAL: ALLOWED_ORIGINS must be configured explicitly")
+		logger.Log.Fatalw("CRITICAL: ALLOWED_ORIGINS must be configured explicitly")
 	}
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     allowedOrigins,
@@ -138,12 +139,12 @@ func StartServer() {
 		defer ticker.Stop()
 		for range ticker.C {
 			if _, err := passwordService.CleanupExpiredTokens(context.Background()); err != nil {
-				log.Println("password reset cleanup error:", err)
+				logger.Log.Errorw("password reset cleanup error", "error", err)
 			}
 		}
 	}()
 
 	if err := app.Listen(":3000"); err != nil {
-		log.Fatalf("server failed to start: %v", err)
+		logger.Log.Fatalw("server failed to start", "error", err)
 	}
 }

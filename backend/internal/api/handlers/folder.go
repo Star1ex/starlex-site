@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"log"
 	"time"
 
 	"github.com/Team-Tracks/team-track-site/internal/api/dto"
+	"github.com/Team-Tracks/team-track-site/internal/logger"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -60,7 +60,7 @@ func (h *Handlers) CreateFolder(ctx *fiber.Ctx) error {
 	}
 	err := h.folderService.Create(ctx.Context(), folder)
 	if err != nil {
-		log.Printf("[ERROR] create folder failed: %v", err)
+		logger.Log.Errorw("create folder failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "internal server error",
 		})
@@ -93,7 +93,7 @@ func (h *Handlers) GetFolderByID(ctx *fiber.Ctx) error {
 	}
 	folder, err := h.folderService.GetByID(ctx.Context(), id)
 	if err != nil {
-		log.Printf("[ERROR] get folder failed: %v", err)
+		logger.Log.Errorw("get folder failed", "error", err)
 		return ctx.Status(500).JSON(fiber.Map{"error": "internal server error"})
 	}
 
@@ -121,7 +121,7 @@ func (h *Handlers) GetFoldersByUserID(ctx *fiber.Ctx) error {
 
 	folders, err := h.folderService.GetUserFolders(ctx.Context(), userID)
 	if err != nil {
-		log.Printf("[ERROR] get user folders failed: %v", err)
+		logger.Log.Errorw("get user folders failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "internal server error",
 		})
@@ -157,7 +157,7 @@ func (h *Handlers) GetFoldersByTeam(ctx *fiber.Ctx) error {
 
 	folders, err := h.folderService.GetTeamFolders(ctx.Context(), teamID)
 	if err != nil {
-		log.Printf("[ERROR] get team folders failed: %v", err)
+		logger.Log.Errorw("get team folders failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "internal server error",
 		})
@@ -199,7 +199,7 @@ func (h *Handlers) GetFoldersByParentID(ctx *fiber.Ctx) error {
 
 	folders, err := h.folderService.GetSubFolders(ctx.Context(), parentID)
 	if err != nil {
-		log.Printf("[ERROR] get subfolders failed: %v", err)
+		logger.Log.Errorw("get subfolders failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "internal server error",
 		})
@@ -261,7 +261,7 @@ func (h *Handlers) UpdateFolder(ctx *fiber.Ctx) error {
 	req.OwnerID = userID
 	err := h.folderService.Update(ctx.Context(), dto.ToDomainFolder(&req))
 	if err != nil {
-		log.Printf("[ERROR] update folder failed: %v", err)
+		logger.Log.Errorw("update folder failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "internal server error",
 		})
@@ -305,7 +305,7 @@ func (h *Handlers) DeleteFolder(ctx *fiber.Ctx) error {
 
 	err := h.folderService.Delete(ctx.Context(), folderID)
 	if err != nil {
-		log.Printf("[ERROR] delete folder failed: %v", err)
+		logger.Log.Errorw("delete folder failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "internal server error",
 		})
@@ -366,7 +366,7 @@ func (h *Handlers) MoveFolder(ctx *fiber.Ctx) error {
 	err = h.folderService.Move(ctx.Context(), req.FolderID, &req.ParentID)
 
 	if err != nil {
-		log.Printf("[ERROR] move folder failed: %v", err)
+		logger.Log.Errorw("move folder failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "internal server error",
 		})
