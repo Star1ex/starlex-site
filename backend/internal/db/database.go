@@ -52,6 +52,15 @@ func setupDB(cfg *config.DatabaseConfig) (*DB, error) {
 		return nil, fmt.Errorf("failed connect to DB: %v", err)
 	}
 
+	sqlDB, err := db.DB()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get underlying sql.DB: %w", err)
+	}
+	sqlDB.SetMaxOpenConns(25)
+	sqlDB.SetMaxIdleConns(10)
+	sqlDB.SetConnMaxLifetime(5 * time.Minute)
+	sqlDB.SetConnMaxIdleTime(2 * time.Minute)
+
 	log.Println("Connected to db successfully")
 
 	return &DB{db}, nil
