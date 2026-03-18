@@ -12,7 +12,9 @@ export const App = () => {
         <BrowserRouter>
           <LastVisitedManager />
           <AuthProvider>
-            <AppRoutes />
+            <AuthGate>
+              <AppRoutes />
+            </AuthGate>
           </AuthProvider>
         </BrowserRouter>
       </ThemeProvider>
@@ -20,5 +22,17 @@ export const App = () => {
   );
 };
 
+const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isInitialized } = useAuth();
+  if (!isInitialized) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <span>Loading...</span>
+      </div>
+    );
+  }
+  return <>{children}</>;
+};
+
 // Lazy import to avoid cycles in top-level imports
-import { AuthProvider } from '@/contexts/AuthContext.js';
+import { AuthProvider, useAuth } from '@/contexts/AuthContext.js';
