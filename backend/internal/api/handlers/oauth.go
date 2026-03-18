@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
@@ -862,7 +863,7 @@ func (h *Handlers) setRefreshCookie(ctx *fiber.Ctx, token string) {
 		Value:    token,
 		Expires:  time.Now().Add(7 * 24 * time.Hour),
 		HTTPOnly: true,
-		Secure:   h.isSecureCookie(),
+		Secure:   os.Getenv("APP_ENV") == "production",
 		SameSite: "Lax",
 		Path:     "/",
 	})
