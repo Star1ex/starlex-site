@@ -18,6 +18,7 @@ import (
 	"github.com/Team-Tracks/team-track-site/internal/service"
 	"github.com/Team-Tracks/team-track-site/internal/storage"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 )
@@ -45,6 +46,9 @@ func StartServer() {
 	})
 
 	app.Use(recover.New())
+	app.Use(compress.New(compress.Config{
+		Level: compress.LevelBestSpeed,
+	}))
 	app.Use(handlers.CreateGlobalRateLimiter())
 
 	app.Use(func(c *fiber.Ctx) error {

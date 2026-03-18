@@ -3,6 +3,7 @@ package db
 import (
 	"fmt"
 	"log"
+	"os"
 	"time"
 
 	"github.com/Team-Tracks/team-track-site/internal/config"
@@ -45,8 +46,12 @@ func Must(cfg *config.DatabaseConfig) *DB {
 }
 
 func setupDB(cfg *config.DatabaseConfig) (*DB, error) {
+	logLevel := logger.Info
+	if os.Getenv("APP_ENV") == "production" {
+		logLevel = logger.Warn
+	}
 	db, err := gorm.Open(pgdriver.Open(cfg.DSN()), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger: logger.Default.LogMode(logLevel),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed connect to DB: %v", err)
