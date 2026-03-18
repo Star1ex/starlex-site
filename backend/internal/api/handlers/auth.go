@@ -264,6 +264,7 @@ func (h *Handlers) Logout(ctx *fiber.Ctx) error {
 				nextVersion = 1
 			}
 			_ = h.userService.Update(ctx.Context(), &entity.User{TokenVersion: nextVersion}, userID)
+			h.userService.BustTokenVersionCache(userID)
 		}
 	}
 

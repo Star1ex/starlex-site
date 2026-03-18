@@ -119,6 +119,8 @@ func (h *Handlers) ChangePassword(ctx *fiber.Ctx) error {
 		})
 	}
 
+	h.userService.BustTokenVersionCache(userID)
+
 	updatedUser, err := h.userService.Get(ctx.Context(), userID)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

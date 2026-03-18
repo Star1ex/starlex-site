@@ -40,4 +40,5 @@ type Service interface {
 	PublishUserLogin(user *entity.User)
 
 	GetTokenVersion(ctx context.Context, userID string) (int, error)
+	BustTokenVersionCache(userID string)
 }

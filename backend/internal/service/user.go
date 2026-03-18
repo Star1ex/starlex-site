@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"mime/multipart"
+	"sync"
 	"time"
 
 	"github.com/Team-Tracks/team-track-site/internal/api/dto"
@@ -22,6 +23,43 @@ type UserService struct {
 }
 
 var ErrPasswordNotSet = errors.New("password not set")
+
+type tokenVersionCache struct {
+	mu      sync.RWMutex
+	entries map[string]tokenVersionEntry
+}
+
+type tokenVersionEntry struct {
+	version   int
+	expiresAt time.Time
+}
+
+var tvCache = &tokenVersionCache{entries: make(map[string]tokenVersionEntry)}
+
+func (c *tokenVersionCache) get(userID string) (int, bool) {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	entry, ok := c.entries[userID]
+	if !ok || time.Now().After(entry.expiresAt) {
+		return 0, false
+	}
+	return entry.version, true
+}
+
+func (c *tokenVersionCache) set(userID string, version int) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.entries[userID] = tokenVersionEntry{
+		version:   version,
+		expiresAt: time.Now().Add(60 * time.Second),
+	}
+}
+
+func (c *tokenVersionCache) bust(userID string) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	delete(c.entries, userID)
+}
 
 func NewUserService(repo user.Repository, storage storage.Storage, bus *events.Bus) *UserService {
 	return &UserService{
@@ -146,7 +184,19 @@ func (s *UserService) Update(ctx context.Context, u *entity.User, id string) err
 }
 
 func (s *UserService) GetTokenVersion(ctx context.Context, userID string) (int, error) {
-	return s.repo.GetTokenVersion(ctx, userID)
+	if v, ok := tvCache.get(userID); ok {
+		return v, nil
+	}
+	version, err := s.repo.GetTokenVersion(ctx, userID)
+	if err != nil {
+		return 0, err
+	}
+	tvCache.set(userID, version)
+	return version, nil
+}
+
+func (s *UserService) BustTokenVersionCache(userID string) {
+	tvCache.bust(userID)
 }
 
 func (s *UserService) PublishUserRegistered(user *entity.User) {
