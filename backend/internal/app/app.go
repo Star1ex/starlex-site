@@ -17,6 +17,7 @@ import (
 	"github.com/Team-Tracks/team-track-site/internal/repository"
 	"github.com/Team-Tracks/team-track-site/internal/service"
 	"github.com/Team-Tracks/team-track-site/internal/storage"
+	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
@@ -27,6 +28,15 @@ import (
 func StartServer() {
 
 	logger.Init(os.Getenv("APP_ENV"))
+	if err := sentry.Init(sentry.ClientOptions{
+		Dsn:         os.Getenv("SENTRY_DSN"),
+		Environment: os.Getenv("APP_ENV"),
+		Release:     os.Getenv("APP_VERSION"),
+	}); err != nil {
+		logger.Log.Errorw("sentry init failed", "error", err)
+	}
+	defer sentry.Flush(2 * time.Second)
+
 	config := config.LoadConfig()
 	if config.JWTSecret == "" || len(config.JWTSecret) < 32 {
 		logger.Log.Fatalw("CRITICAL: JWT_SECRET must be set and at least 32 characters long!")
@@ -45,6 +55,12 @@ func StartServer() {
 		WriteTimeout:      20 * time.Second,
 		IdleTimeout:       30 * time.Second,
 		ReduceMemoryUsage: true,
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			if err != nil {
+				sentry.CaptureException(err)
+			}
+			return fiber.DefaultErrorHandler(c, err)
+		},
 	})
 
 	app.Use(recover.New())
