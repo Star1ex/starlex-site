@@ -2,23 +2,26 @@ import React from "react";
 import { BrowserRouter } from "react-router-dom";
 import { AppRoutes } from "@/app/routes.js";
 import { ErrorBoundary } from "@/components/ErrorBoundary.js";
+import { HelmetProvider } from "react-helmet-async";
 import { ThemeProvider } from "@/shared/contexts/ThemeContext.js";
 import { LastVisitedManager } from "@/app/LastVisitedManager.js";
 
 export const App = () => {
   return (
-    <ErrorBoundary>
-      <ThemeProvider>
-        <BrowserRouter>
-          <LastVisitedManager />
-          <AuthProvider>
-            <AuthGate>
-              <AppRoutes />
-            </AuthGate>
-          </AuthProvider>
-        </BrowserRouter>
-      </ThemeProvider>
-    </ErrorBoundary>
+    <HelmetProvider>
+      <ErrorBoundary>
+        <ThemeProvider>
+          <BrowserRouter>
+            <LastVisitedManager />
+            <AuthProvider>
+              <AuthGate>
+                <AppRoutes />
+              </AuthGate>
+            </AuthProvider>
+          </BrowserRouter>
+        </ThemeProvider>
+      </ErrorBoundary>
+    </HelmetProvider>
   );
 };
 

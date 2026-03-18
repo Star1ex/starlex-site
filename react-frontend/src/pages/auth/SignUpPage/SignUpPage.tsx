@@ -4,6 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { authService } from '@/services/api/index.js';
 import { useTheme } from '@/shared/contexts/ThemeContext.js';
 import { FaGoogle, FaGithub } from 'react-icons/fa';
+import { Helmet } from 'react-helmet-async';
 
 export const SignUpPage = () => {
   const navigate = useNavigate();
@@ -112,6 +113,10 @@ export const SignUpPage = () => {
 
   return (
     <div className="auth-page min-h-screen flex items-center justify-center p-4 transition-colors duration-300 relative">
+      <Helmet>
+        <title>Sign Up — Team Track</title>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <button
         type="button"
         onClick={toggleTheme}

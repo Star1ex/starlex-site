@@ -6,6 +6,7 @@ import { setAuthUser } from '@/shared/lib/authManager.js';
 import { useAuth } from '@/contexts/AuthContext.js';
 import { useTheme } from '@/shared/contexts/ThemeContext.js';
 import { FaGoogle, FaGithub } from 'react-icons/fa';
+import { Helmet } from 'react-helmet-async';
 
 export const SignInPage = () => {
   const navigate = useNavigate();
@@ -126,6 +127,10 @@ export const SignInPage = () => {
 
   return (
     <div className="auth-page min-h-screen flex items-center justify-center p-4 transition-colors duration-300 relative">
+      <Helmet>
+        <title>Sign In — Team Track</title>
+        <meta name="robots" content="noindex, nofollow" />
+      </Helmet>
       <button
         type="button"
         onClick={toggleTheme}
