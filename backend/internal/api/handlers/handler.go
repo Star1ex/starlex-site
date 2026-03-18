@@ -3,6 +3,7 @@ package handlers
 import (
 	"time"
 
+	"github.com/Team-Tracks/team-track-site/internal/db"
 	"github.com/Team-Tracks/team-track-site/internal/domain/folder"
 	"github.com/Team-Tracks/team-track-site/internal/domain/password"
 	"github.com/Team-Tracks/team-track-site/internal/domain/task"
@@ -13,6 +14,7 @@ import (
 )
 
 type Handlers struct {
+	db                  *db.DB
 	userService         user.Service
 	teamService         team.Service
 	taskService         task.Service
@@ -35,10 +37,12 @@ func NewHandlers(userService user.Service,
 	passwordService password.Service,
 	sprintService *service.SprintService,
 	discussionService *service.DiscussionService,
+	db *db.DB,
 	authConfig AuthConfig,
 ) *Handlers {
 
 	return &Handlers{
+		db:                  db,
 		userService:         userService,
 		teamService:         teamService,
 		taskService:         taskService,

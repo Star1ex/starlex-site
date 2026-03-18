@@ -14,9 +14,7 @@ func InitRoutes(app *fiber.App, h *handlers.Handlers) {
 
 	api := app.Group("/api")
 
-	api.Get("/health", func(c *fiber.Ctx) error {
-		return c.SendString("healthy")
-	})
+	api.Get("/health", h.HealthCheck)
 
 	setupAuthRoutes(api, h)
 
