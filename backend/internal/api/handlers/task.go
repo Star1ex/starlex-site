@@ -7,6 +7,7 @@ import (
 
 	"github.com/Team-Tracks/team-track-site/internal/api/dto"
 	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
+	"github.com/Team-Tracks/team-track-site/internal/repository"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
@@ -141,6 +142,11 @@ func (h *Handlers) UpdateTask(c *fiber.Ctx) error {
 	)
 
 	if err != nil {
+		if errors.Is(err, repository.ErrStaleData) {
+			return c.Status(fiber.StatusConflict).JSON(fiber.Map{
+				"error": "task was modified by someone else, please refresh",
+			})
+		}
 		log.Printf("[ERROR] update task failed: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "internal server error",

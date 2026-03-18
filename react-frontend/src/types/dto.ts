@@ -39,6 +39,7 @@ export interface TaskDTO {
   priority: 'low' | 'medium' | 'high';
   progress: 'not_started' | 'in_progress' | 'done';
   created_at: string;
+  updated_at: string;
 }
 
 export interface CreateTaskRequest {
@@ -59,6 +60,7 @@ export interface UpdateTaskRequest {
   priority?: 'low' | 'medium' | 'high';
   folder_id?: string | null;
   owner_id?: string;
+  updated_at?: string;
 }
 
 export type TaskProgress = 'not_started' | 'in_progress' | 'done';

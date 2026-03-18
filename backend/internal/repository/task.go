@@ -31,6 +31,8 @@ type TaskRepository struct {
 	db *gorm.DB
 }
 
+var ErrStaleData = errors.New("stale task data")
+
 func NewTaskRepository(db *gorm.DB) *TaskRepository {
 	return &TaskRepository{
 		db: db,
@@ -157,8 +159,19 @@ func (r *TaskRepository) Update(ctx context.Context, id string, data *entity.Tas
 	}
 
 	if len(updates) > 0 {
-		if err := r.db.Model(&task).Updates(updates).Error; err != nil {
-			return nil, err
+		expectedUpdatedAt := data.UpdatedAt
+		if expectedUpdatedAt.IsZero() {
+			expectedUpdatedAt = task.UpdatedAt
+		}
+		result := r.db.WithContext(ctx).
+			Model(&TaskModel{}).
+			Where("id = ? AND updated_at = ?", task.ID, expectedUpdatedAt).
+			Updates(updates)
+		if result.Error != nil {
+			return nil, result.Error
+		}
+		if result.RowsAffected == 0 {
+			return nil, ErrStaleData
 		}
 	}
 
