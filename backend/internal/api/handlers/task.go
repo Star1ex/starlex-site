@@ -287,7 +287,7 @@ func (h *Handlers) PatchTaskProgress(ctx *fiber.Ctx) error {
 	}
 
 	progressValue := strings.TrimSpace(*input.Progress)
-	if progressValue != "not_started" && progressValue != "in_progress" && progressValue != "In review" && progressValue != "done" {
+	if progressValue != "not_started" && progressValue != "in_progress" && progressValue != "done" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad task progress"})
 	}
 
@@ -459,7 +459,7 @@ func (h *Handlers) UpdateTaskProgress(ctx *fiber.Ctx) error {
 
 	progressValue := *updates.Progress
 
-	if progressValue != "not_started" && progressValue != "in_progress" && progressValue != "In review" && progressValue != "done" {
+	if progressValue != "not_started" && progressValue != "in_progress" && progressValue != "done" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad task progress"})
 	}
 

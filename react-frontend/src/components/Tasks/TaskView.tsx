@@ -49,7 +49,7 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'low'|'medium'|'high'>('medium');
-  const [progress, setProgress] = useState<'not_started'|'in_progress'|'In review'|'done'>('not_started');
+  const [progress, setProgress] = useState<'not_started'|'in_progress'|'done'>('not_started');
 
   const locationFolderId = (location.state as any)?.folder_id ?? null;
 
