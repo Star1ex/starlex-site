@@ -162,7 +162,16 @@ func StartServer() {
 		}
 	}()
 
-	if err := app.Listen(":3000"); err != nil {
+	// Allow overriding listen port via env (BACKEND_PORT or PORT), default 3000
+	port := os.Getenv("BACKEND_PORT")
+	if port == "" {
+		port = os.Getenv("PORT")
+	}
+	if port == "" {
+		port = "3000"
+	}
+
+	if err := app.Listen(":" + port); err != nil {
 		logger.Log.Fatalw("server failed to start", "error", err)
 	}
 }
