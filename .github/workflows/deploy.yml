@@ -21,8 +21,15 @@ jobs:
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> backend/.env
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> backend/.env
           echo "DB_SSL_MODE=${{ secrets.DB_SSL_MODE }}" >> backend/.env
-          # DB_HOST not written here; compose injects internal service DNS (db)
-          # DB_PORT not written here for backend; compose injects 5432
+          # Force internal DB values regardless of secrets
+          echo "DB_HOST=db" >> backend/.env
+          echo "DB_PORT=5432" >> backend/.env
+          echo "DB_SSL_MODE=disable" >> backend/.env
+          echo "STORAGE_TYPE=${{ secrets.STORAGE_TYPE }}" >> backend/.env
+          echo "LOCAL_PATH=${{ secrets.LOCAL_PATH }}" >> backend/.env
+          echo "LOCAL_URL=${{ secrets.LOCAL_URL }}" >> backend/.env
+          echo "ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }}" >> backend/.env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> backend/.env
           echo "BACKEND_PORT=${{ secrets.BACKEND_PORT }}" >> backend/.env
           echo "PORT=${{ secrets.PORT }}" >> backend/.env
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> backend/.env

@@ -3,6 +3,8 @@ services:
     image: postgres:16-alpine
     container_name: team-track-site-db
     restart: unless-stopped
+    env_file:
+      - backend/.env
     environment:
       POSTGRES_USER: ${DB_USER:-team_admin}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-1234}
@@ -10,7 +12,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-team_admin} -d ${DB_NAME:-team_track}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-team_admin} -d ${DB_NAME:-team_track} -p 5432"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -32,6 +34,8 @@ services:
         condition: service_healthy
     ports:
       - "${BACKEND_PORT:-3000}:3000"
+    env_file:
+      - backend/.env
     environment:
       # Force internal service DNS for Docker network regardless of env secrets
       DB_HOST: db
@@ -40,7 +44,11 @@ services:
       DB_USER: ${DB_USER:-team_admin}
       DB_PASSWORD: ${DB_PASSWORD:-1234}
       DB_NAME: ${DB_NAME:-team_track}
-      JWT_SECRET: ${JWT_SECRET:-changeme}
+      STORAGE_TYPE: ${STORAGE_TYPE:-local}
+      LOCAL_PATH: ${LOCAL_PATH:-/uploads}
+      LOCAL_URL: ${LOCAL_URL:-/uploads/}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://teamtrackwebsite.duckdns.org}
+      JWT_SECRET: ${JWT_SECRET:-default_jwt_secret_please_set_32_chars_minimum}
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
       interval: 30s
