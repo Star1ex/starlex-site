@@ -9,15 +9,6 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
-<<<<<<< HEAD
-    user: "0:0"
-    command: >
-      sh -c "chown -R postgres:postgres /var/lib/postgresql &&
-             exec /usr/local/bin/docker-entrypoint.sh postgres"
-    ports:
-      - "${DB_PORT}:5432" 
-=======
->>>>>>> 3a85e61 ([STEP 2] Remove DB external port, Postgres root user, add resource limits)
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -64,21 +55,13 @@ services:
     container_name: team-track-site-frontend
     restart: unless-stopped
     ports:
-<<<<<<< HEAD
-      - "8080:80"
+      - "8080:80"  
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - uploads_data:/usr/share/nginx/html/uploads:ro
-=======
-      - "80:80"
->>>>>>> 78c5b60 (Reverse proxy support)
     depends_on:
       - backend
 
 volumes:
-<<<<<<< HEAD
-  postgres_data:
-=======
   postgres_data:
   uploads_data:
->>>>>>> 3a85e61 ([STEP 2] Remove DB external port, Postgres root user, add resource limits)
