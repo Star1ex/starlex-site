@@ -103,6 +103,19 @@ class ApiClient {
       const token = await this.refreshAccessToken();
       this.setAccessToken(token);
       console.debug('Session restored from refresh token');
+
+      // Fetch CSRF token so all protected mutations (POST/PUT/DELETE) work
+      try {
+        const csrfResponse = await this.client.get<{ csrf_token: string }>('/api/auth/csrf');
+        const csrfToken = csrfResponse.data?.csrf_token;
+        if (csrfToken) {
+          this.setCsrfToken(csrfToken);
+          console.debug('CSRF token fetched');
+        }
+      } catch {
+        console.debug('CSRF token fetch failed — mutations may return 403');
+      }
+
       return true;
     } catch (err) {
       console.debug('No valid session found (user not authenticated)');

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import TaskCard from '@/widgets/TaskCard/TaskCard.js';
 import MembersPanel from '@/widgets/MembersPanel/MembersPanel.js';
 import CreateTaskModal from '@/widgets/CreateTaskModal/CreateTaskModal.js';
@@ -134,7 +135,7 @@ const TaskBoard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-full bg-white dark:bg-dark-bg text-black dark:text-dark-text font-sans transition-colors">
+    <div className="min-h-full text-black dark:text-dark-text font-sans transition-colors" style={{ background: 'var(--bg-primary)' }}>
       <div className="max-w-[1600px] mx-auto px-4 sm:px-6 pt-6 sm:pt-8">
         <div className="mb-3">
           <BreadcrumbBack
@@ -145,6 +146,9 @@ const TaskBoard: React.FC = () => {
         <div className="flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-dark-text truncate">Team Tasks</h1>
+            {!loading && tasks.length > 0 && (
+              <span className="text-sm font-normal" style={{ color: 'var(--text-secondary)' }}>{tasks.length}</span>
+            )}
             {loading && (
               <span className="text-xs text-gray-400 dark:text-dark-text-muted animate-pulse">Syncing…</span>
             )}
@@ -193,9 +197,13 @@ const TaskBoard: React.FC = () => {
             </span>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="text-sm font-medium text-gray-700 dark:text-dark-text hover:text-gray-900 dark:hover:text-white transition-colors"
+              className="inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-lg transition-all duration-150 hover:opacity-80"
+              style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}
             >
-              + Add Task
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              New task
             </button>
           </div>
           {tasks.length === 0 ? (
@@ -225,27 +233,30 @@ const TaskBoard: React.FC = () => {
               )}
             </div>
           ) : (
-            <div className="space-y-px">
-              <div className="hidden sm:flex items-center gap-2 sm:gap-2.5 px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-gray-500 dark:text-dark-text-muted border-b border-gray-200 dark:border-dark-border mb-1 sticky top-[73px] bg-white dark:bg-dark-bg z-10">
-                <div className="flex-1 min-w-[120px] sm:min-w-[180px]">Task</div>
-                <div className="flex-shrink-0 min-w-[60px] sm:min-w-[72px] text-center">Assignee</div>
-                <div className="flex-shrink-0 min-w-[80px] sm:min-w-[90px] text-center">Status</div>
-                <div className="flex-shrink-0 min-w-[64px] sm:min-w-[72px] text-center">Priority</div>
-                <div className="flex-shrink-0 min-w-[28px] sm:min-w-[30px]"></div>
-              </div>
+            <div className="space-y-2 pb-4">
               <div className="overflow-x-auto -mx-2 sm:mx-0 scrollbar-thin scrollbar-thumb-gray-300 dark:scrollbar-thumb-gray-600 scrollbar-track-transparent">
                 <div className="inline-block min-w-full align-middle">
-                  {tasks.map((task) => (
-                    <TaskCard
-                      key={task.id}
-                      task={task}
-                      users={users}
-                      onUpdate={handleTaskUpdate}
-                      onClick={() => handleTaskClick(task)}
-                      onDelete={() => handleTaskDelete(task.id)}
-                      teamId={team_id}
-                    />
-                  ))}
+                  <AnimatePresence initial={false}>
+                    {tasks.map((task, i) => (
+                      <motion.div
+                        key={task.id}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.97 }}
+                        transition={{ duration: 0.18, delay: i * 0.03, ease: 'easeOut' }}
+                        className="mb-2"
+                      >
+                        <TaskCard
+                          task={task}
+                          users={users}
+                          onUpdate={handleTaskUpdate}
+                          onClick={() => handleTaskClick(task)}
+                          onDelete={() => handleTaskDelete(task.id)}
+                          teamId={team_id}
+                        />
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
                 </div>
               </div>
             </div>
