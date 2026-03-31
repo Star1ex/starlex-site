@@ -18,11 +18,11 @@ jobs:
       - name: Create Backend .env File
         run: |
           echo "DB_USER=${{ secrets.DB_USER }}" > backend/.env
-          echo "DB_HOST=${{ secrets.DB_HOST }}" >> backend/.env
-          echo "DB_PORT=${{ secrets.DB_PORT }}" >> backend/.env
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> backend/.env
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> backend/.env
           echo "DB_SSL_MODE=${{ secrets.DB_SSL_MODE }}" >> backend/.env
+          # DB_HOST not written here; compose injects internal service DNS (db)
+          # DB_PORT not written here for backend; compose injects 5432
           echo "BACKEND_PORT=${{ secrets.BACKEND_PORT }}" >> backend/.env
           echo "PORT=${{ secrets.PORT }}" >> backend/.env
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> backend/.env
@@ -74,7 +74,11 @@ jobs:
           # Quick API health via container (do not fail the job; show logs on failure)
           echo "--- backend container env & health ---"
           set +e
-          docker exec team-track-site-backend sh -c 'echo BACKEND_PORT=$BACKEND_PORT PORT=$PORT && wget --tries=2 --timeout=3 -qO- http://localhost:3000/api/health && echo' \
+          docker exec team-track-site-backend sh -c '\
+            echo BACKEND_PORT=$BACKEND_PORT PORT=$PORT DB_HOST=$DB_HOST DB_PORT=$DB_PORT DB_SSL_MODE=$DB_SSL_MODE ;\
+            echo \"-- getent hosts db --\" ; getent hosts db ;\
+            echo \"-- getent hosts $DB_HOST --\" ; getent hosts \"$DB_HOST\" ;\
+            echo \"-- wget /api/health --\" ; wget --tries=2 --timeout=3 -qO- http://localhost:3000/api/health && echo' \
             || echo "[warn] backend health request failed"
           echo "--- backend last 40 log lines ---"
           docker logs --tail 40 team-track-site-backend || true
