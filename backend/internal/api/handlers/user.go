@@ -1,9 +1,7 @@
 package handlers
 
 import (
-	"context"
 	"io"
-	"log"
 	"mime"
 	"mime/multipart"
 	"net/http"
@@ -11,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/Team-Tracks/team-track-site/internal/api/dto"
+	"github.com/Team-Tracks/team-track-site/internal/logger"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -26,7 +25,7 @@ func (h *Handlers) GetUser(c *fiber.Ctx) error {
 		})
 	}
 
-	user, err := h.userService.Get(context.Background(), userID)
+	user, err := h.userService.Get(c.Context(), userID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to load user",
@@ -52,7 +51,7 @@ func (h *Handlers) GetTeams(ctx *fiber.Ctx) error {
 	}
 	teams, err := h.userService.GetTeams(ctx.Context(), userID)
 	if err != nil {
-		log.Println(err)
+		logger.Log.Errorw("get teams failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{})
 	}
 	response := dto.ToTeamsResponse(teams)
@@ -159,7 +158,7 @@ func (h *Handlers) GetPhoto(c *fiber.Ctx) error {
 		})
 	}
 
-	photoURL, err := h.userService.GetPhoto(context.Background(), userID)
+	photoURL, err := h.userService.GetPhoto(c.Context(), userID)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "photo not found",
@@ -190,9 +189,9 @@ func (h *Handlers) UserUpdate(c *fiber.Ctx) error {
 	// Prevent privilege escalation via self-service profile update.
 	updates.Role = ""
 
-	err := h.userService.Update(context.Background(), dto.FromUseUpdate(&updates), userID)
+	err := h.userService.Update(c.Context(), dto.FromUseUpdate(&updates), userID)
 	if err != nil {
-		log.Println(err)
+		logger.Log.Errorw("update user failed", "error", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to update",
 		})

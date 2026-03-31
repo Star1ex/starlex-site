@@ -23,7 +23,8 @@ func main() {
 	db := db.Must(&cfg.DatabaseConfig)
 	storage, err := storage.NewStorageByEnv(&cfg.StorageConfig)
 	if err != nil {
-		fmt.Errorf("Error init storager")
+		fmt.Printf("Error init storage: %v\n", err)
+		return
 	}
 
 	ctx := context.Background()

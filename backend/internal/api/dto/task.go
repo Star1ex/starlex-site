@@ -29,15 +29,17 @@ type TaskResponse struct {
 	Priority    string    `json:"priority"`
 	Progress    string    `json:"progress"`
 	CreatedAt   time.Time `json:"created_at,omitempty"`
+	UpdatedAt   time.Time `json:"updated_at,omitempty"`
 }
 
 type UpdateTask struct {
-	Task        string   `json:"task"`
-	Description string   `json:"description"`
-	AssignedTo  []string `json:"user_ids"`
-	Priority    string   `json:"priority"`
-	FolderID    *string  `json:"folder_id"`
-	OwnerID     string   `json:"owner_id"`
+	Task        string    `json:"task"`
+	Description string    `json:"description"`
+	AssignedTo  []string  `json:"user_ids"`
+	Priority    string    `json:"priority"`
+	FolderID    *string   `json:"folder_id"`
+	OwnerID     string    `json:"owner_id"`
+	UpdatedAt   time.Time `json:"updated_at"`
 }
 
 type UpdateTaskTitle struct {
@@ -83,6 +85,7 @@ func ToTaskResponse(task *entity.Task) *TaskResponse {
 		Priority:    task.Priority,
 		Progress:    task.Progress,
 		CreatedAt:   createdAt,
+		UpdatedAt:   task.UpdatedAt,
 	}
 }
 
@@ -106,6 +109,7 @@ func FromUpdateTask(updates *UpdateTask) (*entity.Task, []string) {
 		Task:        updates.Task,
 		Description: updates.Description,
 		Priority:    updates.Priority,
+		UpdatedAt:   updates.UpdatedAt,
 	}, updates.AssignedTo
 }
 

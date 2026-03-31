@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"log"
 	"os"
 	"strings"
 	"time"
@@ -13,27 +12,41 @@ import (
 	"github.com/Team-Tracks/team-track-site/internal/db"
 	"github.com/Team-Tracks/team-track-site/internal/events"
 	emailService "github.com/Team-Tracks/team-track-site/internal/infra/email"
+	"github.com/Team-Tracks/team-track-site/internal/logger"
 	"github.com/Team-Tracks/team-track-site/internal/notifications/telegram"
 	"github.com/Team-Tracks/team-track-site/internal/repository"
 	"github.com/Team-Tracks/team-track-site/internal/service"
 	"github.com/Team-Tracks/team-track-site/internal/storage"
+	"github.com/getsentry/sentry-go"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/gofiber/fiber/v2/middleware/requestid"
 )
 
 func StartServer() {
 
+	logger.Init(os.Getenv("APP_ENV"))
+	if err := sentry.Init(sentry.ClientOptions{
+		Dsn:         os.Getenv("SENTRY_DSN"),
+		Environment: os.Getenv("APP_ENV"),
+		Release:     os.Getenv("APP_VERSION"),
+	}); err != nil {
+		logger.Log.Errorw("sentry init failed", "error", err)
+	}
+	defer sentry.Flush(2 * time.Second)
+
 	config := config.LoadConfig()
 	if config.JWTSecret == "" || len(config.JWTSecret) < 32 {
-		log.Fatal("CRITICAL: JWT_SECRET must be set and at least 32 characters long!")
+		logger.Log.Fatalw("CRITICAL: JWT_SECRET must be set and at least 32 characters long!")
 	}
 
 	db := db.Must(&config.DatabaseConfig)
 
 	storage, err := storage.NewStorageByEnv(&config.StorageConfig)
 	if err != nil {
-		log.Println("Error init storage")
+		logger.Log.Errorw("Error init storage", "error", err)
 	}
 
 	app := fiber.New(fiber.Config{
@@ -42,9 +55,19 @@ func StartServer() {
 		WriteTimeout:      20 * time.Second,
 		IdleTimeout:       30 * time.Second,
 		ReduceMemoryUsage: true,
+		ErrorHandler: func(c *fiber.Ctx, err error) error {
+			if err != nil {
+				sentry.CaptureException(err)
+			}
+			return fiber.DefaultErrorHandler(c, err)
+		},
 	})
 
 	app.Use(recover.New())
+	app.Use(requestid.New())
+	app.Use(compress.New(compress.Config{
+		Level: compress.LevelBestSpeed,
+	}))
 	app.Use(handlers.CreateGlobalRateLimiter())
 
 	app.Use(func(c *fiber.Ctx) error {
@@ -62,7 +85,7 @@ func StartServer() {
 
 	allowedOrigins := strings.TrimSpace(os.Getenv("ALLOWED_ORIGINS"))
 	if allowedOrigins == "" {
-		log.Fatal("CRITICAL: ALLOWED_ORIGINS must be configured explicitly")
+		logger.Log.Fatalw("CRITICAL: ALLOWED_ORIGINS must be configured explicitly")
 	}
 	app.Use(cors.New(cors.Config{
 		AllowOrigins:     allowedOrigins,
@@ -91,6 +114,8 @@ func StartServer() {
 	teamRepo := repository.NewTeamRepository(db.DB)
 	taskRepo := repository.NewTaskRepository(db.DB)
 	folderRepo := repository.NewFolderRepository(db.DB)
+	sprintRepo := repository.NewSprintRepository(db.DB)
+	discussionRepo := repository.NewDiscussionRepository(db.DB)
 	verificationRepo := repository.NewVerificationRepository(db.DB)
 	passwordResetRepo := repository.NewPasswordResetRepository(db.DB)
 	passwordAuditRepo := repository.NewPasswordAuditRepository(db.DB)
@@ -110,6 +135,8 @@ func StartServer() {
 	teamService := service.NewTeamService(teamRepo, userRepo)
 	taskService := service.NewTaskService(taskRepo, userRepo, teamRepo)
 	folderService := service.NewFolderService(folderRepo)
+	sprintService := service.NewSprintService(sprintRepo)
+	discussionService := service.NewDiscussionService(discussionRepo)
 	authConfig := handlers.AuthConfig{
 		JWTSecret:       config.JWTSecret,
 		FrontendBaseURL: config.FrontendBaseURL,
@@ -122,7 +149,7 @@ func StartServer() {
 			GithubCallbackURL:  config.OAuthConfig.GithubCallbackURL,
 		},
 	}
-	httpHandlers := handlers.NewHandlers(userService, teamService, taskService, folderService, verificationService, passwordService, authConfig)
+	httpHandlers := handlers.NewHandlers(userService, teamService, taskService, folderService, verificationService, passwordService, sprintService, discussionService, db, authConfig)
 	routes.InitRoutes(app, httpHandlers)
 
 	go func() {
@@ -130,12 +157,12 @@ func StartServer() {
 		defer ticker.Stop()
 		for range ticker.C {
 			if _, err := passwordService.CleanupExpiredTokens(context.Background()); err != nil {
-				log.Println("password reset cleanup error:", err)
+				logger.Log.Errorw("password reset cleanup error", "error", err)
 			}
 		}
 	}()
 
 	if err := app.Listen(":3000"); err != nil {
-		log.Fatalf("server failed to start: %v", err)
+		logger.Log.Fatalw("server failed to start", "error", err)
 	}
 }

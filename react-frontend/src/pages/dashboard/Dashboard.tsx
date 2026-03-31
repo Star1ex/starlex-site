@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { NewTabModal } from '@/widgets/NewTabModal/NewTabModal.js';
 import { useModal } from '@/shared/hooks/useModal.js';
 import { useNavigate } from 'react-router-dom';
 import { getAuthUser } from '@/shared/lib/authManager.js';
 import { userService } from '@/services/api/index.js';
+import { pageVariants } from '@/shared/lib/animations.js';
 
 type Team = {
   id: string;
@@ -112,7 +114,13 @@ export const Dashboard: React.FC = () => {
   };
 
   return (
-    <div className="min-h-full bg-white dark:bg-dark-bg transition-colors duration-300">
+    <motion.div
+      className="min-h-full bg-white dark:bg-dark-bg transition-colors duration-300"
+      variants={pageVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+    >
       {/* Main Content */}
       <main className="flex-1 bg-white dark:bg-dark-bg transition-colors duration-300 p-6 sm:p-8 overflow-y-auto">
         <div className="max-w-6xl mx-auto">
@@ -202,6 +210,6 @@ export const Dashboard: React.FC = () => {
           onTeamCreated={handleTeamCreated}
         />
       )}
-    </div>
+    </motion.div>
   );
 };

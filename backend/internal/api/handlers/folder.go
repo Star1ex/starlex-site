@@ -1,10 +1,10 @@
 package handlers
 
 import (
-	"context"
 	"time"
 
 	"github.com/Team-Tracks/team-track-site/internal/api/dto"
+	"github.com/Team-Tracks/team-track-site/internal/logger"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -37,6 +37,9 @@ func (h *Handlers) CreateFolder(ctx *fiber.Ctx) error {
 		})
 	}
 
+	req.Name = sanitizeStrict(req.Name)
+	req.Icon = sanitizeStrict(req.Icon)
+
 	folder := dto.ToDomainFolder(&req)
 	// Enforce ownership from auth context, never trust client-supplied owner_id.
 	folder.OwnerID = userID
@@ -55,10 +58,11 @@ func (h *Handlers) CreateFolder(ctx *fiber.Ctx) error {
 	if folder.UpdatedAt.IsZero() {
 		folder.UpdatedAt = folder.CreatedAt
 	}
-	err := h.folderService.Create(context.Background(), folder)
+	err := h.folderService.Create(ctx.Context(), folder)
 	if err != nil {
+		logger.Log.Errorw("create folder failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": "internal server error",
 		})
 	}
 	return ctx.Status(fiber.StatusOK).JSON(dto.FromDomainFolder(folder))
@@ -87,9 +91,10 @@ func (h *Handlers) GetFolderByID(ctx *fiber.Ctx) error {
 	if _, err := h.requireFolderAccess(ctx, id, userID); err != nil {
 		return err
 	}
-	folder, err := h.folderService.GetByID(context.Background(), id)
+	folder, err := h.folderService.GetByID(ctx.Context(), id)
 	if err != nil {
-		return ctx.Status(500).JSON(fiber.Map{"error": err.Error()})
+		logger.Log.Errorw("get folder failed", "error", err)
+		return ctx.Status(500).JSON(fiber.Map{"error": "internal server error"})
 	}
 
 	return ctx.Status(200).JSON(dto.FromDomainFolder(folder))
@@ -114,10 +119,11 @@ func (h *Handlers) GetFoldersByUserID(ctx *fiber.Ctx) error {
 		})
 	}
 
-	folders, err := h.folderService.GetUserFolders(context.Background(), userID)
+	folders, err := h.folderService.GetUserFolders(ctx.Context(), userID)
 	if err != nil {
+		logger.Log.Errorw("get user folders failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": "internal server error",
 		})
 	}
 
@@ -149,10 +155,11 @@ func (h *Handlers) GetFoldersByTeam(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	folders, err := h.folderService.GetTeamFolders(context.Background(), teamID)
+	folders, err := h.folderService.GetTeamFolders(ctx.Context(), teamID)
 	if err != nil {
+		logger.Log.Errorw("get team folders failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": "internal server error",
 		})
 	}
 
@@ -190,10 +197,11 @@ func (h *Handlers) GetFoldersByParentID(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	folders, err := h.folderService.GetSubFolders(context.Background(), parentID)
+	folders, err := h.folderService.GetSubFolders(ctx.Context(), parentID)
 	if err != nil {
+		logger.Log.Errorw("get subfolders failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": "internal server error",
 		})
 	}
 
@@ -243,15 +251,19 @@ func (h *Handlers) UpdateFolder(ctx *fiber.Ctx) error {
 		})
 	}
 
+	req.Name = sanitizeStrict(req.Name)
+	req.Icon = sanitizeStrict(req.Icon)
+
 	req.ID = folderIDParams
 	if _, err := h.requireFolderAccess(ctx, req.ID, userID); err != nil {
 		return err
 	}
 	req.OwnerID = userID
-	err := h.folderService.Update(context.Background(), dto.ToDomainFolder(&req))
+	err := h.folderService.Update(ctx.Context(), dto.ToDomainFolder(&req))
 	if err != nil {
+		logger.Log.Errorw("update folder failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": "internal server error",
 		})
 	}
 
@@ -291,10 +303,11 @@ func (h *Handlers) DeleteFolder(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	err := h.folderService.Delete(context.Background(), folderID)
+	err := h.folderService.Delete(ctx.Context(), folderID)
 	if err != nil {
+		logger.Log.Errorw("delete folder failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": "internal server error",
 		})
 	}
 
@@ -350,11 +363,12 @@ func (h *Handlers) MoveFolder(ctx *fiber.Ctx) error {
 		}
 	}
 
-	err = h.folderService.Move(context.Background(), req.FolderID, &req.ParentID)
+	err = h.folderService.Move(ctx.Context(), req.FolderID, &req.ParentID)
 
 	if err != nil {
+		logger.Log.Errorw("move folder failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": "internal server error",
 		})
 	}
 

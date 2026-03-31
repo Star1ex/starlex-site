@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { isAuthenticated } from "@/shared/lib/authManager.js";
 import { useTheme } from "@/shared/contexts/ThemeContext.js";
 import iconTeamtrack from "@/assets/icon-teamtrack.png";
+import { Helmet } from "react-helmet-async";
 
 export const HomePage = () => {
   const navigate = useNavigate();
@@ -78,6 +79,33 @@ export const HomePage = () => {
 
   return (
     <div className="relative min-h-screen font-sans bg-[color:var(--bg-primary)] text-[color:var(--text-primary)] transition-colors duration-300">
+      <Helmet>
+        <title>Team Track — Task Management for Modern Teams</title>
+        <meta
+          name="description"
+          content="Organize tasks, run sprints, and collaborate with your team in real time. Free for teams of up to 5."
+        />
+        <meta name="robots" content="index, follow" />
+        <link rel="canonical" href="https://teamtrack.tech/" />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content="Team Track — Task Management for Modern Teams" />
+        <meta property="og:description" content="Organize tasks, run sprints, and collaborate with your team in real time." />
+        <meta property="og:image" content="https://teamtrack.tech/og-image.png" />
+        <meta property="og:url" content="https://teamtrack.tech/" />
+        <meta name="twitter:card" content="summary_large_image" />
+        <script type="application/ld+json">
+          {JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            name: "Team Track",
+            applicationCategory: "ProjectManagement",
+            operatingSystem: "Web",
+            offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
+            description: "Task management with sprints, folders, and real-time collaboration.",
+            url: "https://teamtrack.tech",
+          })}
+        </script>
+      </Helmet>
       <div className="relative overflow-hidden">
         <div
           className="absolute inset-0"

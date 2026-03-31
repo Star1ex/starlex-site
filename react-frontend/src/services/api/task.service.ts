@@ -1,5 +1,14 @@
+import type { AxiosError } from 'axios';
 import { httpClient } from './client.js';
 import { TaskDTO, CreateTaskRequest, UpdateTaskRequest, TaskProgress } from '../../types/dto.js';
+import { showToast } from '@/shared/lib/toast.js';
+
+const maybeHandleStaleUpdate = (error: unknown) => {
+  const err = error as AxiosError;
+  if (err?.response?.status === 409) {
+    showToast('Someone else edited this task. Refresh to see latest.');
+  }
+};
 
 export const taskService = {
   // Personal
@@ -29,8 +38,13 @@ export const taskService = {
   },
 
   async updateTask(id: string, data: UpdateTaskRequest, options?: { signal?: AbortSignal }): Promise<TaskDTO> {
-    const response = await httpClient.put<TaskDTO>(`/api/tasks/${id}`, data, { signal: options?.signal as any });
-    return response.data;
+    try {
+      const response = await httpClient.put<TaskDTO>(`/api/tasks/${id}`, data, { signal: options?.signal as any });
+      return response.data;
+    } catch (error) {
+      maybeHandleStaleUpdate(error);
+      throw error;
+    }
   },
 
   async updateTaskTitle(id: string, task: string, options?: { signal?: AbortSignal }): Promise<void> {
@@ -85,8 +99,13 @@ export const taskService = {
   },
 
   async updateTeamTask(teamId: string, taskId: string, data: UpdateTaskRequest): Promise<TaskDTO> {
-    const response = await httpClient.put<TaskDTO>(`/api/teams/${teamId}/tasks/${taskId}`, data);
-    return response.data;
+    try {
+      const response = await httpClient.put<TaskDTO>(`/api/teams/${teamId}/tasks/${taskId}`, data);
+      return response.data;
+    } catch (error) {
+      maybeHandleStaleUpdate(error);
+      throw error;
+    }
   },
 
   async updateTeamTaskTitle(teamId: string, taskId: string, task: string): Promise<void> {

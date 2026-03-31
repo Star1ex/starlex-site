@@ -6,14 +6,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
 	"github.com/Team-Tracks/team-track-site/internal/domain/user"
+	"github.com/Team-Tracks/team-track-site/internal/logger"
 	"github.com/Team-Tracks/team-track-site/internal/repository"
 	"github.com/Team-Tracks/team-track-site/internal/security"
 	"github.com/gofiber/fiber/v2"
@@ -63,7 +64,8 @@ func (h *Handlers) OAuthRateLimit(ctx *fiber.Ctx) error {
 
 func (h *Handlers) StartGoogleOAuth(ctx *fiber.Ctx) error {
 	if err := h.validateOAuthConfig("google"); err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		logger.Log.Errorw("oauth config google", "error", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "oauth configuration error"})
 	}
 	returnTo := sanitizeReturnTo(ctx.Query("redirect"))
 	state, err := security.GenerateSecureToken(32)
@@ -73,13 +75,14 @@ func (h *Handlers) StartGoogleOAuth(ctx *fiber.Ctx) error {
 
 	h.setOAuthCookies(ctx, "google", state, oauthActionLogin, "", returnTo)
 	authURL := h.googleAuthURL(state)
-	log.Printf("oauth google start: ip=%s return_to=%s", ctx.IP(), returnTo)
+	logger.Log.Infow("oauth google start", "ip", ctx.IP(), "return_to", returnTo)
 	return ctx.Redirect(authURL, fiber.StatusFound)
 }
 
 func (h *Handlers) StartGithubOAuth(ctx *fiber.Ctx) error {
 	if err := h.validateOAuthConfig("github"); err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		logger.Log.Errorw("oauth config github", "error", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "oauth configuration error"})
 	}
 	returnTo := sanitizeReturnTo(ctx.Query("redirect"))
 	state, err := security.GenerateSecureToken(32)
@@ -89,13 +92,14 @@ func (h *Handlers) StartGithubOAuth(ctx *fiber.Ctx) error {
 
 	h.setOAuthCookies(ctx, "github", state, oauthActionLogin, "", returnTo)
 	authURL := h.githubAuthURL(state)
-	log.Printf("oauth github start: ip=%s return_to=%s", ctx.IP(), returnTo)
+	logger.Log.Infow("oauth github start", "ip", ctx.IP(), "return_to", returnTo)
 	return ctx.Redirect(authURL, fiber.StatusFound)
 }
 
 func (h *Handlers) LinkGoogle(ctx *fiber.Ctx) error {
 	if err := h.validateOAuthConfig("google"); err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		logger.Log.Errorw("oauth config google", "error", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "oauth configuration error"})
 	}
 	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
@@ -108,7 +112,7 @@ func (h *Handlers) LinkGoogle(ctx *fiber.Ctx) error {
 	}
 	returnTo := sanitizeReturnTo(ctx.Query("redirect"))
 	h.setOAuthCookies(ctx, "google", state, oauthActionLink, userID, returnTo)
-	log.Printf("oauth google link start: user=%s ip=%s", userID, ctx.IP())
+	logger.Log.Infow("oauth google link start", "user_id", userID, "ip", ctx.IP())
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
 		"auth_url": h.googleAuthURL(state),
 	})
@@ -116,7 +120,8 @@ func (h *Handlers) LinkGoogle(ctx *fiber.Ctx) error {
 
 func (h *Handlers) LinkGithub(ctx *fiber.Ctx) error {
 	if err := h.validateOAuthConfig("github"); err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+		logger.Log.Errorw("oauth config github", "error", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "oauth configuration error"})
 	}
 	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
@@ -129,7 +134,7 @@ func (h *Handlers) LinkGithub(ctx *fiber.Ctx) error {
 	}
 	returnTo := sanitizeReturnTo(ctx.Query("redirect"))
 	h.setOAuthCookies(ctx, "github", state, oauthActionLink, userID, returnTo)
-	log.Printf("oauth github link start: user=%s ip=%s", userID, ctx.IP())
+	logger.Log.Infow("oauth github link start", "user_id", userID, "ip", ctx.IP())
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
 		"auth_url": h.githubAuthURL(state),
 	})
@@ -144,13 +149,13 @@ func (h *Handlers) HandleGoogleCallback(ctx *fiber.Ctx) error {
 		return h.redirectOAuthError(ctx, "google", "missing_state", "")
 	}
 	if err := h.validateOAuthState(ctx, "google", state); err != nil {
-		log.Printf("oauth google state mismatch: ip=%s err=%v", ctx.IP(), err)
+		logger.Log.Warnw("oauth google state mismatch", "ip", ctx.IP(), "error", err)
 		return h.redirectOAuthError(ctx, "google", "invalid_state", "")
 	}
 	defer h.clearOAuthCookies(ctx, "google")
 
 	if errParam := ctx.Query("error"); errParam != "" {
-		log.Printf("oauth google denied: ip=%s error=%s", ctx.IP(), errParam)
+		logger.Log.Warnw("oauth google denied", "ip", ctx.IP(), "error", errParam)
 		return h.redirectOAuthError(ctx, "google", errParam, h.getOAuthReturnTo(ctx, "google"))
 	}
 	code := ctx.Query("code")
@@ -160,7 +165,7 @@ func (h *Handlers) HandleGoogleCallback(ctx *fiber.Ctx) error {
 
 	profile, err := h.fetchGoogleProfile(ctx.Context(), code)
 	if err != nil {
-		log.Printf("oauth google profile error: ip=%s err=%v", ctx.IP(), err)
+		logger.Log.Errorw("oauth google profile error", "ip", ctx.IP(), "error", err)
 		return h.redirectOAuthError(ctx, "google", "profile_error", h.getOAuthReturnTo(ctx, "google"))
 	}
 
@@ -176,13 +181,13 @@ func (h *Handlers) HandleGithubCallback(ctx *fiber.Ctx) error {
 		return h.redirectOAuthError(ctx, "github", "missing_state", "")
 	}
 	if err := h.validateOAuthState(ctx, "github", state); err != nil {
-		log.Printf("oauth github state mismatch: ip=%s err=%v", ctx.IP(), err)
+		logger.Log.Warnw("oauth github state mismatch", "ip", ctx.IP(), "error", err)
 		return h.redirectOAuthError(ctx, "github", "invalid_state", "")
 	}
 	defer h.clearOAuthCookies(ctx, "github")
 
 	if errParam := ctx.Query("error"); errParam != "" {
-		log.Printf("oauth github denied: ip=%s error=%s", ctx.IP(), errParam)
+		logger.Log.Warnw("oauth github denied", "ip", ctx.IP(), "error", errParam)
 		return h.redirectOAuthError(ctx, "github", errParam, h.getOAuthReturnTo(ctx, "github"))
 	}
 	code := ctx.Query("code")
@@ -192,7 +197,7 @@ func (h *Handlers) HandleGithubCallback(ctx *fiber.Ctx) error {
 
 	profile, err := h.fetchGithubProfile(ctx.Context(), code)
 	if err != nil {
-		log.Printf("oauth github profile error: ip=%s err=%v", ctx.IP(), err)
+		logger.Log.Errorw("oauth github profile error", "ip", ctx.IP(), "error", err)
 		return h.redirectOAuthError(ctx, "github", "profile_error", h.getOAuthReturnTo(ctx, "github"))
 	}
 
@@ -263,11 +268,11 @@ func (h *Handlers) completeOAuth(ctx *fiber.Ctx, provider string, profile oauthP
 	linkUserID := h.getOAuthLinkUser(ctx, provider)
 	returnTo := h.getOAuthReturnTo(ctx, provider)
 
-	log.Printf("oauth %s callback: ip=%s action=%s", provider, ctx.IP(), action)
+	logger.Log.Infow("oauth callback", "provider", provider, "ip", ctx.IP(), "action", action)
 
 	userEntity, err := h.resolveOAuthUser(ctx.Context(), provider, action, linkUserID, profile)
 	if err != nil {
-		log.Printf("oauth %s user resolve error: ip=%s action=%s err=%v", provider, ctx.IP(), action, err)
+		logger.Log.Errorw("oauth user resolve error", "provider", provider, "ip", ctx.IP(), "action", action, "error", err)
 		return h.redirectOAuthError(ctx, provider, "account_error", returnTo)
 	}
 
@@ -275,7 +280,7 @@ func (h *Handlers) completeOAuth(ctx *fiber.Ctx, provider string, profile oauthP
 
 	_, refreshTokenStr, err := h.issueTokens(userEntity)
 	if err != nil {
-		log.Printf("oauth %s token error: ip=%s err=%v", provider, ctx.IP(), err)
+		logger.Log.Errorw("oauth token error", "provider", provider, "ip", ctx.IP(), "error", err)
 		return h.redirectOAuthError(ctx, provider, "token_error", returnTo)
 	}
 
@@ -328,7 +333,7 @@ func (h *Handlers) linkOAuthAccount(ctx context.Context, userID string, profile 
 		return nil, err
 	}
 
-	update := h.buildOAuthUpdate(userEntity, profile, true)
+	update := h.buildOAuthUpdate(ctx, userEntity, profile, true)
 	if err := h.userService.UpdateOAuthFields(ctx, userEntity.ID, update); err != nil {
 		return nil, err
 	}
@@ -344,7 +349,7 @@ func (h *Handlers) linkExistingByEmail(ctx context.Context, userEntity *entity.U
 		return nil, err
 	}
 
-	update := h.buildOAuthUpdate(userEntity, profile, true)
+	update := h.buildOAuthUpdate(ctx, userEntity, profile, true)
 	if err := h.userService.UpdateOAuthFields(ctx, userEntity.ID, update); err != nil {
 		return nil, err
 	}
@@ -352,20 +357,20 @@ func (h *Handlers) linkExistingByEmail(ctx context.Context, userEntity *entity.U
 }
 
 func (h *Handlers) updateOAuthUser(ctx context.Context, userEntity *entity.User, profile oauthProfile) (*entity.User, error) {
-	update := h.buildOAuthUpdate(userEntity, profile, false)
+	update := h.buildOAuthUpdate(ctx, userEntity, profile, false)
 	if err := h.userService.UpdateOAuthFields(ctx, userEntity.ID, update); err != nil {
 		return nil, err
 	}
 	return h.userService.Get(ctx, userEntity.ID)
 }
 
-func (h *Handlers) buildOAuthUpdate(userEntity *entity.User, profile oauthProfile, ensureProvider bool) user.OAuthUpdate {
+func (h *Handlers) buildOAuthUpdate(ctx context.Context, userEntity *entity.User, profile oauthProfile, ensureProvider bool) user.OAuthUpdate {
 	update := user.OAuthUpdate{}
 	if profile.AvatarURL != "" {
 		update.AvatarURL = &profile.AvatarURL
 	}
 	if profile.Email != "" && !strings.EqualFold(profile.Email, userEntity.Email) {
-		if email := h.maybeUpdateEmail(profile.Email, userEntity.ID); email != "" {
+		if email := h.maybeUpdateEmail(ctx, profile.Email, userEntity.ID); email != "" {
 			update.Email = &email
 		}
 	}
@@ -488,11 +493,11 @@ func authProvidersAfterUnlink(userEntity *entity.User, provider string) []string
 	return providers
 }
 
-func (h *Handlers) maybeUpdateEmail(email, userID string) string {
+func (h *Handlers) maybeUpdateEmail(ctx context.Context, email, userID string) string {
 	if email == "" {
 		return ""
 	}
-	existing, err := h.userService.GetByEmail(context.Background(), email)
+	existing, err := h.userService.GetByEmail(ctx, email)
 	if err == nil && existing != nil && existing.ID != userID {
 		return ""
 	}
@@ -858,7 +863,7 @@ func (h *Handlers) setRefreshCookie(ctx *fiber.Ctx, token string) {
 		Value:    token,
 		Expires:  time.Now().Add(7 * 24 * time.Hour),
 		HTTPOnly: true,
-		Secure:   h.isSecureCookie(),
+		Secure:   os.Getenv("APP_ENV") == "production",
 		SameSite: "Lax",
 		Path:     "/",
 	})

@@ -2,14 +2,15 @@ package db
 
 import (
 	"fmt"
-	"log"
+	"os"
 	"time"
 
 	"github.com/Team-Tracks/team-track-site/internal/config"
+	"github.com/Team-Tracks/team-track-site/internal/logger"
 	"github.com/Team-Tracks/team-track-site/internal/repository"
 	pgdriver "gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
+	gormlogger "gorm.io/gorm/logger"
 )
 
 type DB struct {
@@ -28,31 +29,44 @@ func Must(cfg *config.DatabaseConfig) *DB {
 			break
 		}
 		if i < 4 {
-			log.Printf("Failed to connect to DB, retry %d/5: %v", i+1, err)
+			logger.Log.Warnw("Failed to connect to DB, retrying", "attempt", i+1, "error", err)
 			time.Sleep(2 * time.Second)
 		}
 	}
 
 	if err != nil {
-		log.Fatalf("Failed to init db after 5 retries: %v", err)
+		logger.Log.Fatalw("Failed to init db after 5 retries", "error", err)
 	}
 
 	if err := migrate(db); err != nil {
-		log.Fatalf("Failed migrate models: %v", err)
+		logger.Log.Fatalw("Failed migrate models", "error", err)
 	}
 
 	return db
 }
 
 func setupDB(cfg *config.DatabaseConfig) (*DB, error) {
+	logLevel := gormlogger.Info
+	if os.Getenv("APP_ENV") == "production" {
+		logLevel = gormlogger.Warn
+	}
 	db, err := gorm.Open(pgdriver.Open(cfg.DSN()), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger: gormlogger.Default.LogMode(logLevel),
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed connect to DB: %v", err)
 	}
 
-	log.Println("Connected to db successfully")
+	sqlDB, err := db.DB()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get underlying sql.DB: %w", err)
+	}
+	sqlDB.SetMaxOpenConns(25)
+	sqlDB.SetMaxIdleConns(10)
+	sqlDB.SetConnMaxLifetime(5 * time.Minute)
+	sqlDB.SetConnMaxIdleTime(2 * time.Minute)
+
+	logger.Log.Infow("Connected to db successfully")
 
 	return &DB{db}, nil
 }
@@ -63,7 +77,11 @@ func migrate(db *DB) error {
 		&repository.UserModel{},
 		&repository.TeamModel{},
 		&repository.TaskModel{},
+		&repository.SprintModel{},
+		&repository.SubtaskModel{},
 		&repository.FolderModel{},
+		&repository.DiscussionModel{},
+		&repository.DiscussionMessageModel{},
 		&repository.VerificationCodeModel{},
 		&repository.PasswordResetTokenModel{},
 		&repository.PasswordAuditLogModel{},
@@ -75,7 +93,7 @@ func migrate(db *DB) error {
 	//	return fmt.Errorf("failed to fill task owner_ids: %v", err)
 	//}
 
-	log.Println("Models migrated successfully")
+	logger.Log.Infow("Models migrated successfully")
 	return nil
 }
 
@@ -86,11 +104,11 @@ func fillDefaultOwnerIDs(db *DB) error {
 	db.Raw(`SELECT COUNT(*) FROM task_models WHERE owner_id IS NULL`).Scan(&count)
 
 	if count == 0 {
-		log.Println("All tasks already have owner_id")
+		logger.Log.Infow("All tasks already have owner_id")
 		return nil
 	}
 
-	log.Printf("Filling owner_id for %d tasks", count)
+	logger.Log.Infow("Filling owner_id for tasks", "count", count)
 
 	var defaultOwner repository.UserModel
 	if err := db.First(&defaultOwner).Error; err != nil {
@@ -107,6 +125,6 @@ func fillDefaultOwnerIDs(db *DB) error {
 		return fmt.Errorf("failed to update owner_id: %v", result.Error)
 	}
 
-	log.Printf("Updated %d tasks with default owner_id: %s", result.RowsAffected, defaultOwner.ID)
+	logger.Log.Infow("Updated tasks with default owner_id", "count", result.RowsAffected, "owner_id", defaultOwner.ID)
 	return nil
 }

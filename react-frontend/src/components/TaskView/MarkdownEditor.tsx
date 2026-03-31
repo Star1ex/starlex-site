@@ -124,42 +124,137 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
         }}
       />
       <style>{`
+        /* ── Kill BlockNote's own background — editor must be invisible ── */
+        .notion-md-editor .bn-container,
+        .notion-md-editor .bn-editor,
+        .notion-md-editor [class^="bn-"],
+        .notion-md-editor [class*=" bn-"] {
+          background: transparent !important;
+          border: none !important;
+          box-shadow: none !important;
+        }
+
+        /* ── Restore font/spacing on the container ── */
+        .notion-md-editor .bn-container {
+          font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+          font-size: 15px;
+          line-height: 1.75;
+        }
+
+        /* ── Code blocks: shared structure (restore border/bg only here) ── */
         .notion-md-editor .bn-block-content[data-content-type="codeBlock"] {
-          border: 1px solid rgba(148, 163, 184, 0.35);
-          border-radius: 12px;
-          background: #0f172a;
-          box-shadow: 0 8px 24px rgba(2, 6, 23, 0.12);
-          overflow: hidden;
+          border-radius: 8px !important;
+          overflow: hidden !important;
         }
 
         .notion-md-editor .bn-block-content[data-content-type="codeBlock"] > pre {
           margin: 0;
           padding: 14px 16px;
-          font-family: 'JetBrains Mono', 'Fira Code', Menlo, Consolas, monospace;
-          font-size: 0.9rem;
+          font-family: 'JetBrains Mono', 'Fira Code', Menlo, Consolas, monospace !important;
+          font-size: 0.875rem;
           line-height: 1.65;
-          color: #e2e8f0;
           overflow-x: auto;
           scrollbar-width: thin;
-          scrollbar-color: rgba(148, 163, 184, 0.45) transparent;
         }
 
         .notion-md-editor .bn-block-content[data-content-type="codeBlock"] > div {
-          background: linear-gradient(180deg, rgba(15, 23, 42, 0.94), rgba(15, 23, 42, 0.8));
-          border-bottom: 1px solid rgba(148, 163, 184, 0.25);
-          padding: 6px 10px;
+          border-bottom-width: 1px !important;
+          border-bottom-style: solid !important;
+          padding: 5px 10px;
         }
 
         .notion-md-editor .bn-block-content[data-content-type="codeBlock"] > div > select {
-          color: #cbd5e1;
-          background: transparent;
-          font-size: 12px;
-          letter-spacing: 0.02em;
+          background: transparent !important;
+          font-size: 11px;
+          font-family: 'JetBrains Mono', 'Fira Code', monospace;
+          border: none !important;
+          outline: none;
+          cursor: pointer;
+          opacity: 0.65;
         }
 
-        .dark .notion-md-editor .bn-block-content[data-content-type="codeBlock"] {
-          border-color: rgba(148, 163, 184, 0.24);
-          box-shadow: 0 10px 30px rgba(2, 6, 23, 0.35);
+        /* ── Light theme: slightly darker than white page ── */
+        html:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)
+          .notion-md-editor .bn-block-content[data-content-type="codeBlock"] {
+          background: #f0f2f5 !important;
+          border: 1px solid rgba(0,0,0,0.07) !important;
+        }
+        html:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)
+          .notion-md-editor .bn-block-content[data-content-type="codeBlock"] > pre {
+          color: #1e293b;
+          scrollbar-color: rgba(0,0,0,0.15) transparent;
+        }
+        html:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)
+          .notion-md-editor .bn-block-content[data-content-type="codeBlock"] > div {
+          background: #e5e8ed !important;
+          border-bottom-color: rgba(0,0,0,0.07) !important;
+        }
+        html:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)
+          .notion-md-editor .bn-block-content[data-content-type="codeBlock"] > div > select {
+          color: #475569;
+        }
+
+        /* ── Dark theme: slightly lighter than #0a1929 (--bg-primary) ── */
+        html.dark:not(.theme-ultra-dark)
+          .notion-md-editor .bn-block-content[data-content-type="codeBlock"] {
+          background: #112236 !important;
+          border: 1px solid rgba(255,255,255,0.06) !important;
+        }
+        html.dark:not(.theme-ultra-dark)
+          .notion-md-editor .bn-block-content[data-content-type="codeBlock"] > pre {
+          color: #b6c4d6;
+          scrollbar-color: rgba(255,255,255,0.1) transparent;
+        }
+        html.dark:not(.theme-ultra-dark)
+          .notion-md-editor .bn-block-content[data-content-type="codeBlock"] > div {
+          background: #0d1b2d !important;
+          border-bottom-color: rgba(255,255,255,0.06) !important;
+        }
+        html.dark:not(.theme-ultra-dark)
+          .notion-md-editor .bn-block-content[data-content-type="codeBlock"] > div > select {
+          color: #6a86a0;
+        }
+
+        /* ── Ultra-dark theme: slightly lighter than #0b090a (--bg-primary) ── */
+        html.theme-ultra-dark
+          .notion-md-editor .bn-block-content[data-content-type="codeBlock"] {
+          background: #1a1617 !important;
+          border: 1px solid rgba(255,255,255,0.05) !important;
+        }
+        html.theme-ultra-dark
+          .notion-md-editor .bn-block-content[data-content-type="codeBlock"] > pre {
+          color: #b8b0ab;
+          scrollbar-color: rgba(255,255,255,0.08) transparent;
+        }
+        html.theme-ultra-dark
+          .notion-md-editor .bn-block-content[data-content-type="codeBlock"] > div {
+          background: #141011 !important;
+          border-bottom-color: rgba(255,255,255,0.05) !important;
+        }
+        html.theme-ultra-dark
+          .notion-md-editor .bn-block-content[data-content-type="codeBlock"] > div > select {
+          color: #6b625d;
+        }
+
+        /* ── Solarized: code stays dark (classic solarized-dark for code) ── */
+        html.theme-solarized
+          .notion-md-editor .bn-block-content[data-content-type="codeBlock"] {
+          background: #073642 !important;
+          border: 1px solid rgba(7,54,66,0.4) !important;
+        }
+        html.theme-solarized
+          .notion-md-editor .bn-block-content[data-content-type="codeBlock"] > pre {
+          color: #93a1a1;
+          scrollbar-color: rgba(147,161,161,0.25) transparent;
+        }
+        html.theme-solarized
+          .notion-md-editor .bn-block-content[data-content-type="codeBlock"] > div {
+          background: #002b36 !important;
+          border-bottom-color: rgba(147,161,161,0.12) !important;
+        }
+        html.theme-solarized
+          .notion-md-editor .bn-block-content[data-content-type="codeBlock"] > div > select {
+          color: #4e6672;
         }
 
       `}</style>

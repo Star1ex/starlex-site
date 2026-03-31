@@ -1,12 +1,11 @@
 package handlers
 
 import (
-	"context"
 	"errors"
-	"log"
 	"strings"
 
 	"github.com/Team-Tracks/team-track-site/internal/api/dto"
+	"github.com/Team-Tracks/team-track-site/internal/logger"
 	"github.com/Team-Tracks/team-track-site/internal/repository"
 	"github.com/gofiber/fiber/v2"
 )
@@ -32,16 +31,16 @@ func (h *Handlers) CreateTeam(ctx *fiber.Ctx) error {
 
 	var input dto.TeamApi
 	if err := ctx.BodyParser(&input); err != nil {
-		log.Println(err)
+		logger.Log.Errorw("create team body parse failed", "error", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{})
 	}
 
 	team, err := h.teamService.CreateTeam(ctx.Context(), input.Name, input.Description, userID)
 
 	if err != nil {
-		log.Println(err)
+		logger.Log.Errorw("create team failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": "internal server error",
 		})
 	}
 
@@ -62,10 +61,11 @@ func (h *Handlers) DeleteTeam(ctx *fiber.Ctx) error {
 		})
 	}
 
-	err := h.teamService.Delete(context.Background(), teamID, userID)
+	err := h.teamService.Delete(ctx.Context(), teamID, userID)
 	if err != nil {
+		logger.Log.Errorw("delete team failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err,
+			"error": "internal server error",
 		})
 	}
 	return ctx.Status(fiber.StatusOK).JSON("Successfuly delete team")
@@ -110,9 +110,10 @@ func (h *Handlers) PatchTeamName(ctx *fiber.Ctx) error {
 		case errors.Is(err, repository.ErrTeamAlreadyExists):
 			return ctx.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "team name already exists"})
 		case err.Error() == "only team owner can update team name":
-			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
+			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
 		default:
-			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+			logger.Log.Errorw("update team name failed", "error", err)
+			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
 		}
 	}
 
@@ -150,9 +151,10 @@ func (h *Handlers) PatchTeamDescription(ctx *fiber.Ctx) error {
 		case errors.Is(err, repository.ErrTeamNotFound):
 			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "team not found"})
 		case err.Error() == "only team owner can update team description":
-			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": err.Error()})
+			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
 		default:
-			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": err.Error()})
+			logger.Log.Errorw("update team description failed", "error", err)
+			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
 		}
 	}
 
@@ -180,9 +182,9 @@ func (h *Handlers) GetUsers(ctx *fiber.Ctx) error {
 
 	users, err := h.teamService.GetUsers(ctx.Context(), id)
 	if err != nil {
-		log.Println(err)
+		logger.Log.Errorw("get team users failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": "internal server error",
 		})
 	}
 	response := dto.ToUsersResponse(users)
@@ -221,7 +223,7 @@ func (h *Handlers) AddUserToTeam(ctx *fiber.Ctx) error {
 
 	var input dto.AddUserToTeam
 	if err := ctx.BodyParser(&input); err != nil {
-		log.Println(err)
+		logger.Log.Errorw("add user body parse failed", "error", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "invalid request body",
 		})
@@ -229,21 +231,21 @@ func (h *Handlers) AddUserToTeam(ctx *fiber.Ctx) error {
 
 	err := h.teamService.AddUserToTeam(ctx.Context(), teamID, input.Email, userID)
 	if err != nil {
-		log.Println(err)
+		logger.Log.Errorw("add user to team failed", "error", err)
 
 		if err.Error() == "only team owner can add users" {
 			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{
-				"error": err.Error(),
+				"error": "forbidden",
 			})
 		}
 		if err.Error() == "user already in team" {
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": err.Error(),
+				"error": "user already in team",
 			})
 		}
 
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": "internal server error",
 		})
 	}
 
@@ -285,7 +287,7 @@ func (h *Handlers) RemoveUserFromTeam(ctx *fiber.Ctx) error {
 	// Parse request body
 	var input dto.RemoveUserFromTeamRequest
 	if err := ctx.BodyParser(&input); err != nil {
-		log.Println(err)
+		logger.Log.Errorw("remove user body parse failed", "error", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "invalid request body",
 		})
@@ -300,33 +302,33 @@ func (h *Handlers) RemoveUserFromTeam(ctx *fiber.Ctx) error {
 	// Call service to remove user
 	err := h.teamService.RemoveUserFromTeam(ctx.Context(), teamID, input.UserID, currentUserID)
 	if err != nil {
-		log.Println(err)
+		logger.Log.Errorw("remove user from team failed", "error", err)
 
 		// Handle specific errors
 		switch err.Error() {
 		case "only team owner can remove users":
 			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{
-				"error": err.Error(),
+				"error": "forbidden",
 			})
 		case "cannot remove team owner from team":
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": err.Error(),
+				"error": "cannot remove team owner from team",
 			})
 		case "user is not in this team":
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": err.Error(),
+				"error": "user is not in this team",
 			})
 		case "team not found":
 			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"error": err.Error(),
+				"error": "team not found",
 			})
 		case "user not found":
 			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"error": err.Error(),
+				"error": "user not found",
 			})
 		default:
 			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": err.Error(),
+				"error": "internal server error",
 			})
 		}
 	}

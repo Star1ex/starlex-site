@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:latest
+    image: postgres:16-alpine
     container_name: team-track-site-db
     restart: unless-stopped
     env_file:
@@ -9,19 +9,27 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
+<<<<<<< HEAD
     user: "0:0"
     command: >
       sh -c "chown -R postgres:postgres /var/lib/postgresql &&
              exec /usr/local/bin/docker-entrypoint.sh postgres"
     ports:
-      - "${DB_PORT}:5432"
+      - "${DB_PORT}:5432" 
+=======
+>>>>>>> 3a85e61 ([STEP 2] Remove DB external port, Postgres root user, add resource limits)
     volumes:
-      - postgres_data:/var/lib/postgresql
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
 
   backend:
     build:
@@ -36,14 +44,17 @@ services:
       - "${BACKEND_PORT}:3000"
     env_file:
       - backend/.env
-    volumes:
-      - uploads_data:/uploads
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
 
   frontend:
     build:
@@ -53,13 +64,21 @@ services:
     container_name: team-track-site-frontend
     restart: unless-stopped
     ports:
-      - "80:80"
+<<<<<<< HEAD
+      - "8080:80"
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt:ro
       - uploads_data:/usr/share/nginx/html/uploads:ro
+=======
+      - "80:80"
+>>>>>>> 78c5b60 (Reverse proxy support)
     depends_on:
       - backend
 
 volumes:
+<<<<<<< HEAD
+  postgres_data:
+=======
   postgres_data:
   uploads_data:
+>>>>>>> 3a85e61 ([STEP 2] Remove DB external port, Postgres root user, add resource limits)

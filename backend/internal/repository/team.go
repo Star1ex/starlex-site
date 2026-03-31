@@ -3,9 +3,9 @@ package repository
 import (
 	"context"
 	"errors"
-	"log"
 
 	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
+	"github.com/Team-Tracks/team-track-site/internal/logger"
 	"gorm.io/gorm"
 )
 
@@ -55,7 +55,7 @@ func (t *TeamRepository) CreateAndAddCreator(ctx context.Context, team *entity.T
 			if errors.Is(err, gorm.ErrDuplicatedKey) {
 				return ErrTeamAlreadyExists
 			}
-			log.Println(err)
+			logger.Log.Errorw("create team failed", "error", err)
 			return err
 		}
 
@@ -75,7 +75,7 @@ func (t *TeamRepository) CreateAndAddCreator(ctx context.Context, team *entity.T
 			return result.Error
 		}
 		if result.RowsAffected == 0 {
-			log.Printf("Warning: No rows updated when setting role to owner for user %s", userID)
+			logger.Log.Warnw("No rows updated when setting role to owner", "user_id", userID)
 		}
 
 		return nil

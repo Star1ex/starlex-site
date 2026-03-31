@@ -1,10 +1,8 @@
 package handlers
 
 import (
-	"context"
 	"errors"
 	"fmt"
-	"log"
 	"regexp"
 	"strconv"
 	"strings"
@@ -12,6 +10,7 @@ import (
 
 	"github.com/Team-Tracks/team-track-site/internal/api/dto"
 	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
+	"github.com/Team-Tracks/team-track-site/internal/logger"
 	"github.com/Team-Tracks/team-track-site/internal/repository"
 	"github.com/Team-Tracks/team-track-site/internal/service"
 	"github.com/gofiber/fiber/v2"
@@ -44,8 +43,14 @@ func validateEmail(email string) bool {
 }
 
 func (h *Handlers) logSecurityEvent(ctx *fiber.Ctx, userID, email, event, details string) {
-	log.Printf("[SECURITY] Event=%s User=%s Email=%s IP=%s UserAgent=%s Details=%s",
-		event, userID, email, ctx.IP(), ctx.Get("User-Agent"), details)
+	logger.Log.Infow("security event",
+		"event", event,
+		"user_id", userID,
+		"email", email,
+		"ip", ctx.IP(),
+		"user_agent", ctx.Get("User-Agent"),
+		"details", details,
+	)
 }
 
 // Swagger disabled: Login godoc
@@ -65,7 +70,7 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 	var loginInput SignIn
 
 	if err := ctx.BodyParser(&loginInput); err != nil {
-		log.Println(err)
+		logger.Log.Errorw("login body parse failed", "error", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "invalid request body",
 		})
@@ -82,7 +87,7 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 
 	user, err := h.userService.Login(ctx.Context(), loginInput.Email, loginInput.Password)
 	if err != nil {
-		log.Println(err)
+		logger.Log.Errorw("login failed", "error", err)
 		incrementLoginAttempts(lockKey, time.Minute*15)
 		h.logSecurityEvent(ctx, "", loginInput.Email, "LOGIN_FAILED", err.Error())
 		if errors.Is(err, service.ErrPasswordNotSet) {
@@ -264,6 +269,7 @@ func (h *Handlers) Logout(ctx *fiber.Ctx) error {
 				nextVersion = 1
 			}
 			_ = h.userService.Update(ctx.Context(), &entity.User{TokenVersion: nextVersion}, userID)
+			h.userService.BustTokenVersionCache(userID)
 		}
 	}
 
@@ -332,9 +338,9 @@ func (h *Handlers) Register(ctx *fiber.Ctx) error {
 	var input dto.UserApi
 
 	if err := ctx.BodyParser(&input); err != nil {
-		log.Println(err)
+		logger.Log.Errorw("register body parse failed", "error", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": "invalid request body",
 		})
 	}
 
@@ -370,17 +376,17 @@ func (h *Handlers) Register(ctx *fiber.Ctx) error {
 		})
 	}
 
-	userID, err := h.userService.CreateUnverified(context.Background(), &input)
+	userID, err := h.userService.CreateUnverified(ctx.Context(), &input)
 	if err != nil {
-		log.Println(err)
+		logger.Log.Errorw("create user failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to create user",
 		})
 	}
 	// create user with service
-	err = h.verificationService.GenerateAndSendCode(context.Background(), userID, input.Email, input.FirstName)
+	err = h.verificationService.GenerateAndSendCode(ctx.Context(), userID, input.Email, input.FirstName)
 	if err != nil {
-		log.Println("Failed to send verification code: ", err)
+		logger.Log.Errorw("failed to send verification code", "error", err)
 		ctx.Status(fiber.StatusCreated).JSON(fiber.Map{
 			"message": "User registered. Please contact support for verification code.",
 			"user_id": userID,
@@ -407,7 +413,7 @@ func (h *Handlers) Register(ctx *fiber.Ctx) error {
 func (h *Handlers) VerifyEmail(ctx *fiber.Ctx) error {
 	var input VerifyEmailRequest
 	if err := ctx.BodyParser(&input); err != nil {
-		log.Println(err)
+		logger.Log.Errorw("verify email body parse failed", "error", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",
 		})
@@ -419,17 +425,17 @@ func (h *Handlers) VerifyEmail(ctx *fiber.Ctx) error {
 		})
 	}
 
-	err := h.verificationService.VerifyCode(context.Background(), input.UserID, input.Code)
+	err := h.verificationService.VerifyCode(ctx.Context(), input.UserID, input.Code)
 	if err != nil {
-		log.Println(err)
+		logger.Log.Errorw("verify email failed", "error", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": err.Error(),
+			"error": "invalid verification code",
 		})
 	}
 
-	user, err := h.userService.Get(context.Background(), input.UserID)
+	user, err := h.userService.Get(ctx.Context(), input.UserID)
 	if err != nil {
-		log.Println("Failed to get user for notification: ", err)
+		logger.Log.Errorw("failed to get user for notification", "error", err)
 	} else {
 		h.notifyUserRegistered(dto.ToUserResponseIsVerified(user))
 	}
@@ -458,7 +464,7 @@ func (h *Handlers) notifyUserRegistered(user *dto.User) {
 func (h *Handlers) ResendCode(ctx *fiber.Ctx) error {
 	var input ResendCodeRequest
 	if err := ctx.BodyParser(&input); err != nil {
-		log.Println(err)
+		logger.Log.Errorw("resend code body parse failed", "error", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "Invalid request body",
 		})
@@ -470,7 +476,7 @@ func (h *Handlers) ResendCode(ctx *fiber.Ctx) error {
 		})
 	}
 
-	user, err := h.userService.Get(context.Background(), input.UserID)
+	user, err := h.userService.Get(ctx.Context(), input.UserID)
 	if err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "user not found",
@@ -483,9 +489,9 @@ func (h *Handlers) ResendCode(ctx *fiber.Ctx) error {
 		})
 	}
 
-	err = h.verificationService.GenerateAndSendCode(context.Background(), user.ID, user.Email, user.FirstName)
+	err = h.verificationService.GenerateAndSendCode(ctx.Context(), user.ID, user.Email, user.FirstName)
 	if err != nil {
-		log.Println(err)
+		logger.Log.Errorw("resend code failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to resend verification code",
 		})

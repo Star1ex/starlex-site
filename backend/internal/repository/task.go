@@ -17,9 +17,12 @@ type TaskModel struct {
 	Progress    string
 	Assigned    []UserModel `gorm:"many2many:task_users"`
 
-	TeamID    *string `gorm:"default:null"`
-	OwnerID   string  `gorm:"not null;index:idx_owner_folder"`
-	FolderID  *string `gorm:"default:null;index:idx_owner_folder"`
+	TeamID    *string        `gorm:"default:null"`
+	OwnerID   string         `gorm:"not null;index:idx_owner_folder"`
+	FolderID  *string        `gorm:"default:null;index:idx_owner_folder"`
+	SprintID  *string        `gorm:"default:null;index:idx_task_sprint"`
+	Position  int            `gorm:"not null;default:0"`
+	Subtasks  []SubtaskModel `gorm:"foreignKey:TaskID"`
 	CreatedAt time.Time
 	UpdatedAt time.Time
 }
@@ -27,6 +30,8 @@ type TaskModel struct {
 type TaskRepository struct {
 	db *gorm.DB
 }
+
+var ErrStaleData = errors.New("stale task data")
 
 func NewTaskRepository(db *gorm.DB) *TaskRepository {
 	return &TaskRepository{
@@ -54,6 +59,9 @@ func toTaskDomain(m TaskModel) *entity.Task {
 		TeamID:      teamID,
 		OwnerID:     m.OwnerID,
 		FolderID:    m.FolderID,
+		SprintID:    m.SprintID,
+		Position:    m.Position,
+		Subtasks:    toSubtaskDomains(m.Subtasks),
 		Priority:    m.Priority,
 		Progress:    m.Progress,
 		CreatedAt:   m.CreatedAt,
@@ -64,6 +72,26 @@ func toTaskDomains(tasks []TaskModel) []*entity.Task {
 	response := make([]*entity.Task, len(tasks))
 	for i, task := range tasks {
 		response[i] = toTaskDomain(task)
+	}
+	return response
+}
+
+func toSubtaskDomain(m SubtaskModel) *entity.Subtask {
+	return &entity.Subtask{
+		ID:        m.ID,
+		TaskID:    m.TaskID,
+		Title:     m.Title,
+		IsDone:    m.IsDone,
+		Position:  m.Position,
+		CreatedAt: m.CreatedAt,
+		UpdatedAt: m.UpdatedAt,
+	}
+}
+
+func toSubtaskDomains(models []SubtaskModel) []*entity.Subtask {
+	response := make([]*entity.Subtask, len(models))
+	for i, subtask := range models {
+		response[i] = toSubtaskDomain(subtask)
 	}
 	return response
 }
@@ -82,6 +110,8 @@ func fromTaskDomain(t *entity.Task) *TaskModel {
 		Priority:    t.Priority,
 		OwnerID:     t.OwnerID,
 		FolderID:    t.FolderID,
+		SprintID:    t.SprintID,
+		Position:    t.Position,
 		TeamID:      &t.TeamID,
 		CreatedAt:   t.CreatedAt,
 		UpdatedAt:   t.UpdatedAt,
@@ -129,8 +159,19 @@ func (r *TaskRepository) Update(ctx context.Context, id string, data *entity.Tas
 	}
 
 	if len(updates) > 0 {
-		if err := r.db.Model(&task).Updates(updates).Error; err != nil {
-			return nil, err
+		expectedUpdatedAt := data.UpdatedAt
+		if expectedUpdatedAt.IsZero() {
+			expectedUpdatedAt = task.UpdatedAt
+		}
+		result := r.db.WithContext(ctx).
+			Model(&TaskModel{}).
+			Where("id = ? AND updated_at = ?", task.ID, expectedUpdatedAt).
+			Updates(updates)
+		if result.Error != nil {
+			return nil, result.Error
+		}
+		if result.RowsAffected == 0 {
+			return nil, ErrStaleData
 		}
 	}
 
@@ -246,8 +287,11 @@ func (r *TaskRepository) GetUserTasks(ctx context.Context, userID string) ([]*en
 	var models []TaskModel
 
 	err := r.db.WithContext(ctx).
-		Joins("JOIN task_users tu ON tu.task_model_id = task_models.id").
-		Where("tu.user_id = ?", userID).
+		Joins("LEFT JOIN task_users tu ON tu.task_model_id = task_models.id").
+		Where("tu.user_id = ? OR task_models.owner_id = ?", userID, userID).
+		Preload("Assigned").
+		Preload("Subtasks").
+		Order("created_at DESC").
 		Find(&models).Error
 
 	if err != nil {
@@ -261,6 +305,8 @@ func (r *TaskRepository) GetFolderTasks(ctx context.Context, folderID string) ([
 	var models []TaskModel
 
 	err := r.db.WithContext(ctx).
+		Preload("Assigned").
+		Preload("Subtasks").
 		Where("folder_id = ?", folderID).
 		Find(&models).Error
 

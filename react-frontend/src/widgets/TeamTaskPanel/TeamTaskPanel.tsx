@@ -158,7 +158,7 @@ export const TeamTaskPanel: React.FC<TeamTaskPanelProps> = ({ task, isOpen, team
       style={{ width: panelWidth }}
       aria-label="Task details"
     >
-      <div className="h-full bg-white dark:bg-dark-surface md:rounded-2xl rounded-none shadow-[0_20px_60px_rgba(0,0,0,0.18)] border border-gray-100 dark:border-dark-border flex flex-col">
+      <div className="h-full md:rounded-2xl rounded-none shadow-2xl flex flex-col" style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)' }}>
         <div className="flex items-center justify-between px-4 pt-3 pb-2">
           <BreadcrumbBack label="Tasks" onClick={onClose} className="text-xs sm:text-sm" />
           <div className="flex-1 flex items-center justify-center">

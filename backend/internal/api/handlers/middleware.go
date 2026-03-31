@@ -111,6 +111,27 @@ func (h *Handlers) UserIndentity(c *fiber.Ctx) error {
 	return c.Next()
 }
 
+// CSRFProtect validates the X-CSRF-Token header against the csrf_token cookie.
+// Use on all non-GET state-changing routes.
+func (h *Handlers) CSRFProtect(c *fiber.Ctx) error {
+	// Skip safe methods
+	if c.Method() == fiber.MethodGet ||
+		c.Method() == fiber.MethodHead ||
+		c.Method() == fiber.MethodOptions {
+		return c.Next()
+	}
+
+	headerToken := c.Get("X-CSRF-Token")
+	cookieToken := c.Cookies("csrf_token")
+
+	if headerToken == "" || cookieToken == "" || headerToken != cookieToken {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error": "invalid or missing CSRF token",
+		})
+	}
+	return c.Next()
+}
+
 func (h *Handlers) getAuthenticatedUserID(ctx *fiber.Ctx) (string, error) {
 	userInterfaceID := ctx.Locals("user_id")
 

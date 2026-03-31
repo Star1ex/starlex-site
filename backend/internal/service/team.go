@@ -80,6 +80,10 @@ func (s *TeamService) GetUsers(ctx context.Context, teamId string) ([]*entity.Us
 	return users, nil
 }
 
+func (s *TeamService) GetTeamByID(ctx context.Context, teamID string) (*entity.Team, error) {
+	return s.teamRepo.GetTeamByID(ctx, teamID)
+}
+
 func (s *TeamService) AddUserToTeam(ctx context.Context, teamID string, email string, requesterID string) error {
 
 	team, err := s.teamRepo.GetTeamByID(ctx, teamID)

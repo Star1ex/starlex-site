@@ -19,6 +19,8 @@ export const authService = {
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     const response = await httpClient.post<LoginResponse>('/api/auth/login', credentials);
     apiClient.setAccessToken(response.data.access_token);
+    // Fetch CSRF token immediately after login so all mutations work
+    await this.ensureCsrfToken();
     return response.data;
   },
 

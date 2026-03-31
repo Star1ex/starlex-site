@@ -5,7 +5,7 @@ class ApiClient {
   private accessToken: string | null = null;
   private refreshing: Promise<string> | null = null;
   private csrfToken: string | null = null;
-  private initialized = false;
+  private initPromise: Promise<boolean> | null = null;
 
   constructor() {
     this.client = axios.create({
@@ -90,17 +90,32 @@ class ApiClient {
 
   // Try to initialize session by using refresh cookie to get a new access token
   public async initialize(): Promise<boolean> {
-    if (this.initialized) {
-      return this.accessToken !== null;
+    if (this.initPromise !== null) {
+      return this.initPromise;
     }
+    this.initPromise = this._doInit();
+    return this.initPromise;
+  }
 
-    this.initialized = true;
-
+  private async _doInit(): Promise<boolean> {
     try {
       console.debug('Initializing session...');
       const token = await this.refreshAccessToken();
       this.setAccessToken(token);
       console.debug('Session restored from refresh token');
+
+      // Fetch CSRF token so all protected mutations (POST/PUT/DELETE) work
+      try {
+        const csrfResponse = await this.client.get<{ csrf_token: string }>('/api/auth/csrf');
+        const csrfToken = csrfResponse.data?.csrf_token;
+        if (csrfToken) {
+          this.setCsrfToken(csrfToken);
+          console.debug('CSRF token fetched');
+        }
+      } catch {
+        console.debug('CSRF token fetch failed — mutations may return 403');
+      }
+
       return true;
     } catch (err) {
       console.debug('No valid session found (user not authenticated)');
@@ -122,7 +137,7 @@ class ApiClient {
   public clearAccessToken() {
     this.accessToken = null;
     this.csrfToken = null;
-    this.initialized = false;
+    this.initPromise = null;
     console.debug('Access token cleared');
   }
 

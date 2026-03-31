@@ -49,7 +49,7 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'low'|'medium'|'high'>('medium');
-  const [progress, setProgress] = useState<'not_started'|'in_progress'|'In review'|'done'>('not_started');
+  const [progress, setProgress] = useState<'not_started'|'in_progress'|'done'>('not_started');
 
   const locationFolderId = (location.state as any)?.folder_id ?? null;
 
@@ -257,7 +257,7 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
   };
 
   return (
-    <div className="task-view-container min-h-screen bg-white dark:bg-dark-surface">
+    <div className="task-view-container min-h-screen" style={{ background: 'var(--bg-primary)' }}>
       {/* Main Content */}
       <div className="w-full px-4 sm:px-6 md:px-16 pt-12 sm:pt-14 md:pt-16 pb-16">
         <div className="max-w-5xl mx-auto">

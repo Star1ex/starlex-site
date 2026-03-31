@@ -7,6 +7,7 @@ type AuthContextType = {
   userId: string | null;
   userEmail: string | null;
   isLoading: boolean;
+  isInitialized: boolean;
   isAuthenticated: boolean;
   login: (accessToken: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -94,8 +95,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     refreshUser();
   }, []);
 
+  const isInitialized = !isLoading;
+
   return (
-    <AuthContext.Provider value={{ userId, userEmail, isLoading, isAuthenticated, login, logout, refreshUser }}>
+    <AuthContext.Provider value={{ userId, userEmail, isLoading, isInitialized, isAuthenticated, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

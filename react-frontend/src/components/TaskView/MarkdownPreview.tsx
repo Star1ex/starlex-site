@@ -4,7 +4,7 @@ import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import rehypeHighlight from 'rehype-highlight';
-import rehypeRaw from 'rehype-raw';
+import rehypeSanitize from 'rehype-sanitize';
 import 'highlight.js/styles/github-dark.css';
 import 'katex/dist/katex.min.css';
 
@@ -18,7 +18,7 @@ export const MarkdownPreview: React.FC<MarkdownPreviewProps> = ({ value, emptyTe
     <div className="prose prose-lg dark:prose-invert max-w-none">
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
-        rehypePlugins={[rehypeRaw, rehypeKatex, rehypeHighlight]}
+        rehypePlugins={[rehypeSanitize, rehypeKatex, rehypeHighlight]}
         components={{
           input: ({ node, ...props }: any) => {
             if (props.type === 'checkbox') {

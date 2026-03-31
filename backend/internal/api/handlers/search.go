@@ -1,8 +1,6 @@
 package handlers
 
 import (
-	"context"
-
 	"github.com/Team-Tracks/team-track-site/internal/api/dto"
 	"github.com/gofiber/fiber/v2"
 )
@@ -29,7 +27,7 @@ func (h *Handlers) Search(ctx *fiber.Ctx) error {
 		})
 	}
 
-	users, err := h.userService.Search(context.Background(), email)
+	users, err := h.userService.Search(ctx.Context(), email)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "not found user",

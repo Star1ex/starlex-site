@@ -13,6 +13,9 @@ type Task struct {
 
 	OwnerID  string
 	FolderID *string
+	SprintID *string
+	Position int
+	Subtasks []*Subtask
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -28,6 +31,8 @@ type UpdateTask struct {
 
 	OwnerID   string
 	FolderID  *string
+	SprintID  *string
+	Position  int
 	CreatedAt time.Time
 }
 

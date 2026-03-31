@@ -71,3 +71,21 @@ func (h *Handlers) requireFolderAccess(c *fiber.Ctx, folderID, userID string) (*
 
 	return nil, c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
 }
+
+func (h *Handlers) requireDiscussionAccess(c *fiber.Ctx, discussionID, userID string) (*entity.Discussion, error) {
+	disc, err := h.discussionService.GetDiscussionByID(c.Context(), discussionID)
+	if err != nil {
+		return nil, c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "discussion not found"})
+	}
+	if disc.TaskID != nil {
+		if _, err := h.requireTaskAccess(c, *disc.TaskID, userID); err != nil {
+			return nil, err
+		}
+	}
+	if disc.FolderID != nil {
+		if _, err := h.requireFolderAccess(c, *disc.FolderID, userID); err != nil {
+			return nil, err
+		}
+	}
+	return disc, nil
+}

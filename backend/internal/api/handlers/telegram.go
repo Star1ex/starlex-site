@@ -2,9 +2,9 @@ package handlers
 
 import (
 	"fmt"
-	"log"
 
 	"github.com/Team-Tracks/team-track-site/internal/events"
+	"github.com/Team-Tracks/team-track-site/internal/logger"
 	"github.com/Team-Tracks/team-track-site/internal/notifications/telegram"
 )
 
@@ -13,7 +13,7 @@ func UserRegisteredTelegramHandler(tg *telegram.Client) events.Handler {
 
 		event, ok := e.(events.UserRegisteredEvent)
 		if !ok {
-			log.Println("telegram handler: wrong event type")
+			logger.Log.Warnw("telegram handler: wrong event type")
 			return
 		}
 
@@ -30,7 +30,7 @@ func UserRegisteredTelegramHandler(tg *telegram.Client) events.Handler {
 		)
 
 		if err := tg.Send(msg); err != nil {
-			log.Println("telegram send error:", err)
+			logger.Log.Errorw("telegram send error", "error", err)
 		}
 	}
 }
@@ -39,7 +39,7 @@ func UserLoginTelegramHandler(tg *telegram.Client) events.Handler {
 	return func(e events.Event) {
 		event, ok := e.(events.UserLoginEvent)
 		if !ok {
-			log.Println("telegram handler: wrong event type")
+			logger.Log.Warnw("telegram handler: wrong event type")
 			return
 		}
 
@@ -56,7 +56,7 @@ func UserLoginTelegramHandler(tg *telegram.Client) events.Handler {
 		)
 
 		if err := tg.Send(msg); err != nil {
-			log.Println("telegram send error:", err)
+			logger.Log.Errorw("telegram send error", "error", err)
 		}
 	}
 }

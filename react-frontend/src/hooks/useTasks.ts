@@ -96,6 +96,7 @@ export const useTasks = () => {
       priority: (data.priority || 'medium') as any,
       progress: (data.progress || 'not_started') as any,
       created_at: now,
+      updated_at: now,
     };
 
     setTasksById((prev) => ({ ...prev, [tempId]: optimisticTask }));

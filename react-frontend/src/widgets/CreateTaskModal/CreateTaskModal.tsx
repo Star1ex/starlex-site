@@ -6,11 +6,7 @@ import { taskService } from '@/services/api/index.js';
 import { useAuth } from '@/contexts/AuthContext.js';
 import { apiClient } from '@/services/api/client.js';
 import { getAuthUser } from '@/shared/lib/authManager.js';
-import { EditorContent, useEditor } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import Placeholder from '@tiptap/extension-placeholder';
-import Link from '@tiptap/extension-link';
-
+import { MarkdownEditor } from '@/components/TaskView/MarkdownEditor.js';
 
 interface CreateTaskModalProps {
   isOpen: boolean;
@@ -52,39 +48,6 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
       resetForm();
     }
   }, [isOpen, resetForm]);
-
-  const editor = useEditor({
-    extensions: [
-      StarterKit,
-      Link.configure({
-        openOnClick: true,
-        autolink: true,
-        linkOnPaste: true,
-      }),
-      Placeholder.configure({
-        placeholder: 'Describe the task…',
-        showOnlyWhenEditable: true,
-        showOnlyCurrent: false,
-      }),
-    ] as any,
-    content: formData.description || '',
-    onUpdate: ({ editor: tiptap }: any) => {
-      setFormData((prev) => ({ ...prev, description: tiptap.getHTML() }));
-    },
-    editorProps: {
-      attributes: {
-        class: 'team-task-create-editor',
-      },
-    },
-  } as any);
-
-  useEffect(() => {
-    if (!editor) return;
-    const current = editor.getHTML();
-    if ((formData.description || '') !== current) {
-      editor.commands.setContent(formData.description || '', { emitUpdate: false } as any);
-    }
-  }, [formData.description, editor]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -184,7 +147,11 @@ return (
             Description
           </label>
           <div className="mt-2">
-            <EditorContent editor={editor} />
+            <MarkdownEditor
+              value={formData.description}
+              onChange={(value) => setFormData((prev) => ({ ...prev, description: value }))}
+              containerClassName="team-task-create-editor"
+            />
           </div>
         </div>
 
