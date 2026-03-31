@@ -1,5 +1,6 @@
 import React, { Suspense } from "react";
 import { Route, Routes, useLocation } from "react-router-dom";
+import { AnimatePresence } from "framer-motion";
 import { Layout } from "@/widgets/Layout/Layout.js";
 import { ErrorBoundary } from '@/components/ErrorBoundary.js';
 import { authService } from '@/services/api/index.js';
@@ -38,7 +39,8 @@ const AnimatedRoutes = () => {
     <ErrorBoundary>{element}</ErrorBoundary>
   );
   return (
-    <Routes location={location}>
+    <AnimatePresence mode="wait" initial={false}>
+    <Routes location={location} key={location.pathname}>
       <Route path="/" element={withErrorBoundary(<HomePage />)} />
       <Route path="/sign-in" element={withErrorBoundary(<SignInPage />)} />
       <Route path="/sign-up" element={withErrorBoundary(<SignUpPage />)} />
@@ -83,6 +85,7 @@ const AnimatedRoutes = () => {
         element={withErrorBoundary(<RequireAuth><Layout><TaskView /></Layout></RequireAuth>)}
       />
     </Routes>
+    </AnimatePresence>
   );
 };
 

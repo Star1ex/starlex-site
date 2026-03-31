@@ -1,12 +1,14 @@
 import React, { ChangeEvent } from "react";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { motion } from "framer-motion";
 import { authService } from '@/services/api/index.js';
 import { setAuthUser } from '@/shared/lib/authManager.js';
 import { useAuth } from '@/contexts/AuthContext.js';
 import { useTheme } from '@/shared/contexts/ThemeContext.js';
 import { FaGoogle, FaGithub } from 'react-icons/fa';
 import { Helmet } from 'react-helmet-async';
+import { listVariants, listItemVariants, pageVariants } from '@/shared/lib/animations.js';
 
 export const SignInPage = () => {
   const navigate = useNavigate();
@@ -126,7 +128,13 @@ export const SignInPage = () => {
   };
 
   return (
-    <div className="auth-page min-h-screen flex items-center justify-center p-4 transition-colors duration-300 relative">
+    <motion.div
+      className="auth-page min-h-screen flex items-center justify-center p-4 transition-colors duration-300 relative"
+      variants={pageVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+    >
       <Helmet>
         <title>Sign In — Team Track</title>
         <meta name="robots" content="noindex, nofollow" />
@@ -143,7 +151,12 @@ export const SignInPage = () => {
       </button>
       <div className="auth-shell flex flex-col md:flex-row w-full max-w-5xl overflow-hidden">
         {/* Left panel */}
-        <div className="w-full md:w-1/2 p-8 md:p-16 flex flex-col justify-center items-start">
+        <motion.div
+          className="w-full md:w-1/2 p-8 md:p-16 flex flex-col justify-center items-start"
+          initial={{ opacity: 0, x: -16 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30, delay: 0.05 }}
+        >
           <h1 className="text-4xl sm:text-5xl md:text-7xl text-black dark:text-dark-text font-serif mb-4 md:mb-6 transition-colors duration-300">
             Welcome
           </h1>
@@ -151,11 +164,17 @@ export const SignInPage = () => {
           <p className="text-base sm:text-lg text-black dark:text-dark-text-muted transition-colors duration-300">
             Continue your journey
           </p>
-        </div>
+        </motion.div>
 
         {/* Right panel */}
         <div className="auth-panel w-full md:w-1/2 p-8 md:p-16 flex flex-col justify-center">
-          <form className="space-y-6 sm:space-y-7" onSubmit={handleSubmit}>
+          <motion.form
+            className="space-y-6 sm:space-y-7"
+            onSubmit={handleSubmit}
+            variants={listVariants}
+            initial="initial"
+            animate="animate"
+          >
             
             {successMessage && (
               <div className="p-3 bg-green-50 border border-green-200 rounded-md">
@@ -165,7 +184,7 @@ export const SignInPage = () => {
               </div>
             )}
 
-            <div>
+            <motion.div variants={listItemVariants}>
               <label className="block text-sm font-medium text-black dark:text-dark-text uppercase tracking-wider mb-1">
                 Email
               </label>
@@ -177,9 +196,9 @@ export const SignInPage = () => {
                 disabled={isSubmitting}
                 className="auth-input mt-1 w-full border-b border-black dark:border-dark-border focus:border-black dark:focus:border-dark-text focus:outline-none py-2 text-black dark:text-dark-text placeholder-gray-500 dark:placeholder-dark-text-muted transition-colors duration-300 disabled:opacity-50"
               />
-            </div>
+            </motion.div>
 
-            <div>
+            <motion.div variants={listItemVariants}>
               <label className="block text-sm font-medium text-black dark:text-dark-text uppercase tracking-wider mb-1">
                 Password
               </label>
@@ -191,7 +210,7 @@ export const SignInPage = () => {
                 disabled={isSubmitting}
                 className="auth-input mt-1 w-full border-b border-black dark:border-dark-border focus:border-black dark:focus:border-dark-text focus:outline-none py-2 text-black dark:text-dark-text placeholder-gray-500 dark:placeholder-dark-text-muted transition-colors duration-300 disabled:opacity-50"
               />
-            </div>
+            </motion.div>
 
             <div className="flex items-center justify-between">
             <button
@@ -260,9 +279,9 @@ export const SignInPage = () => {
                 Create account
               </button>
             </p>
-          </form>
+          </motion.form>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };

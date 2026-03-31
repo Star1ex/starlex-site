@@ -29,8 +29,8 @@ const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isInitialized } = useAuth();
   if (!isInitialized) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <span>Loading...</span>
+      <div className="app-loading-gate">
+        <div className="app-loading-spinner" />
       </div>
     );
   }

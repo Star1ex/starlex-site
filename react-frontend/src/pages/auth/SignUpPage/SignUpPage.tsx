@@ -1,10 +1,12 @@
 import React, { ChangeEvent } from "react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { authService } from '@/services/api/index.js';
 import { useTheme } from '@/shared/contexts/ThemeContext.js';
 import { FaGoogle, FaGithub } from 'react-icons/fa';
 import { Helmet } from 'react-helmet-async';
+import { pageVariants, listVariants } from '@/shared/lib/animations.js';
 
 export const SignUpPage = () => {
   const navigate = useNavigate();
@@ -112,7 +114,13 @@ export const SignUpPage = () => {
   };
 
   return (
-    <div className="auth-page min-h-screen flex items-center justify-center p-4 transition-colors duration-300 relative">
+    <motion.div
+      className="auth-page min-h-screen flex items-center justify-center p-4 transition-colors duration-300 relative"
+      variants={pageVariants}
+      initial="initial"
+      animate="animate"
+      exit="exit"
+    >
       <Helmet>
         <title>Sign Up — Team Track</title>
         <meta name="robots" content="noindex, nofollow" />
@@ -130,15 +138,26 @@ export const SignUpPage = () => {
       <div className="auth-shell flex flex-col md:flex-row w-full max-w-5xl overflow-hidden">
 
         {/* Left panel */}
-        <div className="w-full md:w-1/2 p-8 md:p-16 flex flex-col justify-center items-start">
+        <motion.div
+          className="w-full md:w-1/2 p-8 md:p-16 flex flex-col justify-center items-start"
+          initial={{ opacity: 0, x: -16 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 30, delay: 0.05 }}
+        >
           <h1 className="text-4xl sm:text-5xl md:text-7xl text-black dark:text-dark-text font-serif mb-4 md:mb-6 transition-colors duration-300">Begin</h1>
           <div className="w-16 sm:w-24 md:w-1/3 h-0.5 bg-black dark:bg-dark-text mb-4 md:mb-6 transition-colors duration-300"></div>
           <p className="text-base sm:text-lg text-black dark:text-dark-text-muted transition-colors duration-300">Start something new</p>
-        </div>
+        </motion.div>
 
         {/* Right panel */}
         <div className="auth-panel w-full md:w-1/2 p-8 md:p-16 flex flex-col justify-center">
-          <form className="space-y-4 sm:space-y-6" onSubmit={handleSubmit}>
+          <motion.form
+            className="space-y-4 sm:space-y-6"
+            onSubmit={handleSubmit}
+            variants={listVariants}
+            initial="initial"
+            animate="animate"
+          >
 
             <div>
               <label className="block text-sm sm:text-base font-medium text-black dark:text-dark-text uppercase tracking-wider mb-1">First Name</label>
@@ -280,9 +299,9 @@ export const SignUpPage = () => {
               </button>
             </p>
 
-          </form>
+          </motion.form>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };

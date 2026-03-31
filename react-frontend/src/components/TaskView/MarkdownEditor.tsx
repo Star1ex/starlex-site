@@ -84,7 +84,7 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
       <BlockNoteViewRaw
         editor={editor}
         theme={theme}
-        formattingToolbar={false}
+        formattingToolbar
         linkToolbar={false}
         slashMenu={false}
         emojiPicker={false}
@@ -124,6 +124,34 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
         }}
       />
       <style>{`
+        /* ── Editor container ── */
+        .notion-md-editor .bn-container {
+          font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+          font-size: 15px;
+          line-height: 1.75;
+        }
+
+        /* Remove BlockNote's own border/shadow so it integrates seamlessly */
+        .notion-md-editor .bn-editor {
+          border: none !important;
+          box-shadow: none !important;
+          padding: 0;
+        }
+
+        /* Generous block padding */
+        .notion-md-editor .bn-block-group > .bn-block-outer > .bn-block {
+          padding-top: 2px;
+          padding-bottom: 2px;
+        }
+
+        /* ── Formatting toolbar ── */
+        .notion-md-editor .bn-formatting-toolbar {
+          border-radius: 10px;
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 8px rgba(0, 0, 0, 0.06);
+          border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        /* ── Code blocks ── */
         .notion-md-editor .bn-block-content[data-content-type="codeBlock"] {
           border: 1px solid rgba(148, 163, 184, 0.35);
           border-radius: 12px;

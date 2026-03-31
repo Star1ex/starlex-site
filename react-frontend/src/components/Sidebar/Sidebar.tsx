@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { ChevronRight, Home, Moon, Settings } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Avatar from '@/shared/ui/Avatar.js';
@@ -15,6 +16,7 @@ import ResizeHandle from './ResizeHandle.js';
 import ContextMenu from './ContextMenu.js';
 import { useFolders } from '@/hooks/useFolders.js';
 import { useTasks } from '@/hooks/useTasks.js';
+import { dropdownVariants } from '@/shared/lib/animations.js';
 
 interface SidebarProps {
   className?: string;
@@ -180,7 +182,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
   return (
     <ContextMenuProvider>
       <aside
-        className={`relative h-screen bg-white dark:bg-dark-surface border-r border-gray-100 dark:border-dark-border flex-shrink-0 transition-all duration-200 ${className}`}
+        className={`relative h-screen bg-white dark:bg-dark-surface border-r border-gray-100/60 dark:border-dark-border/50 flex-shrink-0 transition-all duration-200 ${className}`}
         style={{ width: isCollapsed ? 0 : `${width}px` }}
       >
         {!isCollapsed && (
@@ -260,14 +262,21 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
                   </svg>
                 </button>
 
+                <AnimatePresence>
                 {showProfileMenu && (
-                  <div className="absolute bottom-full left-0 mb-2 w-full bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-lg shadow-xl p-2 z-50">
+                  <motion.div
+                    className="absolute bottom-full left-0 mb-2 w-full bg-white dark:bg-dark-surface border border-gray-100 dark:border-dark-border rounded-xl shadow-dropdown p-2 z-50 origin-bottom"
+                    variants={dropdownVariants}
+                    initial="initial"
+                    animate="animate"
+                    exit="exit"
+                  >
                     <button
                       onClick={() => {
                         navigate('/profile');
                         setShowProfileMenu(false);
                       }}
-                      className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-dark-border text-sm"
+                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border text-sm transition-colors"
                     >
                       View Profile
                     </button>
@@ -276,22 +285,23 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
                         navigate('/settings');
                         setShowProfileMenu(false);
                       }}
-                      className="w-full text-left px-3 py-2 rounded hover:bg-gray-100 dark:hover:bg-dark-border text-sm"
+                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border text-sm transition-colors"
                     >
                       Settings
                     </button>
-                    <div className="h-px bg-gray-200 dark:bg-dark-border my-1" />
+                    <div className="h-px bg-gray-100 dark:bg-dark-border my-1" />
                     <button
                       onClick={() => {
                         logout();
                         setShowProfileMenu(false);
                       }}
-                      className="w-full text-left px-3 py-2 rounded hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 text-sm"
+                      className="w-full text-left px-3 py-2 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 text-sm transition-colors"
                     >
                       Logout
                     </button>
-                  </div>
+                  </motion.div>
                 )}
+                </AnimatePresence>
               </div>
             </div>
           </div>
