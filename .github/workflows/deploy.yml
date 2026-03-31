@@ -4,25 +4,26 @@ on:
     branches:
     - dev
     - main
-    - feature/workflows
-    - feature/docker
 
 jobs:
   build:
     runs-on: self-hosted
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - name: Create Backend .env File
         run: |
           echo "DB_USER=${{ secrets.DB_USER }}" > backend/.env
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> backend/.env
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> backend/.env
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> backend/.env
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> backend/.env
+          echo "DB_SSL_MODE=${{ secrets.DB_SSL_MODE }}" >> backend/.env
+          echo "BACKEND_PORT=${{ secrets.BACKEND_PORT }}" >> backend/.env
+          echo "PORT=${{ secrets.PORT }}" >> backend/.env
           echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> backend/.env
-          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> backend/.env
-          echo "ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }}" >> backend/.env
           echo "STORAGE_TYPE=${{ secrets.STORAGE_TYPE }}" >> backend/.env
           echo "LOCAL_PATH=${{ secrets.LOCAL_PATH }}" >> backend/.env
           echo "LOCAL_URL=${{ secrets.LOCAL_URL }}" >> backend/.env
@@ -41,12 +42,15 @@ jobs:
           echo "CLIENT_SECRET_GITHUB=${{ secrets.CLIENT_SECRET_GITHUB }}" >> backend/.env
           echo "GOOGLE_CALLBACK_URL=${{ secrets.GOOGLE_CALLBACK_URL }}" >> backend/.env
           echo "CALLBACK_URL_GITHUB=${{ secrets.CALLBACK_URL_GITHUB }}" >> backend/.env
-              
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> backend/.env
+          echo "ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }}" >> backend/.env
+
       - name: Create .env File
         run: |
           echo "DB_USER=${{ secrets.DB_USER }}" > .env
           echo "DB_PASSWORD=${{ secrets.DB_PASSWORD }}" >> .env
           echo "DB_NAME=${{ secrets.DB_NAME }}" >> .env
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> .env
           echo "BACKEND_PORT=${{ secrets.BACKEND_PORT }}" >> .env
 
       - name: Build and Deploy
@@ -54,30 +58,17 @@ jobs:
           docker compose down
           docker compose up -d --build
 
-      - name: Post-deploy info (ports & health)
+      - name: Post-deploy health check
         run: |
-          # Read ports from the generated env without echoing sensitive data
-          BACKEND_PORT_VAL=$(grep '^BACKEND_PORT=' backend/.env | cut -d= -f2)
-          PORT_VAL=$(grep '^PORT=' backend/.env | cut -d= -f2)
-          echo "BACKEND_PORT=${BACKEND_PORT_VAL:-<unset>}"
-          echo "PORT=${PORT_VAL:-<unset>}"
-
           echo "--- docker ps (ports) ---"
-          docker ps --format 'table {{.Names}}\t{{.Ports}}'
+          docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'
 
-          # Quick API health via container (do not fail the job; show logs on failure)
-          echo "--- backend container env & health ---"
           set +e
-          docker exec team-track-site-backend sh -c '\
-            echo BACKEND_PORT=$BACKEND_PORT PORT=$PORT DB_HOST=$DB_HOST DB_PORT=$DB_PORT DB_SSL_MODE=$DB_SSL_MODE ;\
-            echo \"-- getent hosts db --\" ; getent hosts db ;\
-            echo \"-- getent hosts $DB_HOST --\" ; getent hosts \"$DB_HOST\" ;\
-            echo \"-- wget /api/health --\" ; wget --tries=2 --timeout=3 -qO- http://localhost:3000/api/health && echo' \
-            || echo "[warn] backend health request failed"
-          echo "--- backend last 40 log lines ---"
-          docker logs --tail 40 team-track-site-backend || true
+          echo "--- backend health ---"
+          docker exec team-track-site-backend wget --tries=2 --timeout=5 -qO- http://localhost:3000/api/health && echo
+          echo "--- backend last 20 log lines ---"
+          docker logs --tail 20 team-track-site-backend || true
           set -e
 
-          # Frontend health via host port 80
           echo "--- frontend /health on :80 ---"
           curl -sS -w "\nHTTP %{http_code}\n" http://127.0.0.1/health || true
