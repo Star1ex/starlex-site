@@ -18,12 +18,10 @@ FROM alpine
 RUN apk --no-cache add ca-certificates wget
 
 COPY --from=builder /usr/local/src/bin/app /
-COPY --from=builder /usr/local/src/.env /
 
 EXPOSE 3000
 
 CMD ["/app"]
-
 
 
 
