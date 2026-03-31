@@ -21,16 +21,16 @@ func Must(cfg *config.DatabaseConfig) *DB {
 	var db *DB
 	var err error
 
-	// Retry connection up to 5 times with 2 second delays
+	// Retry connection up to 10 times with 3 second delays
 	// This helps when DB is starting up in Docker
-	for i := 0; i < 5; i++ {
+	for i := 0; i < 10; i++ {
 		db, err = setupDB(cfg)
 		if err == nil {
 			break
 		}
-		if i < 4 {
+		if i < 9 {
 			logger.Log.Warnw("Failed to connect to DB, retrying", "attempt", i+1, "error", err)
-			time.Sleep(2 * time.Second)
+			time.Sleep(3 * time.Second)
 		}
 	}
 

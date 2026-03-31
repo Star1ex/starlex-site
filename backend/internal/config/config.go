@@ -77,13 +77,13 @@ func LoadConfig() *Config {
 		},
 
 		DatabaseConfig: DatabaseConfig{
-			Host:     os.Getenv("DB_HOST"),
-			Port:     getEnvInt("DB_PORT", 5432),
+			Host:     getEnvStr("DB_HOST", "db"),
+			Port:     getDBPort(getEnvStr("DB_HOST", "db"), getEnvInt("DB_PORT", 5432)),
 			User:     os.Getenv("DB_USER"),
 			DB_Name:  os.Getenv("DB_NAME"),
 			Password: os.Getenv("DB_PASSWORD"),
 			Database: os.Getenv("DB_NAME"),
-			SSLMode:  os.Getenv("DB_SSL_MODE"),
+			SSLMode:  getEnvStr("DB_SSL_MODE", "disable"),
 		},
 
 		StorageConfig: StorageConfig{
@@ -123,6 +123,22 @@ func getEnvInt(key string, defaultValue int) int {
 		return defaultValue
 	}
 	return val
+}
+
+func getEnvStr(key string, defaultValue string) string {
+	val := os.Getenv(key)
+	if val == "" {
+		return defaultValue
+	}
+	return val
+}
+
+// Force port 5432 when using the internal Docker service host "db"
+func getDBPort(host string, envPort int) int {
+	if host == "db" {
+		return 5432
+	}
+	return envPort
 }
 
 // Make a DSN
