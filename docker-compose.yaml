@@ -35,6 +35,11 @@ services:
       - "${BACKEND_PORT:-3000}:3000"
     env_file:
       - backend/.env
+    environment:
+      # Force internal service DNS for Docker network even if secrets provide a public host
+      DB_HOST: ${DB_HOST:-db}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_SSL_MODE: ${DB_SSL_MODE:-disable}
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
       interval: 30s
