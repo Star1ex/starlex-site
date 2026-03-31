@@ -3,8 +3,6 @@ services:
     image: postgres:16-alpine
     container_name: team-track-site-db
     restart: unless-stopped
-    env_file:
-      - backend/.env
     environment:
       POSTGRES_USER: ${DB_USER:-team_admin}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-1234}
