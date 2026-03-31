@@ -181,7 +181,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             </button>
             <button
               onClick={() => {
-                navigate('/settings');
+                navigate('/settings', { state: { background: location } });
                 setMobileQuickMenuOpen(false);
               }}
               className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-dark-text hover:bg-gray-100 dark:hover:bg-dark-border"
@@ -208,35 +208,33 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       )}
 
       {/* Global Sidebar - Desktop */}
-      {!isSettingsRoute && <GlobalSidebar className="hidden md:block" />}
+      <GlobalSidebar className="hidden md:block" />
 
       {/* Global Sidebar - Mobile */}
-      {!isSettingsRoute && (
-        <>
-          <div
-            className={`md:hidden fixed inset-0 bg-black/40 z-30 transition-opacity duration-300 ${
-              mobileSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-            }`}
+      <>
+        <div
+          className={`md:hidden fixed inset-0 bg-black/40 z-30 transition-opacity duration-300 ${
+            mobileSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+          }`}
+          onClick={() => setMobileSidebarOpen(false)}
+        />
+        <div
+          className={`md:hidden fixed left-0 top-0 h-full z-40 transition-transform duration-300 ease-out ${
+            mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+          onTouchStart={handleSidebarTouchStart}
+          onTouchMove={handleSidebarTouchMove}
+        >
+          <GlobalSidebar className="w-72" />
+          <button
             onClick={() => setMobileSidebarOpen(false)}
-          />
-          <div
-            className={`md:hidden fixed left-0 top-0 h-full z-40 transition-transform duration-300 ease-out ${
-              mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-            }`}
-            onTouchStart={handleSidebarTouchStart}
-            onTouchMove={handleSidebarTouchMove}
+            className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border text-gray-700 dark:text-dark-text hover:bg-gray-50 dark:hover:bg-dark-border"
+            aria-label="Close menu"
           >
-            <GlobalSidebar className="w-72" />
-            <button
-              onClick={() => setMobileSidebarOpen(false)}
-              className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-lg bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border text-gray-700 dark:text-dark-text hover:bg-gray-50 dark:hover:bg-dark-border"
-              aria-label="Close menu"
-            >
-              <X size={18} />
-            </button>
-          </div>
-        </>
-      )}
+            <X size={18} />
+          </button>
+        </div>
+      </>
 
       {/* Main Content */}
       <main className={`flex-1 overflow-y-auto md:ml-0 ${isMobile ? 'pt-12 pb-16' : ''}`}>
@@ -244,7 +242,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       </main>
 
       {/* Mobile Bottom Navigation */}
-      {isMobile && !isSettingsRoute && (
+      {isMobile && (
         <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 h-14 bg-white dark:bg-dark-bg border-t border-gray-200 dark:border-dark-border flex items-center justify-around">
           <button
             onClick={() => navigate('/profile')}
@@ -257,7 +255,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             <span className={`mt-0.5 h-0.5 w-4 rounded-full ${location.pathname.startsWith('/profile') ? 'bg-gray-900 dark:bg-dark-text' : 'bg-transparent'}`} />
           </button>
           <button
-            onClick={() => navigate('/settings')}
+            onClick={() => navigate('/settings', { state: { background: location } })}
             className={`flex flex-col items-center justify-center w-10 h-10 rounded-lg transition-colors ${
               location.pathname.startsWith('/settings') ? 'text-gray-900 dark:text-dark-text' : 'text-gray-500 dark:text-dark-text-muted'
             }`}

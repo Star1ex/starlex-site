@@ -175,8 +175,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
   }, [teams, activeTeamId, navigate]);
 
   const handleNavigateSettings = useCallback(() => {
-    navigate('/settings');
-  }, [navigate]);
+    navigate('/settings', { state: { background: location } });
+  }, [navigate, location]);
 
 
   return (
@@ -282,7 +282,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
                     </button>
                     <button
                       onClick={() => {
-                        navigate('/settings');
+                        navigate('/settings', { state: { background: location } });
                         setShowProfileMenu(false);
                       }}
                       className="w-full text-left px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-border text-sm transition-colors"

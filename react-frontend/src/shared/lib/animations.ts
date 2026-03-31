@@ -16,7 +16,7 @@ export const pageVariants: Variants = {
     y: 0,
     transition: { type: 'spring', stiffness: 300, damping: 30, mass: 0.8 },
   },
-  exit: { opacity: 0, y: -4, transition: { duration: 0.18, ease: 'easeIn' } },
+  exit: { opacity: 0, transition: { duration: 0.08, ease: 'easeIn' } },
 };
 
 // Modal variants
