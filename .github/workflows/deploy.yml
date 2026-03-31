@@ -59,3 +59,20 @@ jobs:
         run: |
           docker compose down
           docker compose up -d --build
+
+      - name: Post-deploy info (ports & health)
+        run: |
+          # Read ports from the generated env without echoing sensitive data
+          BACKEND_PORT_VAL=$(grep '^BACKEND_PORT=' backend/.env | cut -d= -f2)
+          PORT_VAL=$(grep '^PORT=' backend/.env | cut -d= -f2)
+          echo "BACKEND_PORT=${BACKEND_PORT_VAL:-<unset>}"
+          echo "PORT=${PORT_VAL:-<unset>}"
+
+          echo "--- docker ps (ports) ---"
+          docker ps --format 'table {{.Names}}\t{{.Ports}}'
+
+          # Quick API health through published port
+          API_PORT=${BACKEND_PORT_VAL:-3000}
+          echo "--- /api/health on ${API_PORT} ---"
+          curl -sS -o /tmp/health.out -w "HTTP %{http_code}\n" "http://127.0.0.1:${API_PORT}/api/health" || true
+          cat /tmp/health.out || true
