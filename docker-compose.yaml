@@ -3,8 +3,6 @@ services:
     image: postgres:16-alpine
     container_name: team-track-site-db
     restart: unless-stopped
-    env_file:
-      - backend/.env
     environment:
       POSTGRES_USER: ${DB_USER:-team_admin}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-1234}
@@ -34,13 +32,15 @@ services:
         condition: service_healthy
     ports:
       - "${BACKEND_PORT:-3000}:3000"
-    env_file:
-      - backend/.env
     environment:
       # Force internal service DNS for Docker network regardless of env secrets
       DB_HOST: db
       DB_PORT: 5432
       DB_SSL_MODE: disable
+      DB_USER: ${DB_USER:-team_admin}
+      DB_PASSWORD: ${DB_PASSWORD:-1234}
+      DB_NAME: ${DB_NAME:-team_track}
+      JWT_SECRET: ${JWT_SECRET:-changeme}
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
       interval: 30s
