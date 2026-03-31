@@ -192,3 +192,58 @@ export interface PasswordResetConfirmRequest {
   code?: string;
   new_password: string;
 }
+
+// ==================== SPRINT DTOs ====================
+export type SprintStatus = 'planning' | 'active' | 'completed' | 'archived';
+
+export interface SubtaskDTO {
+  id: string;
+  task_id: string;
+  title: string;
+  is_done: boolean;
+  position: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SprintDTO {
+  id: string;
+  name: string;
+  goal: string; // plain text / markdown sprint description
+  team_id: string;
+  status: SprintStatus;
+  start_date: string | null;
+  end_date: string | null;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  tasks?: TaskDTO[];
+}
+
+export interface CreateSprintRequest {
+  name: string;
+  goal?: string;
+  start_date?: string | null;
+  end_date?: string | null;
+}
+
+export interface UpdateSprintRequest {
+  name?: string;
+  goal?: string;
+  start_date?: string | null;
+  end_date?: string | null;
+}
+
+export interface CompleteSprintRequest {
+  move_target?: string | null;
+}
+
+export interface CreateSubtaskRequest {
+  title: string;
+}
+
+export interface UpdateSubtaskRequest {
+  title?: string;
+  is_done?: boolean;
+  position?: number;
+}

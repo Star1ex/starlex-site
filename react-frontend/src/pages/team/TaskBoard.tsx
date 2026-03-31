@@ -9,6 +9,7 @@ import type { Task, User } from '@/entities/types.js';
 import { useParams, useNavigate } from 'react-router-dom';
 import { taskService, teamService } from '@/services/api/index.js';
 import BreadcrumbBack from '@/shared/ui/BreadcrumbBack.js';
+import { Layers } from 'lucide-react';
 
 const TaskBoard: React.FC = () => {
   const { team_id } = useParams<{ team_id: string }>();
@@ -154,6 +155,13 @@ const TaskBoard: React.FC = () => {
             )}
           </div>
           <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate(`/team/${team_id}/sprints`)}
+              className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-dark-text-muted hover:text-gray-900 dark:hover:text-dark-text transition-colors"
+            >
+              <Layers size={15} />
+              Sprints
+            </button>
             <button
               onClick={() => setShowAddUserModal(true)}
               className="text-sm text-gray-600 dark:text-dark-text-muted hover:text-gray-900 dark:hover:text-dark-text transition-colors"
