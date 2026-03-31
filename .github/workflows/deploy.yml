@@ -14,11 +14,7 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-<<<<<<< HEAD
       
-=======
-
->>>>>>> 78c5b60 (Reverse proxy support)
       - name: Create Backend .env File
         run: |
           echo "DB_USER=${{ secrets.DB_USER }}" > backend/.env
@@ -33,8 +29,7 @@ jobs:
           echo "STORAGE_TYPE=${{ secrets.STORAGE_TYPE }}" >> backend/.env
           echo "LOCAL_PATH=${{ secrets.LOCAL_PATH }}" >> backend/.env
           echo "LOCAL_URL=${{ secrets.LOCAL_URL }}" >> backend/.env
-<<<<<<< HEAD
-          echo "TOKEN_TELEGRAM_NOTIFICATIONS=${{ secrets.TOKEN_TELEGRAM_NOTIFICATIONS }}" >> backend/.env
+          echo "TOKEN_TELEGRAM_NOTIFICATIONS=${{ secrets.TOKEN_TELEGRAM_BOT_NOTIFICATIONS }}" >> backend/.env
           echo "CHAT_ID_TELEGRAM_BOT_NOTIFICATIONS=${{ secrets.CHAT_ID_TELEGRAM_BOT_NOTIFICATIONS }}" >> backend/.env
           echo "SMTP_HOST=${{ secrets.SMTP_HOST }}" >> backend/.env
           echo "SMTP_PORT=${{ secrets.SMTP_PORT }}" >> backend/.env
@@ -52,9 +47,6 @@ jobs:
           echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> backend/.env
           echo "ALLOWED_ORIGINS=${{ secrets.ALLOWED_ORIGINS }}" >> backend/.env
               
-=======
-
->>>>>>> 78c5b60 (Reverse proxy support)
       - name: Create .env File
         run: |
           echo "DB_USER=${{ secrets.DB_USER }}" > .env
