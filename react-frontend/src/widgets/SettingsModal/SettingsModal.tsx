@@ -113,7 +113,7 @@ export const SettingsModal: React.FC = () => {
 
   return createPortal(
     <motion.div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center p-6"
       initial={{ opacity: 0 }}
       animate={{ opacity: 1, transition: { duration: 0.18 } }}
       exit={{ opacity: 0, transition: { duration: 0.14 } }}
@@ -131,12 +131,14 @@ export const SettingsModal: React.FC = () => {
         role="dialog"
         aria-modal="true"
         aria-label="Settings"
-        className="relative w-full max-w-4xl rounded-2xl overflow-hidden flex"
+        className="relative rounded-2xl overflow-hidden flex"
         style={{
           background: 'var(--bg-primary)',
           border: '1px solid var(--border-color)',
           boxShadow: '0 32px 80px rgba(0,0,0,0.3)',
-          height: 'min(680px, 90vh)',
+          width: 'calc(100vw - 80px)',
+          maxWidth: '1300px',
+          height: 'min(88vh, 860px)',
         }}
         initial={{ opacity: 0, scale: 0.96, y: 12 }}
         animate={{ opacity: 1, scale: 1, y: 0, transition: { type: 'spring', stiffness: 380, damping: 28 } }}
@@ -145,7 +147,7 @@ export const SettingsModal: React.FC = () => {
       >
         {/* Left Sidebar */}
         <aside
-          className="hidden md:flex flex-col w-56 flex-shrink-0 overflow-y-auto"
+          className="hidden md:flex flex-col w-60 flex-shrink-0 overflow-y-auto"
           style={{ background: 'var(--bg-secondary)', borderRight: '1px solid var(--border-color)' }}
         >
           {/* Profile section */}
