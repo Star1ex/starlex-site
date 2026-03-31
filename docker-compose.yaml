@@ -49,6 +49,9 @@ services:
       LOCAL_URL: ${LOCAL_URL:-/uploads/}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://teamtrackwebsite.duckdns.org}
       JWT_SECRET: ${JWT_SECRET:-default_jwt_secret_please_set_32_chars_minimum}
+      # Force backend to always listen on 3000 inside Docker (nginx proxies to :3000)
+      BACKEND_PORT: "3000"
+      PORT: "3000"
     healthcheck:
       test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
       interval: 30s
