@@ -41,7 +41,7 @@ const SprintCard: React.FC<{
       whileTap={{ scale: 0.98 }}
       onClick={onOpen}
       className="flex-shrink-0 cursor-pointer select-none"
-      style={{ width: 240 }}
+      style={{ width: 320 }}
     >
       <div
         className="h-full rounded-2xl p-5 flex flex-col gap-3 transition-shadow duration-200"
@@ -107,7 +107,7 @@ const NewSprintCard: React.FC<{ onClick: () => void; index: number }> = ({ onCli
     whileTap={{ scale: 0.98 }}
     onClick={onClick}
     className="flex-shrink-0 cursor-pointer select-none"
-    style={{ width: 240 }}
+    style={{ width: 320 }}
   >
     <div
       className="h-full rounded-2xl p-5 flex flex-col items-center justify-center gap-2 transition-all duration-200"
