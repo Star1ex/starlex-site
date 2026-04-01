@@ -203,7 +203,7 @@ const SprintDetailPage: React.FC = () => {
   if (loading) {
     return (
       <div className="min-h-full" style={{ background: 'var(--bg-primary)' }}>
-        <div className="max-w-[540px] mx-auto px-6 pt-8 animate-pulse space-y-4">
+        <div className="max-w-[700px] mx-auto px-6 pt-8 animate-pulse space-y-4">
           <div className="h-3 w-20 rounded" style={{ background: 'var(--bg-secondary)' }} />
           <div className="h-8 w-64 rounded-xl" style={{ background: 'var(--bg-secondary)' }} />
           <div className="h-3 w-40 rounded" style={{ background: 'var(--bg-secondary)' }} />
@@ -243,7 +243,7 @@ const SprintDetailPage: React.FC = () => {
       className="min-h-full font-sans transition-colors"
       style={{ background: 'var(--bg-primary)', color: 'var(--text-primary)' }}
     >
-      <div className="max-w-[540px] mx-auto px-6 pt-8 pb-20">
+      <div className="max-w-[700px] mx-auto px-6 pt-8 pb-20">
 
         {/* Breadcrumb */}
         <div className="mb-6">
