@@ -199,7 +199,7 @@ const TaskBoard: React.FC = () => {
         {/* Tasks - Full width */}
         {/* Tasks - Right */}
         <main className="flex-1 min-w-0 order-1 mt-2 sm:mt-4">
-          <div className="max-w-[700px] mx-auto">
+          <div className="max-w-[900px] mx-auto">
           <div className="flex items-center justify-between px-2 sm:px-4 mb-2 sm:mb-3">
             <span className="text-xs sm:text-sm font-medium text-gray-500 dark:text-dark-text-muted">
               Tasks
@@ -270,7 +270,7 @@ const TaskBoard: React.FC = () => {
               </div>
             </div>
           )}
-          </div>{/* max-w-[700px] */}
+          </div>{/* max-w-[900px] */}
         </main>
 
         {showMembersPanel && (
