@@ -7,13 +7,19 @@ import TeamTaskPanel from '@/widgets/TeamTaskPanel/TeamTaskPanel.js';
 import AddUserModal from '@/widgets/AddUserModal/AddUserModal.js';
 import type { Task, User } from '@/entities/types.js';
 import { useParams, useNavigate } from 'react-router-dom';
-import { taskService, teamService } from '@/services/api/index.js';
+import { taskService, teamService, userService } from '@/services/api/index.js';
+import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle.js';
 import BreadcrumbBack from '@/shared/ui/BreadcrumbBack.js';
+import { IconPicker } from '@/shared/ui/IconPicker.js';
+import { Layers } from 'lucide-react';
 
 const TaskBoard: React.FC = () => {
   const { team_id } = useParams<{ team_id: string }>();
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [teamName, setTeamName] = useState<string | null>(null);
+  const [teamIcon, setTeamIcon] = useState('');
+  useDocumentTitle(teamName);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,6 +60,15 @@ const TaskBoard: React.FC = () => {
       console.error('Error fetching users:', err);
       setUsers([]);
     }
+  }, [team_id]);
+
+  useEffect(() => {
+    if (!team_id) return;
+    userService.getTeams().then((teams: any[]) => {
+      const found = teams.find((t: any) => t.id === team_id);
+      if (found?.name) setTeamName(found.name);
+      if (found?.icon) setTeamIcon(found.icon);
+    }).catch(() => {});
   }, [team_id]);
 
   const loadData = useCallback(async () => {
@@ -155,6 +170,13 @@ const TaskBoard: React.FC = () => {
           </div>
           <div className="flex items-center gap-4">
             <button
+              onClick={() => navigate(`/team/${team_id}/sprints`)}
+              className="flex items-center gap-1.5 text-sm text-gray-600 dark:text-dark-text-muted hover:text-gray-900 dark:hover:text-dark-text transition-colors"
+            >
+              <Layers size={15} />
+              Sprints
+            </button>
+            <button
               onClick={() => setShowAddUserModal(true)}
               className="text-sm text-gray-600 dark:text-dark-text-muted hover:text-gray-900 dark:hover:text-dark-text transition-colors"
             >
@@ -191,6 +213,7 @@ const TaskBoard: React.FC = () => {
         {/* Tasks - Full width */}
         {/* Tasks - Right */}
         <main className="flex-1 min-w-0 order-1 mt-2 sm:mt-4">
+          <div className="max-w-[1060px] mx-auto">
           <div className="flex items-center justify-between px-2 sm:px-4 mb-2 sm:mb-3">
             <span className="text-xs sm:text-sm font-medium text-gray-500 dark:text-dark-text-muted">
               Tasks
@@ -261,6 +284,7 @@ const TaskBoard: React.FC = () => {
               </div>
             </div>
           )}
+          </div>{/* max-w-[1060px] */}
         </main>
 
         {showMembersPanel && (

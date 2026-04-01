@@ -47,6 +47,10 @@ export const taskService = {
     }
   },
 
+  async updateTaskIcon(id: string, icon: string): Promise<void> {
+    await httpClient.patch(`/api/tasks/${id}/icon`, { icon });
+  },
+
   async updateTaskTitle(id: string, task: string, options?: { signal?: AbortSignal }): Promise<void> {
     await httpClient.patch(`/api/tasks/${id}/title`, { task }, { signal: options?.signal as any });
   },

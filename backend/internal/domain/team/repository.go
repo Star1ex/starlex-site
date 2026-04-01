@@ -18,5 +18,6 @@ type Repository interface {
 	RemoveUserFromTeam(ctx context.Context, teamID string, userID string) error
 	UpdateName(ctx context.Context, teamID string, name string) error
 	UpdateDescription(ctx context.Context, teamID string, description string) error
+	UpdateIcon(ctx context.Context, teamID string, icon string) error
 	Delete(ctx context.Context, teamID string) error
 }

@@ -4,6 +4,7 @@ type Team struct {
 	ID          string
 	Name        string
 	Description string
+	Icon        string
 	OwnerID     string
 }
 

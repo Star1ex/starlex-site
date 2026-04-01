@@ -66,6 +66,7 @@ func setupUserRoutes(api fiber.Router, h *handlers.Handlers) {
 
 func setupSearchRoutes(api fiber.Router, h *handlers.Handlers) {
 	api.Get("/search/:email", h.Search)
+	api.Get("/search", h.GlobalSearch)
 }
 
 func setupFolderRoutes(api fiber.Router, h *handlers.Handlers) {
@@ -92,6 +93,7 @@ func setupTaskRoutes(api fiber.Router, h *handlers.Handlers) {
 	tasks.Delete("/:id", h.DeleteTask)
 
 	tasks.Put("/:id/progress", h.UpdateTaskProgress)
+	tasks.Patch("/:id/icon", h.PatchTaskIcon)
 	tasks.Patch("/:id/title", h.PatchTaskTitle)
 	tasks.Patch("/:id/description", h.PatchTaskDescription)
 	tasks.Patch("/:id/priority", h.PatchTaskPriority)
@@ -110,6 +112,7 @@ func setupTeamRoutes(api fiber.Router, h *handlers.Handlers) {
 	teams.Delete("/:id", h.DeleteTeam)
 	teams.Patch("/:id/name", h.PatchTeamName)
 	teams.Patch("/:id/description", h.PatchTeamDescription)
+	teams.Patch("/:id/icon", h.PatchTeamIcon)
 
 	teams.Get("/:id/users", h.GetUsers)
 	teams.Post("/:id/users", h.AddUserToTeam)
@@ -122,6 +125,7 @@ func setupTeamRoutes(api fiber.Router, h *handlers.Handlers) {
 		teamTasks.Get("/user/:user_id", h.GetUserTasks)
 		teamTasks.Put("/:id", h.UpdateTask)
 		teamTasks.Put("/:id/progress", h.UpdateTaskProgress)
+		teamTasks.Patch("/:id/icon", h.PatchTaskIcon)
 		teamTasks.Patch("/:id/title", h.PatchTaskTitle)
 		teamTasks.Patch("/:id/description", h.PatchTaskDescription)
 		teamTasks.Patch("/:id/priority", h.PatchTaskPriority)

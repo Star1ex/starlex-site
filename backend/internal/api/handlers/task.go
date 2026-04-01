@@ -156,6 +156,39 @@ func (h *Handlers) UpdateTask(c *fiber.Ctx) error {
 	return c.JSON(updatedTask)
 }
 
+func (h *Handlers) PatchTaskIcon(ctx *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+
+	taskID := ctx.Params("id")
+	if taskID == "" || taskID == "nil" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
+	}
+	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+		return err
+	}
+
+	var input dto.UpdateTaskIcon
+	if err := ctx.BodyParser(&input); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad json"})
+	}
+	if input.Icon == nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "icon field is required"})
+	}
+
+	if err := h.taskService.UpdateTaskIcon(ctx.Context(), taskID, *input.Icon); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "task not found"})
+		}
+		logger.Log.Errorw("update task icon failed", "error", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
+	}
+
+	return ctx.SendStatus(fiber.StatusNoContent)
+}
+
 func (h *Handlers) PatchTaskTitle(ctx *fiber.Ctx) error {
 	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {

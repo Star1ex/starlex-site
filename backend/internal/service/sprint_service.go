@@ -21,6 +21,10 @@ type SprintService struct {
 	sprintRepo *repository.SprintRepository
 }
 
+func (s *SprintService) SearchInTeams(ctx context.Context, teamIDs []string, query string) ([]*entity.Sprint, error) {
+	return s.sprintRepo.SearchInTeams(ctx, teamIDs, query)
+}
+
 func NewSprintService(sprintRepo *repository.SprintRepository) *SprintService {
 	return &SprintService{sprintRepo: sprintRepo}
 }

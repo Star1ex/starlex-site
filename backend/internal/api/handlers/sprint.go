@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/Team-Tracks/team-track-site/internal/api/dto"
 	"github.com/Team-Tracks/team-track-site/internal/service"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -78,7 +79,7 @@ func (h *Handlers) CreateSprint(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to create sprint"})
 	}
-	return ctx.Status(fiber.StatusCreated).JSON(sprint)
+	return ctx.Status(fiber.StatusCreated).JSON(dto.ToSprintResponse(sprint))
 }
 
 func (h *Handlers) GetTeamSprints(ctx *fiber.Ctx) error {
@@ -95,7 +96,7 @@ func (h *Handlers) GetTeamSprints(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to load sprints"})
 	}
-	return ctx.JSON(sprints)
+	return ctx.JSON(dto.ToSprintListResponse(sprints))
 }
 
 func (h *Handlers) GetSprintByID(ctx *fiber.Ctx) error {
@@ -119,7 +120,7 @@ func (h *Handlers) GetSprintByID(ctx *fiber.Ctx) error {
 	if sprint.TeamID != teamID {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "sprint not found"})
 	}
-	return ctx.JSON(sprint)
+	return ctx.JSON(dto.ToSprintResponse(sprint))
 }
 
 func (h *Handlers) UpdateSprint(ctx *fiber.Ctx) error {
@@ -158,7 +159,7 @@ func (h *Handlers) UpdateSprint(ctx *fiber.Ctx) error {
 	if updated.TeamID != teamID {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "sprint not found"})
 	}
-	return ctx.JSON(updated)
+	return ctx.JSON(dto.ToSprintResponse(updated))
 }
 
 func (h *Handlers) StartSprint(ctx *fiber.Ctx) error {
@@ -182,7 +183,7 @@ func (h *Handlers) StartSprint(ctx *fiber.Ctx) error {
 		}
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to start sprint"})
 	}
-	return ctx.JSON(updated)
+	return ctx.JSON(dto.ToSprintResponse(updated))
 }
 
 func (h *Handlers) CompleteSprint(ctx *fiber.Ctx) error {
@@ -211,7 +212,7 @@ func (h *Handlers) CompleteSprint(ctx *fiber.Ctx) error {
 	if updated.TeamID != teamID {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "sprint not found"})
 	}
-	return ctx.JSON(updated)
+	return ctx.JSON(dto.ToSprintResponse(updated))
 }
 
 func (h *Handlers) ArchiveSprint(ctx *fiber.Ctx) error {
@@ -235,7 +236,7 @@ func (h *Handlers) ArchiveSprint(ctx *fiber.Ctx) error {
 	if updated.TeamID != teamID {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "sprint not found"})
 	}
-	return ctx.JSON(updated)
+	return ctx.JSON(dto.ToSprintResponse(updated))
 }
 
 func (h *Handlers) DeleteSprint(ctx *fiber.Ctx) error {
@@ -341,7 +342,7 @@ func (h *Handlers) CreateSubtask(ctx *fiber.Ctx) error {
 		}
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to create subtask"})
 	}
-	return ctx.Status(fiber.StatusCreated).JSON(subtask)
+	return ctx.Status(fiber.StatusCreated).JSON(dto.ToSubtaskResponse(subtask))
 }
 
 func (h *Handlers) UpdateSubtask(ctx *fiber.Ctx) error {
@@ -374,7 +375,7 @@ func (h *Handlers) UpdateSubtask(ctx *fiber.Ctx) error {
 	if subtask.TaskID != taskID {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "subtask not found"})
 	}
-	return ctx.JSON(subtask)
+	return ctx.JSON(dto.ToSubtaskResponse(subtask))
 }
 
 func (h *Handlers) DeleteSubtask(ctx *fiber.Ctx) error {

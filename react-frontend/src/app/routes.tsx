@@ -20,6 +20,8 @@ const AboutUs = React.lazy(() => import('@/pages/about-us/AboutUs.js').then(m =>
 const ProfilePage = React.lazy(() => import('@/pages/profile/UserProfile.js').then(m => ({ default: m.default })));
 const UserProfilePage = React.lazy(() => import('@/pages/profile/UserProfilePage.js').then(m => ({ default: m.UserProfilePage })));
 const TaskBoard = React.lazy(() => import('@/pages/team/TaskBoard.js').then(m => ({ default: m.default })));
+const SprintSpacePage = React.lazy(() => import('@/pages/team/SprintSpacePage.js').then(m => ({ default: m.default })));
+const SprintDetailPage = React.lazy(() => import('@/pages/team/SprintDetailPage.js').then(m => ({ default: m.default })));
 const PersonalTasksPage = React.lazy(() => import('@/pages/personal/PersonalTasksPage.js').then(m => ({ default: m.default })));
 const TaskView = React.lazy(() => import('@/components/Tasks/TaskView.js').then(m => ({ default: m.default })));
 const SettingsModal = React.lazy(() =>
@@ -31,6 +33,7 @@ import { Navigate } from 'react-router-dom';
 function preloadRoutes() {
   import('@/pages/dashboard/Dashboard.js');
   import('@/pages/team/TaskBoard.js');
+  import('@/pages/team/SprintSpacePage.js');
   import('@/pages/settings/GeneralSettings.js');
   import('@/pages/profile/UserProfile.js');
   import('@/pages/profile/UserProfilePage.js');
@@ -99,6 +102,14 @@ const AnimatedRoutes = () => {
           <Route
             path="/team/:team_id"
             element={withErrorBoundary(<RequireAuth><Layout><TaskBoard /></Layout></RequireAuth>)}
+          />
+          <Route
+            path="/team/:team_id/sprints"
+            element={withErrorBoundary(<RequireAuth><Layout><SprintSpacePage /></Layout></RequireAuth>)}
+          />
+          <Route
+            path="/team/:team_id/sprints/:sprint_id"
+            element={withErrorBoundary(<RequireAuth><Layout><SprintDetailPage /></Layout></RequireAuth>)}
           />
           <Route
             path="/personal"

@@ -2,6 +2,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import Avatar from '@/shared/ui/Avatar.js';
 import type { User, CreateTaskFormData } from '@/entities/types.js';
+import type { TaskDTO } from '@/types/dto.js';
 import { taskService } from '@/services/api/index.js';
 import { useAuth } from '@/contexts/AuthContext.js';
 import { apiClient } from '@/services/api/client.js';
@@ -13,15 +14,18 @@ interface CreateTaskModalProps {
   onClose: () => void;
   users: User[];
   onSuccess: () => void;
+  /** Optional: called with the newly-created task (before onSuccess) */
+  onCreated?: (task: TaskDTO) => void;
   teamId: string;
 }
 
-const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ 
-  isOpen, 
-  onClose, 
-  users, 
-  onSuccess, 
-  teamId 
+const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
+  isOpen,
+  onClose,
+  users,
+  onSuccess,
+  onCreated,
+  teamId
 }) => {
   const [formData, setFormData] = useState<CreateTaskFormData>({
     task: '',
@@ -90,7 +94,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         return;
       }
 
-      await taskService.createTeamTask(teamId, {
+      const created = await taskService.createTeamTask(teamId, {
         task: formData.task,
         description: formData.description,
         progress: formData.progress,
@@ -98,6 +102,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         owner_id: ownerId || '',
       });
 
+      onCreated?.(created);
       onSuccess();
       onClose();
     } catch (error) {

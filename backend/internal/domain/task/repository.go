@@ -11,6 +11,7 @@ type Repository interface {
 	Create(ctx context.Context, task *entity.Task) error
 	Get(ctx context.Context, id string) (*entity.Task, error)
 	Update(ctx context.Context, id string, data *entity.Task, assignedTo []string) (*entity.Task, error)
+	UpdateIcon(ctx context.Context, id string, icon string) error
 	UpdateTitle(ctx context.Context, id string, title string) error
 	UpdateDescription(ctx context.Context, id string, description string) error
 	UpdatePriority(ctx context.Context, id string, priority string) error
@@ -25,4 +26,6 @@ type Repository interface {
 	GetFolderTasks(ctx context.Context, folderID string) ([]*entity.Task, error)
 
 	MoveTaskToFolder(ctx context.Context, taskID, folderID string) error
+
+	SearchInTeams(ctx context.Context, teamIDs []string, query string) ([]*entity.Task, error)
 }

@@ -6,6 +6,7 @@ type Task struct {
 	ID          string
 	Task        string
 	Description string
+	Icon        string
 	AssignedTo  []*User
 	TeamID      string
 	Priority    string

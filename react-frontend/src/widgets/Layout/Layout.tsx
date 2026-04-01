@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { GlobalSidebar } from '@/widgets/GlobalSidebar/GlobalSidebar.js';
 import { NewTabModal } from '@/widgets/NewTabModal/NewTabModal.js';
+import { SearchModal } from '@/widgets/SearchModal/SearchModal.js';
 import { useModal } from '@/shared/hooks/useModal.js';
 import { Menu, X, MoreVertical, User, Settings as SettingsIcon } from 'lucide-react';
 import { ToastHost } from '@/shared/ui/ToastHost.js';
@@ -15,6 +16,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [mobileQuickMenuOpen, setMobileQuickMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 768 : false));
+  const [searchOpen, setSearchOpen] = useState(false);
   const { open, onOpen, onClose } = useModal(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -66,6 +68,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     const authRoutes = ['/sign-in', '/sign-up', '/oauth', '/verify-email', '/forgot-password', '/reset-password'];
     const isAuthRoute = authRoutes.some((route) => location.pathname.startsWith(route));
     const getRouteLabel = (path: string) => {
+      if (path.match(/\/team\/[^/]+\/sprints\/[^/]+/)) return 'Sprint';
+      if (path.match(/\/team\/[^/]+\/sprints/)) return 'Sprints';
       if (path.startsWith('/team/')) return 'Tasks';
       if (path.startsWith('/task/')) return 'Task';
       if (path.startsWith('/settings')) return 'Settings';
@@ -87,6 +91,19 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     }
   }, [location.pathname]);
 
+  const openSearch = useCallback(() => setSearchOpen(true), []);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen(s => !s);
+      }
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, []);
+
   const handleTeamCreated = () => {
     const event = new CustomEvent('teamCreated');
     window.dispatchEvent(event);
@@ -94,6 +111,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   const mobileTitle = useMemo(() => {
+    if (location.pathname.match(/\/team\/[^/]+\/sprints\/[^/]+/)) return 'Sprint';
+    if (location.pathname.match(/\/team\/[^/]+\/sprints/)) return 'Sprints';
     if (location.pathname.startsWith('/team/')) return 'Team Tasks';
     if (location.pathname.startsWith('/task/')) return 'Task';
     if (location.pathname.startsWith('/settings')) return 'Settings';
@@ -276,6 +295,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       )}
 
       <ToastHost />
+
+      <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
 
       {open && (
         <NewTabModal

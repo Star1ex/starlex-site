@@ -13,6 +13,7 @@ type Service interface {
 	Delete(ctx context.Context, teamID, userID string) error
 	UpdateTeamName(ctx context.Context, teamID, name, userID string) error
 	UpdateTeamDescription(ctx context.Context, teamID, description, userID string) error
+	UpdateTeamIcon(ctx context.Context, teamID, icon, userID string) error
 	// Retrieves all users from team
 	GetUsers(ctx context.Context, teamId string) ([]*entity.User, error)
 	AddUserToTeam(ctx context.Context, teamID string, email string, requesterID string) error
