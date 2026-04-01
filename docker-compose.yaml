@@ -1,6 +1,6 @@
 services:
   db:
-    image: postgres:16-alpine
+    image: postgres:latest
     container_name: team-track-site-db
     restart: unless-stopped
     user: "0:0"
