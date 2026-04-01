@@ -72,6 +72,17 @@ func (s *TeamService) UpdateTeamDescription(ctx context.Context, teamID, descrip
 	return s.teamRepo.UpdateDescription(ctx, teamID, description)
 }
 
+func (s *TeamService) UpdateTeamIcon(ctx context.Context, teamID, icon, userID string) error {
+	team, err := s.teamRepo.GetTeamByID(ctx, teamID)
+	if err != nil {
+		return err
+	}
+	if userID != team.OwnerID {
+		return errors.New("only team owner can update team icon")
+	}
+	return s.teamRepo.UpdateIcon(ctx, teamID, icon)
+}
+
 func (s *TeamService) GetUsers(ctx context.Context, teamId string) ([]*entity.User, error) {
 	users, err := s.teamRepo.GetTeam(ctx, teamId)
 	if err != nil {

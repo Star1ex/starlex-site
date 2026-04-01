@@ -13,6 +13,7 @@ type TeamModel struct {
 	ID          string      `gorm:"primaryKey"`
 	Name        string      `gorm:"unique;not null"`
 	Description string      `gorm:"not null"`
+	Icon        string      `gorm:"not null;default:''"`
 	OwnerID     string      `gorm:"not null"`
 	Users       []UserModel `gorm:"many2many:users_teams"`
 }
@@ -22,6 +23,7 @@ func fromDomainToTeam(team *entity.Team) *TeamModel {
 		ID:          team.ID,
 		Name:        team.Name,
 		Description: team.Description,
+		Icon:        team.Icon,
 		OwnerID:     team.OwnerID,
 	}
 }
@@ -31,6 +33,7 @@ func toTeamDomain(Team *TeamModel) *entity.Team {
 		ID:          Team.ID,
 		Name:        Team.Name,
 		Description: Team.Description,
+		Icon:        Team.Icon,
 		OwnerID:     Team.OwnerID,
 	}
 }
@@ -150,6 +153,17 @@ func (t *TeamRepository) UpdateName(ctx context.Context, teamID string, name str
 		if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
 			return ErrTeamAlreadyExists
 		}
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return ErrTeamNotFound
+	}
+	return nil
+}
+
+func (t *TeamRepository) UpdateIcon(ctx context.Context, teamID string, icon string) error {
+	result := t.db.WithContext(ctx).Model(&TeamModel{}).Where("id = ?", teamID).Update("icon", icon)
+	if result.Error != nil {
 		return result.Error
 	}
 	if result.RowsAffected == 0 {

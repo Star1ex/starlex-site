@@ -13,6 +13,7 @@ type TaskModel struct {
 	ID          string `gorm:"primaryKey"`
 	Task        string `gorm:"not null"`
 	Description string `gorm:"not null"`
+	Icon        string `gorm:"not null;default:''"`
 	Priority    string `gorm:"not null"`
 	Progress    string
 	Assigned    []UserModel `gorm:"many2many:task_users"`
@@ -55,6 +56,7 @@ func toTaskDomain(m TaskModel) *entity.Task {
 		ID:          m.ID,
 		Task:        m.Task,
 		Description: m.Description,
+		Icon:        m.Icon,
 		AssignedTo:  users,
 		TeamID:      teamID,
 		OwnerID:     m.OwnerID,
@@ -106,6 +108,7 @@ func fromTaskDomain(t *entity.Task) *TaskModel {
 		ID:          t.ID,
 		Task:        t.Task,
 		Description: t.Description,
+		Icon:        t.Icon,
 		Assigned:    users,
 		Priority:    t.Priority,
 		OwnerID:     t.OwnerID,
@@ -192,6 +195,17 @@ func (r *TaskRepository) Update(ctx context.Context, id string, data *entity.Tas
 	return toTaskDomain(task), nil
 }
 
+func (r *TaskRepository) UpdateIcon(ctx context.Context, id string, icon string) error {
+	result := r.db.WithContext(ctx).Model(&TaskModel{}).Where("id = ?", id).Update("icon", icon)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
 func (r *TaskRepository) UpdateTitle(ctx context.Context, id string, title string) error {
 	result := r.db.WithContext(ctx).Model(&TaskModel{}).Where("id = ?", id).Update("task", title)
 	if result.Error != nil {
@@ -273,7 +287,7 @@ func (r *TaskRepository) GetTeamTasks(ctx context.Context, teamID string) ([]*en
 
 	err := r.db.WithContext(ctx).
 		Preload("Assigned").
-		Where("team_id = ?", teamID).
+		Where("team_id = ? AND sprint_id IS NULL", teamID).
 		Find(&models).Error
 
 	if err != nil {
@@ -325,6 +339,23 @@ func (r *TaskRepository) MoveTaskToFolder(ctx context.Context, taskID, folderID 
 		return err
 	}
 	return nil
+}
+
+func (r *TaskRepository) SearchInTeams(ctx context.Context, teamIDs []string, query string) ([]*entity.Task, error) {
+	if len(teamIDs) == 0 || query == "" {
+		return nil, nil
+	}
+	var models []TaskModel
+	pattern := "%" + query + "%"
+	err := r.db.WithContext(ctx).
+		Preload("Assigned").
+		Where("team_id IN ? AND sprint_id IS NULL AND (task ILIKE ? OR description ILIKE ?)", teamIDs, pattern, pattern).
+		Limit(10).
+		Find(&models).Error
+	if err != nil {
+		return nil, err
+	}
+	return toTaskDomains(models), nil
 }
 
 func (r *TaskRepository) GetTasksWithoutFolder(ctx context.Context, userID string) ([]*entity.Task, error) {

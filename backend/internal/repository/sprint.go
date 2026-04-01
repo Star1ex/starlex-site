@@ -230,3 +230,19 @@ func (r *SprintRepository) UpdateSubtask(ctx context.Context, id string, updates
 func (r *SprintRepository) DeleteSubtask(ctx context.Context, id string) error {
 	return r.db.WithContext(ctx).Delete(&SubtaskModel{}, "id = ?", id).Error
 }
+
+func (r *SprintRepository) SearchInTeams(ctx context.Context, teamIDs []string, query string) ([]*entity.Sprint, error) {
+	if len(teamIDs) == 0 || query == "" {
+		return nil, nil
+	}
+	var models []SprintModel
+	pattern := "%" + query + "%"
+	err := r.db.WithContext(ctx).
+		Where("team_id IN ? AND (name ILIKE ? OR goal ILIKE ?)", teamIDs, pattern, pattern).
+		Limit(10).
+		Find(&models).Error
+	if err != nil {
+		return nil, err
+	}
+	return toSprintDomains(models), nil
+}

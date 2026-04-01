@@ -26,6 +26,7 @@ type Service interface {
 	Update(ctx context.Context, id string, data *entity.Task, assignedTo []string) (*entity.Task, error)
 	// Update task
 	UpdateTaskProgress(ctx context.Context, taskID, progress string) (*entity.Task, error)
+	UpdateTaskIcon(ctx context.Context, taskID, icon string) error
 	UpdateTaskTitle(ctx context.Context, taskID, title string) error
 	UpdateTaskDescription(ctx context.Context, taskID, description string) error
 	UpdateTaskPriority(ctx context.Context, taskID, priority string) error
@@ -36,4 +37,7 @@ type Service interface {
 
 	// Move task to folder
 	MoveTaskToFolder(ctx context.Context, taskID, folderID string) error
+
+	// Search tasks across multiple teams
+	SearchInTeams(ctx context.Context, teamIDs []string, query string) ([]*entity.Task, error)
 }

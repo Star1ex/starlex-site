@@ -97,6 +97,10 @@ func (s *TaskService) UpdateTaskProgress(ctx context.Context, taskID, progress s
 	return s.taskRepo.Get(ctx, taskID)
 }
 
+func (s *TaskService) UpdateTaskIcon(ctx context.Context, taskID, icon string) error {
+	return s.taskRepo.UpdateIcon(ctx, taskID, icon)
+}
+
 func (s *TaskService) UpdateTaskTitle(ctx context.Context, taskID, title string) error {
 	return s.taskRepo.UpdateTitle(ctx, taskID, title)
 }
@@ -131,4 +135,8 @@ func (s *TaskService) GetFolderTasks(ctx context.Context, folderID string) ([]*e
 
 func (s *TaskService) MoveTaskToFolder(ctx context.Context, taskID, folderID string) error {
 	return s.taskRepo.MoveTaskToFolder(ctx, taskID, folderID)
+}
+
+func (s *TaskService) SearchInTeams(ctx context.Context, teamIDs []string, query string) ([]*entity.Task, error) {
+	return s.taskRepo.SearchInTeams(ctx, teamIDs, query)
 }

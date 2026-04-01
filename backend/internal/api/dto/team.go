@@ -14,6 +14,11 @@ type TeamResponse struct {
 	TeamID      string `json:"team_id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
+	Icon        string `json:"icon"`
+}
+
+type UpdateTeamIcon struct {
+	Icon *string `json:"icon"`
 }
 
 func ToTeamResponse(team *entity.Team) *TeamResponse {
@@ -21,6 +26,7 @@ func ToTeamResponse(team *entity.Team) *TeamResponse {
 		TeamID:      team.ID,
 		Name:        team.Name,
 		Description: team.Description,
+		Icon:        team.Icon,
 	}
 }
 
@@ -47,6 +53,7 @@ func ToTeamsResponse(teams []*entity.Team) []TeamResponse {
 			TeamID:      team.ID,
 			Name:        team.Name,
 			Description: team.Description,
+			Icon:        team.Icon,
 		}
 	}
 	return response

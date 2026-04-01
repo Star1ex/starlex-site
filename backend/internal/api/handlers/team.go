@@ -161,6 +161,41 @@ func (h *Handlers) PatchTeamDescription(ctx *fiber.Ctx) error {
 	return ctx.SendStatus(fiber.StatusNoContent)
 }
 
+func (h *Handlers) PatchTeamIcon(ctx *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+
+	teamID := ctx.Params("id")
+	if teamID == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "team id is required"})
+	}
+
+	var input dto.UpdateTeamIcon
+	if err := ctx.BodyParser(&input); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
+	}
+	if input.Icon == nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "icon field is required"})
+	}
+
+	err := h.teamService.UpdateTeamIcon(ctx.Context(), teamID, *input.Icon, userID)
+	if err != nil {
+		switch {
+		case errors.Is(err, repository.ErrTeamNotFound):
+			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "team not found"})
+		case err.Error() == "only team owner can update team icon":
+			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
+		default:
+			logger.Log.Errorw("update team icon failed", "error", err)
+			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
+		}
+	}
+
+	return ctx.SendStatus(fiber.StatusNoContent)
+}
+
 // Swagger disabled: GetUsers godoc
 // Swagger disabled: Summary 		Get all users from team
 // Swagger disabled: Description 	Return all users from team

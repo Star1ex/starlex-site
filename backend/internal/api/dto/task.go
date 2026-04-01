@@ -22,6 +22,7 @@ type TaskResponse struct {
 	ID          string    `json:"id" binding:"required"`
 	Task        string    `json:"task" binding:"required"`
 	Description string    `json:"description"`
+	Icon        string    `json:"icon"`
 	AssignedTo  []string  `json:"user_ids"`
 	TeamID      string    `json:"team_id"`
 	FolderID    *string   `json:"folder_id"`
@@ -30,6 +31,10 @@ type TaskResponse struct {
 	Progress    string    `json:"progress"`
 	CreatedAt   time.Time `json:"created_at,omitempty"`
 	UpdatedAt   time.Time `json:"updated_at,omitempty"`
+}
+
+type UpdateTaskIcon struct {
+	Icon *string `json:"icon"`
 }
 
 type UpdateTask struct {
@@ -78,6 +83,7 @@ func ToTaskResponse(task *entity.Task) *TaskResponse {
 		ID:          task.ID,
 		Task:        task.Task,
 		Description: task.Description,
+		Icon:        task.Icon,
 		AssignedTo:  assignedIDs,
 		TeamID:      task.TeamID,
 		FolderID:    task.FolderID,
