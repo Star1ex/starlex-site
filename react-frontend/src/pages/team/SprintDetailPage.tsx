@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useParams, useNavigate } from 'react-router-dom';
-import { FileText, Plus, MoreHorizontal } from 'lucide-react';
+import { FileText, Plus, MoreHorizontal, ChevronDown, CheckCircle2 } from 'lucide-react';
 import { sprintService, taskService, teamService } from '@/services/api/index.js';
 import type { SprintDTO, TaskDTO, SprintStatus } from '@/types/dto.js';
 import type { Task, User } from '@/entities/types.js';
@@ -24,7 +24,6 @@ function fmtDate(iso: string | null | undefined): string {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-/** Map TaskDTO (API) to lightweight Task entity used by widgets. */
 function toTask(dto: TaskDTO): Task {
   return {
     id: dto.id,
@@ -41,7 +40,10 @@ const SprintDetailPage: React.FC = () => {
   const navigate = useNavigate();
 
   const [sprint, setSprint] = useState<SprintDTO | null>(null);
-  const [tasks, setTasks] = useState<Task[]>([]);
+  // active = not_started | in_progress
+  const [activeTasks, setActiveTasks] = useState<Task[]>([]);
+  // done tasks shown in collapsed section
+  const [doneTasks, setDoneTasks] = useState<Task[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -51,19 +53,23 @@ const SprintDetailPage: React.FC = () => {
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [showTaskPanel, setShowTaskPanel] = useState(false);
   const [showActions, setShowActions] = useState(false);
+  const [showDone, setShowDone] = useState(false);
 
-  // Inline sprint name editing
+  // Inline sprint editing
   const [name, setName] = useState('');
   const isEditingRef = useRef(false);
   const debouncedName = useDebounce(name, 500);
   const lastSavedNameRef = useRef('');
-
-  // Inline date editing
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const debouncedStart = useDebounce(startDate, 600);
   const debouncedEnd = useDebounce(endDate, 600);
   const lastSavedDatesRef = useRef({ start: '', end: '' });
+
+  const splitTasks = useCallback((all: Task[]) => {
+    setActiveTasks(all.filter(t => t.progress !== 'done'));
+    setDoneTasks(all.filter(t => t.progress === 'done'));
+  }, []);
 
   const fetchSprint = useCallback(async () => {
     if (!team_id || !sprint_id) return;
@@ -74,13 +80,17 @@ const SprintDetailPage: React.FC = () => {
       lastSavedNameRef.current = data.name;
       setStartDate(toInputDate(data.start_date));
       setEndDate(toInputDate(data.end_date));
-      lastSavedDatesRef.current = { start: toInputDate(data.start_date), end: toInputDate(data.end_date) };
-      setTasks(Array.isArray(data.tasks) ? data.tasks.map(toTask) : []);
+      lastSavedDatesRef.current = {
+        start: toInputDate(data.start_date),
+        end: toInputDate(data.end_date),
+      };
+      const all = Array.isArray(data.tasks) ? data.tasks.map(toTask) : [];
+      splitTasks(all);
       setError(null);
     } catch {
       setError('Failed to load sprint');
     }
-  }, [team_id, sprint_id]);
+  }, [team_id, sprint_id, splitTasks]);
 
   const fetchUsers = useCallback(async () => {
     if (!team_id) return;
@@ -105,15 +115,9 @@ const SprintDetailPage: React.FC = () => {
   useEffect(() => {
     if (!sprint || !isEditingRef.current) return;
     if (debouncedName === lastSavedNameRef.current) return;
-    const save = async () => {
-      try {
-        await sprintService.updateSprint(team_id!, sprint.id, { name: debouncedName });
-        lastSavedNameRef.current = debouncedName;
-      } catch {
-        showToast('Failed to save sprint name');
-      }
-    };
-    save();
+    sprintService.updateSprint(team_id!, sprint.id, { name: debouncedName })
+      .then(() => { lastSavedNameRef.current = debouncedName; })
+      .catch(() => showToast('Failed to save sprint name'));
   }, [debouncedName, sprint, team_id]);
 
   // Auto-save dates
@@ -121,19 +125,58 @@ const SprintDetailPage: React.FC = () => {
     if (!sprint || !isEditingRef.current) return;
     const ref = lastSavedDatesRef.current;
     if (debouncedStart === ref.start && debouncedEnd === ref.end) return;
-    const save = async () => {
-      try {
-        await sprintService.updateSprint(team_id!, sprint.id, {
-          start_date: debouncedStart ? new Date(debouncedStart).toISOString() : null,
-          end_date: debouncedEnd ? new Date(debouncedEnd).toISOString() : null,
-        });
-        lastSavedDatesRef.current = { start: debouncedStart, end: debouncedEnd };
-      } catch {
-        showToast('Failed to save dates');
-      }
-    };
-    save();
+    sprintService.updateSprint(team_id!, sprint.id, {
+      start_date: debouncedStart ? new Date(debouncedStart).toISOString() : null,
+      end_date: debouncedEnd ? new Date(debouncedEnd).toISOString() : null,
+    })
+      .then(() => { lastSavedDatesRef.current = { start: debouncedStart, end: debouncedEnd }; })
+      .catch(() => showToast('Failed to save dates'));
   }, [debouncedStart, debouncedEnd, sprint, team_id]);
+
+  // Task created in sprint → link it immediately
+  const handleTaskCreated = useCallback(async (created: TaskDTO) => {
+    if (!sprint_id) return;
+    try {
+      await sprintService.moveTaskToSprint(created.id, sprint_id);
+    } catch {
+      showToast('Task created but could not be linked to sprint');
+    }
+  }, [sprint_id]);
+
+  // Task updated — when it becomes done, animate it out of active list
+  const handleTaskUpdate = useCallback((updated: Task) => {
+    if (updated.progress === 'done') {
+      // Remove from active with exit animation, add to done
+      setActiveTasks(prev => prev.filter(t => t.id !== updated.id));
+      setDoneTasks(prev => {
+        if (prev.some(t => t.id === updated.id)) return prev.map(t => t.id === updated.id ? updated : t);
+        return [...prev, updated];
+      });
+    } else {
+      // Task un-done → move back to active
+      setDoneTasks(prev => prev.filter(t => t.id !== updated.id));
+      setActiveTasks(prev => {
+        if (prev.some(t => t.id === updated.id)) return prev.map(t => t.id === updated.id ? updated : t);
+        return [...prev, updated];
+      });
+    }
+    if (selectedTask?.id === updated.id) setSelectedTask(updated);
+  }, [selectedTask]);
+
+  const handleTaskDelete = useCallback(async (taskId: string) => {
+    setActiveTasks(prev => prev.filter(t => t.id !== taskId));
+    setDoneTasks(prev => prev.filter(t => t.id !== taskId));
+    try {
+      await taskService.deleteTeamTask(team_id!, taskId);
+    } catch {
+      await fetchSprint();
+    }
+  }, [team_id, fetchSprint]);
+
+  const handleTaskTitleChange = useCallback((id: string, title: string) => {
+    setActiveTasks(prev => prev.map(t => t.id === id ? { ...t, task: title } : t));
+    setDoneTasks(prev => prev.map(t => t.id === id ? { ...t, task: title } : t));
+  }, []);
 
   const handleStatusAction = async (action: 'start' | 'complete' | 'archive' | 'delete') => {
     if (!sprint || !team_id) return;
@@ -155,24 +198,6 @@ const SprintDetailPage: React.FC = () => {
     }
   };
 
-  const handleTaskUpdate = useCallback((updated: Task) => {
-    setTasks(prev => prev.map(t => t.id === updated.id ? updated : t));
-    if (selectedTask?.id === updated.id) setSelectedTask(updated);
-  }, [selectedTask]);
-
-  const handleTaskDelete = useCallback(async (taskId: string) => {
-    setTasks(prev => prev.filter(t => t.id !== taskId));
-    try {
-      await taskService.deleteTeamTask(team_id!, taskId);
-    } catch {
-      await fetchSprint();
-    }
-  }, [team_id, fetchSprint]);
-
-  const handleTaskTitleChange = useCallback((id: string, title: string) => {
-    setTasks(prev => prev.map(t => t.id === id ? { ...t, task: title } : t));
-  }, []);
-
   if (!team_id || !sprint_id) return null;
 
   if (loading) {
@@ -183,7 +208,7 @@ const SprintDetailPage: React.FC = () => {
           <div className="h-8 w-64 rounded-xl" style={{ background: 'var(--bg-secondary)' }} />
           <div className="h-3 w-40 rounded" style={{ background: 'var(--bg-secondary)' }} />
           <div className="space-y-2 pt-6">
-            {Array.from({ length: 5 }).map((_, i) => (
+            {Array.from({ length: 4 }).map((_, i) => (
               <div key={i} className="h-14 rounded-2xl" style={{ background: 'var(--bg-secondary)' }} />
             ))}
           </div>
@@ -212,8 +237,6 @@ const SprintDetailPage: React.FC = () => {
   }
 
   const statusColor = SPRINT_STATUS_COLOR[sprint.status as SprintStatus] ?? '#6b7280';
-  const dateRange = [startDate ? fmtDate(startDate) : null, endDate ? fmtDate(endDate) : null]
-    .filter(Boolean).join(' – ');
 
   return (
     <div
@@ -229,7 +252,6 @@ const SprintDetailPage: React.FC = () => {
 
         {/* Sprint header */}
         <div className="mb-8">
-          {/* Name row */}
           <div className="flex items-start gap-3 mb-3">
             <span
               className="mt-2.5 flex-shrink-0 w-2 h-2 rounded-full"
@@ -237,10 +259,7 @@ const SprintDetailPage: React.FC = () => {
             />
             <input
               value={name}
-              onChange={e => {
-                isEditingRef.current = true;
-                setName(e.target.value);
-              }}
+              onChange={e => { isEditingRef.current = true; setName(e.target.value); }}
               className="flex-1 text-2xl font-bold bg-transparent outline-none leading-tight"
               style={{ color: 'var(--text-primary)' }}
               placeholder="Sprint name"
@@ -248,38 +267,28 @@ const SprintDetailPage: React.FC = () => {
             />
           </div>
 
-          {/* Dates + actions row */}
-          <div className="flex items-center gap-4 flex-wrap ml-[22px]">
-            {/* Editable dates */}
+          <div className="flex items-center gap-3 flex-wrap ml-[22px]">
+            {/* Dates */}
             <div className="flex items-center gap-2">
               <input
                 type="date"
                 value={startDate}
                 onChange={e => { isEditingRef.current = true; setStartDate(e.target.value); }}
-                className="text-xs px-2 py-1 rounded-lg outline-none transition-colors"
-                style={{
-                  background: 'var(--bg-secondary)',
-                  color: 'var(--text-secondary)',
-                  colorScheme: 'dark',
-                }}
+                className="text-xs px-2 py-1 rounded-lg outline-none"
+                style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', colorScheme: 'dark' }}
               />
               {(startDate || endDate) && (
-                <span style={{ color: 'var(--text-secondary)', fontSize: 11 }}>→</span>
+                <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>→</span>
               )}
               <input
                 type="date"
                 value={endDate}
                 onChange={e => { isEditingRef.current = true; setEndDate(e.target.value); }}
-                className="text-xs px-2 py-1 rounded-lg outline-none transition-colors"
-                style={{
-                  background: 'var(--bg-secondary)',
-                  color: 'var(--text-secondary)',
-                  colorScheme: 'dark',
-                }}
+                className="text-xs px-2 py-1 rounded-lg outline-none"
+                style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)', colorScheme: 'dark' }}
               />
             </div>
 
-            {/* Description button (only if goal exists) */}
             {sprint.goal && (
               <button
                 onClick={() => setShowDescription(true)}
@@ -291,16 +300,15 @@ const SprintDetailPage: React.FC = () => {
               </button>
             )}
 
-            {/* Actions menu */}
+            {/* Actions ··· */}
             <div className="relative ml-auto">
               <button
                 onClick={() => setShowActions(v => !v)}
-                className="w-7 h-7 flex items-center justify-center rounded-lg transition-all duration-150 hover:opacity-60"
+                className="w-7 h-7 flex items-center justify-center rounded-lg transition-opacity hover:opacity-60"
                 style={{ color: 'var(--text-secondary)' }}
               >
                 <MoreHorizontal size={16} />
               </button>
-
               <AnimatePresence>
                 {showActions && (
                   <>
@@ -309,14 +317,14 @@ const SprintDetailPage: React.FC = () => {
                       initial={{ opacity: 0, scale: 0.96, y: -4 }}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.96, y: -4 }}
-                      transition={{ duration: 0.14, ease: 'easeOut' }}
+                      transition={{ duration: 0.14 }}
                       className="absolute right-0 top-9 z-20 min-w-[160px] rounded-2xl overflow-hidden shadow-xl py-1"
                       style={{ background: 'var(--bg-secondary)' }}
                     >
                       {sprint.status === 'planning' && (
                         <button
                           onClick={() => handleStatusAction('start')}
-                          className="w-full text-left px-4 py-2.5 text-sm transition-opacity hover:opacity-60"
+                          className="w-full text-left px-4 py-2.5 text-sm hover:opacity-60"
                           style={{ color: SPRINT_STATUS_COLOR.active }}
                         >
                           Start sprint
@@ -325,27 +333,27 @@ const SprintDetailPage: React.FC = () => {
                       {sprint.status === 'active' && (
                         <button
                           onClick={() => handleStatusAction('complete')}
-                          className="w-full text-left px-4 py-2.5 text-sm transition-opacity hover:opacity-60"
+                          className="w-full text-left px-4 py-2.5 text-sm hover:opacity-60"
                           style={{ color: SPRINT_STATUS_COLOR.completed }}
                         >
-                          Complete sprint
+                          Complete
                         </button>
                       )}
                       {sprint.status !== 'archived' && (
                         <button
                           onClick={() => handleStatusAction('archive')}
-                          className="w-full text-left px-4 py-2.5 text-sm transition-opacity hover:opacity-60"
+                          className="w-full text-left px-4 py-2.5 text-sm hover:opacity-60"
                           style={{ color: 'var(--text-secondary)' }}
                         >
                           Archive
                         </button>
                       )}
-                      {tasks.length === 0 && (
+                      {activeTasks.length + doneTasks.length === 0 && (
                         <>
                           <div className="mx-4 my-1 h-px" style={{ background: 'var(--bg-primary)' }} />
                           <button
                             onClick={() => handleStatusAction('delete')}
-                            className="w-full text-left px-4 py-2.5 text-sm transition-opacity hover:opacity-60"
+                            className="w-full text-left px-4 py-2.5 text-sm hover:opacity-60"
                             style={{ color: '#ef4444' }}
                           >
                             Delete sprint
@@ -360,13 +368,16 @@ const SprintDetailPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Tasks section */}
-        <div>
+        {/* Active Tasks */}
+        <div className="mb-8">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-medium uppercase tracking-wider" style={{ color: 'var(--text-secondary)', letterSpacing: '0.08em' }}>
+            <span
+              className="text-xs font-medium uppercase tracking-wider"
+              style={{ color: 'var(--text-secondary)', letterSpacing: '0.08em' }}
+            >
               Tasks
-              {tasks.length > 0 && (
-                <span className="ml-1.5 normal-case font-normal">{tasks.length}</span>
+              {activeTasks.length > 0 && (
+                <span className="ml-1.5 normal-case font-normal">{activeTasks.length}</span>
               )}
             </span>
             <button
@@ -379,26 +390,44 @@ const SprintDetailPage: React.FC = () => {
             </button>
           </div>
 
-          {tasks.length === 0 ? (
+          {activeTasks.length === 0 && doneTasks.length === 0 ? (
             <motion.div
-              className="py-16 text-center"
+              className="py-14 text-center"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ duration: 0.25, delay: 0.1 }}
+              transition={{ duration: 0.25 }}
             >
-              <p className="text-sm" style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>
+              <p className="text-sm" style={{ color: 'var(--text-secondary)', opacity: 0.5 }}>
                 No tasks yet
               </p>
             </motion.div>
+          ) : activeTasks.length === 0 ? (
+            <motion.div
+              className="py-8 text-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.25 }}
+            >
+              <CheckCircle2 size={28} className="mx-auto mb-2" style={{ color: SPRINT_STATUS_COLOR.active, opacity: 0.6 }} />
+              <p className="text-sm font-medium" style={{ color: 'var(--text-primary)', opacity: 0.7 }}>
+                All tasks done
+              </p>
+            </motion.div>
           ) : (
-            <AnimatePresence initial={false}>
+            <AnimatePresence mode="popLayout">
               <div className="space-y-2">
-                {tasks.map((task, i) => (
+                {activeTasks.map((task, i) => (
                   <motion.div
                     key={task.id}
+                    layout
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.97 }}
+                    exit={{
+                      opacity: 0,
+                      x: 40,
+                      scale: 0.96,
+                      transition: { duration: 0.28, ease: [0.4, 0, 1, 1] },
+                    }}
                     transition={{ duration: 0.18, delay: i * 0.025, ease: 'easeOut' }}
                   >
                     <TaskCard
@@ -415,6 +444,60 @@ const SprintDetailPage: React.FC = () => {
             </AnimatePresence>
           )}
         </div>
+
+        {/* Done section */}
+        {doneTasks.length > 0 && (
+          <div>
+            <button
+              onClick={() => setShowDone(v => !v)}
+              className="flex items-center gap-2 mb-3 transition-opacity hover:opacity-60"
+            >
+              <CheckCircle2 size={13} style={{ color: SPRINT_STATUS_COLOR.active }} />
+              <span
+                className="text-xs font-medium uppercase tracking-wider"
+                style={{ color: 'var(--text-secondary)', letterSpacing: '0.08em' }}
+              >
+                Done
+              </span>
+              <span className="text-xs ml-0.5" style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>
+                {doneTasks.length}
+              </span>
+              <motion.span
+                animate={{ rotate: showDone ? 180 : 0 }}
+                transition={{ duration: 0.18 }}
+                style={{ display: 'flex', color: 'var(--text-secondary)' }}
+              >
+                <ChevronDown size={13} />
+              </motion.span>
+            </button>
+
+            <AnimatePresence>
+              {showDone && (
+                <motion.div
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: 'auto' }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2, ease: 'easeOut' }}
+                  style={{ overflow: 'hidden' }}
+                >
+                  <div className="space-y-2 opacity-60">
+                    {doneTasks.map(task => (
+                      <TaskCard
+                        key={task.id}
+                        task={task}
+                        users={users}
+                        onUpdate={handleTaskUpdate}
+                        onClick={() => { setSelectedTask(task); setShowTaskPanel(true); }}
+                        onDelete={() => handleTaskDelete(task.id)}
+                        teamId={team_id}
+                      />
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
       </div>
 
       {/* Modals */}
@@ -430,6 +513,7 @@ const SprintDetailPage: React.FC = () => {
         onClose={() => setShowCreateTask(false)}
         users={users}
         onSuccess={fetchSprint}
+        onCreated={handleTaskCreated}
         teamId={team_id}
       />
 
