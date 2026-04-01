@@ -7,6 +7,8 @@ import type { SprintDTO, TaskDTO, SprintStatus } from '@/types/dto.js';
 import type { Task, User } from '@/entities/types.js';
 import { SPRINT_STATUS_COLOR } from '@/shared/lib/sprint.js';
 import { SprintDescriptionModal } from '@/widgets/SprintDescriptionModal/SprintDescriptionModal.js';
+import { trackItem } from '@/shared/lib/recentItems.js';
+import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle.js';
 import CreateTaskModal from '@/widgets/CreateTaskModal/CreateTaskModal.js';
 import TaskCard from '@/widgets/TaskCard/TaskCard.js';
 import TeamTaskPanel from '@/widgets/TeamTaskPanel/TeamTaskPanel.js';
@@ -40,6 +42,7 @@ const SprintDetailPage: React.FC = () => {
   const navigate = useNavigate();
 
   const [sprint, setSprint] = useState<SprintDTO | null>(null);
+  useDocumentTitle(sprint?.name ?? null);
   // active = not_started | in_progress
   const [activeTasks, setActiveTasks] = useState<Task[]>([]);
   // done tasks shown in collapsed section
@@ -78,6 +81,7 @@ const SprintDetailPage: React.FC = () => {
       setSprint(data);
       setName(data.name);
       lastSavedNameRef.current = data.name;
+      trackItem({ id: sprint_id, name: data.name, url: `/team/${team_id}/sprints/${sprint_id}`, type: 'sprint', subtitle: `Sprint` });
       setStartDate(toInputDate(data.start_date));
       setEndDate(toInputDate(data.end_date));
       lastSavedDatesRef.current = {
@@ -506,6 +510,12 @@ const SprintDetailPage: React.FC = () => {
         sprintName={sprint.name}
         description={sprint.goal}
         onClose={() => setShowDescription(false)}
+        onSave={(goal) => {
+          setSprint((prev) => prev ? { ...prev, goal } : prev);
+          sprintService.updateSprint(team_id!, sprint.id, { goal }).catch(() =>
+            showToast('Failed to save description')
+          );
+        }}
       />
 
       <CreateTaskModal

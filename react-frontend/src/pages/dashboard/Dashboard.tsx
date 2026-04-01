@@ -1,207 +1,266 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { NewTabModal } from '@/widgets/NewTabModal/NewTabModal.js';
 import { useModal } from '@/shared/hooks/useModal.js';
 import { useNavigate } from 'react-router-dom';
 import { getAuthUser } from '@/shared/lib/authManager.js';
 import { userService } from '@/services/api/index.js';
 import { pageVariants } from '@/shared/lib/animations.js';
+import { getAllRecent, type RecentItem } from '@/shared/lib/recentItems.js';
+import { Clock, Users, Layers, FileText, Plus, Search } from 'lucide-react';
+import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle.js';
+import { SearchModal } from '@/widgets/SearchModal/SearchModal.js';
 
-type Team = {
-  id: string;
-  name: string;
-  description: string;
-  emails: string[];
-};
+type Team = { id: string; name: string; description: string; emails: string[] };
 
-type RecentTask = {
-  id: string;
-  title: string;
-  openedAt: number;
-};
-
-const RECENT_TASKS_KEY = 'recentTasks';
-
-const ALLOWED_USER_ID = import.meta.env.VITE_ALLOWED_USER_ID || 'f8634233-48f0-4ae3-8924-8ca482b6fb62';
-
-const getUserIdFromToken = (token: string): string | null => {
-  try {
-    const payload = token.split('.')[1];
-    if (!payload) return null;
-    const decoded = JSON.parse(atob(payload));
-    return decoded.userId || decoded.id || decoded.sub || null;
-  } catch (err) {
-    console.error('Error decoding token:', err);
-    return null;
+function fmtDate(ts: number): string {
+  const d = new Date(ts);
+  const now = new Date();
+  if (d.getFullYear() !== now.getFullYear()) {
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   }
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+const TYPE_ICON: Record<RecentItem['type'], React.ReactNode> = {
+  team:   <Users size={20} />,
+  sprint: <Layers size={20} />,
+  task:   <FileText size={20} />,
 };
 
-const getUserNameFromToken = (token: string): string => {
-  try {
-    const payload = token.split('.')[1];
-    if (!payload) return 'User';
-    const decoded = JSON.parse(atob(payload));
-    const firstName = decoded.firstName || decoded.first_name || '';
-    const lastName = decoded.lastName || decoded.last_name || '';
-    return `${firstName} ${lastName}`.trim() || 'User';
-  } catch (err) {
-    return 'User';
-  }
+const TYPE_LABEL: Record<RecentItem['type'], string> = {
+  team:   'Team',
+  sprint: 'Sprint',
+  task:   'Task',
+};
+
+const RecentCard: React.FC<{ item: RecentItem; index: number }> = ({ item, index }) => {
+  const navigate = useNavigate();
+
+  return (
+    <motion.button
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0, transition: { delay: 0.08 + index * 0.04, duration: 0.22, ease: 'easeOut' } }}
+      onClick={() => navigate(item.url)}
+      className="flex-shrink-0 w-40 rounded-xl p-4 text-left flex flex-col justify-between transition-all duration-150 group"
+      style={{
+        background: 'var(--bg-secondary)',
+        border: '1px solid transparent',
+        height: '128px',
+      }}
+      whileHover={{
+        scale: 1.02,
+        borderColor: 'var(--border-color)',
+        transition: { duration: 0.12 },
+      }}
+      whileTap={{ scale: 0.98 }}
+    >
+      {/* Icon */}
+      <div
+        className="w-8 h-8 flex items-center justify-center rounded-lg"
+        style={{ color: 'var(--text-secondary)', background: 'var(--bg-primary)' }}
+      >
+        {TYPE_ICON[item.type]}
+      </div>
+
+      {/* Name + meta */}
+      <div>
+        <p
+          className="text-sm font-medium leading-snug line-clamp-2 mb-1.5"
+          style={{ color: 'var(--text-primary)' }}
+        >
+          {item.name}
+        </p>
+        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+          {fmtDate(item.openedAt)}
+        </p>
+      </div>
+    </motion.button>
+  );
 };
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { open, onOpen, onClose } = useModal(false);
-  const [teams, setTeams] = useState<Team[]>([]);
-  const [markdownText, setMarkdownText] = useState('');
-  const [canEdit, setCanEdit] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [userName, setUserName] = useState('User');
-  const [recentTasks, setRecentTasks] = useState<RecentTask[]>([]);
+  const [userName, setUserName] = useState('');
+  const [recent, setRecent] = useState(getAllRecent());
+  const [searchOpen, setSearchOpen] = useState(false);
+
+  const refreshRecent = useCallback(() => setRecent(getAllRecent()), []);
 
   useEffect(() => {
     const storedUser = getAuthUser();
-    const userId = storedUser?.id || storedUser?.user_id || null;
-    setCanEdit(userId === ALLOWED_USER_ID);
-
-    if (storedUser && (storedUser.firstName || storedUser.first_name)) {
-      const firstName = storedUser.firstName || storedUser.first_name || '';
-      const lastName = storedUser.lastName || storedUser.last_name || '';
-      setUserName(`${firstName} ${lastName}`.trim() || 'User');
+    if (storedUser?.firstName || storedUser?.first_name) {
+      setUserName((storedUser.firstName || storedUser.first_name || '').split(' ')[0]);
     }
 
-    const fetchUser = async () => {
-      try {
-        const userData = await userService.getProfile();
-        const firstName = userData.firstName || '';
-        const lastName = userData.lastName || '';
-        setUserName(`${firstName} ${lastName}`.trim() || 'User');
-      } catch (err: any) {
-        if (err?.response?.status === 401) {
-          navigate('/sign-in');
-        } else {
-          console.error('Error fetching user:', err);
-        }
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchUser();
+    userService.getProfile()
+      .then((data: any) => {
+        setUserName((data.firstName || '').split(' ')[0] || '');
+      })
+      .catch((err: any) => {
+        if (err?.response?.status === 401) navigate('/sign-in');
+      })
+      .finally(() => setLoading(false));
   }, [navigate]);
 
   useEffect(() => {
-    const loadRecent = () => {
-      try {
-        const raw = localStorage.getItem(RECENT_TASKS_KEY);
-        const parsed = raw ? (JSON.parse(raw) as RecentTask[]) : [];
-        const next = parsed
-          .filter((t) => t && t.id)
-          .sort((a, b) => b.openedAt - a.openedAt)
-          .slice(0, 3);
-        setRecentTasks(next);
-      } catch {
-        setRecentTasks([]);
-      }
-    };
-    loadRecent();
-    window.addEventListener('storage', loadRecent);
-    return () => window.removeEventListener('storage', loadRecent);
-  }, []);
+    window.addEventListener('focus', refreshRecent);
+    return () => window.removeEventListener('focus', refreshRecent);
+  }, [refreshRecent]);
 
-  const handleTeamCreated = (team: Team) => {
-    setTeams(prev => [...prev, team]);
-  };
+  const handleTeamCreated = useCallback((team: Team) => {
+    window.dispatchEvent(new CustomEvent('teamCreated'));
+    onClose();
+    refreshRecent();
+  }, [onClose, refreshRecent]);
+
+  useDocumentTitle('Home');
+
+  const hour = new Date().getHours();
+  const greeting = useMemo(() => {
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  }, [hour]);
+
+  // All recent items sorted by time, max 8
+  const allRecent = useMemo(() => {
+    const { teams, sprints, tasks } = recent;
+    return [...teams, ...sprints, ...tasks]
+      .sort((a, b) => b.openedAt - a.openedAt)
+      .slice(0, 8);
+  }, [recent]);
 
   return (
     <motion.div
-      className="min-h-full bg-white dark:bg-dark-bg transition-colors duration-300"
+      className="min-h-full transition-colors duration-300"
+      style={{ background: 'var(--bg-primary)' }}
       variants={pageVariants}
       initial="initial"
       animate="animate"
       exit="exit"
     >
-      {/* Main Content */}
-      <main className="flex-1 bg-white dark:bg-dark-bg transition-colors duration-300 p-6 sm:p-8 overflow-y-auto">
-        <div className="max-w-6xl mx-auto">
-          {/* Welcome Section */}
-          <div className="mb-8">
-            <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-dark-text mb-2">
-              Hi {userName.split(' ')[0] || 'there'}
-            </h1>
-            {loading && (
-              <div className="text-xs text-gray-400 dark:text-dark-text-muted animate-pulse">
-                Syncing your workspace…
-              </div>
-            )}
-          </div>
+      <div className="max-w-4xl mx-auto px-8 pt-16 pb-16">
 
-          {/* Mobile Quick Actions */}
-          <div className="md:hidden mb-6 grid gap-3">
-            <button
-              onClick={() => navigate('/task/new')}
-              className="w-full min-h-[44px] px-4 py-3 rounded-xl bg-gray-100 dark:bg-dark-surface text-gray-900 dark:text-dark-text text-sm font-medium text-left shadow-sm"
-            >
-              New Task
-            </button>
-            <button
-              onClick={() => window.dispatchEvent(new CustomEvent('mobileCreateFolder'))}
-              className="w-full min-h-[44px] px-4 py-3 rounded-xl bg-gray-100 dark:bg-dark-surface text-gray-900 dark:text-dark-text text-sm font-medium text-left shadow-sm"
-            >
-              New Folder
-            </button>
-            <button
-              onClick={onOpen}
-              className="w-full min-h-[44px] px-4 py-3 rounded-xl bg-gray-900 dark:bg-white text-white dark:text-black text-sm font-medium text-left shadow-sm"
-            >
-              New Team
-            </button>
-          </div>
+        {/* Greeting */}
+        <motion.h1
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0, transition: { duration: 0.3, ease: 'easeOut' } }}
+          className="text-center text-4xl font-bold tracking-tight mb-12"
+          style={{ color: 'var(--text-primary)' }}
+        >
+          {loading && !userName
+            ? greeting
+            : `${greeting}${userName ? `, ${userName}` : ''}`}
+        </motion.h1>
 
-          {recentTasks.length > 0 && (
-            <div className="mb-10">
-              <h2 className="text-sm uppercase tracking-[0.2em] text-gray-500 dark:text-dark-text-muted mb-3">
-                Recent
-              </h2>
-              <div className="space-y-2">
-                {recentTasks.map((task) => (
-                  <button
-                    key={task.id}
-                    onClick={() => navigate(`/task/${task.id}`)}
-                    className="w-full text-left px-4 py-3 rounded-lg border border-gray-100 dark:border-dark-border hover:bg-gray-50 dark:hover:bg-dark-border transition-colors"
-                  >
-                    <div className="text-sm font-medium text-gray-900 dark:text-dark-text truncate">
-                      {task.title || 'Untitled'}
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
+        {/* Search bar */}
+        <motion.button
+          initial={{ opacity: 0, y: 6 }}
+          animate={{ opacity: 1, y: 0, transition: { delay: 0.08, duration: 0.22, ease: 'easeOut' } }}
+          onClick={() => setSearchOpen(true)}
+          className="w-full max-w-md mx-auto flex items-center gap-3 px-4 py-2.5 rounded-xl mb-10 transition-colors"
+          style={{
+            background: 'var(--bg-secondary)',
+            border: '1px solid var(--border-color)',
+            color: 'var(--text-secondary)',
+          }}
+          whileHover={{ borderColor: 'var(--text-secondary)', transition: { duration: 0.12 } }}
+        >
+          <Search size={15} />
+          <span className="flex-1 text-left text-sm">Search teams, sprints, tasks…</span>
+          <span className="text-xs font-mono px-1.5 py-0.5 rounded" style={{ background: 'var(--bg-primary)' }}>⌘K</span>
+        </motion.button>
 
-          {canEdit ? (
-            <div className="space-y-6">
-              <div className="bg-white dark:bg-dark-surface rounded-lg p-6">
-                <h2 className="text-xl font-semibold text-gray-900 dark:text-dark-text mb-4">Edit Content</h2>
-                <textarea
-                  value={markdownText}
-                  onChange={(e) => setMarkdownText(e.target.value)}
-                  placeholder="Write text in Markdown format..."
-                  className="w-full h-96 p-4 border border-gray-200 dark:border-dark-border rounded-lg font-mono text-sm resize-vertical focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text transition-colors"
-                />
-              </div>
-              {markdownText && (
-                <div className="prose prose-lg dark:prose-invert max-w-none bg-white dark:bg-dark-surface rounded-lg p-6">
-                  <div dangerouslySetInnerHTML={{ __html: markdownText }} />
-                </div>
-              )}
-            </div>
+        {/* Recently visited */}
+        <section className="mb-10">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1, transition: { delay: 0.06, duration: 0.2 } }}
+            className="flex items-center gap-2 mb-4"
+          >
+            <Clock size={14} style={{ color: 'var(--text-secondary)' }} />
+            <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+              Recently visited
+            </span>
+          </motion.div>
+
+          {allRecent.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1, transition: { delay: 0.1 } }}
+              className="flex gap-3"
+            >
+              {/* Placeholder cards */}
+              {[
+                { label: 'Open a team', icon: <Users size={20} />, action: onOpen },
+                { label: 'New task', icon: <FileText size={20} />, action: () => navigate('/task/new') },
+              ].map((p, i) => (
+                <motion.button
+                  key={i}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0, transition: { delay: 0.1 + i * 0.05, duration: 0.2 } }}
+                  onClick={p.action}
+                  className="flex-shrink-0 w-40 rounded-xl p-4 text-left flex flex-col justify-between transition-all duration-150"
+                  style={{ background: 'var(--bg-secondary)', border: '1px solid transparent', height: '128px' }}
+                  whileHover={{ scale: 1.02, borderColor: 'var(--border-color)', transition: { duration: 0.12 } }}
+                  whileTap={{ scale: 0.98 }}
+                >
+                  <div className="w-8 h-8 flex items-center justify-center rounded-lg" style={{ color: 'var(--text-secondary)', background: 'var(--bg-primary)' }}>
+                    {p.icon}
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>{p.label}</p>
+                    <p className="text-xs flex items-center gap-1 mt-1" style={{ color: 'var(--text-secondary)' }}>
+                      <Plus size={11} /> Get started
+                    </p>
+                  </div>
+                </motion.button>
+              ))}
+            </motion.div>
           ) : (
-            <div className="max-w-4xl mx-auto">
+            <div className="flex gap-3 overflow-x-auto pb-1 -mx-1 px-1 scrollbar-none">
+              <AnimatePresence initial={false}>
+                {allRecent.map((item, i) => (
+                  <RecentCard key={`${item.type}-${item.id}`} item={item} index={i} />
+                ))}
+              </AnimatePresence>
             </div>
           )}
-        </div>
-      </main>
+        </section>
+
+        {/* Quick actions row */}
+        <motion.section
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0, transition: { delay: 0.2, duration: 0.24, ease: 'easeOut' } }}
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+              Quick actions
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {[
+              { label: 'New team', icon: <Users size={14} />, action: onOpen },
+              { label: 'New task', icon: <FileText size={14} />, action: () => navigate('/task/new') },
+            ].map((a, i) => (
+              <motion.button
+                key={i}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.97 }}
+                onClick={a.action}
+                className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
+                style={{ background: 'var(--bg-secondary)', color: 'var(--text-primary)' }}
+              >
+                {a.icon}
+                {a.label}
+              </motion.button>
+            ))}
+          </div>
+        </motion.section>
+      </div>
 
       {open && (
         <NewTabModal
@@ -210,6 +269,8 @@ export const Dashboard: React.FC = () => {
           onTeamCreated={handleTeamCreated}
         />
       )}
+
+      <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </motion.div>
   );
 };

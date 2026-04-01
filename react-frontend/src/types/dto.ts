@@ -32,6 +32,7 @@ export interface TaskDTO {
   id: string;
   task: string;
   description: string;
+  icon?: string;
   user_ids: UserDTO[]; // expanded to include user objects for frontend
   team_id: string | null;
   folder_id: string | null;
@@ -74,6 +75,7 @@ export interface TeamDTO {
   id: string;
   name: string;
   description: string;
+  icon?: string;
   emails?: string[];
 }
 

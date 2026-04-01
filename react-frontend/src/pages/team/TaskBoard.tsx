@@ -7,14 +7,19 @@ import TeamTaskPanel from '@/widgets/TeamTaskPanel/TeamTaskPanel.js';
 import AddUserModal from '@/widgets/AddUserModal/AddUserModal.js';
 import type { Task, User } from '@/entities/types.js';
 import { useParams, useNavigate } from 'react-router-dom';
-import { taskService, teamService } from '@/services/api/index.js';
+import { taskService, teamService, userService } from '@/services/api/index.js';
+import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle.js';
 import BreadcrumbBack from '@/shared/ui/BreadcrumbBack.js';
+import { IconPicker } from '@/shared/ui/IconPicker.js';
 import { Layers } from 'lucide-react';
 
 const TaskBoard: React.FC = () => {
   const { team_id } = useParams<{ team_id: string }>();
   const navigate = useNavigate();
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [teamName, setTeamName] = useState<string | null>(null);
+  const [teamIcon, setTeamIcon] = useState('');
+  useDocumentTitle(teamName);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,6 +60,15 @@ const TaskBoard: React.FC = () => {
       console.error('Error fetching users:', err);
       setUsers([]);
     }
+  }, [team_id]);
+
+  useEffect(() => {
+    if (!team_id) return;
+    userService.getTeams().then((teams: any[]) => {
+      const found = teams.find((t: any) => t.id === team_id);
+      if (found?.name) setTeamName(found.name);
+      if (found?.icon) setTeamIcon(found.icon);
+    }).catch(() => {});
   }, [team_id]);
 
   const loadData = useCallback(async () => {

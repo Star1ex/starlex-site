@@ -25,6 +25,10 @@ export const teamService = {
     await httpClient.patch(`/api/teams/${teamId}/description`, { description });
   },
 
+  async updateTeamIcon(teamId: string, icon: string): Promise<void> {
+    await httpClient.patch(`/api/teams/${teamId}/icon`, { icon });
+  },
+
   async getTeamUsers(teamId: string): Promise<UserDTO[]> {
     const response = await httpClient.get<UserDTO[]>(`/api/teams/${teamId}/users`);
     return response.data;

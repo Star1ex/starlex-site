@@ -7,23 +7,16 @@ import type { TaskDTO, CreateTaskRequest } from '@/types/dto.js';
 import { useTasks } from '@/hooks/useTasks.js';
 import { showToast } from '@/shared/lib/toast.js';
 import BreadcrumbBack from '@/shared/ui/BreadcrumbBack.js';
+import { trackItem } from '@/shared/lib/recentItems.js';
+import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle.js';
+import { IconPicker } from '@/shared/ui/IconPicker.js';
 
 const MarkdownEditor = React.lazy(() =>
   import('@/components/TaskView/MarkdownEditor.js').then((m) => ({ default: m.MarkdownEditor }))
 );
 
-const RECENT_TASKS_KEY = 'recentTasks';
-
 const updateRecentTasks = (taskId: string, title: string) => {
-  try {
-    const raw = localStorage.getItem(RECENT_TASKS_KEY);
-    const parsed = raw ? (JSON.parse(raw) as Array<{ id: string; title: string; openedAt: number }>) : [];
-    const filtered = parsed.filter((t) => t.id !== taskId);
-    const next = [{ id: taskId, title, openedAt: Date.now() }, ...filtered].slice(0, 5);
-    localStorage.setItem(RECENT_TASKS_KEY, JSON.stringify(next));
-  } catch {
-    // ignore storage errors
-  }
+  trackItem({ id: taskId, name: title, url: `/task/${taskId}`, type: 'task' });
 };
 
 export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
@@ -47,6 +40,8 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
 
   // Local editing fields
   const [title, setTitle] = useState('');
+  useDocumentTitle(title || (isNew ? 'New Task' : null));
+  const [icon, setIcon] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'low'|'medium'|'high'>('medium');
   const [progress, setProgress] = useState<'not_started'|'in_progress'|'done'>('not_started');
@@ -70,6 +65,7 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
         if (!mounted) return;
         setTask(data);
         setTitle(data.task || '');
+        setIcon(data.icon || '');
         setDescription(data.description || '');
         setPriority(data.priority as any || 'medium');
         setProgress(data.progress as any || 'not_started');
@@ -267,7 +263,21 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
               to={sessionStorage.getItem('prevRoutePath') || '/dashboard'}
             />
           </div>
-          {/* Title Input - Notion Style */}
+          {/* Icon + Title — Notion style */}
+          {!isNew && (
+            <div className="mb-2">
+              <IconPicker
+                value={icon}
+                size={36}
+                onChange={(v) => {
+                  setIcon(v);
+                  if (taskIdParam && taskIdParam !== 'new') {
+                    taskService.updateTaskIcon(taskIdParam as string, v).catch(() => {});
+                  }
+                }}
+              />
+            </div>
+          )}
           <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Untitled" className="w-full text-5xl font-bold text-gray-900 dark:text-dark-text placeholder-gray-300 dark:placeholder-dark-text-muted bg-transparent border-none outline-none mb-6" style={{ fontWeight: 700, lineHeight: 1.2, letterSpacing: '-0.02em' }} />
 
           {/* Description */}

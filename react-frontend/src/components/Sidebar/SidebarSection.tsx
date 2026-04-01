@@ -15,7 +15,7 @@ interface SidebarSectionProps {
   title: string;
   type: 'teams' | 'tasks';
   defaultExpanded?: boolean;
-  teams?: Array<{ id: string; name: string }>;
+  teams?: Array<{ id: string; name: string; icon?: string }>;
   loadingTeams?: boolean;
   onTeamClick?: (teamId: string) => void;
   onAddTeam?: () => void;
@@ -92,12 +92,8 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
       if (!active || !over) return;
 
       if (active.type === 'task') {
-        if (over.type === 'folder') {
-          await tasksHook.moveTaskToFolder(active.id, over.id);
-        }
-        if (over.type === 'root') {
-          await tasksHook.moveTaskToFolder(active.id, null);
-        }
+        if (over.type === 'folder') await tasksHook.moveTaskToFolder(active.id, over.id);
+        if (over.type === 'root') await tasksHook.moveTaskToFolder(active.id, null);
         return;
       }
 
@@ -107,9 +103,7 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
           if (isDescendant(over.id, active.id)) return;
           await foldersHook.moveFolder(active.id, over.id);
         }
-        if (over.type === 'root') {
-          await foldersHook.moveFolder(active.id, null);
-        }
+        if (over.type === 'root') await foldersHook.moveFolder(active.id, null);
       }
     },
     [foldersHook, tasksHook, isDescendant]
@@ -120,7 +114,6 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
       onAddTeam?.();
       return;
     }
-
     const storedUser = getAuthUser();
     const resolvedOwnerId = userId ?? storedUser?.id ?? '';
     await foldersHook.createFolder({
@@ -134,23 +127,12 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
     });
   }, [type, onAddTeam, userId, foldersHook]);
 
-  const handleToggleExpanded = useCallback(() => {
-    setIsExpanded((prev) => !prev);
-  }, []);
-
   const handleHeaderContextMenu = useCallback((e: React.MouseEvent) => {
     if (type === 'tasks') openContextMenu(e, { type: 'root' });
   }, [openContextMenu, type]);
 
-  const handleTeamClick = useCallback((teamId: string) => {
-    onTeamClick?.(teamId);
-  }, [onTeamClick]);
-
   const [teamMenu, setTeamMenu] = useState<{ show: boolean; x: number; y: number; teamId: string | null }>({
-    show: false,
-    x: 0,
-    y: 0,
-    teamId: null,
+    show: false, x: 0, y: 0, teamId: null,
   });
   const [renamingTeamId, setRenamingTeamId] = useState<string | null>(null);
 
@@ -166,97 +148,96 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
   }, [teamMenu.show, closeTeamMenu]);
 
   return (
-    <div className="py-1">
+    <div>
+      {/* Section header */}
       <div
-        className="flex items-center justify-between px-1 group"
+        className="flex items-center justify-between px-2 group mb-0.5"
         onContextMenu={handleHeaderContextMenu}
       >
         <button
-          onClick={handleToggleExpanded}
-          className="flex items-center gap-2 flex-1 px-2 py-1 hover:bg-gray-100 dark:hover:bg-dark-border rounded-md transition-colors text-left"
+          onClick={() => setIsExpanded((p) => !p)}
+          className="flex items-center gap-1.5 flex-1 py-1.5 rounded transition-colors text-left"
         >
           <ChevronRight
-            className={`w-4 h-4 text-gray-500 transition-transform ${isExpanded ? 'rotate-90' : ''}`}
+            size={14}
+            className={`text-gray-400 dark:text-dark-text-muted transition-transform flex-shrink-0 ${isExpanded ? 'rotate-90' : ''}`}
           />
-          <span className="text-[11px] font-semibold text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">
+          <span className="text-xs font-semibold text-gray-400 dark:text-dark-text-muted tracking-wide">
             {title}
           </span>
         </button>
 
         <button
           onClick={handleAddNew}
-          className="p-1 hover:bg-gray-100 dark:hover:bg-dark-border rounded opacity-0 group-hover:opacity-100 transition-opacity"
+          className="w-6 h-6 flex items-center justify-center rounded hover:bg-gray-100 dark:hover:bg-dark-border opacity-0 group-hover:opacity-100 transition-opacity"
           title={`Add ${type === 'teams' ? 'team' : 'folder'}`}
         >
-          <Plus className="w-4 h-4 text-gray-500" />
+          <Plus size={14} className="text-gray-400 dark:text-dark-text-muted" />
         </button>
       </div>
 
       {isExpanded && (
         <DndContext sensors={sensors} onDragEnd={handleDragEnd}>
           <div
-            className="pl-2 mt-1 space-y-0.5"
+            className="space-y-0"
             style={{ contentVisibility: 'auto', containIntrinsicSize: '1px 400px' }}
           >
             {type === 'tasks' ? (
-              <>
-                <div
-                  ref={setRootDropRef}
-                  className={`rounded-md transition-colors ${isRootOver ? 'bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-300 dark:ring-blue-700' : ''}`}
-                >
-                  {rootFolders.map((folder: FolderDTO) => (
-                    <FolderItem
-                      key={folder.id}
-                      folder={folder}
-                      level={0}
-                      getSubfolders={foldersHook.getSubfolders}
-                      getFolderTasks={tasksHook.getFolderTasks}
-                      onUpdateFolder={foldersHook.updateFolder}
-                      onDeleteFolder={foldersHook.deleteFolder}
-                      onUpdateTask={tasksHook.updateTask}
-                      savingFolderIds={savingFolderIds}
-                      recentFolderIds={recentFolderIds}
-                      recentTaskIds={recentTaskIds}
-                      removingFolderIds={removingFolderIds}
-                      removingTaskIds={removingTaskIds}
-                    />
-                  ))}
-
-                  {type === 'tasks' && foldersHook.createError && (
-                    <div className="px-4 py-1 text-xs text-red-500">{foldersHook.createError}</div>
-                  )}
-
-                  {orphanTasks.length > 0 && (
-                    <div className="mt-1">
-                      {orphanTasks.map((task: TaskDTO) => (
-                        <TaskItem
-                          key={task.id}
-                          task={task}
-                          level={0}
-                          onUpdateTask={tasksHook.updateTask}
-                          isRemoving={!!removingTaskIds[task.id]}
-                          recentTaskIds={recentTaskIds}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </>
+              <div
+                ref={setRootDropRef}
+                className={`rounded-md transition-colors ${isRootOver ? 'bg-blue-50 dark:bg-blue-900/20 ring-1 ring-blue-300 dark:ring-blue-700' : ''}`}
+              >
+                {rootFolders.map((folder: FolderDTO) => (
+                  <FolderItem
+                    key={folder.id}
+                    folder={folder}
+                    level={0}
+                    getSubfolders={foldersHook.getSubfolders}
+                    getFolderTasks={tasksHook.getFolderTasks}
+                    onUpdateFolder={foldersHook.updateFolder}
+                    onDeleteFolder={foldersHook.deleteFolder}
+                    onUpdateTask={tasksHook.updateTask}
+                    savingFolderIds={savingFolderIds}
+                    recentFolderIds={recentFolderIds}
+                    recentTaskIds={recentTaskIds}
+                    removingFolderIds={removingFolderIds}
+                    removingTaskIds={removingTaskIds}
+                  />
+                ))}
+                {foldersHook.createError && (
+                  <div className="px-4 py-1 text-xs text-red-500">{foldersHook.createError}</div>
+                )}
+                {orphanTasks.length > 0 && (
+                  <div className="mt-0.5">
+                    {orphanTasks.map((task: TaskDTO) => (
+                      <TaskItem
+                        key={task.id}
+                        task={task}
+                        level={0}
+                        onUpdateTask={tasksHook.updateTask}
+                        isRemoving={!!removingTaskIds[task.id]}
+                        recentTaskIds={recentTaskIds}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             ) : (
               <>
                 {loadingTeams && (
-                  <div className="pl-4 py-1.5 text-xs text-gray-500 dark:text-dark-text-muted text-left">Loading...</div>
+                  <div className="pl-4 py-1 text-xs text-gray-400 dark:text-dark-text-muted">Loading…</div>
                 )}
                 {!loadingTeams && teams.length === 0 && (
-                  <div className="pl-4 py-1.5 text-xs text-gray-500 dark:text-dark-text-muted text-left">No teams yet</div>
+                  <div className="pl-4 py-1 text-xs text-gray-400 dark:text-dark-text-muted">No teams yet</div>
                 )}
                 {teams.map((team) => (
                   <TeamItem
                     key={team.id}
                     id={team.id}
                     name={team.name}
+                    icon={team.icon}
                     isActive={activeTeamId === team.id}
-                    onClick={handleTeamClick}
+                    onClick={onTeamClick ?? (() => {})}
                     onOpenMenu={(e, teamId) => {
                       e.preventDefault();
                       e.stopPropagation();
@@ -264,10 +245,7 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
                     }}
                     isRenaming={renamingTeamId === team.id}
                     onRename={async (newName) => {
-                      if (!newName.trim()) {
-                        setRenamingTeamId(null);
-                        return;
-                      }
+                      if (!newName.trim()) { setRenamingTeamId(null); return; }
                       await onRenameTeam?.(team.id, newName.trim());
                       setRenamingTeamId(null);
                     }}
@@ -289,19 +267,13 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
             onMouseDown={(e) => e.stopPropagation()}
           >
             <button
-              onClick={() => {
-                setRenamingTeamId(teamMenu.teamId);
-                closeTeamMenu();
-              }}
+              onClick={() => { setRenamingTeamId(teamMenu.teamId); closeTeamMenu(); }}
               className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-dark-border text-gray-700 dark:text-dark-text"
             >
               Rename
             </button>
             <button
-              onClick={async () => {
-                await onDeleteTeam?.(teamMenu.teamId as string);
-                closeTeamMenu();
-              }}
+              onClick={async () => { await onDeleteTeam?.(teamMenu.teamId as string); closeTeamMenu(); }}
               className="w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-dark-border text-red-600"
             >
               Delete
@@ -318,6 +290,7 @@ export default SidebarSection;
 const TeamItem: React.FC<{
   id: string;
   name: string;
+  icon?: string;
   isActive: boolean;
   onClick: (id: string) => void;
   onOpenMenu: (e: React.MouseEvent, id: string) => void;
@@ -325,18 +298,27 @@ const TeamItem: React.FC<{
   onRename: (name: string) => void;
   onCancelRename: () => void;
 }> = React.memo(
-  ({ id, name, isActive, onClick, onOpenMenu, isRenaming, onRename, onCancelRename }) => {
+  ({ id, name, icon, isActive, onClick, onOpenMenu, isRenaming, onRename, onCancelRename }) => {
     const handleClick = useCallback(() => onClick(id), [id, onClick]);
     return (
       <div
         onClick={handleClick}
         onContextMenu={(e) => onOpenMenu(e, id)}
-        className={`w-full flex items-center gap-2 pl-4 pr-2 py-1.5 rounded text-sm transition-colors text-left cursor-pointer ${
+        className={`w-full flex items-center gap-2 px-2 py-2 rounded-md text-sm transition-colors cursor-pointer mx-0 ${
           isActive
-            ? 'bg-gray-100 dark:bg-dark-border text-gray-900 dark:text-dark-text'
-            : 'text-gray-700 dark:text-dark-text-muted hover:bg-gray-100 dark:hover:bg-dark-border'
+            ? 'bg-gray-100 dark:bg-dark-border text-gray-900 dark:text-dark-text font-medium'
+            : 'text-gray-600 dark:text-dark-text-muted hover:bg-gray-100 dark:hover:bg-dark-border hover:text-gray-900 dark:hover:text-dark-text'
         }`}
       >
+        {icon ? (
+          <span className="flex-shrink-0 text-base leading-none" style={{ width: 16, textAlign: 'center' }}>{icon}</span>
+        ) : (
+          <span
+            className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${
+              isActive ? 'bg-gray-900 dark:bg-dark-text' : 'bg-gray-300 dark:bg-dark-text-muted'
+            }`}
+          />
+        )}
         {isRenaming ? (
           <InlineEdit
             value={name}
@@ -353,6 +335,7 @@ const TeamItem: React.FC<{
   (prev, next) =>
     prev.id === next.id &&
     prev.name === next.name &&
+    prev.icon === next.icon &&
     prev.isActive === next.isActive &&
     prev.isRenaming === next.isRenaming,
 );

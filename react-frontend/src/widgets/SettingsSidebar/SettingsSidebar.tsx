@@ -119,7 +119,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
     >
       {!isCollapsed && (
         <div className="h-full flex flex-col">
-          <SidebarHeader displayName={`${displayName}'s`} onToggleCollapse={collapse} />
+          <SidebarHeader onToggleCollapse={collapse} />
 
           <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-2 space-y-1">
             <button
