@@ -1,193 +1,301 @@
-import React from "react";
-import { motion } from "framer-motion";
+import React, { useRef, useState, useEffect } from "react";
+import { motion, useInView, type Variants } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/shared/contexts/ThemeContext.js";
 import iconTeamtrack from "@/assets/icon-teamtrack.png";
 
-type AboutUsProps = {
-  variant?: "page" | "settings";
-};
+type AboutUsProps = { variant?: "page" | "settings" };
+
+// ─── Data ─────────────────────────────────────────────────────────────────────
 
 const teamMembers = [
-  { name: "Artem", role: "Lead", github: "critiq17" },
-  { name: "Zakhar", role: "Backend", github: "SH1roV12" },
-  { name: "Artur", role: "DevOps", github: "Oget565" },
+  { name: "Artem",  role: "Lead & Frontend",   github: "critiq17",  description: "Product vision, architecture decisions, and everything you see on screen." },
+  { name: "Zakhar", role: "Backend Engineer",   github: "SH1roV12", description: "Go services, database modeling, and the APIs that power the product." },
+  { name: "Artur",  role: "DevOps",             github: "Oget565",  description: "Infrastructure, CI/CD pipelines, and keeping the platform running." },
 ];
 
-const updates = [
-  {
-    date: "Feb 4, 2026",
-    title: "Live collaboration now includes assignee and status pings.",
-    body: "Reduce context switching with inline updates and instant teammate visibility.",
-    tag: "Collaboration",
-  },
-  {
-    date: "Feb 1, 2026",
-    title: "Markdown editor refresh with faster rendering.",
-    body: "Write once, preview instantly. Large task notes now feel snappy.",
-    tag: "Markdown",
-  },
-  {
-    date: "Dec 10, 2025",
-    title: "Published first release.",
-    body: "Minimal functionality for core features.",
-    tag: "Launch",
-  },
+const values = [
+  { title: "Open by default", body: "Source is public. No hidden roadmaps, no lock-in." },
+  { title: "Calm tools",      body: "No clutter, no noise. Every feature earns its place." },
+  { title: "Speed first",     body: "Interactions feel instant. Latency is a bug, not a cost." },
+  { title: "Visible teams",   body: "Everyone sees what's happening, without asking." },
 ];
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0 },
+const changelog = [
+  { date: "Mar 2026", tag: "Feature",       title: "Global search with icon picker and recents.",      body: "Find anything instantly — tasks, folders, and teams — with a keyboard-first search modal." },
+  { date: "Feb 2026", tag: "Sprints",       title: "Sprint integration with velocity tracking.",        body: "Plan iterations, close sprints cleanly, and track team velocity over time." },
+  { date: "Feb 2026", tag: "Collaboration", title: "Live collaboration with assignee pings.",           body: "See teammate changes the moment they happen. No refresh needed." },
+  { date: "Feb 2026", tag: "Editor",        title: "Markdown editor refresh.",                          body: "Write once, preview instantly. Large task notes now feel snappy with BlockNote." },
+  { date: "Dec 2025", tag: "Launch",        title: "First public release.",                             body: "Minimal, focused, and open. The foundation everything else is built on." },
+];
+
+const stats = [
+  { value: "3",    label: "Developers" },
+  { value: "2025", label: "Founded"    },
+];
+
+// ─── Animation variants ───────────────────────────────────────────────────────
+
+const EASE: [number, number, number, number] = [0.16, 1, 0.3, 1];
+
+const fadeUp: Variants = {
+  hidden:  { opacity: 0, y: 32, filter: "blur(4px)" },
+  visible: { opacity: 1, y: 0,  filter: "blur(0px)", transition: { duration: 0.75, ease: EASE } },
 };
 
-const stagger = {
-  hidden: {},
-  visible: {
-    transition: {
-      staggerChildren: 0.12,
-    },
-  },
+const containerVariants: Variants = {
+  hidden:  {},
+  visible: { transition: { staggerChildren: 0.1, delayChildren: 0.05 } },
 };
+
+// ─── SectionWrapper ───────────────────────────────────────────────────────────
+
+function SectionWrapper({ children, className = "" }: { children: React.ReactNode; className?: string }) {
+  const ref = useRef(null);
+  const inView = useInView(ref, { once: true, amount: 0.1 });
+  return (
+    <motion.div ref={ref} variants={containerVariants} initial="hidden" animate={inView ? "visible" : "hidden"} className={className}>
+      {children}
+    </motion.div>
+  );
+}
+
+// ─── Main component ───────────────────────────────────────────────────────────
 
 export default function AboutUs({ variant = "page" }: AboutUsProps) {
   const isSettings = variant === "settings";
-  const { theme, toggleTheme } = useTheme();
-  const themeLabel =
-    theme === "dark" ? "Dark Blue" : theme === "ultra-dark" ? "Ultra Dark" : theme === "solarized" ? "Solarized" : "Light";
+  const { theme } = useTheme();
+  const navigate = useNavigate();
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    if (isSettings) return;
+    const handler = () => setScrolled(window.scrollY > 40);
+    window.addEventListener("scroll", handler, { passive: true });
+    return () => window.removeEventListener("scroll", handler);
+  }, [isSettings]);
+
+  const darkVars = theme === "dark" ? ({
+    "--bg-primary":        "#0b090a",
+    "--bg-secondary":      "#121011",
+    "--bg-tertiary":       "#191617",
+    "--bg-hover":          "#1f1b1c",
+    "--text-primary":      "#f2f0ee",
+    "--text-secondary":    "#c2bbb6",
+    "--text-tertiary":     "#9b928c",
+    "--border-color":      "#241f21",
+    "--accent-blue":       "#7c3aed",
+    "--button-bg":         "rgba(255,255,255,0.08)",
+    "--button-bg-hover":   "rgba(255,255,255,0.13)",
+    "--button-bg-active":  "rgba(255,255,255,0.18)",
+  } as React.CSSProperties) : undefined;
+
+  const displayedChangelog = isSettings ? changelog.slice(0, 3) : changelog;
 
   return (
     <div
-      className={`relative font-sans bg-[color:var(--bg-primary)] text-[color:var(--text-primary)] transition-colors duration-300 ${
-        isSettings ? "w-full py-6" : "min-h-screen py-10 sm:py-14"
-      }`}
+      className="relative font-sans bg-[color:var(--bg-primary)] text-[color:var(--text-primary)] transition-colors duration-300"
+      style={isSettings ? undefined : darkVars}
     >
-      {!isSettings ? (
-        <div className="star-field">
-          {Array.from({ length: 16 }).map((_, index) => (
-            <span
-              key={index}
-              className="star"
-              style={{
-                top: `${8 + index * 5}%`,
-                left: `${(index * 13) % 92}%`,
-                width: `${index % 3 === 0 ? 2 : 1}px`,
-                height: `${index % 3 === 0 ? 2 : 1}px`,
-                animationDelay: `${index * 0.35}s`,
-                animationDuration: `${6 + (index % 4)}s`,
-              }}
-            />
+      {/* Star field — page only */}
+      {!isSettings && (
+        <div className="star-field pointer-events-none">
+          {Array.from({ length: 16 }).map((_, i) => (
+            <span key={i} className="star" style={{
+              top: `${8 + i * 5}%`, left: `${(i * 13) % 92}%`,
+              width: `${i % 3 === 0 ? 2 : 1}px`, height: `${i % 3 === 0 ? 2 : 1}px`,
+              animationDelay: `${i * 0.35}s`, animationDuration: `${6 + (i % 4)}s`,
+            }} />
           ))}
         </div>
-      ) : null}
+      )}
 
-      <div className={`${isSettings ? "max-w-4xl" : "max-w-5xl"} mx-auto px-6 sm:px-10 relative`}>
-        {!isSettings ? (
-          <header className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between mb-12">
-            <div className="flex items-center gap-3">
-              <img src={iconTeamtrack} alt="TeamTrack" className="w-9 h-9 object-contain" />
-              <div className="text-sm tracking-[0.2em] uppercase text-[color:var(--text-secondary)]">TeamTrack</div>
+      {/* Sticky navbar — page only */}
+      {!isSettings && (
+        <nav className={["fixed top-0 inset-x-0 z-50 transition-all duration-300", scrolled ? "backdrop-blur-md bg-[color:var(--bg-primary)]/80 shadow-sm" : "bg-transparent"].join(" ")}>
+          <div className="max-w-6xl mx-auto px-6 sm:px-10 h-16 flex items-center justify-between gap-4">
+            <button onClick={() => navigate("/")} className="flex items-center gap-3">
+              <img src={iconTeamtrack} alt="TeamTrack logo" className="w-8 h-8 object-contain" />
+              <span className="tt-font-display text-lg tracking-tight text-[color:var(--text-primary)]">TeamTrack</span>
+            </button>
+            <div className="flex items-center gap-2">
+              <motion.button onClick={() => navigate("/sign-in")} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} transition={{ duration: 0.15 }} className="tt-button">Sign In</motion.button>
+              <motion.button onClick={() => navigate("/sign-up")} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} transition={{ duration: 0.15 }} className="tt-button tt-button-primary">Sign Up</motion.button>
             </div>
-            <div className="flex flex-wrap items-center gap-3">
-              <button onClick={toggleTheme} className="tt-button text-xs uppercase tracking-[0.3em]">
-                {themeLabel}
-              </button>
-              <a href="/" className="tt-button">
-                Back Home
-              </a>
-              <a href="https://github.com/Team-Tracks" target="_blank" rel="noopener noreferrer" className="tt-button">
-                GitHub Org
-              </a>
+          </div>
+        </nav>
+      )}
+
+      <div className={`max-w-6xl mx-auto px-6 sm:px-10 relative ${isSettings ? "py-6" : "pt-36 pb-10"}`}>
+
+        {/* ── Hero ── */}
+        <SectionWrapper className="flex flex-col items-center text-center gap-8 pb-20 sm:pb-28">
+          <motion.p variants={fadeUp} className="text-xs uppercase tracking-[0.4em] text-[color:var(--text-secondary)]">About Us</motion.p>
+          <motion.h1 variants={fadeUp} className={`tt-font-display leading-[1.08] max-w-4xl ${isSettings ? "text-3xl sm:text-4xl" : "text-5xl sm:text-6xl lg:text-7xl"}`}>
+            A small team building calm, open collaboration.
+          </motion.h1>
+          <motion.p variants={fadeUp} className="text-[color:var(--text-secondary)] text-lg sm:text-xl leading-relaxed max-w-2xl">
+            TeamTrack is built in the open with a minimalist mindset. Simple, fast, and thoughtfully
+            designed so teams stay focused on momentum — not tooling.
+          </motion.p>
+          {!isSettings && (
+            <motion.div variants={containerVariants} className="flex flex-col sm:flex-row items-center gap-8 sm:gap-16 mt-4">
+              {stats.map((stat) => (
+                <motion.div key={stat.label} variants={fadeUp} className="flex flex-col items-center gap-1">
+                  <span className="tt-font-display text-4xl sm:text-5xl">{stat.value}</span>
+                  <span className="text-xs uppercase tracking-[0.3em] text-[color:var(--text-secondary)]">{stat.label}</span>
+                </motion.div>
+              ))}
+            </motion.div>
+          )}
+        </SectionWrapper>
+
+        {/* ── Values — page only ── */}
+        {!isSettings && (
+          <SectionWrapper className="py-16 sm:py-20">
+            <motion.div variants={fadeUp} className="flex flex-col gap-2 mb-10">
+              <p className="text-xs uppercase tracking-[0.4em] text-[color:var(--text-secondary)]">What we believe</p>
+              <h2 className="tt-font-display text-3xl sm:text-4xl">Values</h2>
+            </motion.div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+              {values.map((v) => (
+                <motion.div key={v.title} variants={fadeUp} className="rounded-2xl bg-[color:var(--bg-secondary)]/80 p-7 flex flex-col gap-3 border border-[color:var(--border-color)]">
+                  <span className="w-2 h-2 rounded-full" style={{ background: "var(--accent-blue)" }} />
+                  <h3 className="tt-font-display text-xl">{v.title}</h3>
+                  <p className="text-sm text-[color:var(--text-secondary)] leading-relaxed">{v.body}</p>
+                </motion.div>
+              ))}
             </div>
-          </header>
-        ) : null}
+          </SectionWrapper>
+        )}
 
-        <motion.section
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.4 }}
-          variants={fadeUp}
-          transition={{ duration: 0.5, ease: "easeOut" }}
-          className={`${isSettings ? "text-center" : ""}`}
-        >
-          <p className="text-xs uppercase tracking-[0.4em] text-[color:var(--text-secondary)]">About Us</p>
-          <h1 className="tt-font-display mt-6 text-4xl sm:text-5xl leading-tight">
-            A small team focused on calm, open collaboration.
-          </h1>
-          <p className="mt-6 text-[color:var(--text-secondary)] max-w-2xl mx-auto">
-            TeamTrack is built in the open with a minimalist mindset. We keep the product simple, fast, and thoughtfully
-            designed so teams can focus on momentum.
-          </p>
-        </motion.section>
-
-        <motion.section
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.3 }}
-          variants={stagger}
-          className="mt-14 sm:mt-20"
-        >
-          <motion.div variants={fadeUp} className="flex items-center justify-between gap-4 mb-8">
-            <h2 className="tt-font-display text-2xl sm:text-3xl">Team</h2>
-            {!isSettings ? (
-              <a href="https://github.com/Team-Tracks" target="_blank" rel="noopener noreferrer" className="tt-link text-sm">
+        {/* ── Team ── */}
+        <SectionWrapper className={isSettings ? "pb-10" : "py-16 sm:py-20"}>
+          <motion.div variants={fadeUp} className="flex items-center justify-between gap-4 mb-10">
+            <div className="flex flex-col gap-2">
+              <p className="text-xs uppercase tracking-[0.4em] text-[color:var(--text-secondary)]">The people</p>
+              <h2 className="tt-font-display text-3xl sm:text-4xl">Team</h2>
+            </div>
+            {!isSettings && (
+              <a href="https://github.com/Team-Tracks" target="_blank" rel="noopener noreferrer" className="tt-link text-sm shrink-0">
                 Explore the org
               </a>
-            ) : null}
+            )}
           </motion.div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5 w-full items-stretch">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
             {teamMembers.map((member) => (
-              <motion.div
-                key={member.github}
-                variants={fadeUp}
-                transition={{ duration: 0.5 }}
-                className="rounded-2xl bg-[color:var(--bg-secondary)]/80 p-6 text-left h-full w-full"
-              >
-                <img
-                  src={`https://github.com/${member.github}.png`}
-                  alt={member.name}
-                  loading="lazy"
-                  decoding="async"
-                  className="w-14 h-14 rounded-full object-cover mb-4"
-                />
-                <div className="tt-font-display text-xl">{member.name}</div>
-                <div className="text-sm text-[color:var(--text-secondary)] mt-1">{member.role}</div>
-                <a
-                  href={`https://github.com/${member.github}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex mt-4 text-sm tt-link"
-                >
+              <motion.div key={member.github} variants={fadeUp} className="rounded-2xl bg-[color:var(--bg-secondary)]/80 p-6 flex flex-col gap-4 border border-[color:var(--border-color)]">
+                <img src={`https://github.com/${member.github}.png`} alt={member.name} loading="lazy" decoding="async" className="w-14 h-14 rounded-full object-cover" />
+                <div className="flex flex-col gap-1">
+                  <div className="tt-font-display text-xl">{member.name}</div>
+                  <div className="text-xs uppercase tracking-[0.25em] text-[color:var(--text-secondary)]">{member.role}</div>
+                </div>
+                <p className="text-sm text-[color:var(--text-secondary)] leading-relaxed flex-1">{member.description}</p>
+                <a href={`https://github.com/${member.github}`} target="_blank" rel="noopener noreferrer" className="text-sm tt-link">
                   @{member.github}
                 </a>
               </motion.div>
             ))}
           </div>
-        </motion.section>
+        </SectionWrapper>
 
-        <motion.section
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.3 }}
-          variants={stagger}
-          className="mt-16 sm:mt-24"
-        >
-          <motion.div variants={fadeUp} className="flex flex-col gap-3">
+        {/* ── Changelog ── */}
+        <SectionWrapper className={isSettings ? "pb-10" : "py-16 sm:py-20"}>
+          <motion.div variants={fadeUp} className="flex flex-col gap-2 mb-10">
             <p className="text-xs uppercase tracking-[0.4em] text-[color:var(--text-secondary)]">Latest Updates</p>
-            <h2 className="tt-font-display text-2xl sm:text-3xl">Changelog</h2>
+            <h2 className="tt-font-display text-3xl sm:text-4xl">Changelog</h2>
           </motion.div>
-          <div className="mt-8 space-y-8">
-            {updates.map((update, index) => (
-              <motion.div key={update.title} variants={fadeUp} transition={{ duration: 0.5, delay: index * 0.05 }}>
-                <div className="text-xs uppercase tracking-[0.3em] text-[color:var(--text-secondary)] flex flex-wrap gap-3">
-                  <span>{update.date}</span>
-                  <span>{update.tag}</span>
+          <div className="flex flex-col divide-y divide-[color:var(--border-color)]">
+            {displayedChangelog.map((entry) => (
+              <motion.div key={entry.title} variants={fadeUp} className="grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-3 sm:gap-10 py-7">
+                <div className="flex sm:flex-col gap-3 sm:gap-2">
+                  <span className="text-xs text-[color:var(--text-secondary)] tracking-wide">{entry.date}</span>
+                  <span className="text-xs uppercase tracking-[0.25em] font-medium" style={{ color: "var(--accent-blue)" }}>{entry.tag}</span>
                 </div>
-                <h3 className="mt-3 text-lg text-[color:var(--text-primary)]">{update.title}</h3>
-                <p className="mt-2 text-[color:var(--text-secondary)] max-w-2xl">{update.body}</p>
+                <div className="flex flex-col gap-2">
+                  <h3 className="text-base font-medium text-[color:var(--text-primary)] leading-snug">{entry.title}</h3>
+                  <p className="text-sm text-[color:var(--text-secondary)] leading-relaxed">{entry.body}</p>
+                </div>
               </motion.div>
             ))}
           </div>
-        </motion.section>
+        </SectionWrapper>
+
+        {/* ── CTA — page only ── */}
+        {!isSettings && (
+          <SectionWrapper className="py-20 sm:py-28 flex flex-col items-center text-center gap-8">
+            <motion.h2 variants={fadeUp} className="tt-font-display text-4xl sm:text-5xl lg:text-6xl max-w-3xl">
+              Ready to try it?
+            </motion.h2>
+            <motion.div variants={fadeUp} className="flex flex-col sm:flex-row items-center gap-4">
+              <motion.button
+                onClick={() => navigate("/sign-up")}
+                whileHover="hover" whileTap={{ scale: 0.97 }} initial="rest"
+                className="relative overflow-hidden rounded-full bg-[color:var(--text-primary)] text-[color:var(--bg-primary)] px-8 py-3.5 text-[0.95rem] font-medium flex items-center gap-2"
+              >
+                <motion.span variants={{ rest: { x: 0 }, hover: { x: -3 } }} transition={{ duration: 0.2, ease: "easeOut" }}>Get started free</motion.span>
+                <motion.span variants={{ rest: { x: 0, opacity: 0.6 }, hover: { x: 4, opacity: 1 } }} transition={{ duration: 0.2, ease: "easeOut" }}>→</motion.span>
+                <motion.span className="absolute inset-0 bg-white/10" variants={{ rest: { opacity: 0 }, hover: { opacity: 1 } }} transition={{ duration: 0.2 }} />
+              </motion.button>
+              <motion.button
+                onClick={() => navigate("/")} whileTap={{ scale: 0.97 }}
+                className="text-[0.95rem] font-medium text-[color:var(--text-secondary)] hover:text-[color:var(--text-primary)] transition-colors duration-200 underline-offset-4 hover:underline"
+              >
+                Back to home
+              </motion.button>
+            </motion.div>
+          </SectionWrapper>
+        )}
       </div>
+
+      {/* ── Watermark — page only ── */}
+      {!isSettings && (
+        <div className="w-full overflow-hidden select-none pointer-events-none py-4">
+          <motion.p
+            initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }} transition={{ duration: 1.2, ease: EASE }}
+            className="text-center"
+            style={{ fontSize: "clamp(4rem, 18vw, 16rem)", fontFamily: '"Playfair Display", serif', letterSpacing: "-0.04em", lineHeight: 1, color: "var(--text-primary)", opacity: 0.06 }}
+          >
+            TeamTrack
+          </motion.p>
+        </div>
+      )}
+
+      {/* ── Footer — page only ── */}
+      {!isSettings && (
+        <div className="max-w-6xl mx-auto px-6 sm:px-10">
+          <footer className="pt-12 pb-10">
+            <div className="h-px w-full bg-[color:var(--text-primary)]/10 mb-12" />
+            <div className="grid grid-cols-1 md:grid-cols-[1.4fr_1fr_1fr] gap-10 mb-12">
+              <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-3">
+                  <img src={iconTeamtrack} alt="TeamTrack logo" className="w-8 h-8 object-contain" />
+                  <span className="tt-font-display text-xl">TeamTrack</span>
+                </div>
+                <p className="text-sm text-[color:var(--text-secondary)] leading-relaxed max-w-xs">Open-source task management for modern teams.</p>
+              </div>
+              <div className="flex flex-col gap-4">
+                <span className="text-xs uppercase tracking-[0.3em] text-[color:var(--text-secondary)]">Support</span>
+                <div className="flex flex-col gap-2 text-sm">
+                  <span className="text-[color:var(--text-secondary)]">critiq17@gmail.com</span>
+                  <a href="https://t.me/critiq1" target="_blank" rel="noopener noreferrer" className="tt-link">@critiq1</a>
+                </div>
+              </div>
+              <div className="flex flex-col gap-4">
+                <span className="text-xs uppercase tracking-[0.3em] text-[color:var(--text-secondary)]">Links</span>
+                <div className="flex flex-col gap-2 text-sm">
+                  <button onClick={() => navigate("/")} className="tt-link text-left">Home</button>
+                  <button onClick={() => navigate("/sign-in")} className="tt-link text-left">Sign In</button>
+                  <button onClick={() => navigate("/sign-up")} className="tt-link text-left">Sign Up</button>
+                </div>
+              </div>
+            </div>
+            <div className="h-px w-full bg-[color:var(--text-primary)]/10 mb-6" />
+            <p className="text-xs text-[color:var(--text-secondary)] text-center tracking-wide">&copy; 2026 TeamTrack. Open-source.</p>
+          </footer>
+        </div>
+      )}
     </div>
   );
 }

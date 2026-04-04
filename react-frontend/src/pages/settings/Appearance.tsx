@@ -51,7 +51,6 @@ function ThemePreview({ theme }: { theme: typeof themeOptions[number] }) {
       style={{ background: theme.bg, height: 88 }}
     >
       <div className="flex h-full">
-        {/* Mini sidebar */}
         <div className="w-10 h-full flex-shrink-0 p-1.5 space-y-1" style={{ background: theme.sidebar }}>
           {[20, 14, 14, 14, 14].map((w, i) => (
             <div
@@ -61,7 +60,6 @@ function ThemePreview({ theme }: { theme: typeof themeOptions[number] }) {
             />
           ))}
         </div>
-        {/* Mini content */}
         <div className="flex-1 p-2 space-y-1.5">
           <div className="rounded-sm" style={{ background: theme.text, height: 6, width: '60%', opacity: 0.7 }} />
           <div className="flex gap-1">

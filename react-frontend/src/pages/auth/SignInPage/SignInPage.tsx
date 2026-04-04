@@ -5,12 +5,13 @@ import { motion } from "framer-motion";
 import { authService } from '@/services/api/index.js';
 import { setAuthUser } from '@/shared/lib/authManager.js';
 import { useAuth } from '@/contexts/AuthContext.js';
-import { useTheme } from '@/shared/contexts/ThemeContext.js';
+import { useTheme, useSystemThemeOnly } from '@/shared/contexts/ThemeContext.js';
 import { FaGoogle, FaGithub } from 'react-icons/fa';
 import { Helmet } from 'react-helmet-async';
 import { listVariants, listItemVariants, pageVariants } from '@/shared/lib/animations.js';
 
 export const SignInPage = () => {
+  useSystemThemeOnly();
   const navigate = useNavigate();
   const location = useLocation();
   const [formEmail, setFormEmail] = useState("");
@@ -144,10 +145,7 @@ export const SignInPage = () => {
         onClick={toggleTheme}
         className="absolute top-6 right-6 px-3 py-2 rounded-full border border-gray-200 dark:border-dark-border text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-dark-text hover:bg-gray-50 dark:hover:bg-dark-surface transition-colors"
       >
-        {theme === 'light' && 'Light'}
-        {theme === 'dark' && 'Dark Blue'}
-        {theme === 'ultra-dark' && 'Ultra Dark'}
-        {theme === 'solarized' && 'Solarized'}
+        {theme === 'light' ? 'Light' : 'Dark'}
       </button>
       <div className="auth-shell flex flex-col md:flex-row w-full max-w-5xl overflow-hidden">
         {/* Left panel */}
