@@ -182,11 +182,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
             >
               <Moon className="w-4 h-4" />
               <span className="text-sm">
-                {theme === 'light' && 'White'}
-                {theme === 'dark' && 'Dark Blue'}
-                {theme === 'ultra-dark' && 'Ultra Dark'}
-                {theme === 'solarized' && 'Solarized White'}
-                {' '}Mode
+                {theme === 'light' ? 'Light' : 'Dark'}{' '}Mode
               </span>
             </button>
             <button

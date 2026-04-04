@@ -3,12 +3,13 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { authService } from '@/services/api/index.js';
-import { useTheme } from '@/shared/contexts/ThemeContext.js';
+import { useTheme, useSystemThemeOnly } from '@/shared/contexts/ThemeContext.js';
 import { FaGoogle, FaGithub } from 'react-icons/fa';
 import { Helmet } from 'react-helmet-async';
 import { pageVariants, listVariants } from '@/shared/lib/animations.js';
 
 export const SignUpPage = () => {
+  useSystemThemeOnly();
   const navigate = useNavigate();
   const [formEmail, setFormEmail] = useState("");
   const [formPassword, setFormPassword] = useState("");
@@ -130,10 +131,7 @@ export const SignUpPage = () => {
         onClick={toggleTheme}
         className="absolute top-6 right-6 px-3 py-2 rounded-full border border-gray-200 dark:border-dark-border text-xs font-semibold uppercase tracking-wider text-gray-600 dark:text-dark-text hover:bg-gray-50 dark:hover:bg-dark-surface transition-colors"
       >
-        {theme === 'light' && 'Light'}
-        {theme === 'dark' && 'Dark Blue'}
-        {theme === 'ultra-dark' && 'Ultra Dark'}
-        {theme === 'solarized' && 'Solarized'}
+        {theme === 'light' ? 'Light' : 'Dark'}
       </button>
       <div className="auth-shell flex flex-col md:flex-row w-full max-w-5xl overflow-hidden">
 

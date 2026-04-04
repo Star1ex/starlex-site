@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { getCookie, setCookie } from '@/shared/lib/cookies.js';
 
-type Theme = 'light' | 'dark' | 'ultra-dark' | 'solarized';
+export type Theme = 'light' | 'dark' | 'ultra-dark' | 'solarized';
 
 interface ThemeContextType {
   theme: Theme;
@@ -23,12 +23,10 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     if (savedCookie === 'dark' || savedCookie === 'light' || savedCookie === 'ultra-dark' || savedCookie === 'solarized') {
       return savedCookie;
     }
-    // Check localStorage next
     const saved = localStorage.getItem(THEME_STORAGE_KEY);
     if (saved === 'dark' || saved === 'light' || saved === 'ultra-dark' || saved === 'solarized') {
-      return saved;
+      return saved as Theme;
     }
-    // Check system preference
     if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
       return 'dark';
     }
@@ -37,7 +35,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   useEffect(() => {
     const root = document.documentElement;
-    
+
     root.classList.remove('dark', 'theme-ultra-dark', 'theme-solarized');
 
     if (theme === 'dark') {
@@ -78,14 +76,10 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const toggleTheme = () => {
     setThemeState((prev) => {
       switch (prev) {
-        case 'light':
-          return 'dark';
-        case 'dark':
-          return 'ultra-dark';
-        case 'ultra-dark':
-          return 'solarized';
-        default:
-          return 'light';
+        case 'light': return 'dark';
+        case 'dark': return 'ultra-dark';
+        case 'ultra-dark': return 'solarized';
+        default: return 'light';
       }
     });
   };
@@ -104,3 +98,24 @@ export const useTheme = (): ThemeContextType => {
   }
   return context;
 };
+
+/**
+ * Forces light/dark based on system preference while the calling component is mounted.
+ * Restores the user's saved theme on unmount.
+ * Use this on public pages (landing, login, signup).
+ */
+export function useSystemThemeOnly(): void {
+  const { setTheme } = useTheme();
+
+  useEffect(() => {
+    const savedTheme = (localStorage.getItem(THEME_STORAGE_KEY) as Theme | null) ?? 'light';
+    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    setTheme(systemDark ? 'dark' : 'light');
+
+    return () => {
+      // Restore user's actual theme when leaving the page
+      setTheme(savedTheme);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+}
