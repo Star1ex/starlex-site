@@ -1,0 +1,1160 @@
+basePath: /api
+definitions:
+  dto.AddUserToTeam:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  dto.FolderDTO:
+    properties:
+      color:
+        type: string
+      created_at:
+        type: string
+      icon:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      owner_id:
+        type: string
+      parent_id:
+        type: string
+      position:
+        type: integer
+      team_id:
+        type: string
+      updated_at:
+        type: string
+    type: object
+  dto.FolderDeleteDTO:
+    properties:
+      id:
+        type: string
+    required:
+    - id
+    type: object
+  dto.FolderMoveDTO:
+    properties:
+      folder_id:
+        type: string
+      parent_id:
+        type: string
+    required:
+    - folder_id
+    type: object
+  dto.RemoveUserFromTeamRequest:
+    properties:
+      userId:
+        type: string
+    required:
+    - userId
+    type: object
+  dto.TaskApi:
+    properties:
+      description:
+        type: string
+      priority:
+        type: string
+      progress:
+        type: string
+      task:
+        type: string
+      user_ids:
+        description: 'Optional: can be empty array'
+        items:
+          type: string
+        type: array
+    required:
+    - task
+    type: object
+  dto.TaskResponse:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      priority:
+        type: string
+      progress:
+        type: string
+      task:
+        type: string
+      team_id:
+        type: string
+      user_ids:
+        items:
+          type: string
+        type: array
+    required:
+    - id
+    - task
+    type: object
+  dto.TeamApi:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      user_id:
+        type: string
+    required:
+    - description
+    - name
+    - user_id
+    type: object
+  dto.TeamResponse:
+    properties:
+      description:
+        type: string
+      name:
+        type: string
+      team_id:
+        type: string
+    type: object
+  dto.UpdateDto:
+    properties:
+      description:
+        type: string
+      priority:
+        type: string
+      progress:
+        type: string
+      task:
+        type: string
+      user_id:
+        items:
+          type: string
+        type: array
+    type: object
+  dto.UserApi:
+    properties:
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      password:
+        type: string
+      photo_url:
+        type: string
+      role:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  dto.UserResponse:
+    properties:
+      email:
+        type: string
+      firstName:
+        type: string
+      id:
+        type: string
+      lastName:
+        type: string
+      photo_url:
+        description: Keep snake_case for photo_url as it's used in frontend
+        type: string
+      role:
+        type: string
+    type: object
+  handlers.RefreshTokenRequest:
+    properties:
+      refresh_token:
+        type: string
+    required:
+    - refresh_token
+    type: object
+  handlers.ResendCodeRequest:
+    properties:
+      user_id:
+        type: string
+    required:
+    - user_id
+    type: object
+  handlers.SignIn:
+    properties:
+      email:
+        type: string
+      password:
+        type: string
+    required:
+    - email
+    - password
+    type: object
+  handlers.VerifyEmailRequest:
+    properties:
+      code:
+        type: string
+      user_id:
+        type: string
+    required:
+    - code
+    - user_id
+    type: object
+host: localhost:3000
+info:
+  contact: {}
+  description: This is the API for TeamTrack web-site
+  title: TeamTrack API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Auth if user created and verified
+      parameters:
+      - description: User data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.SignIn'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: user auth successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: email not verified
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Auth
+      tags:
+      - auth
+  /auth/refresh:
+    post:
+      consumes:
+      - application/json
+      description: Refresh access token using refresh token
+      parameters:
+      - description: Refresh token data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RefreshTokenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: access token refreshed successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: invalid or expired refresh token
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Refresh Access Token
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Register new user and send verification email
+      parameters:
+      - description: User data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UserApi'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: user created successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register
+      tags:
+      - auth
+  /auth/resend-code:
+    post:
+      consumes:
+      - application/json
+      description: Resend verification code to user email
+      parameters:
+      - description: User ID
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.ResendCodeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: code resent successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Resend Verification Code
+      tags:
+      - auth
+  /auth/verify:
+    post:
+      consumes:
+      - application/json
+      description: Verify user email with code
+      parameters:
+      - description: Verification data
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.VerifyEmailRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: email verified successfully
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Verify Email
+      tags:
+      - auth
+  /folder/:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a single folder by its unique identifier passed as a
+        query parameter. Requires JWT authentication.
+      parameters:
+      - description: Folder ID
+        in: query
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Folder data
+          schema:
+            $ref: '#/definitions/dto.FolderDTO'
+        "400":
+          description: Missing or invalid 'id' query parameter
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: User not authorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get folder by ID
+      tags:
+      - folders
+    post:
+      consumes:
+      - application/json
+      description: Creates a new folder for the authenticated user. Requires JWT authentication.
+      parameters:
+      - description: Folder data
+        in: body
+        name: folder
+        required: true
+        schema:
+          $ref: '#/definitions/dto.FolderDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully created folder
+          schema:
+            type: string
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: User not authorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create a new folder
+      tags:
+      - folders
+  /folder/delete:
+    delete:
+      consumes:
+      - application/json
+      description: Permanently deletes a folder by the provided folder ID. Requires
+        JWT authentication.
+      parameters:
+      - description: Folder ID to delete
+        in: body
+        name: folder_id
+        required: true
+        schema:
+          $ref: '#/definitions/dto.FolderDeleteDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully deleted folder
+          schema:
+            type: string
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: User not authorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Delete a folder by ID
+      tags:
+      - folders
+  /folder/direct:
+    get:
+      consumes:
+      - application/json
+      description: Returns all folders owned by the currently authenticated user.
+        User ID is extracted from the JWT token.
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of user folders
+          schema:
+            items:
+              $ref: '#/definitions/dto.FolderDTO'
+            type: array
+        "401":
+          description: User not authorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get folders of the authenticated user
+      tags:
+      - folders
+  /folder/move:
+    put:
+      consumes:
+      - application/json
+      description: Changes the parent folder of an existing folder, effectively moving
+        it in the folder tree. Requires JWT authentication.
+      parameters:
+      - description: Folder ID and target parent folder ID
+        in: body
+        name: move
+        required: true
+        schema:
+          $ref: '#/definitions/dto.FolderMoveDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully moved folder
+          schema:
+            type: string
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: User not authorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Move a folder to a new parent
+      tags:
+      - folders
+  /folder/sub:
+    get:
+      consumes:
+      - application/json
+      description: Returns all child folders of a given parent folder passed as a
+        query parameter. Requires JWT authentication.
+      parameters:
+      - description: Parent folder ID
+        in: query
+        name: parent_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of sub-folders
+          schema:
+            items:
+              $ref: '#/definitions/dto.FolderDTO'
+            type: array
+        "400":
+          description: Missing or invalid 'parent_id' query parameter
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: User not authorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get sub-folders by parent folder ID
+      tags:
+      - folders
+  /folder/team/{team_id}:
+    get:
+      consumes:
+      - application/json
+      description: Returns all folders belonging to a specific team. Requires JWT
+        authentication.
+      parameters:
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of team folders
+          schema:
+            items:
+              $ref: '#/definitions/dto.FolderDTO'
+            type: array
+        "401":
+          description: User not authorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get folders by team ID
+      tags:
+      - folders
+  /folder/update:
+    put:
+      consumes:
+      - application/json
+      description: Updates folder fields (name, color, icon, position, etc.) by providing
+        the full folder payload with the target ID. Requires JWT authentication.
+      parameters:
+      - description: Updated folder data (must include id)
+        in: body
+        name: folder
+        required: true
+        schema:
+          $ref: '#/definitions/dto.FolderDTO'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Successfully updated folder
+          schema:
+            type: string
+        "400":
+          description: Invalid request body
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: User not authorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update an existing folder
+      tags:
+      - folders
+  /search/{email}:
+    get:
+      consumes:
+      - application/json
+      description: Search user by email
+      parameters:
+      - description: User Email
+        in: path
+        name: email
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.UserResponse'
+            type: array
+      security:
+      - BearerAuth: []
+      summary: Search users
+      tags:
+      - search
+  /team:
+    post:
+      consumes:
+      - application/json
+      description: Created new team
+      parameters:
+      - description: Team data
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dto.TeamApi'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: team created successfuly
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Created team
+      tags:
+      - team
+  /team/:id:
+    get:
+      description: Returns a list of all tasks for a given team.
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: List of teams
+          schema:
+            items:
+              $ref: '#/definitions/dto.TeamResponse'
+            type: array
+        "500":
+          description: Server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get teams by user
+      tags:
+      - users
+  /team/{id}:
+    get:
+      description: Return all users from team
+      parameters:
+      - description: Team ID
+        in: path
+        name: id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: List of users
+          schema:
+            items:
+              $ref: '#/definitions/dto.UserResponse'
+            type: array
+        "500":
+          description: Server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all users from team
+      tags:
+      - team
+  /team/{id}/remove-user:
+    post:
+      consumes:
+      - application/json
+      description: Remove user from team by userId (only team owner)
+      parameters:
+      - description: Team ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User ID to remove
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dto.RemoveUserFromTeamRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: user removed successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Remove user from team
+      tags:
+      - team
+  /team/{id}/users:
+    post:
+      consumes:
+      - application/json
+      description: Add user to team by email (only team owner)
+      parameters:
+      - description: Team ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: User email
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/dto.AddUserToTeam'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: user added successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: bad request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "403":
+          description: forbidden
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Add user to team
+      tags:
+      - team
+  /team/{team_id}/tasks:
+    get:
+      description: Returns a list of all tasks for a given team.
+      parameters:
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: List of tasks
+          schema:
+            items:
+              $ref: '#/definitions/dto.TaskResponse'
+            type: array
+        "500":
+          description: Server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get all tasks from team
+      tags:
+      - tasks
+    post:
+      consumes:
+      - application/json
+      description: Creates a new task within the specified team. Requires JWT authentication.
+      parameters:
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: string
+      - description: Task data
+        in: body
+        name: task_data
+        required: true
+        schema:
+          $ref: '#/definitions/dto.TaskApi'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Task created successfully
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad request or invalid JSON
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: User not authorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create task
+      tags:
+      - tasks
+  /team/{team_id}/tasks/{task_id}:
+    put:
+      consumes:
+      - application/json
+      description: Updates the 'Progress' field of an existing task by ID. Requires
+        JWT authentication.
+      parameters:
+      - description: Team ID
+        in: path
+        name: team_id
+        required: true
+        type: string
+      - description: Task ID
+        in: path
+        name: task_id
+        required: true
+        type: string
+      - description: Updated progress value
+        in: body
+        name: updates
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateDto'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Task progress updated successfully
+          schema:
+            $ref: '#/definitions/dto.TaskResponse'
+        "400":
+          description: Bad request, missing fields, or invalid progress value
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: User not authorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Task not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Update task progress
+      tags:
+      - tasks
+  /user/{user_id}/tasks:
+    get:
+      description: Returns a list of all tasks assigned to a specific user.
+      parameters:
+      - description: User ID
+        in: path
+        name: user_id
+        required: true
+        type: string
+      responses:
+        "200":
+          description: List of user's tasks
+          schema:
+            items:
+              $ref: '#/definitions/dto.TaskResponse'
+            type: array
+        "500":
+          description: Server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get user's tasks
+      tags:
+      - tasks
+  /users/{id}/photo:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Uploads a photo file for a specific user
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Photo file
+        in: formData
+        name: photo
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Upload user photo
+      tags:
+      - users
+schemes:
+- http
+securityDefinitions:
+  BearerAuth:
+    description: Type "Bearer {your_token}"
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

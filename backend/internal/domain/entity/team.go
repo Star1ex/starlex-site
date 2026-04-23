@@ -1,0 +1,22 @@
+package entity
+
+type Team struct {
+	ID          string
+	Name        string
+	Description string
+	Icon        string
+	OwnerID     string
+}
+
+type UpdateTeam struct {
+	Name        string
+	Description string
+}
+
+func NewTeam(id, name, description string) *Team {
+	return &Team{
+		ID:          id,
+		Name:        name,
+		Description: description,
+	}
+}

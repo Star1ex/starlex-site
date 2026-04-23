@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard
+Disallow: /task/
+Disallow: /team/
+Disallow: /settings
+Disallow: /profile
+Disallow: /api/
+Sitemap: https://teamtrack.tech/sitemap.xml

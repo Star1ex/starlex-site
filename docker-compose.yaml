@@ -1,0 +1,84 @@
+services:
+  db:
+    image: postgres:latest
+    container_name: team-track-site-db
+    restart: unless-stopped
+    user: "0:0"
+    command: >
+      sh -c "chown -R postgres:postgres /var/lib/postgresql &&
+             exec /usr/local/bin/docker-entrypoint.sh postgres"
+    env_file:
+      - backend/.env
+    environment:
+      POSTGRES_USER: ${DB_USER:-team_admin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-1234}
+      POSTGRES_DB: ${DB_NAME:-team_track}
+    volumes:
+      - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-team_admin} -d ${POSTGRES_DB:-team_track} -p 5432"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: team-track-site-backend-image
+    container_name: team-track-site-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "${BACKEND_PORT:-3000}:3000"
+    env_file:
+      - backend/.env
+    environment:
+      # Force internal service DNS for Docker network regardless of env secrets
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_SSL_MODE: disable
+      # Force backend to always listen on 3000 inside Docker (nginx proxies to :3000)
+      BACKEND_PORT: "3000"
+      PORT: "3000"
+    volumes:
+      - uploads_data:/uploads
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+
+  frontend:
+    build:
+      context: ./react-frontend
+      dockerfile: Dockerfile
+    image: team-track-site-frontend-image
+    container_name: team-track-site-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "8080:80"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - uploads_data:/usr/share/nginx/html/uploads:ro
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  uploads_data:
