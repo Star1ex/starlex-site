@@ -22,7 +22,9 @@ concurrency:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository_owner }}/starlex-backend
+  # GHCR requires a lowercase repository name; the org "Star1ex" is not lowercase,
+  # so hardcode it rather than use ${{ github.repository_owner }}.
+  IMAGE_NAME: star1ex/starlex-backend
   IMAGE_TAG: prod
 
 jobs:
