@@ -15,6 +15,9 @@ name: Deploy to Production
 on:
   push:
     branches: [main]
+  # Manual run forces a full build+deploy regardless of changed paths
+  # (use for the first deploy or to redeploy everything).
+  workflow_dispatch:
 
 concurrency:
   group: deploy-prod
@@ -31,12 +34,13 @@ jobs:
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
-      backend: ${{ steps.filter.outputs.backend }}
-      frontend: ${{ steps.filter.outputs.frontend }}
+      backend: ${{ github.event_name == 'workflow_dispatch' || steps.filter.outputs.backend == 'true' }}
+      frontend: ${{ github.event_name == 'workflow_dispatch' || steps.filter.outputs.frontend == 'true' }}
     steps:
       - uses: actions/checkout@v4
       - uses: dorny/paths-filter@v3
         id: filter
+        if: github.event_name != 'workflow_dispatch'
         with:
           filters: |
             backend:
