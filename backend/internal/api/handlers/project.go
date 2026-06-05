@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	"github.com/Star1ex/starlex-site/internal/api/dto"
+	"github.com/Star1ex/starlex-site/internal/domain/entity"
 	"github.com/Star1ex/starlex-site/internal/domain/project"
 	"github.com/Star1ex/starlex-site/internal/logger"
 	"github.com/Star1ex/starlex-site/internal/repository"
@@ -209,4 +210,71 @@ func (h *Handlers) RemoveProjectMember(ctx *fiber.Ctx) error {
 		return projectError(ctx, err)
 	}
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{"message": "member removed"})
+}
+
+func (h *Handlers) GetProjectTasks(ctx *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+	projectID := ctx.Params("id")
+	if projectID == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "project id is required"})
+	}
+
+	// GetProjectByID enforces project membership.
+	if _, err := h.projectService.GetProjectByID(ctx.Context(), projectID, userID); err != nil {
+		return projectError(ctx, err)
+	}
+
+	tasks, err := h.taskService.GetProjectTasks(ctx.Context(), projectID)
+	if err != nil {
+		return projectError(ctx, err)
+	}
+	return ctx.Status(fiber.StatusOK).JSON(dto.WorkspaceTasksList(tasks))
+}
+
+func (h *Handlers) CreateProjectTask(ctx *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+	projectID := ctx.Params("id")
+	if projectID == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "project id is required"})
+	}
+
+	// GetProjectByID enforces project membership and gives us the workspace.
+	p, err := h.projectService.GetProjectByID(ctx.Context(), projectID, userID)
+	if err != nil {
+		return projectError(ctx, err)
+	}
+
+	var input dto.TaskApi
+	if err := ctx.BodyParser(&input); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
+	}
+	input.Task = sanitizeStrict(input.Task)
+	input.Description = sanitizeMarkdown(input.Description)
+	if input.Task == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task title is required"})
+	}
+
+	entityTask := &entity.Task{
+		Task:        input.Task,
+		Description: input.Description,
+		Priority:    input.Priority,
+		Progress:    input.Progress,
+		OwnerID:     userID,
+	}
+
+	if err := h.taskService.CreateProjectTask(ctx.Context(), projectID, p.WorkspaceID, input.AssignedToID, entityTask); err != nil {
+		return projectError(ctx, err)
+	}
+
+	created, fetchErr := h.taskService.GetTaskByID(ctx.Context(), entityTask.ID)
+	if fetchErr != nil {
+		return ctx.Status(fiber.StatusCreated).JSON(dto.ToTaskResponse(entityTask))
+	}
+	return ctx.Status(fiber.StatusCreated).JSON(dto.ToTaskResponse(created))
 }

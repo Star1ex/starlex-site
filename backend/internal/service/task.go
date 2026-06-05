@@ -66,6 +66,34 @@ func (s *TaskService) CreatePersonalTask(ctx context.Context, task *entity.Task)
 	return s.taskRepo.Create(ctx, task)
 }
 
+// CreateProjectTask creates a task attached to a project. Project membership
+// must be verified by the caller; the task inherits the project's workspace.
+func (s *TaskService) CreateProjectTask(
+	ctx context.Context,
+	projectID, workspaceID string,
+	assignedIDs []string,
+	task *entity.Task,
+) error {
+	var users []*entity.User
+	if len(assignedIDs) > 0 {
+		var err error
+		users, err = s.userRepo.GetByIDs(ctx, assignedIDs)
+		if err != nil {
+			return err
+		}
+	}
+	pid := projectID
+	task.AssignedTo = users
+	task.WorkspaceID = workspaceID
+	task.ProjectID = &pid
+	task.ID = uuid.New().String()
+	return s.taskRepo.Create(ctx, task)
+}
+
+func (s *TaskService) GetProjectTasks(ctx context.Context, projectID string) ([]*entity.Task, error) {
+	return s.taskRepo.GetProjectTasks(ctx, projectID)
+}
+
 func (s *TaskService) GetTaskByID(ctx context.Context, taskID string) (*entity.Task, error) {
 	return s.taskRepo.Get(ctx, taskID)
 }

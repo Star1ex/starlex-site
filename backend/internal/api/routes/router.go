@@ -154,6 +154,9 @@ func setupProjectRoutes(api fiber.Router, h *handlers.Handlers) {
 		projects.Get("/:id/members", h.GetProjectMembers)
 		projects.Post("/:id/members", h.AddProjectMember)
 		projects.Delete("/:id/members", h.RemoveProjectMember)
+
+		projects.Get("/:id/tasks", h.GetProjectTasks)
+		projects.Post("/:id/tasks", h.CreateProjectTask)
 	}
 }
 

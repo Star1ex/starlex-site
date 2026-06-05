@@ -14,6 +14,7 @@ type TaskApi struct {
 	Priority     string    `json:"priority"`
 	FolderID     *string   `json:"folder_id"`
 	WorkspaceID  *string   `json:"workspace_id"`
+	ProjectID    *string   `json:"project_id"`
 	OwnerID      string    `json:"owner_id"`
 	CreatedAt    time.Time `json:"created_at"`
 }
@@ -26,6 +27,7 @@ type TaskResponse struct {
 	AssignedTo  []string  `json:"user_ids"`
 	WorkspaceID string    `json:"workspace_id"`
 	FolderID    *string   `json:"folder_id"`
+	ProjectID   *string   `json:"project_id"`
 	OwnerID     string    `json:"owner_id"`
 	Priority    string    `json:"priority"`
 	Progress    string    `json:"progress"`
@@ -87,6 +89,7 @@ func ToTaskResponse(task *entity.Task) *TaskResponse {
 		AssignedTo:  assignedIDs,
 		WorkspaceID: task.WorkspaceID,
 		FolderID:    task.FolderID,
+		ProjectID:   task.ProjectID,
 		OwnerID:     task.OwnerID,
 		Priority:    task.Priority,
 		Progress:    task.Progress,

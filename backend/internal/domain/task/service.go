@@ -11,6 +11,7 @@ type Service interface {
 	// Create task
 	CreateWorkspaceTask(ctx context.Context, workspaceID string, assignedIDs []string, task *entity.Task, userId string) error
 	CreatePersonalTask(ctx context.Context, task *entity.Task) error
+	CreateProjectTask(ctx context.Context, projectID, workspaceID string, assignedIDs []string, task *entity.Task) error
 
 	// Get task by ID
 	GetTaskByID(ctx context.Context, taskID string) (*entity.Task, error)
@@ -22,6 +23,8 @@ type Service interface {
 	GetTasksWithoutFolder(ctx context.Context, userID string) ([]*entity.Task, error)
 	// Get tasks from folder
 	GetFolderTasks(ctx context.Context, folderID string) ([]*entity.Task, error)
+	// Get tasks from project
+	GetProjectTasks(ctx context.Context, projectID string) ([]*entity.Task, error)
 
 	Update(ctx context.Context, id string, data *entity.Task, assignedTo []string) (*entity.Task, error)
 	// Update task

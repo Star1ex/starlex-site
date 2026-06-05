@@ -63,6 +63,7 @@ func toTaskDomain(m TaskModel) *entity.Task {
 		OwnerID:     m.OwnerID,
 		FolderID:    m.FolderID,
 		SprintID:    m.SprintID,
+		ProjectID:   m.ProjectID,
 		Position:    m.Position,
 		Subtasks:    toSubtaskDomains(m.Subtasks),
 		Priority:    m.Priority,
@@ -115,6 +116,7 @@ func fromTaskDomain(t *entity.Task) *TaskModel {
 		OwnerID:     t.OwnerID,
 		FolderID:    t.FolderID,
 		SprintID:    t.SprintID,
+		ProjectID:   t.ProjectID,
 		Position:    t.Position,
 		WorkspaceID: &t.WorkspaceID,
 		CreatedAt:   t.CreatedAt,
@@ -313,6 +315,20 @@ func (r *TaskRepository) GetUserTasks(ctx context.Context, userID string) ([]*en
 		return nil, err
 	}
 
+	return toTaskDomains(models), nil
+}
+
+func (r *TaskRepository) GetProjectTasks(ctx context.Context, projectID string) ([]*entity.Task, error) {
+	var models []TaskModel
+	err := r.db.WithContext(ctx).
+		Preload("Assigned").
+		Preload("Subtasks").
+		Where("project_id = ?", projectID).
+		Order("created_at DESC").
+		Find(&models).Error
+	if err != nil {
+		return nil, err
+	}
 	return toTaskDomains(models), nil
 }
 
