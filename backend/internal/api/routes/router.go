@@ -31,6 +31,7 @@ func InitRoutes(app *fiber.App, h *handlers.Handlers) {
 		setupFolderRoutes(protected, h)
 		setupTaskRoutes(protected, h)
 		setupWorkspaceRoutes(protected, h)
+		setupProjectRoutes(protected, h)
 		setupSprintRoutes(protected, h)
 		setupDiscussionRoutes(protected, h)
 	}
@@ -132,6 +133,27 @@ func setupWorkspaceRoutes(api fiber.Router, h *handlers.Handlers) {
 		workspaceTasks.Patch("/:id/progress", h.PatchTaskProgress)
 		workspaceTasks.Patch("/:id/assignees", h.PatchTaskAssignees)
 		workspaceTasks.Delete("/:id", h.DeleteTask)
+	}
+}
+
+func setupProjectRoutes(api fiber.Router, h *handlers.Handlers) {
+	// Workspace-scoped: create and list projects.
+	wsProjects := api.Group("/workspaces/:workspace_id/projects")
+	{
+		wsProjects.Post("/", h.CreateProject)
+		wsProjects.Get("/", h.GetWorkspaceProjects)
+	}
+
+	// Project-scoped operations.
+	projects := api.Group("/projects")
+	{
+		projects.Get("/:id", h.GetProjectByID)
+		projects.Patch("/:id", h.UpdateProject)
+		projects.Delete("/:id", h.DeleteProject)
+
+		projects.Get("/:id/members", h.GetProjectMembers)
+		projects.Post("/:id/members", h.AddProjectMember)
+		projects.Delete("/:id/members", h.RemoveProjectMember)
 	}
 }
 

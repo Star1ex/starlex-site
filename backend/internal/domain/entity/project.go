@@ -8,6 +8,7 @@ import "time"
 // member may manage settings and membership.
 type Project struct {
 	ID          string
+	WorkspaceID string // the workspace this project belongs to
 	Name        string
 	Description string
 	Goal        string
@@ -24,9 +25,10 @@ type Project struct {
 
 // NewProject builds a Project with the required fields. Optional fields
 // (deadline, members) are set by the caller. ID is assigned by the service.
-func NewProject(id, name, description, goal, icon, priority, status, leaderID, createdBy string, deadline *time.Time) *Project {
+func NewProject(id, workspaceID, name, description, goal, icon, priority, status, leaderID, createdBy string, deadline *time.Time) *Project {
 	return &Project{
 		ID:          id,
+		WorkspaceID: workspaceID,
 		Name:        name,
 		Description: description,
 		Goal:        goal,

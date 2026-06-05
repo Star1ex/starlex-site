@@ -112,6 +112,7 @@ func StartServer() {
 
 	userRepo := repository.NewUserRepository(db.DB)
 	workspaceRepo := repository.NewWorkspaceRepository(db.DB)
+	projectRepo := repository.NewProjectRepository(db.DB)
 	taskRepo := repository.NewTaskRepository(db.DB)
 	folderRepo := repository.NewFolderRepository(db.DB)
 	sprintRepo := repository.NewSprintRepository(db.DB)
@@ -133,6 +134,7 @@ func StartServer() {
 	passwordService := service.NewPasswordService(userRepo, passwordResetRepo, passwordAuditRepo, emailService, config.FrontendBaseURL)
 	userService := service.NewUserService(userRepo, storage, bus)
 	workspaceService := service.NewWorkspaceService(workspaceRepo, userRepo)
+	projectService := service.NewProjectService(projectRepo, workspaceRepo, userRepo)
 	taskService := service.NewTaskService(taskRepo, userRepo, workspaceRepo)
 	folderService := service.NewFolderService(folderRepo)
 	sprintService := service.NewSprintService(sprintRepo)
@@ -149,7 +151,7 @@ func StartServer() {
 			GithubCallbackURL:  config.OAuthConfig.GithubCallbackURL,
 		},
 	}
-	httpHandlers := handlers.NewHandlers(userService, workspaceService, taskService, folderService, verificationService, passwordService, sprintService, discussionService, db, authConfig)
+	httpHandlers := handlers.NewHandlers(userService, workspaceService, projectService, taskService, folderService, verificationService, passwordService, sprintService, discussionService, db, authConfig)
 	routes.InitRoutes(app, httpHandlers)
 
 	go func() {

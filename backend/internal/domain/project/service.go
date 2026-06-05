@@ -38,9 +38,9 @@ type UpdateFields struct {
 // Service defines project use cases. All mutating operations are guarded by
 // project membership (any member may manage the project).
 type Service interface {
-	CreateProject(ctx context.Context, in CreateInput, userID string) (*entity.Project, error)
+	CreateProject(ctx context.Context, workspaceID string, in CreateInput, userID string) (*entity.Project, error)
 	GetProjectByID(ctx context.Context, projectID, userID string) (*entity.Project, error)
-	GetUserProjects(ctx context.Context, userID string) ([]*entity.Project, error)
+	GetWorkspaceProjects(ctx context.Context, workspaceID, userID string) ([]*entity.Project, error)
 	UpdateProject(ctx context.Context, projectID string, fields UpdateFields, userID string) (*entity.Project, error)
 	Delete(ctx context.Context, projectID, userID string) error
 

@@ -24,6 +24,6 @@ type Repository interface {
 	AddMember(ctx context.Context, projectID, userID string) error
 	RemoveMember(ctx context.Context, projectID, userID string) error
 
-	// Listing
-	GetUserProjects(ctx context.Context, userID string) ([]*entity.Project, error)
+	// Listing — projects within a workspace that the user is a member of.
+	GetWorkspaceProjects(ctx context.Context, workspaceID, userID string) ([]*entity.Project, error)
 }
