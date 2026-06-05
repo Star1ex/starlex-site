@@ -18,6 +18,7 @@ import { useFolders } from '@/hooks/useFolders.js';
 import { useTasks } from '@/hooks/useTasks.js';
 import { dropdownVariants } from '@/shared/lib/animations.js';
 import { trackItem } from '@/shared/lib/recentItems.js';
+import { WorkspaceCreateModal } from '@/widgets/WorkspaceCreateModal/WorkspaceCreateModal.js';
 
 interface SidebarProps {
   className?: string;
@@ -33,6 +34,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
   const [userInfo, setUserInfo] = useState<{ firstName: string; lastName: string; email?: string } | null>(null);
   const [teams, setTeams] = useState<Array<{ id: string; name: string; icon?: string }>>([]);
   const [loadingTeams, setLoadingTeams] = useState(true);
+  const [showCreateWorkspace, setShowCreateWorkspace] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
   const { logout } = useAuth();
@@ -78,9 +80,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
     fetchUser();
     fetchTeams();
 
-    const handleTeamCreated = () => fetchTeams();
-    window.addEventListener('teamCreated', handleTeamCreated);
-    return () => window.removeEventListener('teamCreated', handleTeamCreated);
+    const handleWorkspaceCreated = () => fetchTeams();
+    window.addEventListener('workspaceCreated', handleWorkspaceCreated);
+    return () => window.removeEventListener('workspaceCreated', handleWorkspaceCreated);
   }, [navigate]);
 
   useEffect(() => {
@@ -125,20 +127,20 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
   }, [user, userInfo]);
 
   const activeTeamId = useMemo(() => {
-    const match = location.pathname.match(/\/team\/([^/]+)/);
+    const match = location.pathname.match(/\/workspace\/([^/]+)/);
     return match ? match[1] : null;
   }, [location.pathname]);
 
   const handleAddTeam = useCallback(() => {
-    window.dispatchEvent(new CustomEvent('openNewTeamModal'));
+    setShowCreateWorkspace(true);
   }, []);
 
   const handleTeamClick = useCallback((id: string) => {
-    const team = teams.find((t) => t.id === id);
-    if (team) {
-      trackItem({ id, name: team.name, url: `/team/${id}`, type: 'team' });
+    const ws = teams.find((t) => t.id === id);
+    if (ws) {
+      trackItem({ id, name: ws.name, url: `/workspace/${id}`, type: 'workspace' });
     }
-    navigate(`/team/${id}`);
+    navigate(`/workspace/${id}`);
   }, [navigate, teams]);
 
   const handleRenameTeam = useCallback(async (id: string, name: string) => {
@@ -320,6 +322,16 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
         onCreateTask={tasksHook.createTask}
         onDeleteFolder={foldersHook.deleteFolder}
         onDeleteTask={tasksHook.deleteTask}
+      />
+
+      <WorkspaceCreateModal
+        isOpen={showCreateWorkspace}
+        onClose={() => setShowCreateWorkspace(false)}
+        onCreated={(ws) => {
+          setTeams((prev) => [...prev, { id: ws.id, name: ws.name, icon: ws.icon }]);
+          setShowCreateWorkspace(false);
+          navigate(`/workspace/${ws.id}`);
+        }}
       />
     </ContextMenuProvider>
   );

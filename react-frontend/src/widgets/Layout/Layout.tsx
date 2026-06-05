@@ -57,6 +57,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       if (path.startsWith('/settings')) return 'Settings';
       if (path.startsWith('/profile')) return 'Profile';
       if (path.startsWith('/dashboard')) return 'Dashboard';
+      if (path.match(/\/workspace\/[^/]+\/projects\//)) return 'Project';
+      if (path.startsWith('/workspace/')) return 'Workspace';
       if (path === '/') return 'Home';
       return 'Back';
     };
@@ -91,6 +93,8 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     if (location.pathname.startsWith('/settings')) return 'Settings';
     if (location.pathname.startsWith('/profile')) return 'Profile';
     if (location.pathname.startsWith('/dashboard')) return 'Dashboard';
+    if (location.pathname.match(/\/workspace\/[^/]+\/projects\//)) return 'Project';
+    if (location.pathname.startsWith('/workspace/')) return 'Workspace';
     return 'Starlex';
   }, [location.pathname]);
 

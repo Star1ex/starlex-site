@@ -19,15 +19,17 @@ function fmtDate(ts: number): string {
 }
 
 const TYPE_ICON: Record<RecentItem['type'], React.ReactNode> = {
-  team:   <Users size={20} />,
-  sprint: <Layers size={20} />,
-  task:   <FileText size={20} />,
+  workspace: <Users size={20} />,
+  team:      <Users size={20} />,
+  sprint:    <Layers size={20} />,
+  task:      <FileText size={20} />,
 };
 
 const TYPE_LABEL: Record<RecentItem['type'], string> = {
-  team:   'Team',
-  sprint: 'Sprint',
-  task:   'Task',
+  workspace: 'Workspace',
+  team:      'Workspace',
+  sprint:    'Sprint',
+  task:      'Task',
 };
 
 const RecentCard: React.FC<{ item: RecentItem; index: number }> = ({ item, index }) => {
@@ -116,8 +118,8 @@ export const Dashboard: React.FC = () => {
 
   // All recent items sorted by time, max 8
   const allRecent = useMemo(() => {
-    const { teams, sprints, tasks } = recent;
-    return [...teams, ...sprints, ...tasks]
+    const { workspaces, sprints, tasks } = recent;
+    return [...workspaces, ...sprints, ...tasks]
       .sort((a, b) => b.openedAt - a.openedAt)
       .slice(0, 8);
   }, [recent]);

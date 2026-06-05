@@ -20,6 +20,8 @@ const AboutUs = React.lazy(() => import('@/pages/about-us/AboutUs.js').then(m =>
 const ProfilePage = React.lazy(() => import('@/pages/profile/UserProfile.js').then(m => ({ default: m.default })));
 const UserProfilePage = React.lazy(() => import('@/pages/profile/UserProfilePage.js').then(m => ({ default: m.UserProfilePage })));
 const TaskView = React.lazy(() => import('@/components/Tasks/TaskView.js').then(m => ({ default: m.default })));
+const WorkspacePage = React.lazy(() => import('@/pages/workspace/WorkspacePage.js').then(m => ({ default: m.WorkspacePage })));
+const ProjectPage = React.lazy(() => import('@/pages/workspace/ProjectPage.js').then(m => ({ default: m.ProjectPage })));
 const SettingsModal = React.lazy(() =>
   import('@/widgets/SettingsModal/SettingsModal.js').then(m => ({ default: m.SettingsModal }))
 );
@@ -95,6 +97,14 @@ const AnimatedRoutes = () => {
           <Route
             path="/personal"
             element={withErrorBoundary(<RequireAuth><Layout><Navigate to="/dashboard" replace /></Layout></RequireAuth>)}
+          />
+          <Route
+            path="/workspace/:workspaceId"
+            element={withErrorBoundary(<RequireAuth><Layout><WorkspacePage /></Layout></RequireAuth>)}
+          />
+          <Route
+            path="/workspace/:workspaceId/projects/:projectId"
+            element={withErrorBoundary(<RequireAuth><Layout><ProjectPage /></Layout></RequireAuth>)}
           />
           <Route
             path="/task/new"
