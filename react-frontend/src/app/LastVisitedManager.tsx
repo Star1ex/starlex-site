@@ -4,7 +4,7 @@ import { apiClient } from '@/services/api/client.js';
 import { authService } from '@/services/api/index.js';
 import { getCookie, setCookie } from '@/shared/lib/cookies.js';
 
-const LAST_URL_COOKIE_KEY = 'teamtrack-last-url';
+const LAST_URL_COOKIE_KEY = 'starlex-last-url';
 const LAST_URL_MAX_AGE = 60 * 60 * 24 * 30;
 
 const isAuthPath = (path: string) => {

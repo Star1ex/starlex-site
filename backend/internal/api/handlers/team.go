@@ -4,9 +4,9 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/Team-Tracks/team-track-site/internal/api/dto"
-	"github.com/Team-Tracks/team-track-site/internal/logger"
-	"github.com/Team-Tracks/team-track-site/internal/repository"
+	"github.com/Star1ex/starlex-site/internal/api/dto"
+	"github.com/Star1ex/starlex-site/internal/logger"
+	"github.com/Star1ex/starlex-site/internal/repository"
 	"github.com/gofiber/fiber/v2"
 )
 

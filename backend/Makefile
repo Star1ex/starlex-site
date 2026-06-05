@@ -1,4 +1,4 @@
-# Makefile TeamTrack 
+# Makefile Starlex 
 
 # Variables
 

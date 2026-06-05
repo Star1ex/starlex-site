@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 
-	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
-	"github.com/Team-Tracks/team-track-site/internal/domain/team"
-	"github.com/Team-Tracks/team-track-site/internal/domain/user"
-	"github.com/Team-Tracks/team-track-site/internal/security"
+	"github.com/Star1ex/starlex-site/internal/domain/entity"
+	"github.com/Star1ex/starlex-site/internal/domain/team"
+	"github.com/Star1ex/starlex-site/internal/domain/user"
+	"github.com/Star1ex/starlex-site/internal/security"
 )
 
 type TeamService struct {

@@ -13,7 +13,7 @@ export const Support: React.FC = () => {
 
       <div className="grid sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
         <a
-          href="mailto:teamtracktech@gmail.com"
+          href="mailto:support@starlex.cc"
           className="group flex items-center gap-4 rounded-xl p-4 w-full hover:bg-gray-50 dark:hover:bg-dark-border/40 transition-colors text-left"
         >
           <span className="w-10 h-10 rounded-lg bg-gray-100 dark:bg-dark-border flex items-center justify-center text-gray-700 dark:text-dark-text">
@@ -21,7 +21,7 @@ export const Support: React.FC = () => {
           </span>
           <div className="min-w-0">
             <div className="text-sm font-semibold text-gray-900 dark:text-dark-text">Email Support</div>
-            <div className="text-xs text-gray-600 dark:text-dark-text-muted">teamtracktech@gmail.com</div>
+            <div className="text-xs text-gray-600 dark:text-dark-text-muted">support@starlex.cc</div>
           </div>
         </a>
 

@@ -1,6 +1,6 @@
 package dto
 
-import "github.com/Team-Tracks/team-track-site/internal/domain/entity"
+import "github.com/Star1ex/starlex-site/internal/domain/entity"
 
 type SearchTeamResult struct {
 	ID   string `json:"id"`

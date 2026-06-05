@@ -12,11 +12,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
-	"github.com/Team-Tracks/team-track-site/internal/domain/user"
-	"github.com/Team-Tracks/team-track-site/internal/logger"
-	"github.com/Team-Tracks/team-track-site/internal/repository"
-	"github.com/Team-Tracks/team-track-site/internal/security"
+	"github.com/Star1ex/starlex-site/internal/domain/entity"
+	"github.com/Star1ex/starlex-site/internal/domain/user"
+	"github.com/Star1ex/starlex-site/internal/logger"
+	"github.com/Star1ex/starlex-site/internal/repository"
+	"github.com/Star1ex/starlex-site/internal/security"
 	"github.com/gofiber/fiber/v2"
 )
 

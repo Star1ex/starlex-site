@@ -3,7 +3,7 @@ import { motion, useInView, AnimatePresence, type Variants } from "framer-motion
 import { useNavigate } from "react-router-dom";
 import { isAuthenticated } from "@/shared/lib/authManager.js";
 import { useSystemThemeOnly, useTheme } from "@/shared/contexts/ThemeContext.js";
-import iconTeamtrack from "@/assets/icon-teamtrack.png";
+import iconStarlex from "@/assets/icon-starlex.png";
 import { Helmet } from "react-helmet-async";
 import markdownDark from "@/public/MarkdownSupportBlackTheme.mp4";
 import markdownLight from "@/public/MarkdownSupportWhiteTheme.mp4";
@@ -285,29 +285,29 @@ export const HomePage = () => {
       } as React.CSSProperties : undefined}
     >
       <Helmet>
-        <title>TeamTrack — Task Management for Modern Teams</title>
+        <title>Starlex — Task Management for Modern Teams</title>
         <meta
           name="description"
           content="Organize tasks, run sprints, and collaborate with your team in real time. Free for teams of up to 5."
         />
         <meta name="robots" content="index, follow" />
-        <link rel="canonical" href="https://teamtrack.tech/" />
+        <link rel="canonical" href="https://starlex.cc/" />
         <meta property="og:type" content="website" />
-        <meta property="og:title" content="TeamTrack — Task Management for Modern Teams" />
+        <meta property="og:title" content="Starlex — Task Management for Modern Teams" />
         <meta property="og:description" content="Organize tasks, run sprints, and collaborate with your team in real time." />
-        <meta property="og:image" content="https://teamtrack.tech/og-image.png" />
-        <meta property="og:url" content="https://teamtrack.tech/" />
+        <meta property="og:image" content="https://starlex.cc/og-image.png" />
+        <meta property="og:url" content="https://starlex.cc/" />
         <meta name="twitter:card" content="summary_large_image" />
         <script type="application/ld+json">
           {JSON.stringify({
             "@context": "https://schema.org",
             "@type": "SoftwareApplication",
-            name: "TeamTrack",
+            name: "Starlex",
             applicationCategory: "ProjectManagement",
             operatingSystem: "Web",
             offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
             description: "Task management with sprints, folders, and real-time collaboration.",
-            url: "https://teamtrack.tech",
+            url: "https://starlex.cc",
           })}
         </script>
       </Helmet>
@@ -355,9 +355,9 @@ export const HomePage = () => {
       >
         <div className="max-w-6xl mx-auto px-6 sm:px-10 h-16 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
-            <img src={iconTeamtrack} alt="TeamTrack logo" className="w-8 h-8 object-contain" />
+            <img src={iconStarlex} alt="Starlex logo" className="w-8 h-8 object-contain" />
             <span className="tt-font-display text-lg tracking-tight text-[color:var(--text-primary)]">
-              TeamTrack
+              Starlex
             </span>
           </div>
 
@@ -419,7 +419,7 @@ export const HomePage = () => {
             variants={fadeUp}
             className="text-[color:var(--text-secondary)] text-lg sm:text-xl leading-relaxed max-w-2xl"
           >
-            TeamTrack brings together tasks, sprints, and rich Markdown notes — so your team
+            Starlex brings together tasks, sprints, and rich Markdown notes — so your team
             stays aligned without switching tools.
           </motion.p>
 
@@ -495,7 +495,7 @@ export const HomePage = () => {
         >
           <motion.div variants={fadeUp} className="text-center mb-14">
             <h2 className="tt-font-display text-4xl sm:text-5xl lg:text-6xl">
-              See TeamTrack in action
+              See Starlex in action
             </h2>
             <p className="mt-4 text-[color:var(--text-secondary)] text-lg">
               Short walkthroughs of every core feature.
@@ -587,7 +587,7 @@ export const HomePage = () => {
             opacity: 0.06,
           }}
         >
-          TeamTrack
+          Starlex
         </motion.p>
       </div>
 
@@ -600,9 +600,9 @@ export const HomePage = () => {
             {/* Brand */}
             <div className="flex flex-col gap-4">
               <div className="flex items-center gap-3">
-                <img src={iconTeamtrack} alt="TeamTrack logo" className="w-8 h-8 object-contain" />
+                <img src={iconStarlex} alt="Starlex logo" className="w-8 h-8 object-contain" />
                 <span className="tt-font-display text-xl text-[color:var(--text-primary)]">
-                  TeamTrack
+                  Starlex
                 </span>
               </div>
               <p className="text-sm text-[color:var(--text-secondary)] leading-relaxed max-w-xs">
@@ -658,7 +658,7 @@ export const HomePage = () => {
 
           <div className="h-px w-full bg-[color:var(--text-primary)]/10 mb-6" />
           <p className="text-xs text-[color:var(--text-secondary)] text-center tracking-wide">
-            &copy; 2026 TeamTrack. Open-source.
+            &copy; 2026 Starlex. Open-source.
           </p>
         </footer>
       </div>

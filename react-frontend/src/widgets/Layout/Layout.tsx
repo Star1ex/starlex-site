@@ -118,7 +118,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     if (location.pathname.startsWith('/settings')) return 'Settings';
     if (location.pathname.startsWith('/profile')) return 'Profile';
     if (location.pathname.startsWith('/dashboard')) return 'Dashboard';
-    return 'TeamTrack';
+    return 'Starlex';
   }, [location.pathname]);
 
   const handleRootTouchStart = (e: React.TouchEvent) => {

@@ -3,7 +3,7 @@ package folder
 import (
 	"context"
 
-	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
+	"github.com/Star1ex/starlex-site/internal/domain/entity"
 )
 
 type Service interface {

@@ -1,4 +1,4 @@
-module github.com/Team-Tracks/team-track-site
+module github.com/Star1ex/starlex-site
 
 go 1.24.9
 

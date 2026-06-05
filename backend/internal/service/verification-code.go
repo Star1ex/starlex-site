@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
-	"github.com/Team-Tracks/team-track-site/internal/domain/user"
-	"github.com/Team-Tracks/team-track-site/internal/domain/verification"
-	email "github.com/Team-Tracks/team-track-site/internal/infra/email"
-	"github.com/Team-Tracks/team-track-site/internal/security"
+	"github.com/Star1ex/starlex-site/internal/domain/entity"
+	"github.com/Star1ex/starlex-site/internal/domain/user"
+	"github.com/Star1ex/starlex-site/internal/domain/verification"
+	email "github.com/Star1ex/starlex-site/internal/infra/email"
+	"github.com/Star1ex/starlex-site/internal/security"
 )
 
 type VerificationService struct {

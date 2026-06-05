@@ -2,7 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { motion, useInView, type Variants } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/shared/contexts/ThemeContext.js";
-import iconTeamtrack from "@/assets/icon-teamtrack.png";
+import iconStarlex from "@/assets/icon-starlex.png";
 
 type AboutUsProps = { variant?: "page" | "settings" };
 
@@ -115,8 +115,8 @@ export default function AboutUs({ variant = "page" }: AboutUsProps) {
         <nav className={["fixed top-0 inset-x-0 z-50 transition-all duration-300", scrolled ? "backdrop-blur-md bg-[color:var(--bg-primary)]/80 shadow-sm" : "bg-transparent"].join(" ")}>
           <div className="max-w-6xl mx-auto px-6 sm:px-10 h-16 flex items-center justify-between gap-4">
             <button onClick={() => navigate("/")} className="flex items-center gap-3">
-              <img src={iconTeamtrack} alt="TeamTrack logo" className="w-8 h-8 object-contain" />
-              <span className="tt-font-display text-lg tracking-tight text-[color:var(--text-primary)]">TeamTrack</span>
+              <img src={iconStarlex} alt="Starlex logo" className="w-8 h-8 object-contain" />
+              <span className="tt-font-display text-lg tracking-tight text-[color:var(--text-primary)]">Starlex</span>
             </button>
             <div className="flex items-center gap-2">
               <motion.button onClick={() => navigate("/sign-in")} whileHover={{ scale: 1.03 }} whileTap={{ scale: 0.97 }} transition={{ duration: 0.15 }} className="tt-button">Sign In</motion.button>
@@ -135,7 +135,7 @@ export default function AboutUs({ variant = "page" }: AboutUsProps) {
             A small team building calm, open collaboration.
           </motion.h1>
           <motion.p variants={fadeUp} className="text-[color:var(--text-secondary)] text-lg sm:text-xl leading-relaxed max-w-2xl">
-            TeamTrack is built in the open with a minimalist mindset. Simple, fast, and thoughtfully
+            Starlex is built in the open with a minimalist mindset. Simple, fast, and thoughtfully
             designed so teams stay focused on momentum — not tooling.
           </motion.p>
           {!isSettings && (
@@ -177,7 +177,7 @@ export default function AboutUs({ variant = "page" }: AboutUsProps) {
               <h2 className="tt-font-display text-3xl sm:text-4xl">Team</h2>
             </div>
             {!isSettings && (
-              <a href="https://github.com/Team-Tracks" target="_blank" rel="noopener noreferrer" className="tt-link text-sm shrink-0">
+              <a href="https://github.com/Star1ex" target="_blank" rel="noopener noreferrer" className="tt-link text-sm shrink-0">
                 Explore the org
               </a>
             )}
@@ -257,7 +257,7 @@ export default function AboutUs({ variant = "page" }: AboutUsProps) {
             className="text-center"
             style={{ fontSize: "clamp(4rem, 18vw, 16rem)", fontFamily: '"Playfair Display", serif', letterSpacing: "-0.04em", lineHeight: 1, color: "var(--text-primary)", opacity: 0.06 }}
           >
-            TeamTrack
+            Starlex
           </motion.p>
         </div>
       )}
@@ -270,8 +270,8 @@ export default function AboutUs({ variant = "page" }: AboutUsProps) {
             <div className="grid grid-cols-1 md:grid-cols-[1.4fr_1fr_1fr] gap-10 mb-12">
               <div className="flex flex-col gap-4">
                 <div className="flex items-center gap-3">
-                  <img src={iconTeamtrack} alt="TeamTrack logo" className="w-8 h-8 object-contain" />
-                  <span className="tt-font-display text-xl">TeamTrack</span>
+                  <img src={iconStarlex} alt="Starlex logo" className="w-8 h-8 object-contain" />
+                  <span className="tt-font-display text-xl">Starlex</span>
                 </div>
                 <p className="text-sm text-[color:var(--text-secondary)] leading-relaxed max-w-xs">Open-source task management for modern teams.</p>
               </div>
@@ -292,7 +292,7 @@ export default function AboutUs({ variant = "page" }: AboutUsProps) {
               </div>
             </div>
             <div className="h-px w-full bg-[color:var(--text-primary)]/10 mb-6" />
-            <p className="text-xs text-[color:var(--text-secondary)] text-center tracking-wide">&copy; 2026 TeamTrack. Open-source.</p>
+            <p className="text-xs text-[color:var(--text-secondary)] text-center tracking-wide">&copy; 2026 Starlex. Open-source.</p>
           </footer>
         </div>
       )}

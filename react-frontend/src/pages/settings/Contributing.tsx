@@ -1,9 +1,9 @@
 import React from 'react';
 import ReactMarkdown from 'react-markdown';
 
-const CONTRIBUTING_CONTENT = `# Contributing to TeamTrack
+const CONTRIBUTING_CONTENT = `# Contributing to Starlex
 
-Thank you for your interest in contributing to TeamTrack! This document provides guidelines and instructions for contributing to the project.
+Thank you for your interest in contributing to Starlex! This document provides guidelines and instructions for contributing to the project.
 
 ## Getting Started
 
@@ -62,17 +62,17 @@ Feature requests are welcome! Please:
 - Welcome newcomers
 - Focus on constructive feedback
 
-Thank you for contributing to TeamTrack!`;
+Thank you for contributing to Starlex!`;
 
 export const Contributing: React.FC = () => {
   return (
     <div className="space-y-8 text-center max-w-3xl mx-auto">
       <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text mb-2">
-          Contributing to TeamTrack
+          Contributing to Starlex
         </h3>
         <p className="text-sm text-gray-600 dark:text-dark-text-muted">
-          Guidelines for developers contributing to the TeamTrack project
+          Guidelines for developers contributing to the Starlex project
         </p>
       </div>
 

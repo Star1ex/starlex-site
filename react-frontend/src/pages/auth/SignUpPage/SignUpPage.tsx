@@ -123,7 +123,7 @@ export const SignUpPage = () => {
       exit="exit"
     >
       <Helmet>
-        <title>Sign Up — Team Track</title>
+        <title>Sign Up — Starlex</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <button

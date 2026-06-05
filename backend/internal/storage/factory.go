@@ -3,7 +3,7 @@ package storage
 import (
 	"fmt"
 
-	"github.com/Team-Tracks/team-track-site/internal/config"
+	"github.com/Star1ex/starlex-site/internal/config"
 )
 
 func NewStorageByEnv(cfg *config.StorageConfig) (Storage, error) {

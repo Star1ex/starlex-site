@@ -8,11 +8,11 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Team-Tracks/team-track-site/internal/api/dto"
-	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
-	"github.com/Team-Tracks/team-track-site/internal/logger"
-	"github.com/Team-Tracks/team-track-site/internal/repository"
-	"github.com/Team-Tracks/team-track-site/internal/service"
+	"github.com/Star1ex/starlex-site/internal/api/dto"
+	"github.com/Star1ex/starlex-site/internal/domain/entity"
+	"github.com/Star1ex/starlex-site/internal/logger"
+	"github.com/Star1ex/starlex-site/internal/repository"
+	"github.com/Star1ex/starlex-site/internal/service"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
 )

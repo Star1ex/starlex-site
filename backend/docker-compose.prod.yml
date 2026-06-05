@@ -1,0 +1,75 @@
+# Production stack for Starlex backend.
+# Lives on the server at /opt/starlex/prod/backend/docker-compose.prod.yml
+# The backend image is pulled from GHCR (built in CI); only Postgres is local.
+# Backend is published ONLY on 127.0.0.1:8083 — public traffic arrives via
+# Cloudflare Tunnel -> system nginx -> 127.0.0.1:8083.
+services:
+  db:
+    image: postgres:16
+    container_name: starlex-prod-db
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      POSTGRES_USER: ${DB_USER:-starlex_admin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-1234}
+      POSTGRES_DB: ${DB_NAME:-starlex}
+    volumes:
+      - starlex_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-starlex_admin} -d ${DB_NAME:-starlex} -p 5432"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    networks:
+      - starlex
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: '0.5'
+
+  backend:
+    image: ${BACKEND_IMAGE}
+    container_name: starlex-prod-backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      # Force internal Docker DNS regardless of what .env carries
+      DB_HOST: db
+      DB_PORT: "5432"
+      DB_SSL_MODE: disable
+      # Backend always listens on 3000 inside the container
+      BACKEND_PORT: "3000"
+      PORT: "3000"
+    ports:
+      # Bind to loopback only — nginx is the sole entry point
+      - "127.0.0.1:8083:3000"
+    volumes:
+      - starlex_uploads:/uploads
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    networks:
+      - starlex
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.5'
+
+volumes:
+  starlex_pg:
+  starlex_uploads:
+
+networks:
+  starlex:
+    name: starlex-prod
