@@ -7,8 +7,8 @@ export const folderService = {
     return response.data;
   },
 
-  async getTeamFolders(teamId: string): Promise<FolderDTO[]> {
-    const response = await httpClient.get<FolderDTO[]>(`/api/folders/team/${teamId}`);
+  async getWorkspaceFolders(workspaceId: string): Promise<FolderDTO[]> {
+    const response = await httpClient.get<FolderDTO[]>(`/api/folders/workspace/${workspaceId}`);
     return response.data;
   },
 

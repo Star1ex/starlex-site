@@ -11,24 +11,11 @@ const maybeHandleStaleUpdate = (error: unknown) => {
 };
 
 export const taskService = {
-  // Personal
-  async getPersonalTasks(options?: { signal?: AbortSignal }): Promise<TaskDTO[]> {
-    const response = await httpClient.get<TaskDTO[]>('/api/tasks', { signal: options?.signal as any });
-    return response.data;
-  },
-
-  async getPersonalTasksWithoutFolder(): Promise<TaskDTO[]> {
-    const response = await httpClient.get<TaskDTO[]>('/api/tasks/without-folder');
-    return response.data;
-  },
-
+  // ---- single task (any task the user can access) ----
   async getTasksByFolder(folderId: string): Promise<TaskDTO[]> {
-    const response = await httpClient.get<TaskDTO[]>(`/api/tasks/folder/${folderId}?folder_id=${folderId}`);
-    return response.data;
-  },
-
-  async createPersonalTask(data: CreateTaskRequest): Promise<TaskDTO> {
-    const response = await httpClient.post<TaskDTO>('/api/tasks', data);
+    const response = await httpClient.get<TaskDTO[]>(
+      `/api/tasks/folder/${folderId}?folder_id=${folderId}`
+    );
     return response.data;
   },
 
@@ -86,25 +73,30 @@ export const taskService = {
     return response.data;
   },
 
-  // Team
-  async getTeamTasks(teamId: string): Promise<TaskDTO[]> {
-    const response = await httpClient.get<TaskDTO[]>(`/api/teams/${teamId}/tasks`);
+  // ---- workspace-scoped ----
+  // Any workspace member may create tasks; owner is taken from the auth token.
+  async getWorkspaceTasks(workspaceId: string, options?: { signal?: AbortSignal }): Promise<TaskDTO[]> {
+    const response = await httpClient.get<TaskDTO[]>(`/api/workspaces/${workspaceId}/tasks`, {
+      signal: options?.signal as any,
+    });
     return response.data;
   },
 
-  async getUserTasksInTeam(teamId: string, userId: string): Promise<TaskDTO[]> {
-    const response = await httpClient.get<TaskDTO[]>(`/api/teams/${teamId}/tasks/user/${userId}`);
+  async getUserTasksInWorkspace(workspaceId: string, userId: string): Promise<TaskDTO[]> {
+    const response = await httpClient.get<TaskDTO[]>(
+      `/api/workspaces/${workspaceId}/tasks/user/${userId}`
+    );
     return response.data;
   },
 
-  async createTeamTask(teamId: string, data: CreateTaskRequest): Promise<TaskDTO> {
-    const response = await httpClient.post<TaskDTO>(`/api/teams/${teamId}/tasks`, data);
+  async createWorkspaceTask(workspaceId: string, data: CreateTaskRequest): Promise<TaskDTO> {
+    const response = await httpClient.post<TaskDTO>(`/api/workspaces/${workspaceId}/tasks`, data);
     return response.data;
   },
 
-  async updateTeamTask(teamId: string, taskId: string, data: UpdateTaskRequest): Promise<TaskDTO> {
+  async updateWorkspaceTask(workspaceId: string, taskId: string, data: UpdateTaskRequest): Promise<TaskDTO> {
     try {
-      const response = await httpClient.put<TaskDTO>(`/api/teams/${teamId}/tasks/${taskId}`, data);
+      const response = await httpClient.put<TaskDTO>(`/api/workspaces/${workspaceId}/tasks/${taskId}`, data);
       return response.data;
     } catch (error) {
       maybeHandleStaleUpdate(error);
@@ -112,28 +104,28 @@ export const taskService = {
     }
   },
 
-  async updateTeamTaskTitle(teamId: string, taskId: string, task: string): Promise<void> {
-    await httpClient.patch(`/api/teams/${teamId}/tasks/${taskId}/title`, { task });
+  async updateWorkspaceTaskTitle(workspaceId: string, taskId: string, task: string): Promise<void> {
+    await httpClient.patch(`/api/workspaces/${workspaceId}/tasks/${taskId}/title`, { task });
   },
 
-  async updateTeamTaskDescription(teamId: string, taskId: string, description: string): Promise<void> {
-    await httpClient.patch(`/api/teams/${teamId}/tasks/${taskId}/description`, { description });
+  async updateWorkspaceTaskDescription(workspaceId: string, taskId: string, description: string): Promise<void> {
+    await httpClient.patch(`/api/workspaces/${workspaceId}/tasks/${taskId}/description`, { description });
   },
 
-  async updateTeamTaskPriority(teamId: string, taskId: string, priority: 'low' | 'medium' | 'high'): Promise<void> {
-    await httpClient.patch(`/api/teams/${teamId}/tasks/${taskId}/priority`, { priority });
+  async updateWorkspaceTaskPriority(workspaceId: string, taskId: string, priority: 'low' | 'medium' | 'high'): Promise<void> {
+    await httpClient.patch(`/api/workspaces/${workspaceId}/tasks/${taskId}/priority`, { priority });
   },
 
-  async updateTeamTaskStatus(teamId: string, taskId: string, progress: TaskProgress): Promise<void> {
-    await httpClient.patch(`/api/teams/${teamId}/tasks/${taskId}/progress`, { progress });
+  async updateWorkspaceTaskStatus(workspaceId: string, taskId: string, progress: TaskProgress): Promise<void> {
+    await httpClient.patch(`/api/workspaces/${workspaceId}/tasks/${taskId}/progress`, { progress });
   },
 
-  async updateTeamTaskAssignees(teamId: string, taskId: string, userIds: string[]): Promise<void> {
-    await httpClient.patch(`/api/teams/${teamId}/tasks/${taskId}/assignees`, { user_ids: userIds });
+  async updateWorkspaceTaskAssignees(workspaceId: string, taskId: string, userIds: string[]): Promise<void> {
+    await httpClient.patch(`/api/workspaces/${workspaceId}/tasks/${taskId}/assignees`, { user_ids: userIds });
   },
 
-  async deleteTeamTask(teamId: string, taskId: string): Promise<string> {
-    const response = await httpClient.delete<string>(`/api/teams/${teamId}/tasks/${taskId}`);
+  async deleteWorkspaceTask(workspaceId: string, taskId: string): Promise<string> {
+    const response = await httpClient.delete<string>(`/api/workspaces/${workspaceId}/tasks/${taskId}`);
     return response.data;
   },
 };

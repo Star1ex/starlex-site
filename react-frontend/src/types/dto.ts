@@ -5,7 +5,7 @@ export interface FolderDTO {
   color: string;
   icon: string;
   parent_id: string | null;
-  team_id: string | null;
+  workspace_id: string | null;
   owner_id: string;
   position: number;
   created_at: string;
@@ -17,7 +17,7 @@ export interface CreateFolderRequest {
   color?: string;
   icon?: string;
   parent_id?: string | null;
-  team_id?: string | null;
+  workspace_id?: string | null;
   owner_id: string;
   position?: number;
 }
@@ -28,17 +28,22 @@ export interface FolderMoveRequest {
 }
 
 // ==================== TASK DTOs ====================
+export type TaskProgress = 'not_started' | 'in_progress' | 'done';
+export type TaskPriority = 'low' | 'medium' | 'high';
+
 export interface TaskDTO {
   id: string;
   task: string;
   description: string;
   icon?: string;
-  user_ids: UserDTO[]; // expanded to include user objects for frontend
-  team_id: string | null;
+  user_ids: UserDTO[]; // assignees, expanded to user objects for the UI
+  workspace_id: string | null;
   folder_id: string | null;
+  project_id: string | null;
   owner_id: string;
-  priority: 'low' | 'medium' | 'high';
-  progress: 'not_started' | 'in_progress' | 'done';
+  priority: TaskPriority;
+  progress: TaskProgress;
+  subtasks: SubtaskDTO[];
   created_at: string;
   updated_at: string;
 }
@@ -47,51 +52,107 @@ export interface CreateTaskRequest {
   user_ids?: string[];
   task: string;
   description?: string;
-  progress?: 'not_started' | 'in_progress' | 'done';
-  priority?: 'low' | 'medium' | 'high';
+  progress?: TaskProgress;
+  priority?: TaskPriority;
   folder_id?: string | null;
-  team_id?: string | null;
-  owner_id: string;
+  workspace_id?: string | null;
+  project_id?: string | null;
+  owner_id?: string;
 }
 
 export interface UpdateTaskRequest {
   task?: string;
   description?: string;
   user_ids?: string[];
-  priority?: 'low' | 'medium' | 'high';
+  priority?: TaskPriority;
   folder_id?: string | null;
   owner_id?: string;
   updated_at?: string;
 }
 
-export type TaskProgress = 'not_started' | 'in_progress' | 'done';
-
 export interface UpdateProgressRequest {
   progress: TaskProgress;
 }
 
-// ==================== TEAM DTOs ====================
-export interface TeamDTO {
+// ==================== WORKSPACE DTOs ====================
+export interface WorkspaceDTO {
   id: string;
   name: string;
   description: string;
   icon?: string;
-  emails?: string[];
 }
 
-export interface CreateTeamRequest {
-  user_id: string;
+export interface CreateWorkspaceRequest {
   name: string;
   description: string;
-  emails?: string[];
 }
 
-export interface AddUserToTeamRequest {
+export interface AddUserToWorkspaceRequest {
   email: string;
 }
 
-export interface RemoveUserFromTeamRequest {
+export interface RemoveUserFromWorkspaceRequest {
   userId: string;
+}
+
+// ==================== PROJECT DTOs ====================
+export type ProjectStatus =
+  | 'backlog'
+  | 'planned'
+  | 'in_progress'
+  | 'paused'
+  | 'completed'
+  | 'cancelled';
+
+export type ProjectPriority = 'none' | 'urgent' | 'high' | 'medium' | 'low';
+
+export interface ProjectDTO {
+  id: string;
+  workspace_id: string;
+  name: string;
+  description: string;
+  goal: string;
+  icon: string;
+  priority: ProjectPriority;
+  status: ProjectStatus;
+  leader_id: string;
+  created_by: string;
+  deadline: string | null;
+  member_ids: string[];
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateProjectRequest {
+  name: string;
+  description?: string;
+  goal?: string;
+  icon?: string;
+  priority?: ProjectPriority;
+  status?: ProjectStatus;
+  leader_id?: string;
+  deadline?: string | null;
+  member_ids?: string[];
+}
+
+export interface UpdateProjectRequest {
+  name?: string;
+  description?: string;
+  goal?: string;
+  icon?: string;
+  priority?: ProjectPriority;
+  status?: ProjectStatus;
+  leader_id?: string;
+  deadline?: string | null;
+  clear_deadline?: boolean;
+}
+
+export interface AddProjectMemberRequest {
+  email: string;
+}
+
+export interface RemoveProjectMemberRequest {
+  user_id: string;
 }
 
 // ==================== USER DTOs ====================
@@ -120,6 +181,8 @@ export interface UserProfileDTO {
   google_id?: string | null;
   github_id?: string | null;
   email_verified?: boolean;
+  created_at?: string;
+  last_login_at?: string | null;
 }
 
 export interface UpdateUserRequest {
@@ -149,18 +212,21 @@ export interface RegisterRequest {
   last_name: string;
 }
 
+// Registration no longer creates a user up front; the account is created only
+// after the emailed code is confirmed. The response echoes the email to verify.
 export interface RegisterResponse {
   message: string;
-  user_id: string;
+  email: string;
 }
 
+// Verification is keyed by email (no user exists yet at this stage).
 export interface VerifyEmailRequest {
-  user_id: string;
+  email: string;
   code: string;
 }
 
 export interface ResendCodeRequest {
-  user_id: string;
+  email: string;
 }
 
 export interface AuthResponse {
@@ -212,7 +278,7 @@ export interface SprintDTO {
   id: string;
   name: string;
   goal: string; // plain text / markdown sprint description
-  team_id: string;
+  workspace_id: string;
   status: SprintStatus;
   start_date: string | null;
   end_date: string | null;

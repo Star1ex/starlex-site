@@ -1,5 +1,5 @@
 import { httpClient } from './client.js';
-import { UserDTO, UserProfileDTO, UpdateUserRequest, TeamDTO } from '../../types/dto.js';
+import { UserDTO, UserProfileDTO, UpdateUserRequest, WorkspaceDTO } from '../../types/dto.js';
 
 export const userService = {
   async getProfile(): Promise<UserProfileDTO> {
@@ -17,6 +17,8 @@ export const userService = {
       google_id: d.google_id ?? null,
       github_id: d.github_id ?? null,
       email_verified: d.email_verified ?? d.is_verified ?? false,
+      created_at: d.created_at ?? undefined,
+      last_login_at: d.last_login_at ?? null,
     } as UserProfileDTO;
   },
 
@@ -48,10 +50,15 @@ export const userService = {
     return response.data;
   },
 
-  async getTeams(): Promise<TeamDTO[]> {
-    const response = await httpClient.get<TeamDTO[]>('/api/users/teams');
+  async getWorkspaces(): Promise<WorkspaceDTO[]> {
+    const response = await httpClient.get<WorkspaceDTO[]>('/api/users/workspaces');
     const d = response.data as any[];
-    return (Array.isArray(d) ? d : []).map((t) => ({ id: t.id ?? t.team_id, name: t.name, description: t.description, emails: t.emails || [] }));
+    return (Array.isArray(d) ? d : []).map((w) => ({
+      id: w.id ?? w.workspace_id,
+      name: w.name,
+      description: w.description,
+      icon: w.icon ?? '',
+    }));
   },
 
   // Public user endpoints
