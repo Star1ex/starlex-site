@@ -22,6 +22,7 @@ type Handlers struct {
 	taskService         task.Service
 	folderService       folder.Service
 	verificationService verification.Service
+	registrationService *service.RegistrationService
 	passwordService     password.Service
 	sprintService       *service.SprintService
 	discussionService   *service.DiscussionService
@@ -37,6 +38,7 @@ func NewHandlers(userService user.Service,
 	taskService task.Service,
 	folderService folder.Service,
 	verificationService verification.Service,
+	registrationService *service.RegistrationService,
 	passwordService password.Service,
 	sprintService *service.SprintService,
 	discussionService *service.DiscussionService,
@@ -52,6 +54,7 @@ func NewHandlers(userService user.Service,
 		taskService:         taskService,
 		folderService:       folderService,
 		verificationService: verificationService,
+		registrationService: registrationService,
 		passwordService:     passwordService,
 		sprintService:       sprintService,
 		discussionService:   discussionService,

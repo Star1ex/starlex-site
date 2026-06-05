@@ -27,12 +27,12 @@ type RefreshTokenRequest struct {
 }
 
 type VerifyEmailRequest struct {
-	UserID string `json:"user_id" binding:"required"`
-	Code   string `json:"code" binding:"required"`
+	Email string `json:"email" binding:"required"`
+	Code  string `json:"code" binding:"required"`
 }
 
 type ResendCodeRequest struct {
-	UserID string `json:"user_id" binding:"required"`
+	Email string `json:"email" binding:"required"`
 }
 
 // Login method
@@ -361,6 +361,7 @@ func (h *Handlers) Register(ctx *fiber.Ctx) error {
 		})
 	}
 
+	// Only reject if a real (already created) account exists for this email.
 	existingUser, err := h.userService.GetByEmail(ctx.Context(), input.Email)
 	if err == nil && existingUser != nil {
 		if existingUser.Password == "" {
@@ -381,26 +382,18 @@ func (h *Handlers) Register(ctx *fiber.Ctx) error {
 		})
 	}
 
-	userID, err := h.userService.CreateUnverified(ctx.Context(), &input)
-	if err != nil {
-		logger.Log.Errorw("create user failed", "error", err)
+	// No user is created yet — the account is only persisted after the email is
+	// verified. Store a pending registration and email the code.
+	if err := h.registrationService.Start(ctx.Context(), input.Email, input.Password, input.FirstName, input.LastName, ctx.IP()); err != nil {
+		logger.Log.Errorw("start registration failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to create user",
-		})
-	}
-	// create user with service
-	err = h.verificationService.GenerateAndSendCode(ctx.Context(), userID, input.Email, input.FirstName)
-	if err != nil {
-		logger.Log.Errorw("failed to send verification code", "error", err)
-		ctx.Status(fiber.StatusCreated).JSON(fiber.Map{
-			"message": "User registered. Please contact support for verification code.",
-			"user_id": userID,
+			"error": "Failed to start registration",
 		})
 	}
 
 	return ctx.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"message": "Registration successful. Please check your email for verification code.",
-		"user_id": userID,
+		"message": "Registration started. Please check your email for the verification code.",
+		"email":   input.Email,
 	})
 }
 
@@ -424,26 +417,30 @@ func (h *Handlers) VerifyEmail(ctx *fiber.Ctx) error {
 		})
 	}
 
-	if input.UserID == "" || input.Code == "" {
+	if input.Email == "" || input.Code == "" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "User ID and code are required",
+			"error": "Email and code are required",
 		})
 	}
 
-	err := h.verificationService.VerifyCode(ctx.Context(), input.UserID, input.Code)
+	// Confirm creates the verified user from the pending registration.
+	user, err := h.registrationService.Confirm(ctx.Context(), input.Email, input.Code, ctx.IP())
 	if err != nil {
 		logger.Log.Errorw("verify email failed", "error", err)
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "invalid verification code",
-		})
+		status := fiber.StatusBadRequest
+		message := "invalid verification code"
+		switch {
+		case errors.Is(err, service.ErrPendingNotFound):
+			message = "no pending registration for this email"
+		case errors.Is(err, service.ErrCodeExpired):
+			message = "verification code expired, please register again"
+		case errors.Is(err, service.ErrTooManyAttempts):
+			message = "too many attempts, please register again"
+		}
+		return ctx.Status(status).JSON(fiber.Map{"error": message})
 	}
 
-	user, err := h.userService.Get(ctx.Context(), input.UserID)
-	if err != nil {
-		logger.Log.Errorw("failed to get user for notification", "error", err)
-	} else {
-		h.notifyUserRegistered(dto.ToUserResponseIsVerified(user))
-	}
+	h.notifyUserRegistered(dto.ToUserResponseIsVerified(user))
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message": "Email verified successfully. You can now log in",
@@ -475,28 +472,19 @@ func (h *Handlers) ResendCode(ctx *fiber.Ctx) error {
 		})
 	}
 
-	if input.UserID == "" {
+	if input.Email == "" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "User ID is required",
+			"error": "Email is required",
 		})
 	}
 
-	user, err := h.userService.Get(ctx.Context(), input.UserID)
-	if err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "user not found",
-		})
-	}
-
-	if user.IsVerified {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "Email is already verified",
-		})
-	}
-
-	err = h.verificationService.GenerateAndSendCode(ctx.Context(), user.ID, user.Email, user.FirstName)
-	if err != nil {
+	if err := h.registrationService.Resend(ctx.Context(), input.Email); err != nil {
 		logger.Log.Errorw("resend code failed", "error", err)
+		if errors.Is(err, service.ErrPendingNotFound) {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"error": "no pending registration for this email",
+			})
+		}
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "Failed to resend verification code",
 		})

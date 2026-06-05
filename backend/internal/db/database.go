@@ -84,6 +84,7 @@ func migrate(db *DB) error {
 		&repository.DiscussionModel{},
 		&repository.DiscussionMessageModel{},
 		&repository.VerificationCodeModel{},
+		&repository.PendingRegistrationModel{},
 		&repository.PasswordResetTokenModel{},
 		&repository.PasswordAuditLogModel{},
 	); err != nil {
