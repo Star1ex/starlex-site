@@ -1,0 +1,193 @@
+# Deploy Starlex to production (starlex.cc)
+#
+# Flow:
+#   push to main
+#     -> build backend image -> GHCR        (only if backend/** changed)
+#     -> build frontend static (pnpm)        (only if react-frontend/** changed)
+#     -> deploy job (Tailscale -> server):
+#          backend : scp compose + ssh `docker compose pull && up -d`
+#          frontend: scp dist -> nginx web root  (ultra-fast, just static files)
+#
+# The server holds its own /opt/starlex/prod/backend/.env — secrets are NOT
+# injected by CI. System nginx + Cloudflare Tunnel front everything.
+name: Deploy to Production
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-prod
+  cancel-in-progress: true
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository_owner }}/starlex-backend
+  IMAGE_TAG: prod
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'backend/**'
+            frontend:
+              - 'react-frontend/**'
+
+  build-backend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push backend image
+        uses: docker/build-push-action@v5
+        with:
+          context: backend
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:prod-${{ github.sha }}
+          cache-from: type=gha,scope=backend-prod
+          cache-to: type=gha,mode=max,scope=backend-prod
+
+  build-frontend:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "pnpm"
+          cache-dependency-path: react-frontend/pnpm-lock.yaml
+
+      - name: Build static bundle
+        working-directory: react-frontend
+        env:
+          # Same-origin: the app calls /api/... which nginx proxies to backend
+          VITE_API_URL: ""
+          VITE_SENTRY_DSN: ${{ secrets.VITE_SENTRY_DSN }}
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run build
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: react-frontend/dist/
+          retention-days: 1
+
+  deploy:
+    needs: [detect-changes, build-backend, build-frontend]
+    if: ${{ always() && !contains(needs.*.result, 'failure') && !contains(needs.*.result, 'cancelled') && (needs.build-backend.result == 'success' || needs.build-frontend.result == 'success') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      packages: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Connect to Tailscale VPN
+        uses: tailscale/github-action@v2
+        with:
+          authKey: ${{ secrets.TAILSCALE_AUTHKEY }}
+
+      # ─── Backend ──────────────────────────────────────────────────────────────
+      - name: Copy docker-compose (backend)
+        if: needs.detect-changes.outputs.backend == 'true'
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          source: "backend/docker-compose.prod.yml"
+          target: "/opt/starlex/prod/backend/"
+          strip_components: 1
+          overwrite: true
+
+      - name: Deploy backend on server
+        if: needs.detect-changes.outputs.backend == 'true'
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          GHCR_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GHCR_USER: ${{ github.actor }}
+          BACKEND_IMAGE: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          envs: GHCR_TOKEN,GHCR_USER,BACKEND_IMAGE
+          command_timeout: 10m
+          script: |
+            set -euo pipefail
+            echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+            cd /opt/starlex/prod/backend
+            export BACKEND_IMAGE
+            docker compose -f docker-compose.prod.yml pull backend
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            docker logout ghcr.io >/dev/null 2>&1 || true
+            for i in $(seq 1 30); do
+              curl -sf http://127.0.0.1:8083/api/health >/dev/null 2>&1 && echo "Backend ready" && break
+              [ "$i" -eq 30 ] && docker compose -f docker-compose.prod.yml logs --tail=30 backend && exit 1
+              sleep 2
+            done
+            docker image prune -f >/dev/null 2>&1 || true
+
+      # ─── Frontend (static) ────────────────────────────────────────────────────
+      - name: Download frontend artifact
+        if: needs.detect-changes.outputs.frontend == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-dist
+          path: dist/
+
+      - name: Copy frontend bundle to nginx web root
+        if: needs.detect-changes.outputs.frontend == 'true'
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          port: ${{ secrets.DEPLOY_PORT }}
+          source: "dist/"
+          target: "/opt/starlex/prod/frontend/"
+          strip_components: 1
+          overwrite: true
+          rm: true
+
+      - name: Production deploy complete
+        run: echo "Done — $(date -u)"

@@ -1,0 +1,34 @@
+# Add these two hostname entries to /etc/cloudflared/config.yml
+# INSIDE the existing `ingress:` list, BEFORE the final catch-all
+# `- service: http_status:404` line. Do NOT create a second tunnel —
+# reuse the existing one (tunnel: 7b51396c-254b-4a44-96b9-13d6763a38f2).
+#
+# Resulting ingress: should look like:
+#
+# ingress:
+#   - hostname: critiqal.xyz
+#     service: http://localhost:80
+#   ... (existing critiqal entries) ...
+#
+#   - hostname: starlex.cc          # <-- add
+#     service: http://localhost:80  # <-- add
+#   - hostname: www.starlex.cc      # <-- add
+#     service: http://localhost:80  # <-- add
+#
+#   - service: http_status:404      # keep last
+
+  - hostname: starlex.cc
+    service: http://localhost:80
+  - hostname: www.starlex.cc
+    service: http://localhost:80
+
+# After editing, route DNS for the new zone and restart cloudflared:
+#   cloudflared tunnel route dns 7b51396c-254b-4a44-96b9-13d6763a38f2 starlex.cc
+#   cloudflared tunnel route dns 7b51396c-254b-4a44-96b9-13d6763a38f2 www.starlex.cc
+#   sudo systemctl restart cloudflared
+#
+# NOTE: the starlex.cc zone must be added to the SAME Cloudflare account that
+# owns the tunnel. `route dns` creates the proxied CNAME automatically; if the
+# zone is elsewhere, add a proxied CNAME manually:
+#   starlex.cc      CNAME  7b51396c-254b-4a44-96b9-13d6763a38f2.cfargotunnel.com  (Proxied)
+#   www.starlex.cc  CNAME  7b51396c-254b-4a44-96b9-13d6763a38f2.cfargotunnel.com  (Proxied)
