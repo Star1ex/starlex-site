@@ -5,7 +5,6 @@ import { authService } from '@/services/api/index.js';
 export const VerifyEmailPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const userId = location.state?.userId || "";
   const email = location.state?.email || "";
 
   const [code, setCode] = useState(["", "", "", "", "", ""]);
@@ -66,15 +65,15 @@ export const VerifyEmailPage = () => {
       return;
     }
 
-    if (!userId) {
-      setErrorMessage("User ID is missing. Please try registering again.");
+    if (!email) {
+      setErrorMessage("Email is missing. Please try registering again.");
       return;
     }
 
     setIsLoading(true);
 
     try {
-      await authService.verifyEmail({ user_id: userId, code: verificationCode });
+      await authService.verifyEmail({ email, code: verificationCode });
       navigate('/sign-in', { state: { message: 'Email verified successfully! You can now sign in.' } });
     } catch (err: any) {
       setErrorMessage(err?.response?.data?.error || 'Invalid verification code');
@@ -89,7 +88,7 @@ export const VerifyEmailPage = () => {
     setIsResending(true);
 
     try {
-      await authService.resendCode({ user_id: userId });
+      await authService.resendCode({ email });
       alert('Verification code resent! Please check your email.');
       setCode(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();

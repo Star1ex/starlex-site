@@ -4,7 +4,7 @@ import { ChevronRight, Moon, Settings } from 'lucide-react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Avatar from '@/shared/ui/Avatar.js';
 import { getAuthUser } from '@/shared/lib/authManager.js';
-import { userService, teamService } from '@/services/api/index.js';
+import { userService, workspaceService } from '@/services/api/index.js';
 import { useTheme } from '@/shared/contexts/ThemeContext.js';
 import { useAuth } from '@/contexts/AuthContext.js';
 import type { User } from '@/entities/types.js';
@@ -66,7 +66,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
 
     const fetchTeams = async () => {
       try {
-        const data = await userService.getTeams();
+        const data = await userService.getWorkspaces();
         setTeams(Array.isArray(data) ? data.map((t: any) => ({ id: t.id, name: t.name, icon: t.icon || '' })) : []);
       } catch (err: any) {
         if (err?.response?.status === 401) navigate('/sign-in');
@@ -94,7 +94,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
         color: '#3B82F6',
         parent_id: null,
         owner_id: ownerId,
-        team_id: null,
         position: 0,
       });
     };
@@ -146,7 +145,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
     const snapshot = teams;
     setTeams((prev) => prev.map((t) => (t.id === id ? { ...t, name } : t)));
     try {
-      await teamService.updateTeam(id, { name });
+      await workspaceService.updateWorkspace(id, { name });
     } catch {
       setTeams(snapshot);
     }
@@ -157,7 +156,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
     setTeams((prev) => prev.filter((t) => t.id !== id));
     if (activeTeamId === id) navigate('/dashboard');
     try {
-      await teamService.deleteTeam(id);
+      await workspaceService.deleteWorkspace(id);
     } catch {
       setTeams(snapshot);
     }

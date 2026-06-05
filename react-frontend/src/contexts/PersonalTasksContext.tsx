@@ -46,14 +46,8 @@ export const PersonalTasksProvider = ({ children }: { children: React.ReactNode 
   }, []);
 
   const refreshTasks = React.useCallback(async () => {
-    try {
-      const data = await taskService.getPersonalTasks();
-      // Ensure only personal tasks (team_id == null OR empty string)
-      const personal = (data || []).filter((t) => t.team_id == null || t.team_id === '');
-      setTasks(personal);
-    } catch (err) {
-      console.error('Failed to refresh tasks', err);
-    }
+    // Personal tasks removed; context is a no-op until workspace task view is built
+    setTasks([]);
   }, []);
 
   useEffect(() => {
@@ -99,7 +93,9 @@ export const PersonalTasksProvider = ({ children }: { children: React.ReactNode 
         team_id: null,
         user_ids: data.user_ids ?? [],
       };
-      await taskService.createPersonalTask(payload as CreateTaskRequest);
+      const workspaceId = data.workspace_id;
+      if (!workspaceId) throw new Error('workspace_id required');
+      await taskService.createWorkspaceTask(workspaceId, payload as CreateTaskRequest);
       await refreshTasks();
       window.dispatchEvent(new CustomEvent('personalTaskCreated'));
     } catch (err) {
@@ -122,7 +118,7 @@ export const PersonalTasksProvider = ({ children }: { children: React.ReactNode 
         color: data.color || '#3B82F6',
         icon: data.icon || '📁',
         parent_id: data.parent_id ?? null,
-        team_id: null,
+        workspace_id: null,
         owner_id: userId,
         position: data.position ?? 0,
         created_at: now,
@@ -135,7 +131,7 @@ export const PersonalTasksProvider = ({ children }: { children: React.ReactNode 
         color: data.color || '#3B82F6',
         icon: data.icon || '📁',
         parent_id: data.parent_id ?? null,
-        team_id: null,
+        workspace_id: null,
         owner_id: userId,
         position: data.position ?? 0,
       };

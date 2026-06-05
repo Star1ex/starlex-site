@@ -32,7 +32,6 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ onCreateFolder, onCrea
       progress: 'not_started',
       folder_id: contextMenu.folderId,
       owner_id: ownerId,
-      team_id: null,
       user_ids: [],
     });
     closeContextMenu();
@@ -47,7 +46,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ onCreateFolder, onCrea
       color: '#3B82F6',
       parent_id: contextMenu.folderId,
       owner_id: ownerId,
-      team_id: null,
+
       position: 0,
     });
     closeContextMenu();
@@ -61,7 +60,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ onCreateFolder, onCrea
       color: '#3B82F6',
       parent_id: null,
       owner_id: ownerId,
-      team_id: null,
+
       position: 0,
     });
     closeContextMenu();
@@ -76,7 +75,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ onCreateFolder, onCrea
       progress: 'not_started',
       folder_id: null,
       owner_id: ownerId,
-      team_id: null,
+
       user_ids: [],
     });
     closeContextMenu();

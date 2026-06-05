@@ -36,7 +36,6 @@ const FolderInlineCreate = React.memo(function FolderInlineCreate({
         color: '#3B82F6',
         parent_id: parentId ?? null,
         owner_id: resolvedOwnerId,
-        team_id: null,
         position: 0,
       });
       if (onClose) onClose();

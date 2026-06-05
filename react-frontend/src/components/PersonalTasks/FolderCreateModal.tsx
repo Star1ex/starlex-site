@@ -14,7 +14,7 @@ export default function FolderCreateModal({ onClose, parentId }: { onClose?: () 
     setIsCreating(true);
     setError(null);
     try {
-      await createFolder({ name, icon, color, parent_id, team_id: null });
+      await createFolder({ name, icon, color, parent_id, workspace_id: null });
       if (onClose) onClose();
     } catch (err) {
       console.error('Create folder failed', err);

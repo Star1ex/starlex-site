@@ -229,7 +229,7 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
         progress: 'not_started',
         folder_id: task.folder_id ?? null,
         owner_id: userId || '',
-        team_id: null,
+        workspace_id: null,
         user_ids: [],
       };
 

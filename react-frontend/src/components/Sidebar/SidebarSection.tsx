@@ -122,7 +122,6 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
       color: '#3B82F6',
       parent_id: null,
       owner_id: resolvedOwnerId,
-      team_id: null,
       position: 0,
     });
   }, [type, onAddTeam, userId, foldersHook]);

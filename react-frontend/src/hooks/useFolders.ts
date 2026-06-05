@@ -42,7 +42,7 @@ export const useFolders = () => {
       const controller = new AbortController();
       refreshControllerRef.current = controller;
       const data = await folderService.getUserFolders({ signal: controller.signal });
-      const personal = (data || []).filter((f) => f.team_id == null || f.team_id === '');
+      const personal = (data || []).filter((f) => f.workspace_id == null || f.workspace_id === '');
       const nextById: Record<string, FolderDTO> = {};
       const nextIds: string[] = [];
       for (const folder of personal) {
@@ -120,7 +120,7 @@ export const useFolders = () => {
       color: data.color || '#3B82F6',
       icon: data.icon || '📁',
       parent_id: data.parent_id ?? null,
-      team_id: data.team_id ?? null,
+      workspace_id: data.workspace_id ?? null,
       owner_id: data.owner_id,
       position: data.position ?? 0,
       created_at: now,
@@ -137,7 +137,7 @@ export const useFolders = () => {
       icon: data.icon || '📁',
       parent_id: data.parent_id ?? null,
       owner_id: data.owner_id,
-      team_id: data.team_id ?? null,
+      workspace_id: data.workspace_id ?? null,
       position: data.position ?? 0,
     };
 

@@ -60,16 +60,16 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
         const updates: Promise<void>[] = [];
         const trimmedTitle = formData.task.trim();
         if (trimmedTitle !== (task.task || '')) {
-          updates.push(taskService.updateTeamTaskTitle(teamId, task.id, trimmedTitle));
+          updates.push(taskService.updateTaskTitle(task.id, trimmedTitle));
         }
         if ((formData.description || '') !== (task.description || '')) {
-          updates.push(taskService.updateTeamTaskDescription(teamId, task.id, formData.description || ''));
+          updates.push(taskService.updateTaskDescription(task.id, formData.description || ''));
         }
         if ((formData.priority || 'low') !== (task.priority || 'low')) {
-          updates.push(taskService.updateTeamTaskPriority(teamId, task.id, formData.priority));
+          updates.push(taskService.updateTaskPriority(task.id, formData.priority));
         }
         if ((formData.progress || 'not_started') !== (task.progress || 'not_started')) {
-          updates.push(taskService.updateTeamTaskStatus(teamId, task.id, formData.progress as any));
+          updates.push(taskService.updateTaskStatus(task.id, formData.progress as any));
         }
 
         const originalUserIds =
@@ -79,7 +79,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
           originalUserIds.length !== nextUserIds.length ||
           originalUserIds.some((id) => !nextUserIds.includes(id));
         if (usersChanged) {
-          updates.push(taskService.updateTeamTaskAssignees(teamId, task.id, nextUserIds));
+          updates.push(taskService.updateTaskAssignees(task.id, nextUserIds));
         }
 
         if (updates.length > 0) {

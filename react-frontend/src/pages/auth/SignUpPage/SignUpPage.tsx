@@ -78,11 +78,9 @@ export const SignUpPage = () => {
         last_name: formLastName,
       });
 
-      // Navigate to verification page with user ID and email
       navigate('/verify-email', {
         state: {
-          userId: result.user_id,
-          email: formEmail,
+          email: result.email,
         },
       });
     } catch (err: any) {

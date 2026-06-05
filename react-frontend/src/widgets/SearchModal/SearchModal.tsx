@@ -12,17 +12,17 @@ interface SearchModalProps {
 }
 
 type ResultItem =
-  | { kind: 'team';   id: string; name: string; url: string }
-  | { kind: 'sprint'; id: string; name: string; url: string; status: string }
-  | { kind: 'task';   id: string; name: string; url: string; progress: string };
+  | { kind: 'workspace'; id: string; name: string; url: string }
+  | { kind: 'sprint';    id: string; name: string; url: string; status: string }
+  | { kind: 'task';      id: string; name: string; url: string; progress: string };
 
 const KIND_ICON = {
-  team:   <Users size={14} />,
-  sprint: <Layers size={14} />,
-  task:   <FileText size={14} />,
+  workspace: <Users size={14} />,
+  sprint:    <Layers size={14} />,
+  task:      <FileText size={14} />,
 };
 
-const KIND_LABEL = { team: 'Team', sprint: 'Sprint', task: 'Task' };
+const KIND_LABEL = { workspace: 'Workspace', sprint: 'Sprint', task: 'Task' };
 
 export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
@@ -71,11 +71,11 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
       .then((data: GlobalSearchResponse) => {
         if (ctrl.signal.aborted) return;
         const items: ResultItem[] = [
-          ...data.teams.map(t => ({ kind: 'team' as const, id: t.id, name: t.name, url: `/team/${t.id}` })),
-          ...data.sprints.map(s => ({ kind: 'sprint' as const, id: s.id, name: s.name, url: `/team/${s.team_id}/sprints/${s.id}`, status: s.status })),
+          ...data.workspaces.map(t => ({ kind: 'workspace' as const, id: t.id, name: t.name, url: `/workspace/${t.id}` })),
+          ...data.sprints.map(s => ({ kind: 'sprint' as const, id: s.id, name: s.name, url: `/workspace/${s.workspace_id}/sprints/${s.id}`, status: s.status })),
           ...data.tasks.map(t => ({
             kind: 'task' as const, id: t.id, name: t.task,
-            url: t.sprint_id ? `/team/${t.team_id}/sprints/${t.sprint_id}` : `/task/${t.id}`,
+            url: t.sprint_id ? `/workspace/${t.workspace_id}/sprints/${t.sprint_id}` : `/task/${t.id}`,
             progress: t.progress,
           })),
         ];
@@ -145,7 +145,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
                 value={query}
                 onChange={e => setQuery(e.target.value)}
                 onKeyDown={onKeyDown}
-                placeholder="Search teams, sprints, tasks…"
+                placeholder="Search workspaces, sprints, tasks…"
                 className="flex-1 bg-transparent outline-none text-sm"
                 style={{ color: 'var(--text-primary)' }}
                 spellCheck={false}

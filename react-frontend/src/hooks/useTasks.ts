@@ -32,8 +32,8 @@ export const useTasks = () => {
       }
       const controller = new AbortController();
       refreshControllerRef.current = controller;
-      const data = await taskService.getPersonalTasks({ signal: controller.signal });
-      const personal = (data || []).filter((t) => t.team_id == null || t.team_id === '');
+      // Personal tasks removed — sidebar task list is empty until workspace view is built
+      const personal: TaskDTO[] = [];
       const nextById: Record<string, TaskDTO> = {};
       const nextIds: string[] = [];
       for (const task of personal) {
@@ -90,11 +90,13 @@ export const useTasks = () => {
       task: data.task || 'New Task',
       description: data.description || '',
       user_ids: [],
-      team_id: data.team_id ?? null,
+      workspace_id: data.workspace_id ?? null,
+      project_id: data.project_id ?? null,
       folder_id: data.folder_id ?? null,
-      owner_id: data.owner_id,
+      owner_id: data.owner_id || '',
       priority: (data.priority || 'medium') as any,
       progress: (data.progress || 'not_started') as any,
+      subtasks: [],
       created_at: now,
       updated_at: now,
     };
@@ -109,12 +111,16 @@ export const useTasks = () => {
       progress: data.progress || 'not_started',
       folder_id: data.folder_id ?? null,
       owner_id: data.owner_id,
-      team_id: data.team_id ?? null,
+      workspace_id: data.workspace_id ?? null,
       user_ids: data.user_ids ?? [],
     };
 
     try {
-      const created = await taskService.createPersonalTask(payload);
+      const workspaceId = data.workspace_id;
+      if (!workspaceId) {
+        throw new Error('workspace_id is required to create a task');
+      }
+      const created = await taskService.createWorkspaceTask(workspaceId, payload);
       const real = created as TaskDTO;
       if (!real || !real.id) {
         await refreshTasks();

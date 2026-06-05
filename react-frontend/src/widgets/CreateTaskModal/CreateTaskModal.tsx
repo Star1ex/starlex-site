@@ -94,7 +94,7 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({
         return;
       }
 
-      const created = await taskService.createTeamTask(teamId, {
+      const created = await taskService.createWorkspaceTask(teamId, {
         task: formData.task,
         description: formData.description,
         progress: formData.progress,

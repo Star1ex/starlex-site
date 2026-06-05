@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import Avatar from '@/shared/ui/Avatar.js';
 import type { User } from '@/entities/types.js';
-import { teamService } from '@/services/api/index.js';
+import { workspaceService } from '@/services/api/index.js';
 
 interface UserSidebarProps {
   users: User[];
@@ -62,7 +62,7 @@ const UserSidebar: React.FC<UserSidebarProps> = ({
     setDeletingUserId(userId);
 
     try {
-      await teamService.removeUserFromTeam(teamId, userId);
+      await workspaceService.removeUserFromWorkspace(teamId, userId);
 
       if (onUserRemoved) {
         onUserRemoved(userId);
