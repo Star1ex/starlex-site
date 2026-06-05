@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { NewTabModal } from '@/widgets/NewTabModal/NewTabModal.js';
-import { useModal } from '@/shared/hooks/useModal.js';
 import { useNavigate } from 'react-router-dom';
 import { getAuthUser } from '@/shared/lib/authManager.js';
 import { userService } from '@/services/api/index.js';
@@ -10,8 +8,6 @@ import { getAllRecent, type RecentItem } from '@/shared/lib/recentItems.js';
 import { Clock, Users, Layers, FileText, Plus, Search } from 'lucide-react';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle.js';
 import { SearchModal } from '@/widgets/SearchModal/SearchModal.js';
-
-type Team = { id: string; name: string; description: string; emails: string[] };
 
 function fmtDate(ts: number): string {
   const d = new Date(ts);
@@ -81,7 +77,6 @@ const RecentCard: React.FC<{ item: RecentItem; index: number }> = ({ item, index
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { open, onOpen, onClose } = useModal(false);
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState('');
   const [recent, setRecent] = useState(getAllRecent());
@@ -109,12 +104,6 @@ export const Dashboard: React.FC = () => {
     window.addEventListener('focus', refreshRecent);
     return () => window.removeEventListener('focus', refreshRecent);
   }, [refreshRecent]);
-
-  const handleTeamCreated = useCallback((team: Team) => {
-    window.dispatchEvent(new CustomEvent('teamCreated'));
-    onClose();
-    refreshRecent();
-  }, [onClose, refreshRecent]);
 
   useDocumentTitle('Home');
 
@@ -195,7 +184,6 @@ export const Dashboard: React.FC = () => {
             >
               {/* Placeholder cards */}
               {[
-                { label: 'Open a team', icon: <Users size={20} />, action: onOpen },
                 { label: 'New task', icon: <FileText size={20} />, action: () => navigate('/task/new') },
               ].map((p, i) => (
                 <motion.button
@@ -243,7 +231,6 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="flex flex-wrap gap-2">
             {[
-              { label: 'New team', icon: <Users size={14} />, action: onOpen },
               { label: 'New task', icon: <FileText size={14} />, action: () => navigate('/task/new') },
             ].map((a, i) => (
               <motion.button
@@ -261,14 +248,6 @@ export const Dashboard: React.FC = () => {
           </div>
         </motion.section>
       </div>
-
-      {open && (
-        <NewTabModal
-          open={open}
-          onClose={onClose}
-          onTeamCreated={handleTeamCreated}
-        />
-      )}
 
       <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </motion.div>
