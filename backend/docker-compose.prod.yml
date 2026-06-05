@@ -1,8 +1,8 @@
 # Production stack for Starlex backend.
 # Lives on the server at /opt/starlex/prod/backend/docker-compose.prod.yml
 # The backend image is pulled from GHCR (built in CI); only Postgres is local.
-# Backend is published ONLY on 127.0.0.1:8083 — public traffic arrives via
-# Cloudflare Tunnel -> system nginx -> 127.0.0.1:8083.
+# Backend is published ONLY on 127.0.0.1:8084 — public traffic arrives via
+# Cloudflare Tunnel -> system nginx -> 127.0.0.1:8084.
 services:
   db:
     image: postgres:16
@@ -47,7 +47,7 @@ services:
       PORT: "3000"
     ports:
       # Bind to loopback only — nginx is the sole entry point
-      - "127.0.0.1:8083:3000"
+      - "127.0.0.1:8084:3000"
     volumes:
       - starlex_uploads:/uploads
     healthcheck:

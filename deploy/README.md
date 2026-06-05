@@ -9,12 +9,12 @@ push to main
   ├─ build backend image  → ghcr.io/<owner>/starlex-backend:prod
   ├─ build frontend (pnpm) → static dist artifact
   └─ deploy (Tailscale):
-        backend  → scp compose + `docker compose pull && up -d`   (127.0.0.1:8083)
+        backend  → scp compose + `docker compose pull && up -d`   (127.0.0.1:8084)
         frontend → scp dist → /opt/starlex/prod/frontend          (nginx serves it)
 ```
 
 Ports (avoid clashing with critiqal: 8082 / 3000 / 3002):
-- **backend** published on `127.0.0.1:8083` only
+- **backend** published on `127.0.0.1:8084` only
 - postgres: internal to the compose network (not published)
 
 ---
@@ -87,7 +87,7 @@ First run touches both backend and frontend, so the whole stack comes up.
 
 Manual smoke test on the server:
 ```bash
-curl -s http://127.0.0.1:8083/api/health        # -> healthy
+curl -s http://127.0.0.1:8084/api/health        # -> healthy
 curl -s -H 'Host: starlex.cc' http://127.0.0.1/ # -> index.html
 docker compose -f /opt/starlex/prod/backend/docker-compose.prod.yml ps
 ```
