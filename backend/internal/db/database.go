@@ -75,7 +75,7 @@ func migrate(db *DB) error {
 
 	if err := db.AutoMigrate(
 		&repository.UserModel{},
-		&repository.TeamModel{},
+		&repository.WorkspaceModel{},
 		&repository.SprintModel{},
 		&repository.TaskModel{},
 		&repository.SubtaskModel{},

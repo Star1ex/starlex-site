@@ -62,7 +62,7 @@ type UserProfile struct {
 	IsVerified    bool     `json:"email_verified"`
 }
 
-type AddUserToTeam struct {
+type AddUserToWorkspace struct {
 	Email string `json:"email" validate:"required,email"`
 }
 

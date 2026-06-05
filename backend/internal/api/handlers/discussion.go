@@ -51,12 +51,12 @@ func (h *Handlers) CreateTaskDiscussion(ctx *fiber.Ctx) error {
 	title := sanitizeStrict(req.Title)
 	content := req.Content
 
-	teamID := ""
-	if taskEntity.TeamID != "" {
-		teamID = taskEntity.TeamID
+	workspaceID := ""
+	if taskEntity.WorkspaceID != "" {
+		workspaceID = taskEntity.WorkspaceID
 	}
 
-	discussion, err := h.discussionService.CreateDiscussion(ctx.Context(), &taskID, nil, teamID, userID, title, content, req.ContentType)
+	discussion, err := h.discussionService.CreateDiscussion(ctx.Context(), &taskID, nil, workspaceID, userID, title, content, req.ContentType)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to create discussion"})
 	}
@@ -84,12 +84,12 @@ func (h *Handlers) CreateFolderDiscussion(ctx *fiber.Ctx) error {
 	title := sanitizeStrict(req.Title)
 	content := req.Content
 
-	teamID := ""
-	if folderEntity.TeamID != nil {
-		teamID = *folderEntity.TeamID
+	workspaceID := ""
+	if folderEntity.WorkspaceID != nil {
+		workspaceID = *folderEntity.WorkspaceID
 	}
 
-	discussion, err := h.discussionService.CreateDiscussion(ctx.Context(), nil, &folderID, teamID, userID, title, content, req.ContentType)
+	discussion, err := h.discussionService.CreateDiscussion(ctx.Context(), nil, &folderID, workspaceID, userID, title, content, req.ContentType)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to create discussion"})
 	}
@@ -292,12 +292,12 @@ func (h *Handlers) canResolveDiscussion(ctx *fiber.Ctx, disc *entity.Discussion,
 	if disc.CreatedBy == userID {
 		return true
 	}
-	if disc.TeamID == nil || *disc.TeamID == "" {
+	if disc.WorkspaceID == nil || *disc.WorkspaceID == "" {
 		return false
 	}
-	team, err := h.teamService.GetTeamByID(ctx.Context(), *disc.TeamID)
+	workspace, err := h.workspaceService.GetWorkspaceByID(ctx.Context(), *disc.WorkspaceID)
 	if err != nil {
 		return false
 	}
-	return team.OwnerID == userID
+	return workspace.OwnerID == userID
 }

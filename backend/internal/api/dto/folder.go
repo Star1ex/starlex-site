@@ -13,8 +13,8 @@ type FolderDTO struct {
 	Icon     string  `json:"icon"`
 	ParentID *string `json:"parent_id"`
 
-	TeamID  *string `json:"team_id"`
-	OwnerID string  `json:"owner_id"`
+	WorkspaceID *string `json:"workspace_id"`
+	OwnerID     string  `json:"owner_id"`
 
 	Position int `json:"position"`
 
@@ -41,31 +41,31 @@ type FolderMoveDTO struct {
 
 func ToDomainFolder(dto *FolderDTO) *entity.Folder {
 	return &entity.Folder{
-		ID:        dto.ID,
-		Name:      dto.Name,
-		Color:     dto.Color,
-		Icon:      dto.Icon,
-		ParentID:  dto.ParentID,
-		TeamID:    dto.TeamID,
-		OwnerID:   dto.OwnerID,
-		Position:  dto.Position,
-		CreatedAt: dto.CreatedAt,
-		UpdatedAt: dto.UpdatedAt,
+		ID:          dto.ID,
+		Name:        dto.Name,
+		Color:       dto.Color,
+		Icon:        dto.Icon,
+		ParentID:    dto.ParentID,
+		WorkspaceID: dto.WorkspaceID,
+		OwnerID:     dto.OwnerID,
+		Position:    dto.Position,
+		CreatedAt:   dto.CreatedAt,
+		UpdatedAt:   dto.UpdatedAt,
 	}
 }
 
 func FromDomainFolder(entity *entity.Folder) *FolderDTO {
 	return &FolderDTO{
-		ID:        entity.ID,
-		Name:      entity.Name,
-		Color:     entity.Color,
-		Icon:      entity.Icon,
-		ParentID:  entity.ParentID,
-		TeamID:    entity.TeamID,
-		OwnerID:   entity.OwnerID,
-		Position:  entity.Position,
-		CreatedAt: entity.CreatedAt,
-		UpdatedAt: entity.UpdatedAt,
+		ID:          entity.ID,
+		Name:        entity.Name,
+		Color:       entity.Color,
+		Icon:        entity.Icon,
+		ParentID:    entity.ParentID,
+		WorkspaceID: entity.WorkspaceID,
+		OwnerID:     entity.OwnerID,
+		Position:    entity.Position,
+		CreatedAt:   entity.CreatedAt,
+		UpdatedAt:   entity.UpdatedAt,
 	}
 }
 

@@ -10,17 +10,17 @@ import (
 )
 
 type SprintModel struct {
-	ID        string `gorm:"primaryKey"`
-	Name      string `gorm:"not null;default:''"`
-	Goal      string `gorm:"not null;default:''"`
-	TeamID    string `gorm:"not null;index:idx_sprint_team_status"`
-	Status    string `gorm:"not null;default:'planning';index:idx_sprint_team_status"` // planning|active|completed|archived
-	StartDate *time.Time
-	EndDate   *time.Time
-	CreatedBy string `gorm:"not null"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Tasks     []TaskModel `gorm:"foreignKey:SprintID"`
+	ID          string `gorm:"primaryKey"`
+	Name        string `gorm:"not null;default:''"`
+	Goal        string `gorm:"not null;default:''"`
+	WorkspaceID string `gorm:"not null;index:idx_sprint_workspace_status"`
+	Status      string `gorm:"not null;default:'planning';index:idx_sprint_workspace_status"` // planning|active|completed|archived
+	StartDate   *time.Time
+	EndDate     *time.Time
+	CreatedBy   string `gorm:"not null"`
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Tasks       []TaskModel `gorm:"foreignKey:SprintID"`
 }
 
 type SubtaskModel struct {
@@ -43,17 +43,17 @@ func NewSprintRepository(db *gorm.DB) *SprintRepository {
 
 func toSprintDomain(m SprintModel) *entity.Sprint {
 	return &entity.Sprint{
-		ID:        m.ID,
-		Name:      m.Name,
-		Goal:      m.Goal,
-		TeamID:    m.TeamID,
-		Status:    m.Status,
-		StartDate: m.StartDate,
-		EndDate:   m.EndDate,
-		CreatedBy: m.CreatedBy,
-		CreatedAt: m.CreatedAt,
-		UpdatedAt: m.UpdatedAt,
-		Tasks:     toTaskDomains(m.Tasks),
+		ID:          m.ID,
+		Name:        m.Name,
+		Goal:        m.Goal,
+		WorkspaceID: m.WorkspaceID,
+		Status:      m.Status,
+		StartDate:   m.StartDate,
+		EndDate:     m.EndDate,
+		CreatedBy:   m.CreatedBy,
+		CreatedAt:   m.CreatedAt,
+		UpdatedAt:   m.UpdatedAt,
+		Tasks:       toTaskDomains(m.Tasks),
 	}
 }
 
@@ -67,16 +67,16 @@ func toSprintDomains(models []SprintModel) []*entity.Sprint {
 
 func fromSprintDomain(s *entity.Sprint) *SprintModel {
 	return &SprintModel{
-		ID:        s.ID,
-		Name:      s.Name,
-		Goal:      s.Goal,
-		TeamID:    s.TeamID,
-		Status:    s.Status,
-		StartDate: s.StartDate,
-		EndDate:   s.EndDate,
-		CreatedBy: s.CreatedBy,
-		CreatedAt: s.CreatedAt,
-		UpdatedAt: s.UpdatedAt,
+		ID:          s.ID,
+		Name:        s.Name,
+		Goal:        s.Goal,
+		WorkspaceID: s.WorkspaceID,
+		Status:      s.Status,
+		StartDate:   s.StartDate,
+		EndDate:     s.EndDate,
+		CreatedBy:   s.CreatedBy,
+		CreatedAt:   s.CreatedAt,
+		UpdatedAt:   s.UpdatedAt,
 	}
 }
 
@@ -84,10 +84,10 @@ func (r *SprintRepository) Create(ctx context.Context, sprint *entity.Sprint) er
 	return r.db.WithContext(ctx).Create(fromSprintDomain(sprint)).Error
 }
 
-func (r *SprintRepository) GetTeamSprints(ctx context.Context, teamID string) ([]*entity.Sprint, error) {
+func (r *SprintRepository) GetWorkspaceSprints(ctx context.Context, workspaceID string) ([]*entity.Sprint, error) {
 	var models []SprintModel
 	if err := r.db.WithContext(ctx).
-		Where("team_id = ?", teamID).
+		Where("workspace_id = ?", workspaceID).
 		Order("created_at DESC").
 		Find(&models).Error; err != nil {
 		return nil, err
@@ -141,10 +141,10 @@ func (r *SprintRepository) Delete(ctx context.Context, id string) error {
 	return r.db.WithContext(ctx).Delete(&SprintModel{}, "id = ?", id).Error
 }
 
-func (r *SprintRepository) HasActiveSprint(ctx context.Context, teamID, excludeID string) (bool, error) {
+func (r *SprintRepository) HasActiveSprint(ctx context.Context, workspaceID, excludeID string) (bool, error) {
 	var count int64
 	query := r.db.WithContext(ctx).Model(&SprintModel{}).
-		Where("team_id = ? AND status = ?", teamID, "active")
+		Where("workspace_id = ? AND status = ?", workspaceID, "active")
 	if excludeID != "" {
 		query = query.Where("id <> ?", excludeID)
 	}
@@ -231,14 +231,14 @@ func (r *SprintRepository) DeleteSubtask(ctx context.Context, id string) error {
 	return r.db.WithContext(ctx).Delete(&SubtaskModel{}, "id = ?", id).Error
 }
 
-func (r *SprintRepository) SearchInTeams(ctx context.Context, teamIDs []string, query string) ([]*entity.Sprint, error) {
-	if len(teamIDs) == 0 || query == "" {
+func (r *SprintRepository) SearchInWorkspaces(ctx context.Context, workspaceIDs []string, query string) ([]*entity.Sprint, error) {
+	if len(workspaceIDs) == 0 || query == "" {
 		return nil, nil
 	}
 	var models []SprintModel
 	pattern := "%" + query + "%"
 	err := r.db.WithContext(ctx).
-		Where("team_id IN ? AND (name ILIKE ? OR goal ILIKE ?)", teamIDs, pattern, pattern).
+		Where("workspace_id IN ? AND (name ILIKE ? OR goal ILIKE ?)", workspaceIDs, pattern, pattern).
 		Limit(10).
 		Find(&models).Error
 	if err != nil {

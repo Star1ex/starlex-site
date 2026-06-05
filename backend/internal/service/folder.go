@@ -33,9 +33,9 @@ func (s *FolderService) GetUserFolders(ctx context.Context, userID string) ([]*e
 	return s.folderRepo.GetUserFolders(ctx, userID)
 }
 
-// retrieves all team folders
-func (s *FolderService) GetTeamFolders(ctx context.Context, teamID string) ([]*entity.Folder, error) {
-	return s.folderRepo.GetTeamFolders(ctx, teamID)
+// retrieves all workspace folders
+func (s *FolderService) GetWorkspaceFolders(ctx context.Context, workspaceID string) ([]*entity.Folder, error) {
+	return s.folderRepo.GetWorkspaceFolders(ctx, workspaceID)
 }
 
 // return sub folders by parentID

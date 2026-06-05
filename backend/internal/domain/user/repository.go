@@ -18,7 +18,7 @@ type Repository interface {
 	GetByEmail(ctx context.Context, email string) (*entity.User, error)
 	GetByGoogleID(ctx context.Context, googleID string) (*entity.User, error)
 	GetByGithubID(ctx context.Context, githubID string) (*entity.User, error)
-	GetUserTeams(ctx context.Context, userID string) ([]*entity.Team, error)
+	GetUserWorkspaces(ctx context.Context, userID string) ([]*entity.Workspace, error)
 	GetByIDs(ctx context.Context, ids []string) ([]*entity.User, error)
 
 	// Search by email

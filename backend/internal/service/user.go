@@ -141,12 +141,12 @@ func (s *UserService) Login(ctx context.Context, email, password string) (*entit
 	return user, nil
 }
 
-func (s *UserService) GetTeams(ctx context.Context, userID string) ([]*entity.Team, error) {
-	teams, err := s.repo.GetUserTeams(ctx, userID)
+func (s *UserService) GetWorkspaces(ctx context.Context, userID string) ([]*entity.Workspace, error) {
+	workspaces, err := s.repo.GetUserWorkspaces(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
-	return teams, nil
+	return workspaces, nil
 }
 
 func (s *UserService) Search(ctx context.Context, email string) ([]*entity.User, error) {

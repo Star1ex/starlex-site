@@ -25,7 +25,7 @@ type Service interface {
 	Login(ctx context.Context, email, password string) (*entity.User, error)
 
 	// Others
-	GetTeams(ctx context.Context, userID string) ([]*entity.Team, error)
+	GetWorkspaces(ctx context.Context, userID string) ([]*entity.Workspace, error)
 
 	// Search users by email
 	Search(ctx context.Context, email string) ([]*entity.User, error)

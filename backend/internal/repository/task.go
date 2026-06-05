@@ -18,14 +18,15 @@ type TaskModel struct {
 	Progress    string
 	Assigned    []UserModel `gorm:"many2many:task_users"`
 
-	TeamID    *string        `gorm:"default:null"`
-	OwnerID   string         `gorm:"not null;index:idx_owner_folder"`
-	FolderID  *string        `gorm:"default:null;index:idx_owner_folder"`
-	SprintID  *string        `gorm:"default:null;index:idx_task_sprint"`
-	Position  int            `gorm:"not null;default:0"`
-	Subtasks  []SubtaskModel `gorm:"foreignKey:TaskID"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	WorkspaceID *string        `gorm:"default:null"`
+	OwnerID     string         `gorm:"not null;index:idx_owner_folder"`
+	FolderID    *string        `gorm:"default:null;index:idx_owner_folder"`
+	SprintID    *string        `gorm:"default:null;index:idx_task_sprint"`
+	ProjectID   *string        `gorm:"default:null;index:idx_task_project"`
+	Position    int            `gorm:"not null;default:0"`
+	Subtasks    []SubtaskModel `gorm:"foreignKey:TaskID"`
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 type TaskRepository struct {
@@ -47,9 +48,9 @@ func toTaskDomain(m TaskModel) *entity.Task {
 		users[i] = user
 	}
 
-	teamID := ""
-	if m.TeamID != nil {
-		teamID = *m.TeamID
+	workspaceID := ""
+	if m.WorkspaceID != nil {
+		workspaceID = *m.WorkspaceID
 	}
 
 	return &entity.Task{
@@ -58,7 +59,7 @@ func toTaskDomain(m TaskModel) *entity.Task {
 		Description: m.Description,
 		Icon:        m.Icon,
 		AssignedTo:  users,
-		TeamID:      teamID,
+		WorkspaceID: workspaceID,
 		OwnerID:     m.OwnerID,
 		FolderID:    m.FolderID,
 		SprintID:    m.SprintID,
@@ -115,7 +116,7 @@ func fromTaskDomain(t *entity.Task) *TaskModel {
 		FolderID:    t.FolderID,
 		SprintID:    t.SprintID,
 		Position:    t.Position,
-		TeamID:      &t.TeamID,
+		WorkspaceID: &t.WorkspaceID,
 		CreatedAt:   t.CreatedAt,
 		UpdatedAt:   t.UpdatedAt,
 	}
@@ -282,12 +283,12 @@ func (r *TaskRepository) Delete(ctx context.Context, id string) error {
 	return r.db.Delete(&task).Error
 }
 
-func (r *TaskRepository) GetTeamTasks(ctx context.Context, teamID string) ([]*entity.Task, error) {
+func (r *TaskRepository) GetWorkspaceTasks(ctx context.Context, workspaceID string) ([]*entity.Task, error) {
 	var models []TaskModel
 
 	err := r.db.WithContext(ctx).
 		Preload("Assigned").
-		Where("team_id = ? AND sprint_id IS NULL", teamID).
+		Where("workspace_id = ? AND sprint_id IS NULL", workspaceID).
 		Find(&models).Error
 
 	if err != nil {
@@ -341,15 +342,15 @@ func (r *TaskRepository) MoveTaskToFolder(ctx context.Context, taskID, folderID 
 	return nil
 }
 
-func (r *TaskRepository) SearchInTeams(ctx context.Context, teamIDs []string, query string) ([]*entity.Task, error) {
-	if len(teamIDs) == 0 || query == "" {
+func (r *TaskRepository) SearchInWorkspaces(ctx context.Context, workspaceIDs []string, query string) ([]*entity.Task, error) {
+	if len(workspaceIDs) == 0 || query == "" {
 		return nil, nil
 	}
 	var models []TaskModel
 	pattern := "%" + query + "%"
 	err := r.db.WithContext(ctx).
 		Preload("Assigned").
-		Where("team_id IN ? AND sprint_id IS NULL AND (task ILIKE ? OR description ILIKE ?)", teamIDs, pattern, pattern).
+		Where("workspace_id IN ? AND sprint_id IS NULL AND (task ILIKE ? OR description ILIKE ?)", workspaceIDs, pattern, pattern).
 		Limit(10).
 		Find(&models).Error
 	if err != nil {

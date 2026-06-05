@@ -55,8 +55,8 @@ func (h *Handlers) CreateSprint(ctx *fiber.Ctx) error {
 	if authErr != nil {
 		return authErr
 	}
-	teamID := ctx.Params("team_id")
-	if err := h.requireTeamMember(ctx, teamID, userID); err != nil {
+	workspaceID := ctx.Params("workspace_id")
+	if err := h.requireWorkspaceMember(ctx, workspaceID, userID); err != nil {
 		return err
 	}
 
@@ -75,24 +75,24 @@ func (h *Handlers) CreateSprint(ctx *fiber.Ctx) error {
 	name := sanitizeStrict(req.Name)
 	goal := sanitizeStrict(req.Goal)
 
-	sprint, err := h.sprintService.CreateSprint(ctx.Context(), teamID, userID, name, goal, startDate, endDate)
+	sprint, err := h.sprintService.CreateSprint(ctx.Context(), workspaceID, userID, name, goal, startDate, endDate)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to create sprint"})
 	}
 	return ctx.Status(fiber.StatusCreated).JSON(dto.ToSprintResponse(sprint))
 }
 
-func (h *Handlers) GetTeamSprints(ctx *fiber.Ctx) error {
+func (h *Handlers) GetWorkspaceSprints(ctx *fiber.Ctx) error {
 	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
 		return authErr
 	}
-	teamID := ctx.Params("team_id")
-	if err := h.requireTeamMember(ctx, teamID, userID); err != nil {
+	workspaceID := ctx.Params("workspace_id")
+	if err := h.requireWorkspaceMember(ctx, workspaceID, userID); err != nil {
 		return err
 	}
 
-	sprints, err := h.sprintService.GetTeamSprints(ctx.Context(), teamID)
+	sprints, err := h.sprintService.GetWorkspaceSprints(ctx.Context(), workspaceID)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to load sprints"})
 	}
@@ -104,8 +104,8 @@ func (h *Handlers) GetSprintByID(ctx *fiber.Ctx) error {
 	if authErr != nil {
 		return authErr
 	}
-	teamID := ctx.Params("team_id")
-	if err := h.requireTeamMember(ctx, teamID, userID); err != nil {
+	workspaceID := ctx.Params("workspace_id")
+	if err := h.requireWorkspaceMember(ctx, workspaceID, userID); err != nil {
 		return err
 	}
 	id := ctx.Params("id")
@@ -117,7 +117,7 @@ func (h *Handlers) GetSprintByID(ctx *fiber.Ctx) error {
 		}
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to load sprint"})
 	}
-	if sprint.TeamID != teamID {
+	if sprint.WorkspaceID != workspaceID {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "sprint not found"})
 	}
 	return ctx.JSON(dto.ToSprintResponse(sprint))
@@ -128,8 +128,8 @@ func (h *Handlers) UpdateSprint(ctx *fiber.Ctx) error {
 	if authErr != nil {
 		return authErr
 	}
-	teamID := ctx.Params("team_id")
-	if err := h.requireTeamMember(ctx, teamID, userID); err != nil {
+	workspaceID := ctx.Params("workspace_id")
+	if err := h.requireWorkspaceMember(ctx, workspaceID, userID); err != nil {
 		return err
 	}
 	id := ctx.Params("id")
@@ -156,7 +156,7 @@ func (h *Handlers) UpdateSprint(ctx *fiber.Ctx) error {
 		}
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to update sprint"})
 	}
-	if updated.TeamID != teamID {
+	if updated.WorkspaceID != workspaceID {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "sprint not found"})
 	}
 	return ctx.JSON(dto.ToSprintResponse(updated))
@@ -167,13 +167,13 @@ func (h *Handlers) StartSprint(ctx *fiber.Ctx) error {
 	if authErr != nil {
 		return authErr
 	}
-	teamID := ctx.Params("team_id")
-	if err := h.requireTeamMember(ctx, teamID, userID); err != nil {
+	workspaceID := ctx.Params("workspace_id")
+	if err := h.requireWorkspaceMember(ctx, workspaceID, userID); err != nil {
 		return err
 	}
 	id := ctx.Params("id")
 
-	updated, err := h.sprintService.StartSprint(ctx.Context(), id, teamID)
+	updated, err := h.sprintService.StartSprint(ctx.Context(), id, workspaceID)
 	if err != nil {
 		if errors.Is(err, service.ErrActiveSprintExists) {
 			return ctx.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "another active sprint exists"})
@@ -191,8 +191,8 @@ func (h *Handlers) CompleteSprint(ctx *fiber.Ctx) error {
 	if authErr != nil {
 		return authErr
 	}
-	teamID := ctx.Params("team_id")
-	if err := h.requireTeamMember(ctx, teamID, userID); err != nil {
+	workspaceID := ctx.Params("workspace_id")
+	if err := h.requireWorkspaceMember(ctx, workspaceID, userID); err != nil {
 		return err
 	}
 	id := ctx.Params("id")
@@ -209,7 +209,7 @@ func (h *Handlers) CompleteSprint(ctx *fiber.Ctx) error {
 		}
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to complete sprint"})
 	}
-	if updated.TeamID != teamID {
+	if updated.WorkspaceID != workspaceID {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "sprint not found"})
 	}
 	return ctx.JSON(dto.ToSprintResponse(updated))
@@ -220,8 +220,8 @@ func (h *Handlers) ArchiveSprint(ctx *fiber.Ctx) error {
 	if authErr != nil {
 		return authErr
 	}
-	teamID := ctx.Params("team_id")
-	if err := h.requireTeamMember(ctx, teamID, userID); err != nil {
+	workspaceID := ctx.Params("workspace_id")
+	if err := h.requireWorkspaceMember(ctx, workspaceID, userID); err != nil {
 		return err
 	}
 	id := ctx.Params("id")
@@ -233,7 +233,7 @@ func (h *Handlers) ArchiveSprint(ctx *fiber.Ctx) error {
 		}
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to archive sprint"})
 	}
-	if updated.TeamID != teamID {
+	if updated.WorkspaceID != workspaceID {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "sprint not found"})
 	}
 	return ctx.JSON(dto.ToSprintResponse(updated))
@@ -244,8 +244,8 @@ func (h *Handlers) DeleteSprint(ctx *fiber.Ctx) error {
 	if authErr != nil {
 		return authErr
 	}
-	teamID := ctx.Params("team_id")
-	if err := h.requireTeamMember(ctx, teamID, userID); err != nil {
+	workspaceID := ctx.Params("workspace_id")
+	if err := h.requireWorkspaceMember(ctx, workspaceID, userID); err != nil {
 		return err
 	}
 	id := ctx.Params("id")
@@ -282,8 +282,8 @@ func (h *Handlers) MoveTaskToSprint(ctx *fiber.Ctx) error {
 		if err != nil {
 			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "sprint not found"})
 		}
-		if sprint.TeamID != "" {
-			if err := h.requireTeamMember(ctx, sprint.TeamID, userID); err != nil {
+		if sprint.WorkspaceID != "" {
+			if err := h.requireWorkspaceMember(ctx, sprint.WorkspaceID, userID); err != nil {
 				return err
 			}
 		}

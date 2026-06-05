@@ -10,81 +10,81 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-// Swagger disabled: CreateTeam godoc
-// Swagger disabled: Summary      Created team
-// Swagger disabled: Description  Created new team
-// Swagger disabled: Tags         team
+// Swagger disabled: CreateWorkspace godoc
+// Swagger disabled: Summary      Created workspace
+// Swagger disabled: Description  Created new workspace
+// Swagger disabled: Tags         workspace
 // Swagger disabled: Accept       json
 // Swagger disabled: Produce      json
-// Swagger disabled: Param        user            body      dto.TeamApi  true  "Team data"
-// Swagger disabled: Success      201  {object}   map[string]interface{}    "team created successfuly"
+// Swagger disabled: Param        user            body      dto.WorkspaceApi  true  "Workspace data"
+// Swagger disabled: Success      201  {object}   map[string]interface{}    "workspace created successfuly"
 // Swagger disabled: Failure      400  {object}   map[string]string         "bad request"
 // Swagger disabled: Failure      500  {object}   map[string]string         "internal server error"
 // Swagger disabled: Security BearerAuth
-// Swagger disabled: Router       /team [post]
-func (h *Handlers) CreateTeam(ctx *fiber.Ctx) error {
+// Swagger disabled: Router       /workspace [post]
+func (h *Handlers) CreateWorkspace(ctx *fiber.Ctx) error {
 
 	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
 		return authErr
 	}
 
-	var input dto.TeamApi
+	var input dto.WorkspaceApi
 	if err := ctx.BodyParser(&input); err != nil {
-		logger.Log.Errorw("create team body parse failed", "error", err)
+		logger.Log.Errorw("create workspace body parse failed", "error", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{})
 	}
 
-	team, err := h.teamService.CreateTeam(ctx.Context(), input.Name, input.Description, userID)
+	workspace, err := h.workspaceService.CreateWorkspace(ctx.Context(), input.Name, input.Description, userID)
 
 	if err != nil {
-		logger.Log.Errorw("create team failed", "error", err)
+		logger.Log.Errorw("create workspace failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "internal server error",
 		})
 	}
 
-	response := dto.ToTeamResponse(team)
+	response := dto.ToWorkspaceResponse(workspace)
 
 	return ctx.Status(fiber.StatusCreated).JSON(response)
 }
 
-func (h *Handlers) DeleteTeam(ctx *fiber.Ctx) error {
+func (h *Handlers) DeleteWorkspace(ctx *fiber.Ctx) error {
 	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
 		return authErr
 	}
-	teamID := ctx.Params("id")
-	if teamID == "" {
+	workspaceID := ctx.Params("id")
+	if workspaceID == "" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "missing team_id in path",
+			"error": "missing workspace_id in path",
 		})
 	}
 
-	err := h.teamService.Delete(ctx.Context(), teamID, userID)
+	err := h.workspaceService.Delete(ctx.Context(), workspaceID, userID)
 	if err != nil {
-		logger.Log.Errorw("delete team failed", "error", err)
+		logger.Log.Errorw("delete workspace failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "internal server error",
 		})
 	}
-	return ctx.Status(fiber.StatusOK).JSON("Successfuly delete team")
+	return ctx.Status(fiber.StatusOK).JSON("Successfuly delete workspace")
 }
 
-func (h *Handlers) PatchTeamName(ctx *fiber.Ctx) error {
+func (h *Handlers) PatchWorkspaceName(ctx *fiber.Ctx) error {
 	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
 		return authErr
 	}
 
-	teamID := ctx.Params("id")
-	if teamID == "" {
+	workspaceID := ctx.Params("id")
+	if workspaceID == "" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "team id is required",
+			"error": "workspace id is required",
 		})
 	}
 
-	var input dto.UpdateTeamName
+	var input dto.UpdateWorkspaceName
 	if err := ctx.BodyParser(&input); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "invalid request body",
@@ -98,21 +98,21 @@ func (h *Handlers) PatchTeamName(ctx *fiber.Ctx) error {
 	name := strings.TrimSpace(*input.Name)
 	if name == "" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "team name cannot be empty",
+			"error": "workspace name cannot be empty",
 		})
 	}
 
-	err := h.teamService.UpdateTeamName(ctx.Context(), teamID, name, userID)
+	err := h.workspaceService.UpdateWorkspaceName(ctx.Context(), workspaceID, name, userID)
 	if err != nil {
 		switch {
-		case errors.Is(err, repository.ErrTeamNotFound):
-			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "team not found"})
-		case errors.Is(err, repository.ErrTeamAlreadyExists):
-			return ctx.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "team name already exists"})
-		case err.Error() == "only team owner can update team name":
+		case errors.Is(err, repository.ErrWorkspaceNotFound):
+			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "workspace not found"})
+		case errors.Is(err, repository.ErrWorkspaceAlreadyExists):
+			return ctx.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "workspace name already exists"})
+		case err.Error() == "only workspace owner can update workspace name":
 			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
 		default:
-			logger.Log.Errorw("update team name failed", "error", err)
+			logger.Log.Errorw("update workspace name failed", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
 		}
 	}
@@ -120,20 +120,20 @@ func (h *Handlers) PatchTeamName(ctx *fiber.Ctx) error {
 	return ctx.SendStatus(fiber.StatusNoContent)
 }
 
-func (h *Handlers) PatchTeamDescription(ctx *fiber.Ctx) error {
+func (h *Handlers) PatchWorkspaceDescription(ctx *fiber.Ctx) error {
 	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
 		return authErr
 	}
 
-	teamID := ctx.Params("id")
-	if teamID == "" {
+	workspaceID := ctx.Params("id")
+	if workspaceID == "" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "team id is required",
+			"error": "workspace id is required",
 		})
 	}
 
-	var input dto.UpdateTeamDescription
+	var input dto.UpdateWorkspaceDescription
 	if err := ctx.BodyParser(&input); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error": "invalid request body",
@@ -145,15 +145,15 @@ func (h *Handlers) PatchTeamDescription(ctx *fiber.Ctx) error {
 		})
 	}
 
-	err := h.teamService.UpdateTeamDescription(ctx.Context(), teamID, *input.Description, userID)
+	err := h.workspaceService.UpdateWorkspaceDescription(ctx.Context(), workspaceID, *input.Description, userID)
 	if err != nil {
 		switch {
-		case errors.Is(err, repository.ErrTeamNotFound):
-			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "team not found"})
-		case err.Error() == "only team owner can update team description":
+		case errors.Is(err, repository.ErrWorkspaceNotFound):
+			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "workspace not found"})
+		case err.Error() == "only workspace owner can update workspace description":
 			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
 		default:
-			logger.Log.Errorw("update team description failed", "error", err)
+			logger.Log.Errorw("update workspace description failed", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
 		}
 	}
@@ -161,18 +161,18 @@ func (h *Handlers) PatchTeamDescription(ctx *fiber.Ctx) error {
 	return ctx.SendStatus(fiber.StatusNoContent)
 }
 
-func (h *Handlers) PatchTeamIcon(ctx *fiber.Ctx) error {
+func (h *Handlers) PatchWorkspaceIcon(ctx *fiber.Ctx) error {
 	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
 		return authErr
 	}
 
-	teamID := ctx.Params("id")
-	if teamID == "" {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "team id is required"})
+	workspaceID := ctx.Params("id")
+	if workspaceID == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "workspace id is required"})
 	}
 
-	var input dto.UpdateTeamIcon
+	var input dto.UpdateWorkspaceIcon
 	if err := ctx.BodyParser(&input); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
 	}
@@ -180,15 +180,15 @@ func (h *Handlers) PatchTeamIcon(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "icon field is required"})
 	}
 
-	err := h.teamService.UpdateTeamIcon(ctx.Context(), teamID, *input.Icon, userID)
+	err := h.workspaceService.UpdateWorkspaceIcon(ctx.Context(), workspaceID, *input.Icon, userID)
 	if err != nil {
 		switch {
-		case errors.Is(err, repository.ErrTeamNotFound):
-			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "team not found"})
-		case err.Error() == "only team owner can update team icon":
+		case errors.Is(err, repository.ErrWorkspaceNotFound):
+			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "workspace not found"})
+		case err.Error() == "only workspace owner can update workspace icon":
 			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
 		default:
-			logger.Log.Errorw("update team icon failed", "error", err)
+			logger.Log.Errorw("update workspace icon failed", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
 		}
 	}
@@ -197,27 +197,27 @@ func (h *Handlers) PatchTeamIcon(ctx *fiber.Ctx) error {
 }
 
 // Swagger disabled: GetUsers godoc
-// Swagger disabled: Summary 		Get all users from team
-// Swagger disabled: Description 	Return all users from team
-// Swagger disabled: Tags team
-// Swagger disabled: Param id path string true "Team ID"
+// Swagger disabled: Summary 		Get all users from workspace
+// Swagger disabled: Description 	Return all users from workspace
+// Swagger disabled: Tags workspace
+// Swagger disabled: Param id path string true "Workspace ID"
 // Swagger disabled: Success 200 {array} dto.UserResponse "List of users"
 // Swagger disabled: Failure 500 {object} map[string]string "Server error"
 // Swagger disabled: Security BearerAuth
-// Swagger disabled: Router /team/{id} [get]
+// Swagger disabled: Router /workspace/{id} [get]
 func (h *Handlers) GetUsers(ctx *fiber.Ctx) error {
 	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
 		return authErr
 	}
 	var id string = ctx.Params("id")
-	if err := h.requireTeamMember(ctx, id, userID); err != nil {
+	if err := h.requireWorkspaceMember(ctx, id, userID); err != nil {
 		return err
 	}
 
-	users, err := h.teamService.GetUsers(ctx.Context(), id)
+	users, err := h.workspaceService.GetUsers(ctx.Context(), id)
 	if err != nil {
-		logger.Log.Errorw("get team users failed", "error", err)
+		logger.Log.Errorw("get workspace users failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "internal server error",
 		})
@@ -226,37 +226,37 @@ func (h *Handlers) GetUsers(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(response)
 }
 
-// internal/api/handlers/team_handler.go
+// internal/api/handlers/workspace_handler.go
 
-// Swagger disabled: AddUserToTeam godoc
-// Swagger disabled: Summary      Add user to team
-// Swagger disabled: Description  Add user to team by email (only team owner)
-// Swagger disabled: Tags         team
+// Swagger disabled: AddUserToWorkspace godoc
+// Swagger disabled: Summary      Add user to workspace
+// Swagger disabled: Description  Add user to workspace by email (only workspace owner)
+// Swagger disabled: Tags         workspace
 // Swagger disabled: Accept       json
 // Swagger disabled: Produce      json
-// Swagger disabled: Param        id   path      string                    true  "Team ID"
-// Swagger disabled: Param        user body      dto.AddUserToTeam  true  "User email"
+// Swagger disabled: Param        id   path      string                    true  "Workspace ID"
+// Swagger disabled: Param        user body      dto.AddUserToWorkspace  true  "User email"
 // Swagger disabled: Success      200  {object}  map[string]interface{}    "user added successfully"
 // Swagger disabled: Failure      400  {object}  map[string]string         "bad request"
 // Swagger disabled: Failure      403  {object}  map[string]string         "forbidden"
 // Swagger disabled: Failure      404  {object}  map[string]string         "not found"
 // Swagger disabled: Failure      500  {object}  map[string]string         "internal server error"
 // Swagger disabled: Security     BearerAuth
-// Swagger disabled: Router       /team/{id}/users [post]
-func (h *Handlers) AddUserToTeam(ctx *fiber.Ctx) error {
+// Swagger disabled: Router       /workspace/{id}/users [post]
+func (h *Handlers) AddUserToWorkspace(ctx *fiber.Ctx) error {
 	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
 		return authErr
 	}
 
-	teamID := ctx.Params("id")
-	if teamID == "" {
+	workspaceID := ctx.Params("id")
+	if workspaceID == "" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "team id is required",
+			"error": "workspace id is required",
 		})
 	}
 
-	var input dto.AddUserToTeam
+	var input dto.AddUserToWorkspace
 	if err := ctx.BodyParser(&input); err != nil {
 		logger.Log.Errorw("add user body parse failed", "error", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -264,18 +264,18 @@ func (h *Handlers) AddUserToTeam(ctx *fiber.Ctx) error {
 		})
 	}
 
-	err := h.teamService.AddUserToTeam(ctx.Context(), teamID, input.Email, userID)
+	err := h.workspaceService.AddUserToWorkspace(ctx.Context(), workspaceID, input.Email, userID)
 	if err != nil {
-		logger.Log.Errorw("add user to team failed", "error", err)
+		logger.Log.Errorw("add user to workspace failed", "error", err)
 
-		if err.Error() == "only team owner can add users" {
+		if err.Error() == "only workspace owner can add users" {
 			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"error": "forbidden",
 			})
 		}
-		if err.Error() == "user already in team" {
+		if err.Error() == "user already in workspace" {
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "user already in team",
+				"error": "user already in workspace",
 			})
 		}
 
@@ -285,42 +285,42 @@ func (h *Handlers) AddUserToTeam(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "user added to team successfully",
+		"message": "user added to workspace successfully",
 	})
 }
 
-// Swagger disabled: RemoveUserFromTeam godoc
-// Swagger disabled: Summary      Remove user from team
-// Swagger disabled: Description  Remove user from team by userId (only team owner)
-// Swagger disabled: Tags         team
+// Swagger disabled: RemoveUserFromWorkspace godoc
+// Swagger disabled: Summary      Remove user from workspace
+// Swagger disabled: Description  Remove user from workspace by userId (only workspace owner)
+// Swagger disabled: Tags         workspace
 // Swagger disabled: Accept       json
 // Swagger disabled: Produce      json
-// Swagger disabled: Param        id   path      string                       true  "Team ID"
-// Swagger disabled: Param        user body      dto.RemoveUserFromTeamRequest true  "User ID to remove"
+// Swagger disabled: Param        id   path      string                       true  "Workspace ID"
+// Swagger disabled: Param        user body      dto.RemoveUserFromWorkspaceRequest true  "User ID to remove"
 // Swagger disabled: Success      200  {object}  map[string]interface{}       "user removed successfully"
 // Swagger disabled: Failure      400  {object}  map[string]string            "bad request"
 // Swagger disabled: Failure      403  {object}  map[string]string            "forbidden"
 // Swagger disabled: Failure      404  {object}  map[string]string            "not found"
 // Swagger disabled: Failure      500  {object}  map[string]string            "internal server error"
 // Swagger disabled: Security     BearerAuth
-// Swagger disabled: Router       /team/{id}/remove-user [post]
-func (h *Handlers) RemoveUserFromTeam(ctx *fiber.Ctx) error {
+// Swagger disabled: Router       /workspace/{id}/remove-user [post]
+func (h *Handlers) RemoveUserFromWorkspace(ctx *fiber.Ctx) error {
 	// Get current authenticated user
 	currentUserID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
 		return authErr
 	}
 
-	// Get team ID from URL params
-	teamID := ctx.Params("id")
-	if teamID == "" {
+	// Get workspace ID from URL params
+	workspaceID := ctx.Params("id")
+	if workspaceID == "" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error": "team id is required",
+			"error": "workspace id is required",
 		})
 	}
 
 	// Parse request body
-	var input dto.RemoveUserFromTeamRequest
+	var input dto.RemoveUserFromWorkspaceRequest
 	if err := ctx.BodyParser(&input); err != nil {
 		logger.Log.Errorw("remove user body parse failed", "error", err)
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -335,27 +335,27 @@ func (h *Handlers) RemoveUserFromTeam(ctx *fiber.Ctx) error {
 	}
 
 	// Call service to remove user
-	err := h.teamService.RemoveUserFromTeam(ctx.Context(), teamID, input.UserID, currentUserID)
+	err := h.workspaceService.RemoveUserFromWorkspace(ctx.Context(), workspaceID, input.UserID, currentUserID)
 	if err != nil {
-		logger.Log.Errorw("remove user from team failed", "error", err)
+		logger.Log.Errorw("remove user from workspace failed", "error", err)
 
 		// Handle specific errors
 		switch err.Error() {
-		case "only team owner can remove users":
+		case "only workspace owner can remove users":
 			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{
 				"error": "forbidden",
 			})
-		case "cannot remove team owner from team":
+		case "cannot remove workspace owner from workspace":
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "cannot remove team owner from team",
+				"error": "cannot remove workspace owner from workspace",
 			})
-		case "user is not in this team":
+		case "user is not in this workspace":
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-				"error": "user is not in this team",
+				"error": "user is not in this workspace",
 			})
-		case "team not found":
+		case "workspace not found":
 			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
-				"error": "team not found",
+				"error": "workspace not found",
 			})
 		case "user not found":
 			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{
@@ -370,6 +370,6 @@ func (h *Handlers) RemoveUserFromTeam(ctx *fiber.Ctx) error {
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
 		"success": true,
-		"message": "user removed from team successfully",
+		"message": "user removed from workspace successfully",
 	})
 }

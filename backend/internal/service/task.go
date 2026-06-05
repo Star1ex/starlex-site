@@ -6,42 +6,42 @@ import (
 
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
 	"github.com/Star1ex/starlex-site/internal/domain/task"
-	"github.com/Star1ex/starlex-site/internal/domain/team"
 	"github.com/Star1ex/starlex-site/internal/domain/user"
+	"github.com/Star1ex/starlex-site/internal/domain/workspace"
 	"github.com/Star1ex/starlex-site/internal/security"
 	"github.com/google/uuid"
 )
 
 type TaskService struct {
-	taskRepo task.Repository
-	userRepo user.Repository
-	teamRepo team.Repository
+	taskRepo      task.Repository
+	userRepo      user.Repository
+	workspaceRepo workspace.Repository
 }
 
-func NewTaskService(taskRepo task.Repository, userRepo user.Repository, teamRepo team.Repository) *TaskService {
+func NewTaskService(taskRepo task.Repository, userRepo user.Repository, workspaceRepo workspace.Repository) *TaskService {
 	return &TaskService{
-		taskRepo: taskRepo,
-		userRepo: userRepo,
-		teamRepo: teamRepo,
+		taskRepo:      taskRepo,
+		userRepo:      userRepo,
+		workspaceRepo: workspaceRepo,
 	}
 }
 
-func (s *TaskService) CreateTeamTask(
+func (s *TaskService) CreateWorkspaceTask(
 	ctx context.Context,
-	teamID string,
+	workspaceID string,
 	assignedIDs []string,
 	task *entity.Task,
 	userId string,
 ) error {
-	// Check if team exists and user is the owner of this specific team
-	team, err := s.teamRepo.GetTeamByID(ctx, teamID)
+	// Check if workspace exists and user is the owner of this specific workspace
+	workspace, err := s.workspaceRepo.GetWorkspaceByID(ctx, workspaceID)
 	if err != nil {
 		return err
 	}
 
-	// Verify that the user is the owner of this team
-	if team.OwnerID != userId {
-		return errors.New("not allowed for this user: only team owner can create tasks")
+	// Verify that the user is the owner of this workspace
+	if workspace.OwnerID != userId {
+		return errors.New("not allowed for this user: only workspace owner can create tasks")
 	}
 
 	// Handle assigned users - can be empty array
@@ -55,7 +55,7 @@ func (s *TaskService) CreateTeamTask(
 	// If assignedIDs is empty, users will be nil/empty, which is valid
 
 	task.AssignedTo = users
-	task.TeamID = teamID
+	task.WorkspaceID = workspaceID
 	task.ID = uuid.New().String()
 
 	return s.taskRepo.Create(ctx, task)
@@ -74,8 +74,8 @@ func (s *TaskService) Update(ctx context.Context, id string, data *entity.Task, 
 	return s.taskRepo.Update(ctx, id, data, assignedTo)
 }
 
-func (s *TaskService) GetTeamTasks(ctx context.Context, teamID string) ([]*entity.Task, error) {
-	tasks, err := s.taskRepo.GetTeamTasks(ctx, teamID)
+func (s *TaskService) GetWorkspaceTasks(ctx context.Context, workspaceID string) ([]*entity.Task, error) {
+	tasks, err := s.taskRepo.GetWorkspaceTasks(ctx, workspaceID)
 	if err != nil {
 		return nil, err
 	}
@@ -137,6 +137,6 @@ func (s *TaskService) MoveTaskToFolder(ctx context.Context, taskID, folderID str
 	return s.taskRepo.MoveTaskToFolder(ctx, taskID, folderID)
 }
 
-func (s *TaskService) SearchInTeams(ctx context.Context, teamIDs []string, query string) ([]*entity.Task, error) {
-	return s.taskRepo.SearchInTeams(ctx, teamIDs, query)
+func (s *TaskService) SearchInWorkspaces(ctx context.Context, workspaceIDs []string, query string) ([]*entity.Task, error) {
+	return s.taskRepo.SearchInWorkspaces(ctx, workspaceIDs, query)
 }

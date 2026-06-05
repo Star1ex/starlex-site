@@ -9,8 +9,8 @@ type Folder struct {
 	Icon     string
 	ParentID *string
 
-	TeamID  *string
-	OwnerID string
+	WorkspaceID *string
+	OwnerID     string
 
 	Position int
 
@@ -18,15 +18,15 @@ type Folder struct {
 	UpdatedAt time.Time
 }
 
-func NewFolder(id, name, color, icon string, parentID, teamID *string, ownerID string, position int) *Folder {
+func NewFolder(id, name, color, icon string, parentID, workspaceID *string, ownerID string, position int) *Folder {
 	return &Folder{
-		ID:       id,
-		Name:     name,
-		Color:    color,
-		Icon:     icon,
-		ParentID: parentID,
-		TeamID:   teamID,
-		OwnerID:  ownerID,
-		Position: position,
+		ID:          id,
+		Name:        name,
+		Color:       color,
+		Icon:        icon,
+		ParentID:    parentID,
+		WorkspaceID: workspaceID,
+		OwnerID:     ownerID,
+		Position:    position,
 	}
 }

@@ -16,8 +16,8 @@ type FolderModel struct {
 	Icon     string  `gorm:"default:null"`
 	ParentID *string `gorm:"default:null;index"`
 
-	TeamID  *string `gorm:"default:null;index"`
-	OwnerID string  `gorm:"not null;index"`
+	WorkspaceID *string `gorm:"default:null;index"`
+	OwnerID     string  `gorm:"not null;index"`
 
 	Position int `gorm:"default:0"`
 
@@ -37,16 +37,16 @@ func NewFolderRepository(db *gorm.DB) *FolderRepository {
 
 func toFolderDomain(folder FolderModel) *entity.Folder {
 	return &entity.Folder{
-		ID:        folder.ID,
-		Name:      folder.Name,
-		Color:     folder.Color,
-		Icon:      folder.Icon,
-		ParentID:  folder.ParentID,
-		TeamID:    folder.TeamID,
-		OwnerID:   folder.OwnerID,
-		Position:  folder.Position,
-		CreatedAt: folder.CreatedAt,
-		UpdatedAt: folder.UpdatedAt,
+		ID:          folder.ID,
+		Name:        folder.Name,
+		Color:       folder.Color,
+		Icon:        folder.Icon,
+		ParentID:    folder.ParentID,
+		WorkspaceID: folder.WorkspaceID,
+		OwnerID:     folder.OwnerID,
+		Position:    folder.Position,
+		CreatedAt:   folder.CreatedAt,
+		UpdatedAt:   folder.UpdatedAt,
 	}
 }
 
@@ -60,16 +60,16 @@ func toFolderDomains(folders []FolderModel) []*entity.Folder {
 
 func fromFolderDomain(folder *entity.Folder) *FolderModel {
 	return &FolderModel{
-		ID:        folder.ID,
-		Name:      folder.Name,
-		Color:     folder.Color,
-		Icon:      folder.Icon,
-		ParentID:  folder.ParentID,
-		TeamID:    folder.TeamID,
-		OwnerID:   folder.OwnerID,
-		Position:  folder.Position,
-		CreatedAt: folder.CreatedAt,
-		UpdatedAt: folder.UpdatedAt,
+		ID:          folder.ID,
+		Name:        folder.Name,
+		Color:       folder.Color,
+		Icon:        folder.Icon,
+		ParentID:    folder.ParentID,
+		WorkspaceID: folder.WorkspaceID,
+		OwnerID:     folder.OwnerID,
+		Position:    folder.Position,
+		CreatedAt:   folder.CreatedAt,
+		UpdatedAt:   folder.UpdatedAt,
 	}
 }
 
@@ -108,11 +108,11 @@ func (r *FolderRepository) GetUserFolders(ctx context.Context, userID string) ([
 	return toFolderDomains(folders), nil
 }
 
-// retrieves all team folders
-func (r *FolderRepository) GetTeamFolders(ctx context.Context, teamID string) ([]*entity.Folder, error) {
+// retrieves all workspace folders
+func (r *FolderRepository) GetWorkspaceFolders(ctx context.Context, workspaceID string) ([]*entity.Folder, error) {
 	var folders []FolderModel
 	result := r.db.WithContext(ctx).
-		Where("team_id = ?", teamID).
+		Where("workspace_id = ?", workspaceID).
 		Find(&folders)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {

@@ -21,26 +21,26 @@ type SprintService struct {
 	sprintRepo *repository.SprintRepository
 }
 
-func (s *SprintService) SearchInTeams(ctx context.Context, teamIDs []string, query string) ([]*entity.Sprint, error) {
-	return s.sprintRepo.SearchInTeams(ctx, teamIDs, query)
+func (s *SprintService) SearchInWorkspaces(ctx context.Context, workspaceIDs []string, query string) ([]*entity.Sprint, error) {
+	return s.sprintRepo.SearchInWorkspaces(ctx, workspaceIDs, query)
 }
 
 func NewSprintService(sprintRepo *repository.SprintRepository) *SprintService {
 	return &SprintService{sprintRepo: sprintRepo}
 }
 
-func (s *SprintService) CreateSprint(ctx context.Context, teamID, createdBy, name, goal string, startDate, endDate *time.Time) (*entity.Sprint, error) {
+func (s *SprintService) CreateSprint(ctx context.Context, workspaceID, createdBy, name, goal string, startDate, endDate *time.Time) (*entity.Sprint, error) {
 	sprint := &entity.Sprint{
-		ID:        security.GenerateNewID(),
-		Name:      name,
-		Goal:      goal,
-		TeamID:    teamID,
-		Status:    "planning",
-		StartDate: startDate,
-		EndDate:   endDate,
-		CreatedBy: createdBy,
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
+		ID:          security.GenerateNewID(),
+		Name:        name,
+		Goal:        goal,
+		WorkspaceID: workspaceID,
+		Status:      "planning",
+		StartDate:   startDate,
+		EndDate:     endDate,
+		CreatedBy:   createdBy,
+		CreatedAt:   time.Now().UTC(),
+		UpdatedAt:   time.Now().UTC(),
 	}
 	if err := s.sprintRepo.Create(ctx, sprint); err != nil {
 		return nil, err
@@ -48,8 +48,8 @@ func (s *SprintService) CreateSprint(ctx context.Context, teamID, createdBy, nam
 	return sprint, nil
 }
 
-func (s *SprintService) GetTeamSprints(ctx context.Context, teamID string) ([]*entity.Sprint, error) {
-	return s.sprintRepo.GetTeamSprints(ctx, teamID)
+func (s *SprintService) GetWorkspaceSprints(ctx context.Context, workspaceID string) ([]*entity.Sprint, error) {
+	return s.sprintRepo.GetWorkspaceSprints(ctx, workspaceID)
 }
 
 func (s *SprintService) GetSprintByID(ctx context.Context, id string) (*entity.Sprint, error) {
@@ -70,15 +70,15 @@ func (s *SprintService) UpdateSprint(ctx context.Context, id, name, goal string,
 	return s.sprintRepo.GetByID(ctx, id)
 }
 
-func (s *SprintService) StartSprint(ctx context.Context, id, teamID string) (*entity.Sprint, error) {
+func (s *SprintService) StartSprint(ctx context.Context, id, workspaceID string) (*entity.Sprint, error) {
 	sprint, err := s.sprintRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
-	if sprint.TeamID != teamID {
+	if sprint.WorkspaceID != workspaceID {
 		return nil, gorm.ErrRecordNotFound
 	}
-	active, err := s.sprintRepo.HasActiveSprint(ctx, teamID, id)
+	active, err := s.sprintRepo.HasActiveSprint(ctx, workspaceID, id)
 	if err != nil {
 		return nil, err
 	}

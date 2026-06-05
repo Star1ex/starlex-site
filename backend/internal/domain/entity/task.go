@@ -8,15 +8,16 @@ type Task struct {
 	Description string
 	Icon        string
 	AssignedTo  []*User
-	TeamID      string
+	WorkspaceID string
 	Priority    string
 	Progress    string
 
-	OwnerID  string
-	FolderID *string
-	SprintID *string
-	Position int
-	Subtasks []*Subtask
+	OwnerID   string
+	FolderID  *string
+	SprintID  *string
+	ProjectID *string
+	Position  int
+	Subtasks  []*Subtask
 
 	CreatedAt time.Time
 	UpdatedAt time.Time
@@ -26,7 +27,7 @@ type UpdateTask struct {
 	Task        string
 	Description string
 	AssignedTo  []User
-	TeamID      string
+	WorkspaceID string
 	Priority    string
 	Progress    string
 

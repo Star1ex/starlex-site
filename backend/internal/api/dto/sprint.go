@@ -31,7 +31,7 @@ type SprintTaskResponse struct {
 	Task        string                   `json:"task"`
 	Description string                   `json:"description"`
 	UserIDs     []SprintTaskUserResponse `json:"user_ids"`
-	TeamID      string                   `json:"team_id"`
+	WorkspaceID string                   `json:"workspace_id"`
 	FolderID    *string                  `json:"folder_id"`
 	OwnerID     string                   `json:"owner_id"`
 	Priority    string                   `json:"priority"`
@@ -44,17 +44,17 @@ type SprintTaskResponse struct {
 }
 
 type SprintResponse struct {
-	ID        string               `json:"id"`
-	Name      string               `json:"name"`
-	Goal      string               `json:"goal"`
-	TeamID    string               `json:"team_id"`
-	Status    string               `json:"status"`
-	StartDate *time.Time           `json:"start_date"`
-	EndDate   *time.Time           `json:"end_date"`
-	CreatedBy string               `json:"created_by"`
-	CreatedAt time.Time            `json:"created_at"`
-	UpdatedAt time.Time            `json:"updated_at"`
-	Tasks     []SprintTaskResponse `json:"tasks"`
+	ID          string               `json:"id"`
+	Name        string               `json:"name"`
+	Goal        string               `json:"goal"`
+	WorkspaceID string               `json:"workspace_id"`
+	Status      string               `json:"status"`
+	StartDate   *time.Time           `json:"start_date"`
+	EndDate     *time.Time           `json:"end_date"`
+	CreatedBy   string               `json:"created_by"`
+	CreatedAt   time.Time            `json:"created_at"`
+	UpdatedAt   time.Time            `json:"updated_at"`
+	Tasks       []SprintTaskResponse `json:"tasks"`
 }
 
 func toSubtaskResponse(s *entity.Subtask) SubtaskResponse {
@@ -95,7 +95,7 @@ func toSprintTaskResponse(t *entity.Task) SprintTaskResponse {
 		Task:        t.Task,
 		Description: t.Description,
 		UserIDs:     users,
-		TeamID:      t.TeamID,
+		WorkspaceID: t.WorkspaceID,
 		FolderID:    t.FolderID,
 		OwnerID:     t.OwnerID,
 		Priority:    t.Priority,
@@ -114,17 +114,17 @@ func ToSprintResponse(sprint *entity.Sprint) *SprintResponse {
 		tasks[i] = toSprintTaskResponse(t)
 	}
 	return &SprintResponse{
-		ID:        sprint.ID,
-		Name:      sprint.Name,
-		Goal:      sprint.Goal,
-		TeamID:    sprint.TeamID,
-		Status:    sprint.Status,
-		StartDate: sprint.StartDate,
-		EndDate:   sprint.EndDate,
-		CreatedBy: sprint.CreatedBy,
-		CreatedAt: sprint.CreatedAt,
-		UpdatedAt: sprint.UpdatedAt,
-		Tasks:     tasks,
+		ID:          sprint.ID,
+		Name:        sprint.Name,
+		Goal:        sprint.Goal,
+		WorkspaceID: sprint.WorkspaceID,
+		Status:      sprint.Status,
+		StartDate:   sprint.StartDate,
+		EndDate:     sprint.EndDate,
+		CreatedBy:   sprint.CreatedBy,
+		CreatedAt:   sprint.CreatedAt,
+		UpdatedAt:   sprint.UpdatedAt,
+		Tasks:       tasks,
 	}
 }
 

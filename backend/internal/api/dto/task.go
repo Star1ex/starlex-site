@@ -13,7 +13,7 @@ type TaskApi struct {
 	Progress     string    `json:"progress"`
 	Priority     string    `json:"priority"`
 	FolderID     *string   `json:"folder_id"`
-	TeamID       *string   `json:"team_id"`
+	WorkspaceID  *string   `json:"workspace_id"`
 	OwnerID      string    `json:"owner_id"`
 	CreatedAt    time.Time `json:"created_at"`
 }
@@ -24,7 +24,7 @@ type TaskResponse struct {
 	Description string    `json:"description"`
 	Icon        string    `json:"icon"`
 	AssignedTo  []string  `json:"user_ids"`
-	TeamID      string    `json:"team_id"`
+	WorkspaceID string    `json:"workspace_id"`
 	FolderID    *string   `json:"folder_id"`
 	OwnerID     string    `json:"owner_id"`
 	Priority    string    `json:"priority"`
@@ -85,7 +85,7 @@ func ToTaskResponse(task *entity.Task) *TaskResponse {
 		Description: task.Description,
 		Icon:        task.Icon,
 		AssignedTo:  assignedIDs,
-		TeamID:      task.TeamID,
+		WorkspaceID: task.WorkspaceID,
 		FolderID:    task.FolderID,
 		OwnerID:     task.OwnerID,
 		Priority:    task.Priority,
@@ -95,7 +95,7 @@ func ToTaskResponse(task *entity.Task) *TaskResponse {
 	}
 }
 
-func TeamTasksList(tasks []*entity.Task) []TaskResponse {
+func WorkspaceTasksList(tasks []*entity.Task) []TaskResponse {
 	response := make([]TaskResponse, len(tasks))
 	for i, task := range tasks {
 		response[i] = *ToTaskResponse(task)
@@ -124,7 +124,7 @@ type UpdateDto struct {
 	Task         *string   `json:"task"`
 	Description  *string   `json:"description"`
 	FolderID     *string   `json:"folder_id"`
-	TeamID       *string   `json:"team_id"`
+	WorkspaceID  *string   `json:"workspace_id"`
 	OwnerID      *string   `json:"owner_id"`
 	Progress     *string   `json:"progress"`
 	Priority     *string   `json:"priority"`

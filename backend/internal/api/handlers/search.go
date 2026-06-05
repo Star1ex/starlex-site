@@ -29,7 +29,7 @@ func (h *Handlers) Search(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(dto.ToUsersResponse(users))
 }
 
-// GlobalSearch godoc — search tasks, sprints, and teams by query string
+// GlobalSearch godoc — search tasks, sprints, and workspaces by query string
 func (h *Handlers) GlobalSearch(ctx *fiber.Ctx) error {
 	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
@@ -39,28 +39,28 @@ func (h *Handlers) GlobalSearch(ctx *fiber.Ctx) error {
 	query := strings.TrimSpace(ctx.Query("q"))
 	if len(query) < 1 {
 		return ctx.Status(fiber.StatusOK).JSON(dto.GlobalSearchResponse{
-			Teams: []dto.SearchTeamResult{}, Sprints: []dto.SearchSprintResult{}, Tasks: []dto.SearchTaskResult{},
+			Workspaces: []dto.SearchWorkspaceResult{}, Sprints: []dto.SearchSprintResult{}, Tasks: []dto.SearchTaskResult{},
 		})
 	}
 
-	// Get all teams the user belongs to
-	teams, err := h.userService.GetTeams(ctx.Context(), userID)
+	// Get all workspaces the user belongs to
+	workspaces, err := h.userService.GetWorkspaces(ctx.Context(), userID)
 	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to get teams"})
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to get workspaces"})
 	}
 
-	teamIDs := make([]string, len(teams))
-	for i, t := range teams {
-		teamIDs[i] = t.ID
+	workspaceIDs := make([]string, len(workspaces))
+	for i, t := range workspaces {
+		workspaceIDs[i] = t.ID
 	}
 
-	// Filter teams by name in-memory
+	// Filter workspaces by name in-memory
 	lowerQ := strings.ToLower(query)
-	var matchedTeams []*entity.Team
-	for _, t := range teams {
+	var matchedWorkspaces []*entity.Workspace
+	for _, t := range workspaces {
 		if strings.Contains(strings.ToLower(t.Name), lowerQ) {
-			matchedTeams = append(matchedTeams, t)
-			if len(matchedTeams) == 5 {
+			matchedWorkspaces = append(matchedWorkspaces, t)
+			if len(matchedWorkspaces) == 5 {
 				break
 			}
 		}
@@ -78,11 +78,11 @@ func (h *Handlers) GlobalSearch(ctx *fiber.Ctx) error {
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		taskResults, taskErr = h.taskService.SearchInTeams(ctx.Context(), teamIDs, query)
+		taskResults, taskErr = h.taskService.SearchInWorkspaces(ctx.Context(), workspaceIDs, query)
 	}()
 	go func() {
 		defer wg.Done()
-		sprintResults, sprintErr = h.sprintService.SearchInTeams(ctx.Context(), teamIDs, query)
+		sprintResults, sprintErr = h.sprintService.SearchInWorkspaces(ctx.Context(), workspaceIDs, query)
 	}()
 	wg.Wait()
 
@@ -94,9 +94,9 @@ func (h *Handlers) GlobalSearch(ctx *fiber.Ctx) error {
 	}
 
 	// Build response
-	teamRes := make([]dto.SearchTeamResult, len(matchedTeams))
-	for i, t := range matchedTeams {
-		teamRes[i] = dto.ToSearchTeamResult(t)
+	workspaceRes := make([]dto.SearchWorkspaceResult, len(matchedWorkspaces))
+	for i, t := range matchedWorkspaces {
+		workspaceRes[i] = dto.ToSearchWorkspaceResult(t)
 	}
 
 	sprintRes := make([]dto.SearchSprintResult, len(sprintResults))
@@ -110,8 +110,8 @@ func (h *Handlers) GlobalSearch(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.Status(fiber.StatusOK).JSON(dto.GlobalSearchResponse{
-		Teams:   teamRes,
-		Sprints: sprintRes,
-		Tasks:   taskRes,
+		Workspaces: workspaceRes,
+		Sprints:    sprintRes,
+		Tasks:      taskRes,
 	})
 }

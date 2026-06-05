@@ -7,8 +7,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
-func (h *Handlers) isTeamMember(ctx context.Context, teamID, userID string) (bool, error) {
-	users, err := h.teamService.GetUsers(ctx, teamID)
+func (h *Handlers) isWorkspaceMember(ctx context.Context, workspaceID, userID string) (bool, error) {
+	users, err := h.workspaceService.GetUsers(ctx, workspaceID)
 	if err != nil {
 		return false, err
 	}
@@ -21,10 +21,10 @@ func (h *Handlers) isTeamMember(ctx context.Context, teamID, userID string) (boo
 	return false, nil
 }
 
-func (h *Handlers) requireTeamMember(c *fiber.Ctx, teamID, userID string) error {
-	ok, err := h.isTeamMember(c.Context(), teamID, userID)
+func (h *Handlers) requireWorkspaceMember(c *fiber.Ctx, workspaceID, userID string) error {
+	ok, err := h.isWorkspaceMember(c.Context(), workspaceID, userID)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "team not found"})
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "workspace not found"})
 	}
 	if !ok {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
@@ -42,8 +42,8 @@ func (h *Handlers) requireTaskAccess(c *fiber.Ctx, taskID, userID string) (*enti
 		return taskEntity, nil
 	}
 
-	if taskEntity.TeamID != "" {
-		if err := h.requireTeamMember(c, taskEntity.TeamID, userID); err != nil {
+	if taskEntity.WorkspaceID != "" {
+		if err := h.requireWorkspaceMember(c, taskEntity.WorkspaceID, userID); err != nil {
 			return nil, err
 		}
 		return taskEntity, nil
@@ -62,8 +62,8 @@ func (h *Handlers) requireFolderAccess(c *fiber.Ctx, folderID, userID string) (*
 		return folderEntity, nil
 	}
 
-	if folderEntity.TeamID != nil && *folderEntity.TeamID != "" {
-		if err := h.requireTeamMember(c, *folderEntity.TeamID, userID); err != nil {
+	if folderEntity.WorkspaceID != nil && *folderEntity.WorkspaceID != "" {
+		if err := h.requireWorkspaceMember(c, *folderEntity.WorkspaceID, userID); err != nil {
 			return nil, err
 		}
 		return folderEntity, nil

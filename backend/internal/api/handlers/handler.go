@@ -7,16 +7,16 @@ import (
 	"github.com/Star1ex/starlex-site/internal/domain/folder"
 	"github.com/Star1ex/starlex-site/internal/domain/password"
 	"github.com/Star1ex/starlex-site/internal/domain/task"
-	"github.com/Star1ex/starlex-site/internal/domain/team"
 	"github.com/Star1ex/starlex-site/internal/domain/user"
 	"github.com/Star1ex/starlex-site/internal/domain/verification"
+	"github.com/Star1ex/starlex-site/internal/domain/workspace"
 	"github.com/Star1ex/starlex-site/internal/service"
 )
 
 type Handlers struct {
 	db                  *db.DB
 	userService         user.Service
-	teamService         team.Service
+	workspaceService    workspace.Service
 	taskService         task.Service
 	folderService       folder.Service
 	verificationService verification.Service
@@ -30,7 +30,7 @@ type Handlers struct {
 }
 
 func NewHandlers(userService user.Service,
-	teamService team.Service,
+	workspaceService workspace.Service,
 	taskService task.Service,
 	folderService folder.Service,
 	verificationService verification.Service,
@@ -44,7 +44,7 @@ func NewHandlers(userService user.Service,
 	return &Handlers{
 		db:                  db,
 		userService:         userService,
-		teamService:         teamService,
+		workspaceService:    workspaceService,
 		taskService:         taskService,
 		folderService:       folderService,
 		verificationService: verificationService,

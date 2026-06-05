@@ -43,8 +43,8 @@ func (h *Handlers) CreateFolder(ctx *fiber.Ctx) error {
 	folder := dto.ToDomainFolder(&req)
 	// Enforce ownership from auth context, never trust client-supplied owner_id.
 	folder.OwnerID = userID
-	if folder.TeamID != nil && *folder.TeamID != "" {
-		if err := h.requireTeamMember(ctx, *folder.TeamID, userID); err != nil {
+	if folder.WorkspaceID != nil && *folder.WorkspaceID != "" {
+		if err := h.requireWorkspaceMember(ctx, *folder.WorkspaceID, userID); err != nil {
 			return err
 		}
 	}
@@ -130,19 +130,19 @@ func (h *Handlers) GetFoldersByUserID(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(dto.FromDomainFolders(folders))
 }
 
-// Swagger disabled: GetFoldersByTeam godoc
-// Swagger disabled: Summary      Get folders by team ID
-// Swagger disabled: Description  Returns all folders belonging to a specific team. Requires JWT authentication.
+// Swagger disabled: GetFoldersByWorkspace godoc
+// Swagger disabled: Summary      Get folders by workspace ID
+// Swagger disabled: Description  Returns all folders belonging to a specific workspace. Requires JWT authentication.
 // Swagger disabled: Tags         folders
 // Swagger disabled: Accept       json
 // Swagger disabled: Produce      json
-// Swagger disabled: Param        team_id      path      string                    true  "Team ID"
-// Swagger disabled: Success      200          {array}   dto.FolderDTO             "List of team folders"
+// Swagger disabled: Param        workspace_id      path      string                    true  "Workspace ID"
+// Swagger disabled: Success      200          {array}   dto.FolderDTO             "List of workspace folders"
 // Swagger disabled: Failure      401          {object}  map[string]string         "User not authorized"
 // Swagger disabled: Failure      500          {object}  map[string]string         "Internal server error"
 // Swagger disabled: Security     BearerAuth
-// Swagger disabled: Router       /folder/team/{team_id} [get]
-func (h *Handlers) GetFoldersByTeam(ctx *fiber.Ctx) error {
+// Swagger disabled: Router       /folder/workspace/{workspace_id} [get]
+func (h *Handlers) GetFoldersByWorkspace(ctx *fiber.Ctx) error {
 	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -150,14 +150,14 @@ func (h *Handlers) GetFoldersByTeam(ctx *fiber.Ctx) error {
 		})
 	}
 
-	teamID := ctx.Params("team_id")
-	if err := h.requireTeamMember(ctx, teamID, userID); err != nil {
+	workspaceID := ctx.Params("workspace_id")
+	if err := h.requireWorkspaceMember(ctx, workspaceID, userID); err != nil {
 		return err
 	}
 
-	folders, err := h.folderService.GetTeamFolders(ctx.Context(), teamID)
+	folders, err := h.folderService.GetWorkspaceFolders(ctx.Context(), workspaceID)
 	if err != nil {
-		logger.Log.Errorw("get team folders failed", "error", err)
+		logger.Log.Errorw("get workspace folders failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "internal server error",
 		})
@@ -207,8 +207,8 @@ func (h *Handlers) GetFoldersByParentID(ctx *fiber.Ctx) error {
 
 	filtered := make([]*dto.FolderDTO, 0, len(folders))
 	for _, child := range folders {
-		if parentFolder.TeamID != nil && *parentFolder.TeamID != "" {
-			if child.TeamID != nil && *child.TeamID == *parentFolder.TeamID {
+		if parentFolder.WorkspaceID != nil && *parentFolder.WorkspaceID != "" {
+			if child.WorkspaceID != nil && *child.WorkspaceID == *parentFolder.WorkspaceID {
 				filtered = append(filtered, dto.FromDomainFolder(child))
 			}
 			continue
@@ -356,9 +356,9 @@ func (h *Handlers) MoveFolder(ctx *fiber.Ctx) error {
 		if err != nil {
 			return err
 		}
-		if sourceFolder.TeamID != nil && *sourceFolder.TeamID != "" {
-			if parentFolder.TeamID == nil || *parentFolder.TeamID != *sourceFolder.TeamID {
-				return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "cannot move team folder under another team"})
+		if sourceFolder.WorkspaceID != nil && *sourceFolder.WorkspaceID != "" {
+			if parentFolder.WorkspaceID == nil || *parentFolder.WorkspaceID != *sourceFolder.WorkspaceID {
+				return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "cannot move workspace folder under another workspace"})
 			}
 		}
 	}

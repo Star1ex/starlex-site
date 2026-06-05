@@ -12,21 +12,21 @@ import (
 )
 
 type UserModel struct {
-	ID             string         `gorm:"primaryKey"`
-	Email          string         `gorm:"unique;not null"`
-	Password       *string        `gorm:"default:null"`
-	FirstName      string         `gorm:"not null;size:50"`
-	LastName       string         `gorm:"not null;size:50"`
-	PhotoURL       *string        `gorm:"default:null"`
-	AvatarURL      *string        `gorm:"default:null"`
-	GoogleID       *string        `gorm:"uniqueIndex;default:null"`
-	GithubID       *string        `gorm:"uniqueIndex;default:null"`
-	AuthProviders  datatypes.JSON `gorm:"type:jsonb;default:'[]'"`
-	NameOverridden bool           `gorm:"default:false"`
-	Role           string         `gorm:"default:'member'"`
-	IsVerified     bool           `gorm:"default:false"`
-	TokenVersion   int            `gorm:"default:1"`
-	Teams          []TeamModel    `gorm:"many2many:users_teams"`
+	ID             string           `gorm:"primaryKey"`
+	Email          string           `gorm:"unique;not null"`
+	Password       *string          `gorm:"default:null"`
+	FirstName      string           `gorm:"not null;size:50"`
+	LastName       string           `gorm:"not null;size:50"`
+	PhotoURL       *string          `gorm:"default:null"`
+	AvatarURL      *string          `gorm:"default:null"`
+	GoogleID       *string          `gorm:"uniqueIndex;default:null"`
+	GithubID       *string          `gorm:"uniqueIndex;default:null"`
+	AuthProviders  datatypes.JSON   `gorm:"type:jsonb;default:'[]'"`
+	NameOverridden bool             `gorm:"default:false"`
+	Role           string           `gorm:"default:'member'"`
+	IsVerified     bool             `gorm:"default:false"`
+	TokenVersion   int              `gorm:"default:1"`
+	Workspaces     []WorkspaceModel `gorm:"many2many:users_workspaces"`
 }
 
 type UserRepository struct {
@@ -169,9 +169,9 @@ func (r *UserRepository) GetByGithubID(ctx context.Context, githubID string) (*e
 	return toDomain(&model), nil
 }
 
-func (r *UserRepository) GetUserTeams(ctx context.Context, userID string) ([]*entity.Team, error) {
+func (r *UserRepository) GetUserWorkspaces(ctx context.Context, userID string) ([]*entity.Workspace, error) {
 	var userModel UserModel
-	err := r.db.WithContext(ctx).Preload("Teams").Find(&userModel, "id = ?", userID).Error
+	err := r.db.WithContext(ctx).Preload("Workspaces").Find(&userModel, "id = ?", userID).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, ErrUserNotFound
@@ -179,12 +179,12 @@ func (r *UserRepository) GetUserTeams(ctx context.Context, userID string) ([]*en
 		return nil, err
 	}
 
-	teams := userModel.Teams
-	teamsInUser := make([]*entity.Team, len(teams))
-	for i, team := range teams {
-		teamsInUser[i] = toTeamDomain(&team)
+	workspaces := userModel.Workspaces
+	workspacesInUser := make([]*entity.Workspace, len(workspaces))
+	for i, workspace := range workspaces {
+		workspacesInUser[i] = toWorkspaceDomain(&workspace)
 	}
-	return teamsInUser, nil
+	return workspacesInUser, nil
 }
 
 func (r *UserRepository) GetByIDs(ctx context.Context, ids []string) ([]*entity.User, error) {

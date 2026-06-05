@@ -20,12 +20,12 @@ type Repository interface {
 	Delete(ctx context.Context, id string) error
 
 	// Getters
-	GetTeamTasks(ctx context.Context, teamID string) ([]*entity.Task, error)
+	GetWorkspaceTasks(ctx context.Context, workspaceID string) ([]*entity.Task, error)
 	GetUserTasks(ctx context.Context, userID string) ([]*entity.Task, error)
 	GetTasksWithoutFolder(ctx context.Context, userID string) ([]*entity.Task, error)
 	GetFolderTasks(ctx context.Context, folderID string) ([]*entity.Task, error)
 
 	MoveTaskToFolder(ctx context.Context, taskID, folderID string) error
 
-	SearchInTeams(ctx context.Context, teamIDs []string, query string) ([]*entity.Task, error)
+	SearchInWorkspaces(ctx context.Context, workspaceIDs []string, query string) ([]*entity.Task, error)
 }

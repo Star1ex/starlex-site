@@ -9,13 +9,13 @@ import (
 type Service interface {
 
 	// Create task
-	CreateTeamTask(ctx context.Context, teamID string, assignedIDs []string, task *entity.Task, userId string) error
+	CreateWorkspaceTask(ctx context.Context, workspaceID string, assignedIDs []string, task *entity.Task, userId string) error
 	CreatePersonalTask(ctx context.Context, task *entity.Task) error
 
 	// Get task by ID
 	GetTaskByID(ctx context.Context, taskID string) (*entity.Task, error)
-	// Get all tasks from team by ID
-	GetTeamTasks(ctx context.Context, teamID string) ([]*entity.Task, error)
+	// Get all tasks from workspace by ID
+	GetWorkspaceTasks(ctx context.Context, workspaceID string) ([]*entity.Task, error)
 	// Retrieves all tasks by ID
 	GetUserTasks(ctx context.Context, userID string) ([]*entity.Task, error)
 	// Get tasks without folder
@@ -38,6 +38,6 @@ type Service interface {
 	// Move task to folder
 	MoveTaskToFolder(ctx context.Context, taskID, folderID string) error
 
-	// Search tasks across multiple teams
-	SearchInTeams(ctx context.Context, teamIDs []string, query string) ([]*entity.Task, error)
+	// Search tasks across multiple workspaces
+	SearchInWorkspaces(ctx context.Context, workspaceIDs []string, query string) ([]*entity.Task, error)
 }

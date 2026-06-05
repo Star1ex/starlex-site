@@ -1,6 +1,6 @@
 package entity
 
-type Team struct {
+type Workspace struct {
 	ID          string
 	Name        string
 	Description string
@@ -8,13 +8,13 @@ type Team struct {
 	OwnerID     string
 }
 
-type UpdateTeam struct {
+type UpdateWorkspace struct {
 	Name        string
 	Description string
 }
 
-func NewTeam(id, name, description string) *Team {
-	return &Team{
+func NewWorkspace(id, name, description string) *Workspace {
+	return &Workspace{
 		ID:          id,
 		Name:        name,
 		Description: description,
