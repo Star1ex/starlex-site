@@ -227,7 +227,7 @@ export const SidebarSection: React.FC<SidebarSectionProps> = ({
                   <div className="pl-4 py-1 text-xs text-gray-400 dark:text-dark-text-muted">Loading…</div>
                 )}
                 {!loadingTeams && teams.length === 0 && (
-                  <div className="pl-4 py-1 text-xs text-gray-400 dark:text-dark-text-muted">No teams yet</div>
+                  <div className="pl-4 py-1 text-xs text-gray-400 dark:text-dark-text-muted">No workspaces yet</div>
                 )}
                 {teams.map((team) => (
                   <TeamItem

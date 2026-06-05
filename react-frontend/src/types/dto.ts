@@ -36,7 +36,7 @@ export interface TaskDTO {
   task: string;
   description: string;
   icon?: string;
-  user_ids: UserDTO[]; // assignees, expanded to user objects for the UI
+  user_ids: string[];
   workspace_id: string | null;
   folder_id: string | null;
   project_id: string | null;

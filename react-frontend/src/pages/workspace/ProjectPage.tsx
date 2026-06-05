@@ -187,10 +187,9 @@ const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClose, onCr
 
 const TaskRow: React.FC<{
   task: TaskDTO;
-  index: number;
   onNavigate: (id: string) => void;
   onDelete: (id: string) => void;
-}> = ({ task, index, onNavigate, onDelete }) => {
+}> = ({ task, onNavigate, onDelete }) => {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const pm = PRIORITY_META[task.priority];
@@ -517,7 +516,6 @@ export const ProjectPage: React.FC = () => {
                 <TaskRow
                   key={t.id}
                   task={t}
-                  index={0}
                   onNavigate={id => navigate(`/task/${id}`)}
                   onDelete={handleDeleteTask}
                 />

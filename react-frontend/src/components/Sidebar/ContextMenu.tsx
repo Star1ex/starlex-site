@@ -1,6 +1,5 @@
 import React from 'react';
 import { Edit2, FilePlus, FolderPlus, Trash2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext.js';
 import { getAuthUser } from '@/shared/lib/authManager.js';
 import { useContextMenu } from '@/hooks/useContextMenu.js';
@@ -24,7 +23,6 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
 }) => {
   const { contextMenu, closeContextMenu } = useContextMenu();
   const { userId } = useAuth();
-  const navigate = useNavigate();
 
   const resolveOwnerId = () => {
     const storedUser = getAuthUser();
