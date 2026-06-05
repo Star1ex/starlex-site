@@ -8,7 +8,6 @@ import (
 	"github.com/Star1ex/starlex-site/internal/domain/task"
 	"github.com/Star1ex/starlex-site/internal/domain/user"
 	"github.com/Star1ex/starlex-site/internal/domain/workspace"
-	"github.com/Star1ex/starlex-site/internal/security"
 	"github.com/google/uuid"
 )
 
@@ -33,20 +32,20 @@ func (s *TaskService) CreateWorkspaceTask(
 	task *entity.Task,
 	userId string,
 ) error {
-	// Check if workspace exists and user is the owner of this specific workspace
-	workspace, err := s.workspaceRepo.GetWorkspaceByID(ctx, workspaceID)
-	if err != nil {
-		return err
+	if workspaceID == "" {
+		return errors.New("workspace id is required")
 	}
 
-	// Verify that the user is the owner of this workspace
-	if workspace.OwnerID != userId {
-		return errors.New("not allowed for this user: only workspace owner can create tasks")
+	// Ensure the workspace exists. Membership authorization is enforced by the
+	// API layer (any workspace member may create tasks).
+	if _, err := s.workspaceRepo.GetWorkspaceByID(ctx, workspaceID); err != nil {
+		return err
 	}
 
 	// Handle assigned users - can be empty array
 	var users []*entity.User
 	if len(assignedIDs) > 0 {
+		var err error
 		users, err = s.userRepo.GetByIDs(ctx, assignedIDs)
 		if err != nil {
 			return err
@@ -56,13 +55,9 @@ func (s *TaskService) CreateWorkspaceTask(
 
 	task.AssignedTo = users
 	task.WorkspaceID = workspaceID
+	task.OwnerID = userId
 	task.ID = uuid.New().String()
 
-	return s.taskRepo.Create(ctx, task)
-}
-
-func (s *TaskService) CreatePersonalTask(ctx context.Context, task *entity.Task) error {
-	task.ID = security.GenerateNewID()
 	return s.taskRepo.Create(ctx, task)
 }
 
@@ -110,14 +105,6 @@ func (s *TaskService) GetWorkspaceTasks(ctx context.Context, workspaceID string)
 	return tasks, nil
 }
 
-func (s *TaskService) GetUserTasks(ctx context.Context, userID string) ([]*entity.Task, error) {
-	tasks, err := s.taskRepo.GetUserTasks(ctx, userID)
-	if err != nil {
-		return nil, err
-	}
-	return tasks, nil
-}
-
 func (s *TaskService) UpdateTaskProgress(ctx context.Context, taskID, progress string) (*entity.Task, error) {
 	if err := s.taskRepo.UpdateProgress(ctx, taskID, progress); err != nil {
 		return nil, err
@@ -151,10 +138,6 @@ func (s *TaskService) UpdateTaskAssignees(ctx context.Context, taskID string, as
 
 func (s *TaskService) Delete(ctx context.Context, id string) error {
 	return s.taskRepo.Delete(ctx, id)
-}
-
-func (s *TaskService) GetTasksWithoutFolder(ctx context.Context, userID string) ([]*entity.Task, error) {
-	return s.taskRepo.GetTasksWithoutFolder(ctx, userID)
 }
 
 func (s *TaskService) GetFolderTasks(ctx context.Context, folderID string) ([]*entity.Task, error) {

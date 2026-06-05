@@ -28,10 +28,17 @@ import (
 // Swagger disabled: Router       /workspace/{workspace_id}/tasks [post]
 func (h *Handlers) CreateWorkspaceTask(ctx *fiber.Ctx) error {
 	workspaceID := ctx.Params("workspace_id")
+	if workspaceID == "" || workspaceID == "nil" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "workspace ID is required in URL"})
+	}
 
 	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
 		return authErr
+	}
+	// Any member of the workspace may create tasks.
+	if err := h.requireWorkspaceMember(ctx, workspaceID, userID); err != nil {
+		return err
 	}
 	var input dto.TaskApi
 	if err := ctx.BodyParser(&input); err != nil {
@@ -65,48 +72,6 @@ func (h *Handlers) CreateWorkspaceTask(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.Status(201).JSON(dto.ToTaskResponse(createdTask))
-}
-
-func (h *Handlers) CreatePersonalTask(ctx *fiber.Ctx) error {
-	userID, authErr := h.getAuthenticatedUserID(ctx)
-	if authErr != nil {
-		return authErr
-	}
-
-	var input dto.TaskApi
-	if err := ctx.BodyParser(&input); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad json"})
-	}
-
-	input.Task = sanitizeStrict(input.Task)
-	input.Description = sanitizeMarkdown(input.Description)
-
-	entityTask := &entity.Task{
-		Task:        input.Task,
-		Description: input.Description,
-		Priority:    input.Priority,
-		Progress:    input.Progress,
-		OwnerID:     userID,
-		WorkspaceID: "",
-		FolderID:    input.FolderID,
-	}
-	if input.FolderID != nil && *input.FolderID != "" {
-		folderEntity, err := h.requireFolderAccess(ctx, *input.FolderID, userID)
-		if err != nil {
-			return err
-		}
-		if folderEntity.WorkspaceID != nil && *folderEntity.WorkspaceID != "" {
-			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "personal tasks cannot be created in workspace folders"})
-		}
-	}
-
-	err := h.taskService.CreatePersonalTask(ctx.Context(), entityTask)
-	if err != nil {
-		logger.Log.Errorw("create personal task failed", "error", err)
-		return ctx.Status(500).JSON(fiber.Map{"error": "internal server error"})
-	}
-
-	return ctx.Status(201).JSON(dto.ToTaskResponse(entityTask))
 }
 
 func (h *Handlers) UpdateTask(c *fiber.Ctx) error {
@@ -368,21 +333,6 @@ func (h *Handlers) PatchTaskAssignees(ctx *fiber.Ctx) error {
 	return ctx.SendStatus(fiber.StatusNoContent)
 }
 
-func (h *Handlers) GetPersonalTasks(ctx *fiber.Ctx) error {
-	userID, authErr := h.getAuthenticatedUserID(ctx)
-	if authErr != nil {
-		return authErr
-	}
-
-	tasks, err := h.taskService.GetTasksWithoutFolder(ctx.Context(), userID)
-	if err != nil {
-		logger.Log.Errorw("get personal tasks failed", "error", err)
-		return ctx.Status(500).JSON(fiber.Map{"error": "internal server error"})
-	}
-
-	return ctx.Status(200).JSON(dto.WorkspaceTasksList(tasks))
-}
-
 // Swagger disabled: GetWorkspaceTasks godoc
 // Swagger disabled: Summary      Get all tasks from workspace
 // Swagger disabled: Description  Returns a list of all tasks for a given workspace.
@@ -528,33 +478,6 @@ func (h *Handlers) DeleteTask(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON("Successfuly deleted task")
-}
-
-// Swagger disabled: GetTasksWithoutFolder godoc
-// Swagger disabled: Summary      Get tasks without folder
-// Swagger disabled: Description  Returns a list of all tasks without a folder.
-// Swagger disabled: Tags         tasks
-// Swagger disabled: Param        user_id  path      string       true  "User ID"
-// Swagger disabled: Success      200      {array}   dto.TaskResponse "List of tasks without folder"
-// Swagger disabled: Failure      500      {object}  map[string]string "Server error"
-// Swagger disabled: Security BearerAuth
-// Swagger disabled: Router       /tasks/without-folder [get]
-func (h *Handlers) GetTasksWithoutFolder(ctx *fiber.Ctx) error {
-	userID, authErr := h.getAuthenticatedUserID(ctx)
-	if authErr != nil {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "unauthorized",
-		})
-	}
-
-	tasks, err := h.taskService.GetTasksWithoutFolder(ctx.Context(), userID)
-	if err != nil {
-		logger.Log.Errorw("get tasks without folder failed", "error", err)
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "internal server error",
-		})
-	}
-	return ctx.Status(fiber.StatusOK).JSON(dto.WorkspaceTasksList(tasks))
 }
 
 func (h *Handlers) GetFolderTasks(ctx *fiber.Ctx) error {

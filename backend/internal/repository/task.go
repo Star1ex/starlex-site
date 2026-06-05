@@ -300,24 +300,6 @@ func (r *TaskRepository) GetWorkspaceTasks(ctx context.Context, workspaceID stri
 	return toTaskDomains(models), nil
 }
 
-func (r *TaskRepository) GetUserTasks(ctx context.Context, userID string) ([]*entity.Task, error) {
-	var models []TaskModel
-
-	err := r.db.WithContext(ctx).
-		Joins("LEFT JOIN task_users tu ON tu.task_model_id = task_models.id").
-		Where("tu.user_id = ? OR task_models.owner_id = ?", userID, userID).
-		Preload("Assigned").
-		Preload("Subtasks").
-		Order("created_at DESC").
-		Find(&models).Error
-
-	if err != nil {
-		return nil, err
-	}
-
-	return toTaskDomains(models), nil
-}
-
 func (r *TaskRepository) GetProjectTasks(ctx context.Context, projectID string) ([]*entity.Task, error) {
 	var models []TaskModel
 	err := r.db.WithContext(ctx).
@@ -369,18 +351,6 @@ func (r *TaskRepository) SearchInWorkspaces(ctx context.Context, workspaceIDs []
 		Where("workspace_id IN ? AND sprint_id IS NULL AND (task ILIKE ? OR description ILIKE ?)", workspaceIDs, pattern, pattern).
 		Limit(10).
 		Find(&models).Error
-	if err != nil {
-		return nil, err
-	}
-	return toTaskDomains(models), nil
-}
-
-func (r *TaskRepository) GetTasksWithoutFolder(ctx context.Context, userID string) ([]*entity.Task, error) {
-	var models []TaskModel
-	err := r.db.WithContext(ctx).
-		Where("folder_id IS NULL AND owner_id = ?", userID).
-		Find(&models).Error
-
 	if err != nil {
 		return nil, err
 	}

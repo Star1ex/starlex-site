@@ -10,17 +10,12 @@ type Service interface {
 
 	// Create task
 	CreateWorkspaceTask(ctx context.Context, workspaceID string, assignedIDs []string, task *entity.Task, userId string) error
-	CreatePersonalTask(ctx context.Context, task *entity.Task) error
 	CreateProjectTask(ctx context.Context, projectID, workspaceID string, assignedIDs []string, task *entity.Task) error
 
 	// Get task by ID
 	GetTaskByID(ctx context.Context, taskID string) (*entity.Task, error)
 	// Get all tasks from workspace by ID
 	GetWorkspaceTasks(ctx context.Context, workspaceID string) ([]*entity.Task, error)
-	// Retrieves all tasks by ID
-	GetUserTasks(ctx context.Context, userID string) ([]*entity.Task, error)
-	// Get tasks without folder
-	GetTasksWithoutFolder(ctx context.Context, userID string) ([]*entity.Task, error)
 	// Get tasks from folder
 	GetFolderTasks(ctx context.Context, folderID string) ([]*entity.Task, error)
 	// Get tasks from project
