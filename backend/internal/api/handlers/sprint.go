@@ -4,8 +4,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/Team-Tracks/team-track-site/internal/api/dto"
-	"github.com/Team-Tracks/team-track-site/internal/service"
+	"github.com/Star1ex/starlex-site/internal/api/dto"
+	"github.com/Star1ex/starlex-site/internal/service"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )

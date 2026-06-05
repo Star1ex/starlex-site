@@ -3,14 +3,14 @@ package handlers
 import (
 	"time"
 
-	"github.com/Team-Tracks/team-track-site/internal/db"
-	"github.com/Team-Tracks/team-track-site/internal/domain/folder"
-	"github.com/Team-Tracks/team-track-site/internal/domain/password"
-	"github.com/Team-Tracks/team-track-site/internal/domain/task"
-	"github.com/Team-Tracks/team-track-site/internal/domain/team"
-	"github.com/Team-Tracks/team-track-site/internal/domain/user"
-	"github.com/Team-Tracks/team-track-site/internal/domain/verification"
-	"github.com/Team-Tracks/team-track-site/internal/service"
+	"github.com/Star1ex/starlex-site/internal/db"
+	"github.com/Star1ex/starlex-site/internal/domain/folder"
+	"github.com/Star1ex/starlex-site/internal/domain/password"
+	"github.com/Star1ex/starlex-site/internal/domain/task"
+	"github.com/Star1ex/starlex-site/internal/domain/team"
+	"github.com/Star1ex/starlex-site/internal/domain/user"
+	"github.com/Star1ex/starlex-site/internal/domain/verification"
+	"github.com/Star1ex/starlex-site/internal/service"
 )
 
 type Handlers struct {

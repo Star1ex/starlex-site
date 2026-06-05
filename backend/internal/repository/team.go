@@ -4,8 +4,8 @@ import (
 	"context"
 	"errors"
 
-	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
-	"github.com/Team-Tracks/team-track-site/internal/logger"
+	"github.com/Star1ex/starlex-site/internal/domain/entity"
+	"github.com/Star1ex/starlex-site/internal/logger"
 	"gorm.io/gorm"
 )
 

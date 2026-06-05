@@ -1,7 +1,7 @@
 services:
   db:
     image: postgres:latest
-    container_name: team-track-site-db
+    container_name: starlex-site-db
     restart: unless-stopped
     user: "0:0"
     command: >
@@ -10,13 +10,13 @@ services:
     env_file:
       - backend/.env
     environment:
-      POSTGRES_USER: ${DB_USER:-team_admin}
+      POSTGRES_USER: ${DB_USER:-starlex_admin}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-1234}
-      POSTGRES_DB: ${DB_NAME:-team_track}
+      POSTGRES_DB: ${DB_NAME:-starlex}
     volumes:
       - postgres_data:/var/lib/postgresql
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-team_admin} -d ${POSTGRES_DB:-team_track} -p 5432"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-starlex_admin} -d ${POSTGRES_DB:-starlex} -p 5432"]
       interval: 10s
       timeout: 5s
       retries: 10
@@ -31,8 +31,8 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile
-    image: team-track-site-backend-image
-    container_name: team-track-site-backend
+    image: starlex-site-backend-image
+    container_name: starlex-site-backend
     restart: unless-stopped
     depends_on:
       db:
@@ -67,8 +67,8 @@ services:
     build:
       context: ./react-frontend
       dockerfile: Dockerfile
-    image: team-track-site-frontend-image
-    container_name: team-track-site-frontend
+    image: starlex-site-frontend-image
+    container_name: starlex-site-frontend
     restart: unless-stopped
     ports:
       - "80:80"

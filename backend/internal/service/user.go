@@ -8,12 +8,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Team-Tracks/team-track-site/internal/api/dto"
-	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
-	"github.com/Team-Tracks/team-track-site/internal/domain/user"
-	"github.com/Team-Tracks/team-track-site/internal/events"
-	"github.com/Team-Tracks/team-track-site/internal/security"
-	"github.com/Team-Tracks/team-track-site/internal/storage"
+	"github.com/Star1ex/starlex-site/internal/api/dto"
+	"github.com/Star1ex/starlex-site/internal/domain/entity"
+	"github.com/Star1ex/starlex-site/internal/domain/user"
+	"github.com/Star1ex/starlex-site/internal/events"
+	"github.com/Star1ex/starlex-site/internal/security"
+	"github.com/Star1ex/starlex-site/internal/storage"
 )
 
 type UserService struct {

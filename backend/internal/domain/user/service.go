@@ -4,8 +4,8 @@ import (
 	"context"
 	"mime/multipart"
 
-	"github.com/Team-Tracks/team-track-site/internal/api/dto"
-	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
+	"github.com/Star1ex/starlex-site/internal/api/dto"
+	"github.com/Star1ex/starlex-site/internal/domain/entity"
 )
 
 type Service interface {

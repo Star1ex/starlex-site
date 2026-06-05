@@ -4,15 +4,15 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/Team-Tracks/team-track-site/internal/api/dto"
-	"github.com/Team-Tracks/team-track-site/internal/api/handlers"
-	"github.com/Team-Tracks/team-track-site/internal/config"
-	"github.com/Team-Tracks/team-track-site/internal/db"
-	"github.com/Team-Tracks/team-track-site/internal/events"
-	"github.com/Team-Tracks/team-track-site/internal/notifications/telegram"
-	"github.com/Team-Tracks/team-track-site/internal/repository"
-	"github.com/Team-Tracks/team-track-site/internal/service"
-	"github.com/Team-Tracks/team-track-site/internal/storage"
+	"github.com/Star1ex/starlex-site/internal/api/dto"
+	"github.com/Star1ex/starlex-site/internal/api/handlers"
+	"github.com/Star1ex/starlex-site/internal/config"
+	"github.com/Star1ex/starlex-site/internal/db"
+	"github.com/Star1ex/starlex-site/internal/events"
+	"github.com/Star1ex/starlex-site/internal/notifications/telegram"
+	"github.com/Star1ex/starlex-site/internal/repository"
+	"github.com/Star1ex/starlex-site/internal/service"
+	"github.com/Star1ex/starlex-site/internal/storage"
 )
 
 func main() {

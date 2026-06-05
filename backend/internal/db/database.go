@@ -5,9 +5,9 @@ import (
 	"os"
 	"time"
 
-	"github.com/Team-Tracks/team-track-site/internal/config"
-	"github.com/Team-Tracks/team-track-site/internal/logger"
-	"github.com/Team-Tracks/team-track-site/internal/repository"
+	"github.com/Star1ex/starlex-site/internal/config"
+	"github.com/Star1ex/starlex-site/internal/logger"
+	"github.com/Star1ex/starlex-site/internal/repository"
 	pgdriver "gorm.io/driver/postgres"
 	"gorm.io/gorm"
 	gormlogger "gorm.io/gorm/logger"

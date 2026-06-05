@@ -1,13 +1,13 @@
 package main
 
 import (
-	"github.com/Team-Tracks/team-track-site/internal/app"
-	// _ "github.com/Team-Tracks/team-track-site/docs"
+	"github.com/Star1ex/starlex-site/internal/app"
+	// _ "github.com/Star1ex/starlex-site/docs"
 )
 
-// Swagger disabled: title TeamTrack API
+// Swagger disabled: title Starlex API
 // Swagger disabled: version 1.0
-// Swagger disabled: description This is the API for TeamTrack web-site
+// Swagger disabled: description This is the API for Starlex web-site
 // Swagger disabled: host localhost:3000
 // Swagger disabled: BasePath /api
 // Swagger disabled: schemes http

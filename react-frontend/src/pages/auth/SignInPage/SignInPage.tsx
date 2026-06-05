@@ -137,7 +137,7 @@ export const SignInPage = () => {
       exit="exit"
     >
       <Helmet>
-        <title>Sign In — Team Track</title>
+        <title>Sign In — Starlex</title>
         <meta name="robots" content="noindex, nofollow" />
       </Helmet>
       <button
@@ -267,7 +267,7 @@ export const SignInPage = () => {
             </div>
 
             <p className="text-center text-sm text-black dark:text-dark-text pt-4 transition-colors duration-300">
-              New to Team Track?{" "}
+              New to Starlex?{" "}
               <button
                 type="button"
                 onClick={handleToSignUp}

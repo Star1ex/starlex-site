@@ -3,9 +3,9 @@ package handlers
 import (
 	"fmt"
 
-	"github.com/Team-Tracks/team-track-site/internal/events"
-	"github.com/Team-Tracks/team-track-site/internal/logger"
-	"github.com/Team-Tracks/team-track-site/internal/notifications/telegram"
+	"github.com/Star1ex/starlex-site/internal/events"
+	"github.com/Star1ex/starlex-site/internal/logger"
+	"github.com/Star1ex/starlex-site/internal/notifications/telegram"
 )
 
 func UserRegisteredTelegramHandler(tg *telegram.Client) events.Handler {

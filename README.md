@@ -1,4 +1,4 @@
-# TeamTrack
+# Starlex
 
 A collaborative task management application designed to help teams organize, track, and complete their work efficiently.
 
@@ -39,7 +39,7 @@ A collaborative task management application designed to help teams organize, tra
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-1. Clone this repo (`git clone https://github.com/critiq17/team-track`)
+1. Clone this repo (`git clone https://github.com/Star1ex/starlex-site`)
 2. Create your feature branch (`git checkout dev`) (`git checkout -b feature/AmazingFeature`)
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
 4. Push to the branch (`git push origin feature/AmazingFeature`)

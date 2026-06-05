@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 	"errors"
 
-	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
-	"github.com/Team-Tracks/team-track-site/internal/domain/user"
+	"github.com/Star1ex/starlex-site/internal/domain/entity"
+	"github.com/Star1ex/starlex-site/internal/domain/user"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )

@@ -23,12 +23,12 @@ func NewEmailService(config EmailConfig) *EmailService {
 }
 
 func (s *EmailService) SendVerificationCode(to, firstName, code string) error {
-	subject := "Verify Your Email - TeamTrack"
+	subject := "Verify Your Email - Starlex"
 	body := fmt.Sprintf(`
 		<html>
 		<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
 			<div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-				<h2 style="color: #000;">Welcome to Team Track, %s!</h2>
+				<h2 style="color: #000;">Welcome to Starlex, %s!</h2>
 				<p>Thank you for registering. Please verify your email address to complete your registration.</p>
 				<div style="background-color: #f4f4f4; padding: 20px; border-radius: 5px; text-align: center; margin: 30px 0;">
 					<p style="font-size: 14px; color: #666; margin-bottom: 10px;">Your verification code is:</p>
@@ -37,7 +37,7 @@ func (s *EmailService) SendVerificationCode(to, firstName, code string) error {
 				<p style="color: #666; font-size: 14px;">This code will expire in 15 minutes.</p>
 				<p style="color: #666; font-size: 14px;">If you didn't create an account, please ignore this email.</p>
 				<hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-				<p style="color: #999; font-size: 12px;">Team Track - Manage your projects efficiently</p>
+				<p style="color: #999; font-size: 12px;">Starlex - Manage your projects efficiently</p>
 			</div>
 		</body>
 		</html>	
@@ -47,7 +47,7 @@ func (s *EmailService) SendVerificationCode(to, firstName, code string) error {
 }
 
 func (s *EmailService) SendPasswordResetEmail(to, firstName, code, resetLink string, expiresMinutes int) error {
-	subject := "Reset Your Password - TeamTrack"
+	subject := "Reset Your Password - Starlex"
 	linkSection := ""
 	if resetLink != "" {
 		linkSection = fmt.Sprintf(`
@@ -64,7 +64,7 @@ func (s *EmailService) SendPasswordResetEmail(to, firstName, code, resetLink str
 		<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
 			<div style="max-width: 600px; margin: 0 auto; padding: 20px;">
 				<h2 style="color: #000;">Hi %s,</h2>
-				<p>We received a request to reset your Team Track password.</p>
+				<p>We received a request to reset your Starlex password.</p>
 				<div style="background-color: #f4f4f4; padding: 20px; border-radius: 5px; text-align: center; margin: 30px 0;">
 					<p style="font-size: 14px; color: #666; margin-bottom: 10px;">Your reset code is:</p>
 					<h1 style="font-size: 36px; letter-spacing: 8px; color: #000; margin: 0;">%s</h1>
@@ -74,10 +74,10 @@ func (s *EmailService) SendPasswordResetEmail(to, firstName, code, resetLink str
 				<p style="color: #666; font-size: 14px;">If you didn’t request this, you can safely ignore this email.</p>
 				<ul style="color: #666; font-size: 13px;">
 					<li>Never share your reset code with anyone.</li>
-					<li>Team Track support will never ask for your password.</li>
+					<li>Starlex support will never ask for your password.</li>
 				</ul>
 				<hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-				<p style="color: #999; font-size: 12px;">Team Track - Securely manage your projects</p>
+				<p style="color: #999; font-size: 12px;">Starlex - Securely manage your projects</p>
 			</div>
 		</body>
 		</html>
@@ -87,20 +87,20 @@ func (s *EmailService) SendPasswordResetEmail(to, firstName, code, resetLink str
 }
 
 func (s *EmailService) SendPasswordResetConfirmation(to, firstName string) error {
-	subject := "Your Password Was Reset - TeamTrack"
+	subject := "Your Password Was Reset - Starlex"
 	body := fmt.Sprintf(`
 		<html>
 		<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
 			<div style="max-width: 600px; margin: 0 auto; padding: 20px;">
 				<h2 style="color: #000;">Hi %s,</h2>
-				<p>Your Team Track password was successfully reset.</p>
+				<p>Your Starlex password was successfully reset.</p>
 				<p>If you did not perform this action, please reset your password immediately and contact support.</p>
 				<ul style="color: #666; font-size: 13px;">
 					<li>Review recent account activity.</li>
 					<li>Enable multi-factor authentication if available.</li>
 				</ul>
 				<hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-				<p style="color: #999; font-size: 12px;">Team Track - Securely manage your projects</p>
+				<p style="color: #999; font-size: 12px;">Starlex - Securely manage your projects</p>
 			</div>
 		</body>
 		</html>
@@ -110,20 +110,20 @@ func (s *EmailService) SendPasswordResetConfirmation(to, firstName string) error
 }
 
 func (s *EmailService) SendPasswordChangedConfirmation(to, firstName string) error {
-	subject := "Your Password Was Changed - TeamTrack"
+	subject := "Your Password Was Changed - Starlex"
 	body := fmt.Sprintf(`
 		<html>
 		<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">
 			<div style="max-width: 600px; margin: 0 auto; padding: 20px;">
 				<h2 style="color: #000;">Hi %s,</h2>
-				<p>Your Team Track password was changed successfully.</p>
+				<p>Your Starlex password was changed successfully.</p>
 				<p>If you did not perform this action, please reset your password immediately and contact support.</p>
 				<ul style="color: #666; font-size: 13px;">
 					<li>Use a strong, unique password.</li>
 					<li>Enable multi-factor authentication if available.</li>
 				</ul>
 				<hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;">
-				<p style="color: #999; font-size: 12px;">Team Track - Securely manage your projects</p>
+				<p style="color: #999; font-size: 12px;">Starlex - Securely manage your projects</p>
 			</div>
 		</body>
 		</html>

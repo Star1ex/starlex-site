@@ -4,8 +4,8 @@
     ],
     "swagger": "2.0",
     "info": {
-        "description": "This is the API for TeamTrack web-site",
-        "title": "TeamTrack API",
+        "description": "This is the API for Starlex web-site",
+        "title": "Starlex API",
         "contact": {},
         "version": "1.0"
     },

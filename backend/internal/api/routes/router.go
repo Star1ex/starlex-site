@@ -1,8 +1,8 @@
 package routes
 
 import (
-	//  _ "github.com/Team-Tracks/team-track-site/docs"
-	"github.com/Team-Tracks/team-track-site/internal/api/handlers"
+	//  _ "github.com/Star1ex/starlex-site/docs"
+	"github.com/Star1ex/starlex-site/internal/api/handlers"
 	"github.com/gofiber/fiber/v2"
 	// fiberSwagger "github.com/swaggo/fiber-swagger"
 )

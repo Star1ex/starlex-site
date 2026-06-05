@@ -4,8 +4,8 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
-	"github.com/Team-Tracks/team-track-site/internal/service"
+	"github.com/Star1ex/starlex-site/internal/domain/entity"
+	"github.com/Star1ex/starlex-site/internal/service"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )

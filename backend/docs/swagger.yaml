@@ -203,8 +203,8 @@ definitions:
 host: localhost:3000
 info:
   contact: {}
-  description: This is the API for TeamTrack web-site
-  title: TeamTrack API
+  description: This is the API for Starlex web-site
+  title: Starlex API
   version: "1.0"
 paths:
   /auth/login:

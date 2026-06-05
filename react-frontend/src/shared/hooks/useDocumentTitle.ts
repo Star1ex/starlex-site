@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-const APP = 'TeamTrack';
+const APP = 'Starlex';
 
 export function useDocumentTitle(title: string | null | undefined): void {
   useEffect(() => {

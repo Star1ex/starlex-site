@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Team-Tracks/team-track-site/internal/domain/entity"
-	"github.com/Team-Tracks/team-track-site/internal/repository"
-	"github.com/Team-Tracks/team-track-site/internal/security"
+	"github.com/Star1ex/starlex-site/internal/domain/entity"
+	"github.com/Star1ex/starlex-site/internal/repository"
+	"github.com/Star1ex/starlex-site/internal/security"
 	"github.com/microcosm-cc/bluemonday"
 	"gorm.io/gorm"
 )
