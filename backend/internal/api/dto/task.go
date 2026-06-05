@@ -20,19 +20,20 @@ type TaskApi struct {
 }
 
 type TaskResponse struct {
-	ID          string    `json:"id" binding:"required"`
-	Task        string    `json:"task" binding:"required"`
-	Description string    `json:"description"`
-	Icon        string    `json:"icon"`
-	AssignedTo  []string  `json:"user_ids"`
-	WorkspaceID string    `json:"workspace_id"`
-	FolderID    *string   `json:"folder_id"`
-	ProjectID   *string   `json:"project_id"`
-	OwnerID     string    `json:"owner_id"`
-	Priority    string    `json:"priority"`
-	Progress    string    `json:"progress"`
-	CreatedAt   time.Time `json:"created_at,omitempty"`
-	UpdatedAt   time.Time `json:"updated_at,omitempty"`
+	ID          string            `json:"id" binding:"required"`
+	Task        string            `json:"task" binding:"required"`
+	Description string            `json:"description"`
+	Icon        string            `json:"icon"`
+	AssignedTo  []string          `json:"user_ids"`
+	WorkspaceID string            `json:"workspace_id"`
+	FolderID    *string           `json:"folder_id"`
+	ProjectID   *string           `json:"project_id"`
+	OwnerID     string            `json:"owner_id"`
+	Priority    string            `json:"priority"`
+	Progress    string            `json:"progress"`
+	Subtasks    []SubtaskResponse `json:"subtasks"`
+	CreatedAt   time.Time         `json:"created_at,omitempty"`
+	UpdatedAt   time.Time         `json:"updated_at,omitempty"`
 }
 
 type UpdateTaskIcon struct {
@@ -75,6 +76,11 @@ func ToTaskResponse(task *entity.Task) *TaskResponse {
 		assignedIDs[i] = u.ID
 	}
 
+	subtasks := make([]SubtaskResponse, len(task.Subtasks))
+	for i, s := range task.Subtasks {
+		subtasks[i] = toSubtaskResponse(s)
+	}
+
 	// Use zero time if CreatedAt is not set
 	createdAt := task.CreatedAt
 	if createdAt.IsZero() {
@@ -93,6 +99,7 @@ func ToTaskResponse(task *entity.Task) *TaskResponse {
 		OwnerID:     task.OwnerID,
 		Priority:    task.Priority,
 		Progress:    task.Progress,
+		Subtasks:    subtasks,
 		CreatedAt:   createdAt,
 		UpdatedAt:   task.UpdatedAt,
 	}

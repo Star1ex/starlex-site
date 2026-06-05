@@ -9,6 +9,12 @@ import (
 	"gorm.io/gorm"
 )
 
+// orderByPosition orders a preloaded association by its position column so
+// subtasks are returned in a stable, user-defined order.
+func orderByPosition(db *gorm.DB) *gorm.DB {
+	return db.Order("position ASC")
+}
+
 type TaskModel struct {
 	ID          string `gorm:"primaryKey"`
 	Task        string `gorm:"not null"`
@@ -133,6 +139,7 @@ func (r *TaskRepository) Get(ctx context.Context, id string) (*entity.Task, erro
 	var model TaskModel
 	result := r.db.WithContext(ctx).
 		Preload("Assigned").
+		Preload("Subtasks", orderByPosition).
 		Where("id = ?", id).
 		First(&model)
 	if result.Error != nil {
@@ -290,6 +297,7 @@ func (r *TaskRepository) GetWorkspaceTasks(ctx context.Context, workspaceID stri
 
 	err := r.db.WithContext(ctx).
 		Preload("Assigned").
+		Preload("Subtasks", orderByPosition).
 		Where("workspace_id = ? AND sprint_id IS NULL", workspaceID).
 		Find(&models).Error
 
@@ -304,7 +312,7 @@ func (r *TaskRepository) GetProjectTasks(ctx context.Context, projectID string) 
 	var models []TaskModel
 	err := r.db.WithContext(ctx).
 		Preload("Assigned").
-		Preload("Subtasks").
+		Preload("Subtasks", orderByPosition).
 		Where("project_id = ?", projectID).
 		Order("created_at DESC").
 		Find(&models).Error
@@ -319,7 +327,7 @@ func (r *TaskRepository) GetFolderTasks(ctx context.Context, folderID string) ([
 
 	err := r.db.WithContext(ctx).
 		Preload("Assigned").
-		Preload("Subtasks").
+		Preload("Subtasks", orderByPosition).
 		Where("folder_id = ?", folderID).
 		Find(&models).Error
 
