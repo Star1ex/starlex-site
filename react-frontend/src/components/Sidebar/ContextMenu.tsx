@@ -1,8 +1,10 @@
 import React from 'react';
 import { Edit2, FilePlus, FolderPlus, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext.js';
 import { getAuthUser } from '@/shared/lib/authManager.js';
 import { useContextMenu } from '@/hooks/useContextMenu.js';
+import { showToast } from '@/shared/lib/toast.js';
 import type { CreateFolderRequest, CreateTaskRequest } from '@/types/dto.js';
 
 interface ContextMenuProps {
@@ -10,11 +12,20 @@ interface ContextMenuProps {
   onCreateTask: (data: CreateTaskRequest) => Promise<any>;
   onDeleteFolder: (id: string) => Promise<void>;
   onDeleteTask: (id: string) => Promise<void>;
+  activeWorkspaceId?: string | null;
 }
 
-export const ContextMenu: React.FC<ContextMenuProps> = ({ onCreateFolder, onCreateTask, onDeleteFolder, onDeleteTask }) => {
+export const ContextMenu: React.FC<ContextMenuProps> = ({
+  onCreateFolder,
+  onCreateTask,
+  onDeleteFolder,
+  onDeleteTask,
+  activeWorkspaceId,
+}) => {
   const { contextMenu, closeContextMenu } = useContextMenu();
   const { userId } = useAuth();
+  const navigate = useNavigate();
+
   const resolveOwnerId = () => {
     const storedUser = getAuthUser();
     return userId ?? storedUser?.id ?? '';
@@ -22,8 +33,16 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ onCreateFolder, onCrea
 
   if (!contextMenu.show) return null;
 
+  const requireWorkspace = (): boolean => {
+    if (activeWorkspaceId) return true;
+    showToast('Open a workspace first to create tasks.');
+    closeContextMenu();
+    return false;
+  };
+
   const handleNewTask = async () => {
     if (!contextMenu.folderId) return;
+    if (!requireWorkspace()) return;
     const ownerId = resolveOwnerId();
     await onCreateTask({
       task: 'New Task',
@@ -32,6 +51,23 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ onCreateFolder, onCrea
       progress: 'not_started',
       folder_id: contextMenu.folderId,
       owner_id: ownerId,
+      workspace_id: activeWorkspaceId!,
+      user_ids: [],
+    });
+    closeContextMenu();
+  };
+
+  const handleNewOrphanTask = async () => {
+    if (!requireWorkspace()) return;
+    const ownerId = resolveOwnerId();
+    await onCreateTask({
+      task: 'New Task',
+      description: '',
+      priority: 'medium',
+      progress: 'not_started',
+      folder_id: null,
+      owner_id: ownerId,
+      workspace_id: activeWorkspaceId!,
       user_ids: [],
     });
     closeContextMenu();
@@ -46,7 +82,6 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ onCreateFolder, onCrea
       color: '#3B82F6',
       parent_id: contextMenu.folderId,
       owner_id: ownerId,
-
       position: 0,
     });
     closeContextMenu();
@@ -60,23 +95,7 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ onCreateFolder, onCrea
       color: '#3B82F6',
       parent_id: null,
       owner_id: ownerId,
-
       position: 0,
-    });
-    closeContextMenu();
-  };
-
-  const handleNewOrphanTask = async () => {
-    const ownerId = resolveOwnerId();
-    await onCreateTask({
-      task: 'New Task',
-      description: '',
-      priority: 'medium',
-      progress: 'not_started',
-      folder_id: null,
-      owner_id: ownerId,
-
-      user_ids: [],
     });
     closeContextMenu();
   };
@@ -104,7 +123,6 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ onCreateFolder, onCrea
   return (
     <>
       <div className="fixed inset-0 z-40" onClick={closeContextMenu} />
-
       <div
         className="fixed z-50 bg-white dark:bg-dark-surface rounded-lg shadow-xl border border-gray-200 dark:border-dark-border py-1 min-w-[200px]"
         style={{ left: contextMenu.x, top: contextMenu.y }}
@@ -139,7 +157,9 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({ onCreateFolder, onCrea
   );
 };
 
-const MenuItem: React.FC<{ icon: React.ReactNode; label: string; onClick: () => void; danger?: boolean }> = ({ icon, label, onClick, danger }) => (
+const MenuItem: React.FC<{ icon: React.ReactNode; label: string; onClick: () => void; danger?: boolean }> = ({
+  icon, label, onClick, danger,
+}) => (
   <button
     onClick={onClick}
     className={`w-full flex items-center gap-3 px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-dark-border transition-colors ${

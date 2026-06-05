@@ -322,6 +322,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ className = '' }) => {
         onCreateTask={tasksHook.createTask}
         onDeleteFolder={foldersHook.deleteFolder}
         onDeleteTask={tasksHook.deleteTask}
+        activeWorkspaceId={activeTeamId}
       />
 
       <WorkspaceCreateModal
