@@ -22,8 +22,6 @@ services:
       timeout: 5s
       retries: 10
       start_period: 30s
-    networks:
-      - starlex
     deploy:
       resources:
         limits:
@@ -58,18 +56,16 @@ services:
       timeout: 10s
       retries: 3
       start_period: 60s
-    networks:
-      - starlex
     deploy:
       resources:
         limits:
           memory: 256M
           cpus: '0.5'
 
+# No explicit network: Compose creates a default project network where the
+# embedded Docker DNS (127.0.0.11) resolves service names like `db`.
+# An explicit network broke `db` resolution on the Tailscale host (queries
+# leaked to MagicDNS instead of the embedded resolver).
 volumes:
   starlex_pg:
   starlex_uploads:
-
-networks:
-  starlex:
-    name: starlex-prod
