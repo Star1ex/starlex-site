@@ -34,6 +34,9 @@ type Repository interface {
 	MarkIsVerified(ctx context.Context, userID string) error
 	IsVerified(ctx context.Context, userID string) (bool, error)
 
+	// login metadata
+	MarkLastLogin(ctx context.Context, userID, ip string) error
+
 	// password/session
 	UpdatePasswordAndTokenVersion(ctx context.Context, userID, hashedPassword string, tokenVersion int) error
 	GetTokenVersion(ctx context.Context, userID string) (int, error)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"time"
 
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
 	"github.com/Star1ex/starlex-site/internal/domain/user"
@@ -26,6 +27,11 @@ type UserModel struct {
 	Role           string           `gorm:"default:'member'"`
 	IsVerified     bool             `gorm:"default:false"`
 	TokenVersion   int              `gorm:"default:1"`
+	SignupIP       *string          `gorm:"default:null"`
+	LastLoginIP    *string          `gorm:"default:null"`
+	LastLoginAt    *time.Time       `gorm:"default:null"`
+	CreatedAt      time.Time        `gorm:"autoCreateTime"`
+	UpdatedAt      time.Time        `gorm:"autoUpdateTime"`
 	Workspaces     []WorkspaceModel `gorm:"many2many:users_workspaces"`
 }
 
@@ -48,6 +54,10 @@ func fromDomain(u *entity.User) *UserModel {
 		GithubID:       u.GithubID,
 		NameOverridden: u.NameOverridden,
 		AuthProviders:  marshalAuthProviders(authProviders),
+		IsVerified:     u.IsVerified,
+		SignupIP:       u.SignupIP,
+		LastLoginIP:    u.LastLoginIP,
+		LastLoginAt:    u.LastLoginAt,
 	}
 	if u.Password != "" {
 		model.Password = &u.Password
@@ -89,6 +99,11 @@ func toDomain(u *UserModel) *entity.User {
 		NameOverridden: u.NameOverridden,
 		IsVerified:     u.IsVerified,
 		TokenVersion:   tokenVersion,
+		SignupIP:       u.SignupIP,
+		LastLoginIP:    u.LastLoginIP,
+		LastLoginAt:    u.LastLoginAt,
+		CreatedAt:      u.CreatedAt,
+		UpdatedAt:      u.UpdatedAt,
 	}
 }
 
@@ -324,6 +339,18 @@ func (r *UserRepository) GetPhoto(ctx context.Context, userID string) (string, e
 	}
 
 	return photo, err
+}
+
+// MarkLastLogin records the most recent successful login time and source IP.
+func (r *UserRepository) MarkLastLogin(ctx context.Context, userID, ip string) error {
+	updates := map[string]interface{}{"last_login_at": time.Now()}
+	if ip != "" {
+		updates["last_login_ip"] = ip
+	}
+	return r.db.WithContext(ctx).
+		Model(&UserModel{}).
+		Where("id = ?", userID).
+		Updates(updates).Error
 }
 
 // mark is verified user

@@ -1,6 +1,8 @@
 package dto
 
 import (
+	"time"
+
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
 )
 
@@ -50,16 +52,18 @@ type User struct {
 }
 
 type UserProfile struct {
-	Email         string   `json:"email"`
-	FirstName     string   `json:"first_name"`
-	LastName      string   `json:"last_name"`
-	Role          string   `json:"role"`
-	Photo_URL     *string  `json:"photo_url"`
-	AvatarURL     *string  `json:"avatar_url"`
-	AuthProviders []string `json:"auth_providers"`
-	GoogleID      *string  `json:"google_id"`
-	GithubID      *string  `json:"github_id"`
-	IsVerified    bool     `json:"email_verified"`
+	Email         string     `json:"email"`
+	FirstName     string     `json:"first_name"`
+	LastName      string     `json:"last_name"`
+	Role          string     `json:"role"`
+	Photo_URL     *string    `json:"photo_url"`
+	AvatarURL     *string    `json:"avatar_url"`
+	AuthProviders []string   `json:"auth_providers"`
+	GoogleID      *string    `json:"google_id"`
+	GithubID      *string    `json:"github_id"`
+	IsVerified    bool       `json:"email_verified"`
+	CreatedAt     time.Time  `json:"created_at"`
+	LastLoginAt   *time.Time `json:"last_login_at"`
 }
 
 type AddUserToWorkspace struct {
@@ -150,5 +154,7 @@ func ToUserProfile(u *entity.User) *UserProfile {
 		GoogleID:      u.GoogleID,
 		GithubID:      u.GithubID,
 		IsVerified:    u.IsVerified,
+		CreatedAt:     u.CreatedAt,
+		LastLoginAt:   u.LastLoginAt,
 	}
 }

@@ -183,6 +183,12 @@ func (s *UserService) Update(ctx context.Context, u *entity.User, id string) err
 	return s.repo.Update(ctx, u, id)
 }
 
+// RecordLogin stores the most recent login time and source IP for the user.
+// Failures are non-fatal to the login flow and handled by the caller.
+func (s *UserService) RecordLogin(ctx context.Context, userID, ip string) error {
+	return s.repo.MarkLastLogin(ctx, userID, ip)
+}
+
 func (s *UserService) GetTokenVersion(ctx context.Context, userID string) (int, error) {
 	if v, ok := tvCache.get(userID); ok {
 		return v, nil

@@ -113,6 +113,11 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 	clearLoginAttempts(lockKey)
 	h.logSecurityEvent(ctx, user.ID, user.Email, "LOGIN_SUCCESS", "")
 
+	// Record minimal login metadata (non-fatal on failure).
+	if err := h.userService.RecordLogin(ctx.Context(), user.ID, ctx.IP()); err != nil {
+		logger.Log.Warnw("failed to record login metadata", "user_id", user.ID, "error", err)
+	}
+
 	// Generate access token - short-lived (1 hour)
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"email":         loginInput.Email,

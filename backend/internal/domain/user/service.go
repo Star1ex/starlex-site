@@ -23,6 +23,7 @@ type Service interface {
 
 	// Auth
 	Login(ctx context.Context, email, password string) (*entity.User, error)
+	RecordLogin(ctx context.Context, userID, ip string) error
 
 	// Others
 	GetWorkspaces(ctx context.Context, userID string) ([]*entity.Workspace, error)
