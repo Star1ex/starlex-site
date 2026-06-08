@@ -7,6 +7,7 @@ import (
 	"github.com/Star1ex/starlex-site/internal/domain/folder"
 	"github.com/Star1ex/starlex-site/internal/domain/password"
 	"github.com/Star1ex/starlex-site/internal/domain/project"
+	domainSession "github.com/Star1ex/starlex-site/internal/domain/session"
 	"github.com/Star1ex/starlex-site/internal/domain/task"
 	"github.com/Star1ex/starlex-site/internal/domain/user"
 	"github.com/Star1ex/starlex-site/internal/domain/workspace"
@@ -24,6 +25,7 @@ type Handlers struct {
 	passwordService     password.Service
 	sprintService       *service.SprintService
 	discussionService   *service.DiscussionService
+	sessionService      domainSession.Service
 	jwtSecret           string
 	frontendBaseURL     string
 	oauthConfig         OAuthConfig
@@ -39,6 +41,7 @@ func NewHandlers(userService user.Service,
 	passwordService password.Service,
 	sprintService *service.SprintService,
 	discussionService *service.DiscussionService,
+	sessionService domainSession.Service,
 	db *db.DB,
 	authConfig AuthConfig,
 ) *Handlers {
@@ -54,6 +57,7 @@ func NewHandlers(userService user.Service,
 		passwordService:     passwordService,
 		sprintService:       sprintService,
 		discussionService:   discussionService,
+		sessionService:      sessionService,
 		jwtSecret:           authConfig.JWTSecret,
 		frontendBaseURL:     authConfig.FrontendBaseURL,
 		oauthConfig:         authConfig.OAuth,

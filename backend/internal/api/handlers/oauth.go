@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"os"
 	"strings"
 	"time"
 
@@ -27,6 +26,11 @@ const (
 	oauthReturnCookieSuffix = "return_to"
 	oauthActionLogin        = "login"
 	oauthActionLink         = "link"
+	refreshCookieName       = "refreshToken"
+	deviceCookieName        = "device_id"
+	deviceCookieTTL         = 365 * 24 * time.Hour
+	refreshTokenTTL         = 7 * 24 * time.Hour
+	accessTokenTTL          = time.Hour
 )
 
 type oauthProfile struct {
@@ -278,13 +282,10 @@ func (h *Handlers) completeOAuth(ctx *fiber.Ctx, provider string, profile oauthP
 
 	h.userService.PublishUserLogin(userEntity)
 
-	_, refreshTokenStr, err := h.issueTokens(userEntity)
-	if err != nil {
+	if _, err := h.issueDeviceSession(ctx, userEntity); err != nil {
 		logger.Log.Errorw("oauth token error", "provider", provider, "ip", ctx.IP(), "error", err)
 		return h.redirectOAuthError(ctx, provider, "token_error", returnTo)
 	}
-
-	h.setRefreshCookie(ctx, refreshTokenStr)
 
 	return h.redirectOAuthSuccess(ctx, returnTo)
 }
@@ -857,13 +858,13 @@ func (h *Handlers) setCookie(ctx *fiber.Ctx, name, value string, expires time.Ti
 	})
 }
 
-func (h *Handlers) setRefreshCookie(ctx *fiber.Ctx, token string) {
+func (h *Handlers) setRefreshCookie(ctx *fiber.Ctx, token string, expires time.Time) {
 	ctx.Cookie(&fiber.Cookie{
-		Name:     "refreshToken",
+		Name:     refreshCookieName,
 		Value:    token,
-		Expires:  time.Now().Add(7 * 24 * time.Hour),
+		Expires:  expires,
 		HTTPOnly: true,
-		Secure:   os.Getenv("APP_ENV") == "production",
+		Secure:   h.isSecureCookie(),
 		SameSite: "Lax",
 		Path:     "/",
 	})
@@ -871,7 +872,7 @@ func (h *Handlers) setRefreshCookie(ctx *fiber.Ctx, token string) {
 
 func (h *Handlers) clearRefreshCookie(ctx *fiber.Ctx) {
 	ctx.Cookie(&fiber.Cookie{
-		Name:     "refreshToken",
+		Name:     refreshCookieName,
 		Value:    "",
 		Expires:  time.Now().Add(-1 * time.Hour),
 		HTTPOnly: true,
@@ -879,6 +880,45 @@ func (h *Handlers) clearRefreshCookie(ctx *fiber.Ctx) {
 		SameSite: "Lax",
 		Path:     "/",
 	})
+}
+
+func (h *Handlers) ensureDeviceID(ctx *fiber.Ctx) string {
+	deviceID := strings.TrimSpace(ctx.Cookies(deviceCookieName))
+	if deviceID != "" {
+		return deviceID
+	}
+	deviceID = security.GenerateNewID()
+	h.setDeviceCookie(ctx, deviceID)
+	return deviceID
+}
+
+func (h *Handlers) setDeviceCookie(ctx *fiber.Ctx, deviceID string) {
+	ctx.Cookie(&fiber.Cookie{
+		Name:     deviceCookieName,
+		Value:    deviceID,
+		Expires:  time.Now().Add(deviceCookieTTL),
+		HTTPOnly: true,
+		Secure:   h.isSecureCookie(),
+		SameSite: "Lax",
+		Path:     "/",
+	})
+}
+
+func (h *Handlers) clearDeviceCookie(ctx *fiber.Ctx) {
+	ctx.Cookie(&fiber.Cookie{
+		Name:     deviceCookieName,
+		Value:    "",
+		Expires:  time.Now().Add(-1 * time.Hour),
+		HTTPOnly: true,
+		Secure:   h.isSecureCookie(),
+		SameSite: "Lax",
+		Path:     "/",
+	})
+}
+
+func (h *Handlers) clearSessionCookies(ctx *fiber.Ctx) {
+	h.clearRefreshCookie(ctx)
+	h.clearDeviceCookie(ctx)
 }
 
 func (h *Handlers) isSecureCookie() bool {

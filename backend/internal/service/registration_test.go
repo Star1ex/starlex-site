@@ -109,6 +109,13 @@ func TestConfirm_WrongCode_NoUserCreated(t *testing.T) {
 	if pr.byEmail["jane@x.io"].Attempts != 1 {
 		t.Errorf("attempts should increment, got %d", pr.byEmail["jane@x.io"].Attempts)
 	}
+	var invalidCode InvalidCodeError
+	if !errors.As(err, &invalidCode) {
+		t.Fatalf("wrong code should include remaining attempts, got %v", err)
+	}
+	if invalidCode.RemainingAttempts != maxVerifyAttempts-1 {
+		t.Fatalf("want %d remaining attempts, got %d", maxVerifyAttempts-1, invalidCode.RemainingAttempts)
+	}
 }
 
 func TestConfirm_Expired(t *testing.T) {
@@ -143,5 +150,22 @@ func TestConfirm_TooManyAttempts(t *testing.T) {
 	}
 	if _, ok := pr.byEmail["jane@x.io"]; ok {
 		t.Error("pending registration should be discarded after too many attempts")
+	}
+}
+
+func TestResend_EnforcesCooldown(t *testing.T) {
+	svc, pr, _ := newRegService()
+	seedPending(pr, "jane@x.io", "123456", 15*time.Minute)
+
+	err := svc.Resend(context.Background(), "jane@x.io")
+	if !errors.Is(err, ErrResendCooldown) {
+		t.Fatalf("want ErrResendCooldown, got %v", err)
+	}
+	var cooldown ResendCooldownError
+	if !errors.As(err, &cooldown) {
+		t.Fatalf("want ResendCooldownError details, got %v", err)
+	}
+	if cooldown.RetryAfter <= 0 {
+		t.Fatalf("retry_after should be positive, got %s", cooldown.RetryAfter)
 	}
 }

@@ -22,6 +22,8 @@ func InitRoutes(app *fiber.App, h *handlers.Handlers) {
 	{
 		protected.Post("/auth/password-change", h.ChangePassword)
 		protected.Post("/auth/logout", h.Logout)
+		protected.Get("/auth/sessions", h.GetSessions)
+		protected.Delete("/auth/sessions/:id", h.DeleteSession)
 		protected.Post("/auth/link-google", h.OAuthRateLimit, h.LinkGoogle)
 		protected.Post("/auth/link-github", h.OAuthRateLimit, h.LinkGithub)
 		protected.Delete("/auth/unlink-google", h.UnlinkGoogle)

@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -118,42 +117,24 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 		logger.Log.Warnw("failed to record login metadata", "user_id", user.ID, "error", err)
 	}
 
-	// Generate access token - short-lived (1 hour)
-	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"email":         loginInput.Email,
-		"user_id":       user.ID,
-		"type":          "access",
-		"token_version": user.TokenVersion,
-		"exp":           time.Now().Add(1 * time.Hour).Unix(),
-	})
-
-	accessTokenStr, err := accessToken.SignedString([]byte(h.jwtSecret))
+	accessTokenStr, err := h.issueDeviceSession(ctx, user)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "failed to generate access token")
+		logger.Log.Errorw("login session create failed", "user_id", user.ID, "error", err)
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to create session")
 	}
 
-	// Generate refresh token - long-lived (7 days)
-	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"email":         loginInput.Email,
-		"user_id":       user.ID,
-		"type":          "refresh",
-		"token_version": user.TokenVersion,
-		"exp":           time.Now().Add(7 * 24 * time.Hour).Unix(),
-	})
-
-	refreshTokenStr, err := refreshToken.SignedString([]byte(h.jwtSecret))
+	needsOnboarding, err := h.needsOnboarding(ctx, user.ID)
 	if err != nil {
-		return fiber.NewError(fiber.StatusInternalServerError, "failed to generate refresh token")
+		logger.Log.Errorw("login onboarding check failed", "user_id", user.ID, "error", err)
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to load workspaces")
 	}
-
-	// Set refresh token in httpOnly cookie (secure for production)
-	h.setRefreshCookie(ctx, refreshTokenStr)
 
 	// Return access token and user data
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"access_token": accessTokenStr,
-		"token":        accessTokenStr, // For backward compatibility
-		"user":         dto.ToUserResponse(user),
+		"access_token":     accessTokenStr,
+		"token":            accessTokenStr, // For backward compatibility
+		"needs_onboarding": needsOnboarding,
+		"user":             dto.ToUserResponse(user),
 	})
 }
 
@@ -169,8 +150,14 @@ func (h *Handlers) Login(ctx *fiber.Ctx) error {
 // Swagger disabled: Failure      401  {object}   map[string]string    "invalid or expired refresh token"
 // Swagger disabled: Router       /auth/refresh [post]
 func (h *Handlers) Refresh(ctx *fiber.Ctx) error {
-	// Try to get refresh token from cookie first, then from request body
-	refreshTokenStr := ctx.Cookies("refreshToken")
+	deviceID := strings.TrimSpace(ctx.Cookies(deviceCookieName))
+	if deviceID == "" {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "missing device",
+		})
+	}
+
+	refreshTokenStr := ctx.Cookies(refreshCookieName)
 
 	if refreshTokenStr == "" {
 		var req RefreshTokenRequest
@@ -185,50 +172,33 @@ func (h *Handlers) Refresh(ctx *fiber.Ctx) error {
 		})
 	}
 
-	// Parse and validate refresh token
-	token, err := jwt.Parse(refreshTokenStr, func(t *jwt.Token) (any, error) {
-		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fiber.NewError(fiber.StatusUnauthorized, "invalid token signing method")
-		}
-		return []byte(h.jwtSecret), nil
-	})
-
-	if err != nil || !token.Valid {
+	currentSession, err := h.sessionService.FindByDeviceRefreshToken(ctx.Context(), deviceID, refreshTokenStr)
+	if err != nil {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "invalid or expired refresh token",
 		})
 	}
 
-	claims, ok := token.Claims.(jwt.MapClaims)
-	if !ok {
+	claims, err := h.parseRefreshClaims(refreshTokenStr)
+	if err != nil {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "invalid token claims",
+			"error": "invalid or expired refresh token",
 		})
 	}
 
-	// Verify token type
-	tokenType, ok := claims["type"].(string)
-	if !ok || tokenType != "refresh" {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "invalid token type",
-		})
-	}
-
-	// Check expiration
-	if exp, ok := claims["exp"].(float64); ok && int64(exp) < time.Now().Unix() {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "refresh token expired",
-		})
-	}
-
-	userID, ok := claims["user_id"]
-	if !ok {
+	userID, err := claimString(claims, "user_id")
+	if err != nil {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "missing user_id in token",
 		})
 	}
+	if currentSession.UserID != userID {
+		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "invalid refresh token session",
+		})
+	}
 
-	email, _ := claims["email"].(string)
+	email, _ := claimString(claims, "email")
 
 	tokenVersionClaim, ok := claims["token_version"].(float64)
 	if !ok {
@@ -237,26 +207,32 @@ func (h *Handlers) Refresh(ctx *fiber.Ctx) error {
 		})
 	}
 
-	currentVersion, err := h.userService.GetTokenVersion(ctx.Context(), fmt.Sprintf("%v", userID))
+	currentVersion, err := h.userService.GetTokenVersion(ctx.Context(), userID)
 	if err != nil || int(tokenVersionClaim) != currentVersion {
 		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error": "refresh token invalidated",
 		})
 	}
 
-	// Generate new access token
-	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"email":         email,
-		"user_id":       userID,
-		"type":          "access",
-		"token_version": tokenVersionClaim,
-		"exp":           time.Now().Add(1 * time.Hour).Unix(),
-	})
-
-	accessTokenStr, err := accessToken.SignedString([]byte(h.jwtSecret))
+	userEntity := &entity.User{
+		ID:           userID,
+		Email:        email,
+		TokenVersion: currentVersion,
+	}
+	accessTokenStr, err := h.issueAccessToken(userEntity)
 	if err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to generate access token")
 	}
+
+	refreshExpiresAt := time.Now().Add(refreshTokenTTL)
+	newRefreshToken, err := h.issueRefreshToken(userEntity, refreshExpiresAt)
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to generate refresh token")
+	}
+	if err := h.sessionService.RotateRefreshToken(ctx.Context(), currentSession.ID, newRefreshToken, refreshExpiresAt); err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to rotate refresh token")
+	}
+	h.setRefreshCookie(ctx, newRefreshToken, refreshExpiresAt)
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
 		"access_token": accessTokenStr,
@@ -264,33 +240,20 @@ func (h *Handlers) Refresh(ctx *fiber.Ctx) error {
 }
 
 func (h *Handlers) Logout(ctx *fiber.Ctx) error {
-	userID := h.userIDFromRefreshCookie(ctx)
-
-	if userID != "" {
-		currentVersion, err := h.userService.GetTokenVersion(ctx.Context(), userID)
-		if err == nil {
-			nextVersion := currentVersion + 1
-			if nextVersion == 0 {
-				nextVersion = 1
-			}
-			_ = h.userService.Update(ctx.Context(), &entity.User{TokenVersion: nextVersion}, userID)
-			h.userService.BustTokenVersionCache(userID)
+	deviceID := strings.TrimSpace(ctx.Cookies(deviceCookieName))
+	refreshTokenStr := ctx.Cookies(refreshCookieName)
+	if deviceID != "" && refreshTokenStr != "" {
+		if currentSession, err := h.sessionService.FindByDeviceRefreshToken(ctx.Context(), deviceID, refreshTokenStr); err == nil {
+			_ = h.sessionService.Revoke(ctx.Context(), currentSession.ID)
 		}
 	}
 
-	h.clearRefreshCookie(ctx)
+	h.clearSessionCookies(ctx)
 
-	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "logged out",
-	})
+	return ctx.SendStatus(fiber.StatusNoContent)
 }
 
-func (h *Handlers) userIDFromRefreshCookie(ctx *fiber.Ctx) string {
-	refreshTokenStr := ctx.Cookies("refreshToken")
-	if refreshTokenStr == "" {
-		return ""
-	}
-
+func (h *Handlers) parseRefreshClaims(refreshTokenStr string) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(refreshTokenStr, func(t *jwt.Token) (any, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fiber.NewError(fiber.StatusUnauthorized, "invalid token signing method")
@@ -298,32 +261,47 @@ func (h *Handlers) userIDFromRefreshCookie(ctx *fiber.Ctx) string {
 		return []byte(h.jwtSecret), nil
 	})
 	if err != nil || token == nil || !token.Valid {
-		return ""
+		return nil, errors.New("invalid refresh token")
 	}
 
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
-		return ""
+		return nil, errors.New("invalid token claims")
 	}
 
 	tokenType, ok := claims["type"].(string)
 	if !ok || tokenType != "refresh" {
-		return ""
+		return nil, errors.New("invalid token type")
 	}
 
-	raw, ok := claims["user_id"]
+	if exp, ok := claims["exp"].(float64); ok && int64(exp) < time.Now().Unix() {
+		return nil, errors.New("refresh token expired")
+	}
+
+	return claims, nil
+}
+
+func claimString(claims jwt.MapClaims, key string) (string, error) {
+	raw, ok := claims[key]
 	if !ok || raw == nil {
-		return ""
+		return "", errors.New("missing claim")
 	}
-
 	switch v := raw.(type) {
 	case string:
-		return strings.TrimSpace(v)
+		return strings.TrimSpace(v), nil
 	case float64:
-		return strconv.FormatInt(int64(v), 10)
+		return fmt.Sprintf("%.0f", v), nil
 	default:
-		return fmt.Sprintf("%v", v)
+		return fmt.Sprintf("%v", v), nil
 	}
+}
+
+func (h *Handlers) needsOnboarding(ctx *fiber.Ctx, userID string) (bool, error) {
+	workspaces, err := h.userService.GetWorkspaces(ctx.Context(), userID)
+	if err != nil {
+		return false, err
+	}
+	return len(workspaces) == 0, nil
 }
 
 // Register method
@@ -391,8 +369,10 @@ func (h *Handlers) Register(ctx *fiber.Ctx) error {
 		})
 	}
 
+	h.ensureDeviceID(ctx)
+
 	return ctx.Status(fiber.StatusCreated).JSON(fiber.Map{
-		"message": "Registration started. Please check your email for the verification code.",
+		"pending": true,
 		"email":   input.Email,
 	})
 }
@@ -429,6 +409,7 @@ func (h *Handlers) VerifyEmail(ctx *fiber.Ctx) error {
 		logger.Log.Errorw("verify email failed", "error", err)
 		status := fiber.StatusBadRequest
 		message := "invalid verification code"
+		response := fiber.Map{"error": message}
 		switch {
 		case errors.Is(err, service.ErrPendingNotFound):
 			message = "no pending registration for this email"
@@ -436,14 +417,28 @@ func (h *Handlers) VerifyEmail(ctx *fiber.Ctx) error {
 			message = "verification code expired, please register again"
 		case errors.Is(err, service.ErrTooManyAttempts):
 			message = "too many attempts, please register again"
+		default:
+			var invalidCode service.InvalidCodeError
+			if errors.As(err, &invalidCode) {
+				response["remaining_attempts"] = invalidCode.RemainingAttempts
+			}
 		}
-		return ctx.Status(status).JSON(fiber.Map{"error": message})
+		response["error"] = message
+		return ctx.Status(status).JSON(response)
 	}
 
 	h.notifyUserRegistered(dto.ToUserResponseIsVerified(user))
 
+	accessTokenStr, err := h.issueDeviceSession(ctx, user)
+	if err != nil {
+		logger.Log.Errorw("verify session create failed", "user_id", user.ID, "error", err)
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to create session")
+	}
+
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
-		"message": "Email verified successfully. You can now log in",
+		"access_token":     accessTokenStr,
+		"token":            accessTokenStr,
+		"needs_onboarding": true,
 	})
 }
 
@@ -483,6 +478,13 @@ func (h *Handlers) ResendCode(ctx *fiber.Ctx) error {
 		if errors.Is(err, service.ErrPendingNotFound) {
 			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 				"error": "no pending registration for this email",
+			})
+		}
+		var cooldown service.ResendCooldownError
+		if errors.As(err, &cooldown) {
+			return ctx.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
+				"error":               "verification code resend cooldown",
+				"retry_after_seconds": int(cooldown.RetryAfter.Seconds()),
 			})
 		}
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{

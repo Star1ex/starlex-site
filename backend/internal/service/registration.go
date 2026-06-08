@@ -17,6 +17,7 @@ import (
 const (
 	registrationCodeTTL = 15 * time.Minute
 	maxVerifyAttempts   = 5
+	resendCodeCooldown  = time.Minute
 )
 
 var (
@@ -28,7 +29,33 @@ var (
 	ErrInvalidCode = errors.New("invalid verification code")
 	// ErrTooManyAttempts: too many wrong codes; the sign-up was discarded.
 	ErrTooManyAttempts = errors.New("too many attempts, please register again")
+	// ErrResendCooldown: resend requested too soon after the last code issue.
+	ErrResendCooldown = errors.New("verification code resend cooldown")
 )
+
+type InvalidCodeError struct {
+	RemainingAttempts int
+}
+
+func (e InvalidCodeError) Error() string {
+	return ErrInvalidCode.Error()
+}
+
+func (e InvalidCodeError) Unwrap() error {
+	return ErrInvalidCode
+}
+
+type ResendCooldownError struct {
+	RetryAfter time.Duration
+}
+
+func (e ResendCooldownError) Error() string {
+	return ErrResendCooldown.Error()
+}
+
+func (e ResendCooldownError) Unwrap() error {
+	return ErrResendCooldown
+}
 
 // RegistrationService implements verify-before-persist sign-up: the account is
 // only written to the users table after the email is confirmed.
@@ -94,11 +121,12 @@ func (s *RegistrationService) Confirm(ctx context.Context, email, code, ip strin
 
 	if pending.Code != code {
 		_ = s.pendingRepo.IncrementAttempts(ctx, email)
-		if pending.Attempts+1 >= maxVerifyAttempts {
+		attempts := pending.Attempts + 1
+		if attempts >= maxVerifyAttempts {
 			_ = s.pendingRepo.DeleteByEmail(ctx, email)
 			return nil, ErrTooManyAttempts
 		}
-		return nil, ErrInvalidCode
+		return nil, InvalidCodeError{RemainingAttempts: maxVerifyAttempts - attempts}
 	}
 
 	newUser := entity.NewUser(security.GenerateNewID(), pending.Email, pending.PasswordHash, pending.FirstName, pending.LastName)
@@ -130,6 +158,13 @@ func (s *RegistrationService) Resend(ctx context.Context, email string) error {
 	pending, err := s.pendingRepo.GetByEmail(ctx, email)
 	if err != nil {
 		return ErrPendingNotFound
+	}
+
+	if !pending.CreatedAt.IsZero() {
+		retryAt := pending.CreatedAt.Add(resendCodeCooldown)
+		if time.Now().Before(retryAt) {
+			return ResendCooldownError{RetryAfter: time.Until(retryAt).Round(time.Second)}
+		}
 	}
 
 	code, err := generateNumericCode(6)
