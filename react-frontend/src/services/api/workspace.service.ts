@@ -10,6 +10,11 @@ function normalizeWorkspace(raw: unknown): WorkspaceDTO {
     name: (w.name ?? '') as string,
     description: (w.description ?? '') as string,
     icon: (w.icon ?? '') as string,
+    color: (w.color ?? '') as string,
+    role: (w.role ?? undefined) as WorkspaceDTO['role'],
+    member_count: (w.member_count ?? 0) as number,
+    project_count: (w.project_count ?? 0) as number,
+    created_at: (w.created_at ?? '') as string,
   };
 }
 
@@ -39,6 +44,10 @@ export const workspaceService = {
 
   async updateWorkspaceIcon(workspaceId: string, icon: string): Promise<void> {
     await httpClient.patch(`/api/workspaces/${workspaceId}/icon`, { icon });
+  },
+
+  async updateWorkspaceColor(workspaceId: string, color: string): Promise<void> {
+    await httpClient.patch(`/api/workspaces/${workspaceId}/color`, { color });
   },
 
   async getWorkspaceUsers(workspaceId: string): Promise<UserDTO[]> {

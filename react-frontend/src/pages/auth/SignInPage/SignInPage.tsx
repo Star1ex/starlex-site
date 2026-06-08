@@ -2,10 +2,11 @@ import React, { ChangeEvent } from "react";
 import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { authService } from '@/services/api/index.js';
+import { authService, userService } from '@/services/api/index.js';
 import { setAuthUser } from '@/shared/lib/authManager.js';
 import { useAuth } from '@/contexts/AuthContext.js';
 import { useTheme, useSystemThemeOnly } from '@/shared/contexts/ThemeContext.js';
+import { getLastWorkspaceId } from '@/contexts/WorkspaceContext.js';
 import { FaGoogle, FaGithub } from 'react-icons/fa';
 import { Helmet } from 'react-helmet-async';
 import { listVariants, listItemVariants, pageVariants } from '@/shared/lib/animations.js';
@@ -28,11 +29,16 @@ export const SignInPage = () => {
     // Wait for auth initialization
     if (isLoading) return;
 
-    // If already authenticated, redirect to saved path or dashboard
+    // If already authenticated, redirect to saved path or last workspace
     if (isAuthenticated) {
-      const redirectPath = localStorage.getItem('redirectPath') || '/dashboard';
+      const redirectPath = localStorage.getItem('redirectPath');
       localStorage.removeItem('redirectPath');
-      navigate(redirectPath, { replace: true });
+      if (redirectPath && !redirectPath.startsWith('/sign')) {
+        navigate(redirectPath, { replace: true });
+        return;
+      }
+      const lastId = getLastWorkspaceId();
+      navigate(lastId ? `/workspace/${lastId}` : '/onboarding', { replace: true });
       return;
     }
 
@@ -78,13 +84,36 @@ export const SignInPage = () => {
       const result = await authService.login(data);
 
       if (result && result.user && result.access_token) {
-        // Save user locally and set access token in ApiClient via AuthContext
         setAuthUser(result.user);
         await login(result.access_token);
 
-        const redirectPath = localStorage.getItem('redirectPath') || '/dashboard';
+        // Prefer explicit redirect, then onboarding check, then last workspace
+        const redirectPath = localStorage.getItem('redirectPath');
         localStorage.removeItem('redirectPath');
-        navigate(redirectPath, { replace: true });
+
+        if (redirectPath && !redirectPath.startsWith('/sign') && !redirectPath.startsWith('/login')) {
+          navigate(redirectPath, { replace: true });
+          return;
+        }
+
+        if (result.needs_onboarding) {
+          navigate('/onboarding', { replace: true });
+          return;
+        }
+
+        // Check if user has any workspaces
+        try {
+          const workspaces = await userService.getWorkspaces();
+          if (!Array.isArray(workspaces) || workspaces.length === 0) {
+            navigate('/onboarding', { replace: true });
+            return;
+          }
+        } catch {
+          // If check fails, fall through to last visited
+        }
+
+        const lastId = getLastWorkspaceId();
+        navigate(lastId ? `/workspace/${lastId}` : '/onboarding', { replace: true });
         return;
       } else {
         setErrorMessage('Internal server error');

@@ -5,6 +5,8 @@ import { ErrorBoundary } from "@/components/ErrorBoundary.js";
 import { HelmetProvider } from "react-helmet-async";
 import { ThemeProvider } from "@/shared/contexts/ThemeContext.js";
 import { LastVisitedManager } from "@/app/LastVisitedManager.js";
+import { AuthProvider, useAuth } from '@/contexts/AuthContext.js';
+import { WorkspaceProvider } from '@/contexts/WorkspaceContext.js';
 
 export const App = () => {
   return (
@@ -14,9 +16,11 @@ export const App = () => {
           <BrowserRouter>
             <LastVisitedManager />
             <AuthProvider>
-              <AuthGate>
-                <AppRoutes />
-              </AuthGate>
+              <WorkspaceProvider>
+                <AuthGate>
+                  <AppRoutes />
+                </AuthGate>
+              </WorkspaceProvider>
             </AuthProvider>
           </BrowserRouter>
         </ThemeProvider>
@@ -36,6 +40,3 @@ const AuthGate: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }
   return <>{children}</>;
 };
-
-// Lazy import to avoid cycles in top-level imports
-import { AuthProvider, useAuth } from '@/contexts/AuthContext.js';

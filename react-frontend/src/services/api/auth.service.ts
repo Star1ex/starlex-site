@@ -6,6 +6,7 @@ import {
   RegisterRequest,
   RegisterResponse,
   VerifyEmailRequest,
+  VerifyResponse,
   ResendCodeRequest,
   AuthResponse,
   PasswordChangeRequest,
@@ -29,8 +30,12 @@ export const authService = {
     return response.data;
   },
 
-  async verifyEmail(data: VerifyEmailRequest): Promise<AuthResponse> {
-    const response = await httpClient.post<AuthResponse>('/api/auth/verify', data);
+  async verifyEmail(data: VerifyEmailRequest): Promise<VerifyResponse> {
+    const response = await httpClient.post<VerifyResponse>('/api/auth/verify', data);
+    if (response.data.access_token) {
+      apiClient.setAccessToken(response.data.access_token);
+      await this.ensureCsrfToken();
+    }
     return response.data;
   },
 

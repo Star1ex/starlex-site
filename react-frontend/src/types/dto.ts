@@ -80,11 +80,18 @@ export interface WorkspaceDTO {
   name: string;
   description: string;
   icon?: string;
+  color?: string;
+  role?: 'owner' | 'admin' | 'member' | 'guest';
+  member_count?: number;
+  project_count?: number;
+  created_at?: string;
 }
 
 export interface CreateWorkspaceRequest {
   name: string;
-  description: string;
+  description?: string;
+  icon?: string;
+  color?: string;
 }
 
 export interface AddUserToWorkspaceRequest {
@@ -203,6 +210,14 @@ export interface LoginResponse {
   access_token: string;
   token: string; // backward compatibility
   user: UserDTO;
+  needs_onboarding?: boolean;
+}
+
+export interface VerifyResponse {
+  access_token: string;
+  needs_onboarding: boolean;
+  user: UserDTO;
+  message?: string;
 }
 
 export interface RegisterRequest {

@@ -79,15 +79,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
-    apiClient.clearAccessToken();
-    clearAuthStorage();
-    setUserId(null);
-    setUserEmail(null);
-    setIsAuthenticated(false);
-
-    // Fire server-side cookie invalidation and token revocation.
-    void authService.logout();
-    window.location.replace('/login');
+    // Revoke session server-side first, then clear local state.
+    try {
+      await authService.logout();
+    } catch {
+      // best-effort; still clear locally
+    } finally {
+      apiClient.clearAccessToken();
+      clearAuthStorage();
+      setUserId(null);
+      setUserEmail(null);
+      setIsAuthenticated(false);
+      window.location.replace('/sign-in');
+    }
   };
 
   useEffect(() => {
