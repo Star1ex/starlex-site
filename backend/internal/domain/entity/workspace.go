@@ -1,11 +1,14 @@
 package entity
 
 type Workspace struct {
-	ID          string
-	Name        string
-	Description string
-	Icon        string
-	OwnerID     string
+	ID           string
+	Name         string
+	Description  string
+	Icon         string
+	OwnerID      string
+	Role         string
+	MemberCount  int
+	ProjectCount int
 }
 
 type UpdateWorkspace struct {

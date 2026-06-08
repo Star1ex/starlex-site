@@ -1,7 +1,10 @@
 package dto
 
 import (
+	"time"
+
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
+	domainworkspace "github.com/Star1ex/starlex-site/internal/domain/workspace"
 )
 
 type WorkspaceApi struct {
@@ -11,10 +14,14 @@ type WorkspaceApi struct {
 }
 
 type WorkspaceResponse struct {
-	WorkspaceID string `json:"workspace_id"`
-	Name        string `json:"name"`
-	Description string `json:"description"`
-	Icon        string `json:"icon"`
+	WorkspaceID  string `json:"workspace_id"`
+	ID           string `json:"id"`
+	Name         string `json:"name"`
+	Description  string `json:"description"`
+	Icon         string `json:"icon"`
+	Role         string `json:"role"`
+	MemberCount  int    `json:"member_count"`
+	ProjectCount int    `json:"project_count"`
 }
 
 type UpdateWorkspaceIcon struct {
@@ -23,10 +30,14 @@ type UpdateWorkspaceIcon struct {
 
 func ToWorkspaceResponse(workspace *entity.Workspace) *WorkspaceResponse {
 	return &WorkspaceResponse{
-		WorkspaceID: workspace.ID,
-		Name:        workspace.Name,
-		Description: workspace.Description,
-		Icon:        workspace.Icon,
+		WorkspaceID:  workspace.ID,
+		ID:           workspace.ID,
+		Name:         workspace.Name,
+		Description:  workspace.Description,
+		Icon:         workspace.Icon,
+		Role:         workspace.Role,
+		MemberCount:  workspace.MemberCount,
+		ProjectCount: workspace.ProjectCount,
 	}
 }
 
@@ -46,15 +57,51 @@ type UpdateWorkspaceDescription struct {
 	Description *string `json:"description"`
 }
 
+type WorkspaceMemberResponse struct {
+	User     UserResponse `json:"user"`
+	Role     string       `json:"role"`
+	JoinedAt time.Time    `json:"joined_at"`
+}
+
+type AddWorkspaceMemberRequest struct {
+	Email string `json:"email"`
+	Role  string `json:"role"`
+}
+
+type UpdateWorkspaceMemberRoleRequest struct {
+	Role string `json:"role"`
+}
+
 func ToWorkspacesResponse(workspaces []*entity.Workspace) []WorkspaceResponse {
 	response := make([]WorkspaceResponse, len(workspaces))
 	for i, workspace := range workspaces {
 		response[i] = WorkspaceResponse{
-			WorkspaceID: workspace.ID,
-			Name:        workspace.Name,
-			Description: workspace.Description,
-			Icon:        workspace.Icon,
+			WorkspaceID:  workspace.ID,
+			ID:           workspace.ID,
+			Name:         workspace.Name,
+			Description:  workspace.Description,
+			Icon:         workspace.Icon,
+			Role:         workspace.Role,
+			MemberCount:  workspace.MemberCount,
+			ProjectCount: workspace.ProjectCount,
 		}
+	}
+	return response
+}
+
+func ToWorkspaceMemberResponse(member *domainworkspace.Member) WorkspaceMemberResponse {
+	userResponse := ToUserResponse(member.User)
+	return WorkspaceMemberResponse{
+		User:     *userResponse,
+		Role:     string(member.Role),
+		JoinedAt: member.JoinedAt,
+	}
+}
+
+func ToWorkspaceMemberResponses(members []*domainworkspace.Member) []WorkspaceMemberResponse {
+	response := make([]WorkspaceMemberResponse, len(members))
+	for i, member := range members {
+		response[i] = ToWorkspaceMemberResponse(member)
 	}
 	return response
 }

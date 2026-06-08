@@ -3,8 +3,10 @@ package repository
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
+	domainworkspace "github.com/Star1ex/starlex-site/internal/domain/workspace"
 	"github.com/Star1ex/starlex-site/internal/logger"
 	"gorm.io/gorm"
 )
@@ -16,6 +18,19 @@ type WorkspaceModel struct {
 	Icon        string      `gorm:"not null;default:''"`
 	OwnerID     string      `gorm:"not null"`
 	Users       []UserModel `gorm:"many2many:users_workspaces"`
+}
+
+type WorkspaceMemberModel struct {
+	WorkspaceID string         `gorm:"primaryKey;index"`
+	UserID      string         `gorm:"primaryKey;index"`
+	Role        string         `gorm:"not null;default:'member';index"`
+	JoinedAt    time.Time      `gorm:"autoCreateTime"`
+	Workspace   WorkspaceModel `gorm:"foreignKey:WorkspaceID"`
+	User        UserModel      `gorm:"foreignKey:UserID"`
+}
+
+func (WorkspaceMemberModel) TableName() string {
+	return "workspace_members"
 }
 
 func fromDomainToWorkspace(workspace *entity.Workspace) *WorkspaceModel {
@@ -62,23 +77,13 @@ func (t *WorkspaceRepository) CreateAndAddCreator(ctx context.Context, workspace
 			return err
 		}
 
-		// Add creator to workspace
-		creatorUser := UserModel{ID: userID}
-		err = tx.WithContext(ctx).Model(newWorkspace).Association("Users").Append(&creatorUser)
-		if err != nil {
+		member := WorkspaceMemberModel{
+			WorkspaceID: newWorkspace.ID,
+			UserID:      userID,
+			Role:        string(domainworkspace.RoleOwner),
+		}
+		if err := tx.WithContext(ctx).Create(&member).Error; err != nil {
 			return err
-		}
-
-		// Set role to "owner" for the creator
-		// Use Updates with map to ensure the update works correctly
-		result := tx.WithContext(ctx).Model(&UserModel{}).Where("id = ?", userID).Updates(map[string]interface{}{
-			"role": "owner",
-		})
-		if result.Error != nil {
-			return result.Error
-		}
-		if result.RowsAffected == 0 {
-			logger.Log.Warnw("No rows updated when setting role to owner", "user_id", userID)
 		}
 
 		return nil
@@ -90,32 +95,22 @@ func (t *WorkspaceRepository) CreateAndAddCreator(ctx context.Context, workspace
 }
 
 func (t *WorkspaceRepository) GetWorkspace(ctx context.Context, workspaceId string) ([]*entity.User, error) {
-	var workspaceModel WorkspaceModel
-	err := t.db.WithContext(ctx).Preload("Users").First(&workspaceModel, "id = ?", workspaceId).Error
+	members, err := t.ListMembers(ctx, workspaceId)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrWorkspaceNotFound
-		}
 		return nil, err
 	}
-	users := workspaceModel.Users
-	usersInWorkspace := make([]*entity.User, len(users))
-	for i, user := range users {
-		if user.ID == workspaceModel.OwnerID {
-			user.Role = "owner"
-		} else {
-			user.Role = "member"
-		}
-		usersInWorkspace[i] = toDomain(&user)
+	users := make([]*entity.User, len(members))
+	for i, member := range members {
+		users[i] = member.User
 	}
-	return usersInWorkspace, nil
+	return users, nil
 }
 
 func (r *WorkspaceRepository) Delete(ctx context.Context, workspaceID string) error {
 	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var workspace WorkspaceModel
 
-		if err := tx.Preload("Users").
+		if err := tx.WithContext(ctx).Preload("Users").
 			First(&workspace, "id = ?", workspaceID).Error; err != nil {
 			return err
 		}
@@ -126,7 +121,7 @@ func (r *WorkspaceRepository) Delete(ctx context.Context, workspaceID string) er
 			return err
 		}
 
-		if err := tx.Delete(&workspace).Error; err != nil {
+		if err := tx.WithContext(ctx).Delete(&workspace).Error; err != nil {
 			return err
 		}
 
@@ -185,7 +180,86 @@ func (t *WorkspaceRepository) UpdateDescription(ctx context.Context, workspaceID
 
 // AddUserToWorkspace
 func (t *WorkspaceRepository) AddUserToWorkspace(ctx context.Context, workspaceID string, userID string) error {
-	return t.db.Transaction(func(tx *gorm.DB) error {
+	return t.AddMember(ctx, workspaceID, userID, domainworkspace.RoleMember)
+}
+
+func (t *WorkspaceRepository) RemoveUserFromWorkspace(ctx context.Context, workspaceID string, userID string) error {
+	result := t.db.WithContext(ctx).
+		Where("workspace_id = ? AND user_id = ?", workspaceID, userID).
+		Delete(&WorkspaceMemberModel{})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return ErrUserNotInWorkspace
+	}
+	return nil
+}
+
+func (t *WorkspaceRepository) ListMembers(ctx context.Context, workspaceID string) ([]*domainworkspace.Member, error) {
+	var workspace WorkspaceModel
+	if err := t.db.WithContext(ctx).First(&workspace, "id = ?", workspaceID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, ErrWorkspaceNotFound
+		}
+		return nil, err
+	}
+
+	var models []WorkspaceMemberModel
+	if err := t.db.WithContext(ctx).
+		Preload("User").
+		Where("workspace_id = ?", workspaceID).
+		Order("joined_at ASC").
+		Find(&models).Error; err != nil {
+		return nil, err
+	}
+
+	members := make([]*domainworkspace.Member, len(models))
+	for i, model := range models {
+		userEntity := toDomain(&model.User)
+		userEntity.Role = model.Role
+		members[i] = &domainworkspace.Member{
+			User:     userEntity,
+			Role:     domainworkspace.Role(model.Role),
+			JoinedAt: model.JoinedAt,
+		}
+	}
+	return members, nil
+}
+
+func (t *WorkspaceRepository) GetRole(ctx context.Context, workspaceID, userID string) (domainworkspace.Role, error) {
+	var member WorkspaceMemberModel
+	err := t.db.WithContext(ctx).
+		Where("workspace_id = ? AND user_id = ?", workspaceID, userID).
+		First(&member).Error
+	if err != nil {
+		return "", err
+	}
+	role, err := domainworkspace.ParseRole(member.Role)
+	if err != nil {
+		return "", err
+	}
+	return role, nil
+}
+
+func (t *WorkspaceRepository) CountOwners(ctx context.Context, workspaceID string) (int64, error) {
+	var count int64
+	err := t.db.WithContext(ctx).Model(&WorkspaceMemberModel{}).
+		Where("workspace_id = ? AND role = ?", workspaceID, string(domainworkspace.RoleOwner)).
+		Count(&count).Error
+	return count, err
+}
+
+func (t *WorkspaceRepository) CountMembers(ctx context.Context, workspaceID string) (int64, error) {
+	var count int64
+	err := t.db.WithContext(ctx).Model(&WorkspaceMemberModel{}).
+		Where("workspace_id = ?", workspaceID).
+		Count(&count).Error
+	return count, err
+}
+
+func (t *WorkspaceRepository) AddMember(ctx context.Context, workspaceID, userID string, role domainworkspace.Role) error {
+	return t.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		var workspace WorkspaceModel
 		if err := tx.WithContext(ctx).First(&workspace, "id = ?", workspaceID).Error; err != nil {
 			if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -201,55 +275,34 @@ func (t *WorkspaceRepository) AddUserToWorkspace(ctx context.Context, workspaceI
 			}
 			return err
 		}
-		var count int64
-		tx.WithContext(ctx).Model(&workspace).Where("id = ?", userID).Association("Users").Count()
-		if count > 0 {
-			return errors.New("user already in workspace")
-		}
 
-		if err := tx.WithContext(ctx).Model(&workspace).Association("Users").Append(&user); err != nil {
+		var count int64
+		if err := tx.WithContext(ctx).Model(&WorkspaceMemberModel{}).
+			Where("workspace_id = ? AND user_id = ?", workspaceID, userID).
+			Count(&count).Error; err != nil {
 			return err
 		}
+		if count > 0 {
+			return ErrUserAlreadyInWorkspace
+		}
 
-		return nil
+		return tx.WithContext(ctx).Create(&WorkspaceMemberModel{
+			WorkspaceID: workspaceID,
+			UserID:      userID,
+			Role:        string(role),
+		}).Error
 	})
 }
 
-func (t *WorkspaceRepository) RemoveUserFromWorkspace(ctx context.Context, workspaceID string, userID string) error {
-	return t.db.Transaction(func(tx *gorm.DB) error {
-		var workspace WorkspaceModel
-		if err := tx.WithContext(ctx).First(&workspace, "id = ?", workspaceID).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return errors.New("workspace not found")
-			}
-			return err
-		}
-
-		// Check if user is the owner
-		if workspace.OwnerID == userID {
-			return errors.New("cannot remove workspace owner from workspace")
-		}
-
-		var user UserModel
-		if err := tx.WithContext(ctx).First(&user, "id = ?", userID).Error; err != nil {
-			if errors.Is(err, gorm.ErrRecordNotFound) {
-				return errors.New("user not found")
-			}
-			return err
-		}
-
-		// Check if user is actually in the workspace
-		var count int64
-		count = tx.WithContext(ctx).Model(&workspace).Where("id = ?", userID).Association("Users").Count()
-		if count == 0 {
-			return errors.New("user is not in this workspace")
-		}
-
-		// Remove user from workspace
-		if err := tx.WithContext(ctx).Model(&workspace).Association("Users").Delete(&user); err != nil {
-			return err
-		}
-
-		return nil
-	})
+func (t *WorkspaceRepository) UpdateMemberRole(ctx context.Context, workspaceID, userID string, role domainworkspace.Role) error {
+	result := t.db.WithContext(ctx).Model(&WorkspaceMemberModel{}).
+		Where("workspace_id = ? AND user_id = ?", workspaceID, userID).
+		Update("role", string(role))
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return ErrUserNotInWorkspace
+	}
+	return nil
 }

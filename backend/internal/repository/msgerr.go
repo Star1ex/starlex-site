@@ -13,4 +13,5 @@ var (
 
 	// Workspace member errors
 	ErrUserAlreadyInWorkspace error = errors.New("repository: user already in workspace")
+	ErrUserNotInWorkspace     error = errors.New("repository: user is not in this workspace")
 )

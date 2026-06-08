@@ -2,23 +2,23 @@ package handlers
 
 import (
 	"context"
+	"errors"
 
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
+	domainworkspace "github.com/Star1ex/starlex-site/internal/domain/workspace"
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 func (h *Handlers) isWorkspaceMember(ctx context.Context, workspaceID, userID string) (bool, error) {
-	users, err := h.workspaceService.GetUsers(ctx, workspaceID)
+	_, err := h.workspaceService.GetRole(ctx, workspaceID, userID)
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return false, nil
+		}
 		return false, err
 	}
-
-	for _, u := range users {
-		if u.ID == userID {
-			return true, nil
-		}
-	}
-	return false, nil
+	return true, nil
 }
 
 func (h *Handlers) requireWorkspaceMember(c *fiber.Ctx, workspaceID, userID string) error {
@@ -27,6 +27,20 @@ func (h *Handlers) requireWorkspaceMember(c *fiber.Ctx, workspaceID, userID stri
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "workspace not found"})
 	}
 	if !ok {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
+	}
+	return nil
+}
+
+func (h *Handlers) requireWorkspaceRole(c *fiber.Ctx, workspaceID, userID string, minRole domainworkspace.Role) error {
+	role, err := h.workspaceService.GetRole(c.Context(), workspaceID, userID)
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
+		}
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "workspace not found"})
+	}
+	if !role.AtLeast(minRole) {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
 	}
 	return nil

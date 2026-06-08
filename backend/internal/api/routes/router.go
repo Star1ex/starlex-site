@@ -116,6 +116,10 @@ func setupWorkspaceRoutes(api fiber.Router, h *handlers.Handlers) {
 	workspaces.Get("/:id/users", h.GetUsers)
 	workspaces.Post("/:id/users", h.AddUserToWorkspace)
 	workspaces.Delete("/:id/users", h.RemoveUserFromWorkspace)
+	workspaces.Get("/:id/members", h.ListWorkspaceMembers)
+	workspaces.Post("/:id/members", h.AddWorkspaceMember)
+	workspaces.Patch("/:id/members/:user_id", h.PatchWorkspaceMemberRole)
+	workspaces.Delete("/:id/members/:user_id", h.DeleteWorkspaceMember)
 
 	workspaceTasks := workspaces.Group("/:workspace_id/tasks")
 	{

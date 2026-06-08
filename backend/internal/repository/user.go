@@ -185,21 +185,45 @@ func (r *UserRepository) GetByGithubID(ctx context.Context, githubID string) (*e
 }
 
 func (r *UserRepository) GetUserWorkspaces(ctx context.Context, userID string) ([]*entity.Workspace, error) {
-	var userModel UserModel
-	err := r.db.WithContext(ctx).Preload("Workspaces").Find(&userModel, "id = ?", userID).Error
+	type workspaceRow struct {
+		ID           string
+		Name         string
+		Description  string
+		Icon         string
+		OwnerID      string
+		Role         string
+		MemberCount  int
+		ProjectCount int
+	}
+
+	var rows []workspaceRow
+	err := r.db.WithContext(ctx).
+		Table("workspace_models AS w").
+		Select(`w.id, w.name, w.description, w.icon, w.owner_id, wm.role,
+			(SELECT COUNT(*) FROM workspace_members WHERE workspace_id = w.id) AS member_count,
+			(SELECT COUNT(*) FROM project_models WHERE workspace_id = w.id) AS project_count`).
+		Joins("JOIN workspace_members wm ON wm.workspace_id = w.id").
+		Where("wm.user_id = ?", userID).
+		Order("w.name ASC").
+		Scan(&rows).Error
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrUserNotFound
-		}
 		return nil, err
 	}
 
-	workspaces := userModel.Workspaces
-	workspacesInUser := make([]*entity.Workspace, len(workspaces))
-	for i, workspace := range workspaces {
-		workspacesInUser[i] = toWorkspaceDomain(&workspace)
+	workspaces := make([]*entity.Workspace, len(rows))
+	for i, row := range rows {
+		workspaces[i] = &entity.Workspace{
+			ID:           row.ID,
+			Name:         row.Name,
+			Description:  row.Description,
+			Icon:         row.Icon,
+			OwnerID:      row.OwnerID,
+			Role:         row.Role,
+			MemberCount:  row.MemberCount,
+			ProjectCount: row.ProjectCount,
+		}
 	}
-	return workspacesInUser, nil
+	return workspaces, nil
 }
 
 func (r *UserRepository) GetByIDs(ctx context.Context, ids []string) ([]*entity.User, error) {
