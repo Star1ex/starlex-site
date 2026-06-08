@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
+	domainlabel "github.com/Star1ex/starlex-site/internal/domain/label"
 	domaintask "github.com/Star1ex/starlex-site/internal/domain/task"
 	domainworkspace "github.com/Star1ex/starlex-site/internal/domain/workspace"
 	"gorm.io/gorm"
@@ -35,7 +36,8 @@ type TaskModel struct {
 	Status      string  `gorm:"not null;default:'todo';index"`
 	Priority    string  `gorm:"not null"`
 	Progress    string
-	Assigned    []UserModel `gorm:"many2many:task_users"`
+	Assigned    []UserModel  `gorm:"many2many:task_users"`
+	Labels      []LabelModel `gorm:"many2many:task_labels"`
 
 	WorkspaceID *string        `gorm:"default:null"`
 	OwnerID     string         `gorm:"not null;index:idx_owner_folder"`
@@ -66,6 +68,10 @@ func toTaskDomain(m TaskModel) *entity.Task {
 		user := toDomain(&u)
 		users[i] = user
 	}
+	labels := make([]*domainlabel.Label, len(m.Labels))
+	for i := range m.Labels {
+		labels[i] = toLabelDomain(&m.Labels[i])
+	}
 
 	workspaceID := ""
 	if m.WorkspaceID != nil {
@@ -89,6 +95,7 @@ func toTaskDomain(m TaskModel) *entity.Task {
 		Status:      m.Status,
 		Priority:    m.Priority,
 		Progress:    m.Progress,
+		Labels:      labels,
 		CreatedAt:   m.CreatedAt,
 		UpdatedAt:   m.UpdatedAt,
 	}
@@ -203,6 +210,7 @@ func (r *TaskRepository) Get(ctx context.Context, id string) (*entity.Task, erro
 	var model TaskModel
 	result := r.db.WithContext(ctx).
 		Preload("Assigned").
+		Preload("Labels").
 		Preload("Subtasks", orderByPosition).
 		Where("id = ?", id).
 		First(&model)
@@ -217,7 +225,7 @@ func (r *TaskRepository) Get(ctx context.Context, id string) (*entity.Task, erro
 
 func (r *TaskRepository) Update(ctx context.Context, id string, data *entity.Task, assigned []string) (*entity.Task, error) {
 	var task TaskModel
-	if err := r.db.WithContext(ctx).Preload("Assigned").Where("id = ?", id).First(&task).Error; err != nil {
+	if err := r.db.WithContext(ctx).Preload("Assigned").Preload("Labels").Where("id = ?", id).First(&task).Error; err != nil {
 		return nil, err
 	}
 
@@ -265,7 +273,7 @@ func (r *TaskRepository) Update(ctx context.Context, id string, data *entity.Tas
 		}
 	}
 
-	if err := r.db.WithContext(ctx).Preload("Assigned").Where("id = ?", id).First(&task).Error; err != nil {
+	if err := r.db.WithContext(ctx).Preload("Assigned").Preload("Labels").Where("id = ?", id).First(&task).Error; err != nil {
 		return nil, err
 	}
 
@@ -358,6 +366,41 @@ func (r *TaskRepository) UpdateAssignees(ctx context.Context, id string, assigne
 	return nil
 }
 
+func (r *TaskRepository) UpdateLabels(ctx context.Context, id string, labelIDs []string) error {
+	var task TaskModel
+	if err := r.db.WithContext(ctx).Where("id = ?", id).First(&task).Error; err != nil {
+		return err
+	}
+	if task.WorkspaceID == nil || *task.WorkspaceID == "" {
+		return domainlabel.ErrLabelNotFound
+	}
+
+	var labels []LabelModel
+	if len(labelIDs) > 0 {
+		if err := r.db.WithContext(ctx).
+			Where("id IN ? AND workspace_id = ?", labelIDs, *task.WorkspaceID).
+			Find(&labels).Error; err != nil {
+			return err
+		}
+		if len(labels) != len(uniqueStrings(labelIDs)) {
+			return domainlabel.ErrLabelNotFound
+		}
+	}
+
+	if err := r.db.WithContext(ctx).Model(&task).Association("Labels").Replace(labels); err != nil {
+		return err
+	}
+	return nil
+}
+
+func uniqueStrings(values []string) map[string]struct{} {
+	out := make(map[string]struct{}, len(values))
+	for _, value := range values {
+		out[value] = struct{}{}
+	}
+	return out
+}
+
 func (r *TaskRepository) Delete(ctx context.Context, id string) error {
 	var task TaskModel
 	if err := r.db.WithContext(ctx).Preload("Assigned").Where("id = ?", id).First(&task).Error; err != nil {
@@ -375,6 +418,7 @@ func (r *TaskRepository) GetWorkspaceTasks(ctx context.Context, workspaceID stri
 
 	err := r.db.WithContext(ctx).
 		Preload("Assigned").
+		Preload("Labels").
 		Preload("Subtasks", orderByPosition).
 		Where("workspace_id = ? AND sprint_id IS NULL", workspaceID).
 		Find(&models).Error
@@ -390,6 +434,7 @@ func (r *TaskRepository) GetProjectTasks(ctx context.Context, projectID string) 
 	var models []TaskModel
 	err := r.db.WithContext(ctx).
 		Preload("Assigned").
+		Preload("Labels").
 		Preload("Subtasks", orderByPosition).
 		Where("project_id = ?", projectID).
 		Order("created_at DESC").
@@ -405,6 +450,7 @@ func (r *TaskRepository) GetFolderTasks(ctx context.Context, folderID string) ([
 
 	err := r.db.WithContext(ctx).
 		Preload("Assigned").
+		Preload("Labels").
 		Preload("Subtasks", orderByPosition).
 		Where("folder_id = ?", folderID).
 		Find(&models).Error
@@ -434,6 +480,7 @@ func (r *TaskRepository) SearchInWorkspaces(ctx context.Context, workspaceIDs []
 	pattern := "%" + query + "%"
 	err := r.db.WithContext(ctx).
 		Preload("Assigned").
+		Preload("Labels").
 		Where("workspace_id IN ? AND sprint_id IS NULL AND (task ILIKE ? OR description ILIKE ?)", workspaceIDs, pattern, pattern).
 		Limit(10).
 		Find(&models).Error

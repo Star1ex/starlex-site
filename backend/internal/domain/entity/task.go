@@ -1,6 +1,10 @@
 package entity
 
-import "time"
+import (
+	"time"
+
+	domainlabel "github.com/Star1ex/starlex-site/internal/domain/label"
+)
 
 type Task struct {
 	ID          string
@@ -13,6 +17,7 @@ type Task struct {
 	Status      string
 	Priority    string
 	Progress    string
+	Labels      []*domainlabel.Label
 
 	OwnerID   string
 	FolderID  *string

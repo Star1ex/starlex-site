@@ -35,6 +35,7 @@ func InitRoutes(app *fiber.App, h *handlers.Handlers) {
 		setupTaskRoutes(protected, h)
 		setupWorkspaceRoutes(protected, h)
 		setupInviteRoutes(protected, h)
+		setupLabelRoutes(protected, h)
 		setupProjectRoutes(protected, h)
 		setupSprintRoutes(protected, h)
 		setupDiscussionRoutes(protected, h)
@@ -102,6 +103,7 @@ func setupTaskRoutes(api fiber.Router, h *handlers.Handlers) {
 	tasks.Patch("/:id/progress", h.PatchTaskProgress)
 	tasks.Patch("/:id/status", h.PatchTaskStatus)
 	tasks.Patch("/:id/assignees", h.PatchTaskAssignees)
+	tasks.Patch("/:id/labels", h.PatchTaskLabels)
 
 	tasks.Get("/folder/:folder_id", h.GetFolderTasks)
 	tasks.Put("/:id/move", h.MoveTaskToFolder)
@@ -125,6 +127,8 @@ func setupWorkspaceRoutes(api fiber.Router, h *handlers.Handlers) {
 	workspaces.Delete("/:id/members/:user_id", h.DeleteWorkspaceMember)
 	workspaces.Get("/:id/invites", h.ListWorkspaceInvites)
 	workspaces.Post("/:id/invites", h.CreateWorkspaceInvite)
+	workspaces.Get("/:id/labels", h.ListWorkspaceLabels)
+	workspaces.Post("/:id/labels", h.CreateWorkspaceLabel)
 
 	workspaceTasks := workspaces.Group("/:workspace_id/tasks")
 	{
@@ -140,8 +144,15 @@ func setupWorkspaceRoutes(api fiber.Router, h *handlers.Handlers) {
 		workspaceTasks.Patch("/:id/progress", h.PatchTaskProgress)
 		workspaceTasks.Patch("/:id/status", h.PatchTaskStatus)
 		workspaceTasks.Patch("/:id/assignees", h.PatchTaskAssignees)
+		workspaceTasks.Patch("/:id/labels", h.PatchTaskLabels)
 		workspaceTasks.Delete("/:id", h.DeleteTask)
 	}
+}
+
+func setupLabelRoutes(api fiber.Router, h *handlers.Handlers) {
+	labels := api.Group("/labels")
+	labels.Patch("/:id", h.PatchLabel)
+	labels.Delete("/:id", h.DeleteLabel)
 }
 
 func setupInviteRoutes(api fiber.Router, h *handlers.Handlers) {

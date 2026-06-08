@@ -157,6 +157,10 @@ func (s *TaskService) UpdateTaskAssignees(ctx context.Context, taskID string, as
 	return s.taskRepo.UpdateAssignees(ctx, taskID, assignedTo)
 }
 
+func (s *TaskService) UpdateTaskLabels(ctx context.Context, taskID string, labelIDs []string) error {
+	return s.taskRepo.UpdateLabels(ctx, taskID, labelIDs)
+}
+
 func (s *TaskService) Delete(ctx context.Context, id string) error {
 	return s.taskRepo.Delete(ctx, id)
 }

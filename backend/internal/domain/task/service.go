@@ -30,6 +30,7 @@ type Service interface {
 	UpdateTaskPriority(ctx context.Context, taskID, priority string) error
 	UpdateTaskStatus(ctx context.Context, taskID, status string) error
 	UpdateTaskAssignees(ctx context.Context, taskID string, assignedTo []string) error
+	UpdateTaskLabels(ctx context.Context, taskID string, labelIDs []string) error
 	// Delete task
 	Delete(ctx context.Context, id string) error
 

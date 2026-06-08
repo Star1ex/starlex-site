@@ -34,6 +34,7 @@ type TaskResponse struct {
 	Status      string            `json:"status"`
 	Priority    string            `json:"priority"`
 	Progress    string            `json:"progress"`
+	Labels      []LabelResponse   `json:"labels"`
 	Subtasks    []SubtaskResponse `json:"subtasks"`
 	CreatedAt   time.Time         `json:"created_at,omitempty"`
 	UpdatedAt   time.Time         `json:"updated_at,omitempty"`
@@ -88,6 +89,7 @@ func ToTaskResponse(task *entity.Task) *TaskResponse {
 	for i, s := range task.Subtasks {
 		subtasks[i] = toSubtaskResponse(s)
 	}
+	labels := ToLabelResponses(task.Labels)
 
 	// Use zero time if CreatedAt is not set
 	createdAt := task.CreatedAt
@@ -109,6 +111,7 @@ func ToTaskResponse(task *entity.Task) *TaskResponse {
 		Status:      task.Status,
 		Priority:    task.Priority,
 		Progress:    task.Progress,
+		Labels:      labels,
 		Subtasks:    subtasks,
 		CreatedAt:   createdAt,
 		UpdatedAt:   task.UpdatedAt,
