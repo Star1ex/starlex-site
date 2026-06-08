@@ -17,6 +17,8 @@ type WorkspaceModel struct {
 	Description string      `gorm:"not null"`
 	Icon        string      `gorm:"not null;default:''"`
 	OwnerID     string      `gorm:"not null"`
+	KeyPrefix   string      `gorm:"not null;default:''"`
+	TaskSeq     int64       `gorm:"not null;default:0"`
 	Users       []UserModel `gorm:"many2many:users_workspaces"`
 }
 
@@ -40,6 +42,8 @@ func fromDomainToWorkspace(workspace *entity.Workspace) *WorkspaceModel {
 		Description: workspace.Description,
 		Icon:        workspace.Icon,
 		OwnerID:     workspace.OwnerID,
+		KeyPrefix:   workspace.KeyPrefix,
+		TaskSeq:     workspace.TaskSeq,
 	}
 }
 
@@ -50,6 +54,8 @@ func toWorkspaceDomain(Workspace *WorkspaceModel) *entity.Workspace {
 		Description: Workspace.Description,
 		Icon:        Workspace.Icon,
 		OwnerID:     Workspace.OwnerID,
+		KeyPrefix:   Workspace.KeyPrefix,
+		TaskSeq:     Workspace.TaskSeq,
 	}
 }
 

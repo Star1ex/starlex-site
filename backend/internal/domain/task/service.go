@@ -28,7 +28,7 @@ type Service interface {
 	UpdateTaskTitle(ctx context.Context, taskID, title string) error
 	UpdateTaskDescription(ctx context.Context, taskID, description string) error
 	UpdateTaskPriority(ctx context.Context, taskID, priority string) error
-	UpdateTaskStatus(ctx context.Context, taskID, progress string) error
+	UpdateTaskStatus(ctx context.Context, taskID, status string) error
 	UpdateTaskAssignees(ctx context.Context, taskID string, assignedTo []string) error
 	// Delete task
 	Delete(ctx context.Context, id string) error

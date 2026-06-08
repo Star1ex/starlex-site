@@ -10,6 +10,7 @@ type TaskApi struct {
 	AssignedToID []string  `json:"user_ids"` // Optional: can be empty array
 	Task         string    `json:"task" binding:"required"`
 	Description  string    `json:"description"`
+	Status       string    `json:"status"`
 	Progress     string    `json:"progress"`
 	Priority     string    `json:"priority"`
 	FolderID     *string   `json:"folder_id"`
@@ -21,6 +22,7 @@ type TaskApi struct {
 
 type TaskResponse struct {
 	ID          string            `json:"id" binding:"required"`
+	Key         string            `json:"key"`
 	Task        string            `json:"task" binding:"required"`
 	Description string            `json:"description"`
 	Icon        string            `json:"icon"`
@@ -29,6 +31,7 @@ type TaskResponse struct {
 	FolderID    *string           `json:"folder_id"`
 	ProjectID   *string           `json:"project_id"`
 	OwnerID     string            `json:"owner_id"`
+	Status      string            `json:"status"`
 	Priority    string            `json:"priority"`
 	Progress    string            `json:"progress"`
 	Subtasks    []SubtaskResponse `json:"subtasks"`
@@ -44,6 +47,7 @@ type UpdateTask struct {
 	Task        string    `json:"task"`
 	Description string    `json:"description"`
 	AssignedTo  []string  `json:"user_ids"`
+	Status      string    `json:"status"`
 	Priority    string    `json:"priority"`
 	FolderID    *string   `json:"folder_id"`
 	OwnerID     string    `json:"owner_id"`
@@ -64,6 +68,10 @@ type UpdateTaskPriority struct {
 
 type UpdateTaskProgress struct {
 	Progress *string `json:"progress"`
+}
+
+type UpdateTaskStatus struct {
+	Status *string `json:"status"`
 }
 
 type UpdateTaskAssignees struct {
@@ -89,6 +97,7 @@ func ToTaskResponse(task *entity.Task) *TaskResponse {
 
 	return &TaskResponse{
 		ID:          task.ID,
+		Key:         task.Key,
 		Task:        task.Task,
 		Description: task.Description,
 		Icon:        task.Icon,
@@ -97,6 +106,7 @@ func ToTaskResponse(task *entity.Task) *TaskResponse {
 		FolderID:    task.FolderID,
 		ProjectID:   task.ProjectID,
 		OwnerID:     task.OwnerID,
+		Status:      task.Status,
 		Priority:    task.Priority,
 		Progress:    task.Progress,
 		Subtasks:    subtasks,
@@ -117,6 +127,9 @@ func FromTaskApi(api *TaskApi) (*entity.Task, []string) {
 	return &entity.Task{
 		Task:        api.Task,
 		Description: api.Description,
+		Status:      api.Status,
+		Priority:    api.Priority,
+		Progress:    api.Progress,
 	}, api.AssignedToID
 }
 
@@ -124,6 +137,7 @@ func FromUpdateTask(updates *UpdateTask) (*entity.Task, []string) {
 	return &entity.Task{
 		Task:        updates.Task,
 		Description: updates.Description,
+		Status:      updates.Status,
 		Priority:    updates.Priority,
 		UpdatedAt:   updates.UpdatedAt,
 	}, updates.AssignedTo
@@ -137,5 +151,6 @@ type UpdateDto struct {
 	WorkspaceID  *string   `json:"workspace_id"`
 	OwnerID      *string   `json:"owner_id"`
 	Progress     *string   `json:"progress"`
+	Status       *string   `json:"status"`
 	Priority     *string   `json:"priority"`
 }

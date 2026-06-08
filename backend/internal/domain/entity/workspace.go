@@ -6,6 +6,8 @@ type Workspace struct {
 	Description  string
 	Icon         string
 	OwnerID      string
+	KeyPrefix    string
+	TaskSeq      int64
 	Role         string
 	MemberCount  int
 	ProjectCount int

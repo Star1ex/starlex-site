@@ -15,12 +15,21 @@ import (
 
 type mockTaskRepo struct {
 	task.Repository
-	created []*entity.Task
+	created       []*entity.Task
+	statusUpdates map[string]string
 }
 
 func (m *mockTaskRepo) Create(_ context.Context, t *entity.Task) error {
 	cp := *t
 	m.created = append(m.created, &cp)
+	return nil
+}
+
+func (m *mockTaskRepo) UpdateStatus(_ context.Context, id string, status string) error {
+	if m.statusUpdates == nil {
+		m.statusUpdates = map[string]string{}
+	}
+	m.statusUpdates[id] = status
 	return nil
 }
 
@@ -53,7 +62,7 @@ func (m *mockTaskUserRepo) GetByIDs(_ context.Context, ids []string) ([]*entity.
 }
 
 func newTaskService(wsID, ownerID string) (*TaskService, *mockTaskRepo) {
-	tr := &mockTaskRepo{}
+	tr := &mockTaskRepo{statusUpdates: map[string]string{}}
 	wr := &mockTaskWorkspaceRepo{existing: map[string]*entity.Workspace{
 		wsID: {ID: wsID, OwnerID: ownerID},
 	}}
@@ -86,6 +95,9 @@ func TestCreateWorkspaceTask_NonOwnerAllowed(t *testing.T) {
 	if got.ID == "" {
 		t.Error("task ID should be generated")
 	}
+	if got.Status != string(task.StatusTodo) {
+		t.Errorf("default status should be todo, got %q", got.Status)
+	}
 }
 
 func TestCreateWorkspaceTask_RequiresWorkspaceID(t *testing.T) {
@@ -117,5 +129,68 @@ func TestCreateWorkspaceTask_AssignsUsers(t *testing.T) {
 	}
 	if n := len(tr.created[0].AssignedTo); n != 2 {
 		t.Errorf("want 2 assignees, got %d", n)
+	}
+}
+
+func TestCreateWorkspaceTask_StatusValidation(t *testing.T) {
+	tests := []struct {
+		name       string
+		status     string
+		wantErr    error
+		wantStatus string
+	}{
+		{name: "empty defaults to todo", wantStatus: string(task.StatusTodo)},
+		{name: "explicit status persists", status: string(task.StatusInReview), wantStatus: string(task.StatusInReview)},
+		{name: "invalid status rejected", status: "blocked", wantErr: task.ErrInvalidStatus},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			svc, tr := newTaskService("ws1", "owner")
+			err := svc.CreateWorkspaceTask(context.Background(), "ws1", nil, &entity.Task{Task: "x", Status: tt.status}, "u1")
+			if !errors.Is(err, tt.wantErr) {
+				t.Fatalf("want error %v, got %v", tt.wantErr, err)
+			}
+			if tt.wantErr != nil {
+				if len(tr.created) != 0 {
+					t.Fatalf("invalid status should not create task")
+				}
+				return
+			}
+			if tr.created[0].Status != tt.wantStatus {
+				t.Fatalf("want status %q, got %q", tt.wantStatus, tr.created[0].Status)
+			}
+		})
+	}
+}
+
+func TestUpdateTaskStatus(t *testing.T) {
+	tests := []struct {
+		name       string
+		status     string
+		wantErr    error
+		wantStatus string
+	}{
+		{name: "valid status persists", status: string(task.StatusDone), wantStatus: string(task.StatusDone)},
+		{name: "invalid status rejected", status: "almost_done", wantErr: task.ErrInvalidStatus},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			svc, tr := newTaskService("ws1", "owner")
+			err := svc.UpdateTaskStatus(context.Background(), "task1", tt.status)
+			if !errors.Is(err, tt.wantErr) {
+				t.Fatalf("want error %v, got %v", tt.wantErr, err)
+			}
+			if tt.wantErr != nil {
+				if tr.statusUpdates["task1"] != "" {
+					t.Fatalf("invalid status should not persist")
+				}
+				return
+			}
+			if tr.statusUpdates["task1"] != tt.wantStatus {
+				t.Fatalf("want status %q, got %q", tt.wantStatus, tr.statusUpdates["task1"])
+			}
+		})
 	}
 }

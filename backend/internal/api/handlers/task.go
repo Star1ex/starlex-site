@@ -6,6 +6,7 @@ import (
 
 	"github.com/Star1ex/starlex-site/internal/api/dto"
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
+	domaintask "github.com/Star1ex/starlex-site/internal/domain/task"
 	"github.com/Star1ex/starlex-site/internal/logger"
 	"github.com/Star1ex/starlex-site/internal/repository"
 	"github.com/gofiber/fiber/v2"
@@ -51,6 +52,7 @@ func (h *Handlers) CreateWorkspaceTask(ctx *fiber.Ctx) error {
 	entityTask := &entity.Task{
 		Task:        input.Task,
 		Description: input.Description,
+		Status:      input.Status,
 		Priority:    input.Priority,
 		Progress:    input.Progress,
 	}
@@ -289,12 +291,65 @@ func (h *Handlers) PatchTaskProgress(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad task progress"})
 	}
 
-	if err := h.taskService.UpdateTaskStatus(ctx.Context(), taskID, progressValue); err != nil {
+	if _, err := h.taskService.UpdateTaskProgress(ctx.Context(), taskID, progressValue); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "task not found"})
 		}
 		logger.Log.Errorw("update task progress failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
+	}
+
+	return ctx.SendStatus(fiber.StatusNoContent)
+}
+
+// PatchTaskStatus godoc
+// @Summary      Update task status
+// @Description  Updates the status field of an existing task.
+// @Tags         tasks
+// @Accept       json
+// @Produce      json
+// @Param        id      path  string                true  "Task ID"
+// @Param        status  body  dto.UpdateTaskStatus  true  "Task status"
+// @Success      204
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      403  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Security     BearerAuth
+// @Router       /tasks/{id}/status [patch]
+func (h *Handlers) PatchTaskStatus(ctx *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+
+	taskID := ctx.Params("id")
+	if taskID == "" || taskID == "nil" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
+	}
+	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+		return err
+	}
+
+	var input dto.UpdateTaskStatus
+	if err := ctx.BodyParser(&input); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad json"})
+	}
+	if input.Status == nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "status field is required"})
+	}
+
+	statusValue := strings.TrimSpace(*input.Status)
+	if err := h.taskService.UpdateTaskStatus(ctx.Context(), taskID, statusValue); err != nil {
+		switch {
+		case errors.Is(err, domaintask.ErrInvalidStatus):
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid status"})
+		case errors.Is(err, gorm.ErrRecordNotFound):
+			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "task not found"})
+		default:
+			logger.Log.Errorw("update task status failed", "error", err)
+			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
+		}
 	}
 
 	return ctx.SendStatus(fiber.StatusNoContent)

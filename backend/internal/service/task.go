@@ -5,19 +5,19 @@ import (
 	"errors"
 
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
-	"github.com/Star1ex/starlex-site/internal/domain/task"
+	taskdomain "github.com/Star1ex/starlex-site/internal/domain/task"
 	"github.com/Star1ex/starlex-site/internal/domain/user"
 	"github.com/Star1ex/starlex-site/internal/domain/workspace"
 	"github.com/google/uuid"
 )
 
 type TaskService struct {
-	taskRepo      task.Repository
+	taskRepo      taskdomain.Repository
 	userRepo      user.Repository
 	workspaceRepo workspace.Repository
 }
 
-func NewTaskService(taskRepo task.Repository, userRepo user.Repository, workspaceRepo workspace.Repository) *TaskService {
+func NewTaskService(taskRepo taskdomain.Repository, userRepo user.Repository, workspaceRepo workspace.Repository) *TaskService {
 	return &TaskService{
 		taskRepo:      taskRepo,
 		userRepo:      userRepo,
@@ -52,11 +52,16 @@ func (s *TaskService) CreateWorkspaceTask(
 		}
 	}
 	// If assignedIDs is empty, users will be nil/empty, which is valid
+	status, err := taskdomain.ParseStatus(task.Status)
+	if err != nil {
+		return err
+	}
 
 	task.AssignedTo = users
 	task.WorkspaceID = workspaceID
 	task.OwnerID = userId
 	task.ID = uuid.New().String()
+	task.Status = string(status)
 
 	return s.taskRepo.Create(ctx, task)
 }
@@ -77,11 +82,16 @@ func (s *TaskService) CreateProjectTask(
 			return err
 		}
 	}
+	status, err := taskdomain.ParseStatus(task.Status)
+	if err != nil {
+		return err
+	}
 	pid := projectID
 	task.AssignedTo = users
 	task.WorkspaceID = workspaceID
 	task.ProjectID = &pid
 	task.ID = uuid.New().String()
+	task.Status = string(status)
 	return s.taskRepo.Create(ctx, task)
 }
 
@@ -94,6 +104,13 @@ func (s *TaskService) GetTaskByID(ctx context.Context, taskID string) (*entity.T
 }
 
 func (s *TaskService) Update(ctx context.Context, id string, data *entity.Task, assignedTo []string) (*entity.Task, error) {
+	if data.Status != "" {
+		status, err := taskdomain.ParseStatus(data.Status)
+		if err != nil {
+			return nil, err
+		}
+		data.Status = string(status)
+	}
 	return s.taskRepo.Update(ctx, id, data, assignedTo)
 }
 
@@ -128,8 +145,12 @@ func (s *TaskService) UpdateTaskPriority(ctx context.Context, taskID, priority s
 	return s.taskRepo.UpdatePriority(ctx, taskID, priority)
 }
 
-func (s *TaskService) UpdateTaskStatus(ctx context.Context, taskID, progress string) error {
-	return s.taskRepo.UpdateProgress(ctx, taskID, progress)
+func (s *TaskService) UpdateTaskStatus(ctx context.Context, taskID, statusValue string) error {
+	status, err := taskdomain.ParseStatus(statusValue)
+	if err != nil {
+		return err
+	}
+	return s.taskRepo.UpdateStatus(ctx, taskID, string(status))
 }
 
 func (s *TaskService) UpdateTaskAssignees(ctx context.Context, taskID string, assignedTo []string) error {

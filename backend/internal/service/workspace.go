@@ -36,6 +36,7 @@ func (s *WorkspaceService) CreateWorkspace(ctx context.Context, name, descriptio
 		Name:         name,
 		Description:  description,
 		OwnerID:      userID,
+		KeyPrefix:    workspace.DeriveKeyPrefix(name),
 		Role:         string(workspace.RoleOwner),
 		MemberCount:  1,
 		ProjectCount: 0,

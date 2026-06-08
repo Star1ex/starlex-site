@@ -4,11 +4,13 @@ import "time"
 
 type Task struct {
 	ID          string
+	Key         string
 	Task        string
 	Description string
 	Icon        string
 	AssignedTo  []*User
 	WorkspaceID string
+	Status      string
 	Priority    string
 	Progress    string
 
@@ -28,6 +30,7 @@ type UpdateTask struct {
 	Description string
 	AssignedTo  []User
 	WorkspaceID string
+	Status      string
 	Priority    string
 	Progress    string
 

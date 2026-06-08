@@ -16,6 +16,7 @@ type Repository interface {
 	UpdateDescription(ctx context.Context, id string, description string) error
 	UpdatePriority(ctx context.Context, id string, priority string) error
 	UpdateProgress(ctx context.Context, id string, progress string) error
+	UpdateStatus(ctx context.Context, id string, status string) error
 	UpdateAssignees(ctx context.Context, id string, assignedTo []string) error
 	Delete(ctx context.Context, id string) error
 

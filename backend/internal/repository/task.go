@@ -3,10 +3,14 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
+	domaintask "github.com/Star1ex/starlex-site/internal/domain/task"
+	domainworkspace "github.com/Star1ex/starlex-site/internal/domain/workspace"
 	"gorm.io/gorm"
+	"gorm.io/gorm/clause"
 )
 
 // orderByPosition orders a preloaded association by its position column so
@@ -15,12 +19,21 @@ func orderByPosition(db *gorm.DB) *gorm.DB {
 	return db.Order("position ASC")
 }
 
+func stringValue(value *string) string {
+	if value == nil {
+		return ""
+	}
+	return *value
+}
+
 type TaskModel struct {
-	ID          string `gorm:"primaryKey"`
-	Task        string `gorm:"not null"`
-	Description string `gorm:"not null"`
-	Icon        string `gorm:"not null;default:''"`
-	Priority    string `gorm:"not null"`
+	ID          string  `gorm:"primaryKey"`
+	Key         *string `gorm:"uniqueIndex;default:null"`
+	Task        string  `gorm:"not null"`
+	Description string  `gorm:"not null"`
+	Icon        string  `gorm:"not null;default:''"`
+	Status      string  `gorm:"not null;default:'todo';index"`
+	Priority    string  `gorm:"not null"`
 	Progress    string
 	Assigned    []UserModel `gorm:"many2many:task_users"`
 
@@ -61,6 +74,7 @@ func toTaskDomain(m TaskModel) *entity.Task {
 
 	return &entity.Task{
 		ID:          m.ID,
+		Key:         stringValue(m.Key),
 		Task:        m.Task,
 		Description: m.Description,
 		Icon:        m.Icon,
@@ -72,6 +86,7 @@ func toTaskDomain(m TaskModel) *entity.Task {
 		ProjectID:   m.ProjectID,
 		Position:    m.Position,
 		Subtasks:    toSubtaskDomains(m.Subtasks),
+		Status:      m.Status,
 		Priority:    m.Priority,
 		Progress:    m.Progress,
 		CreatedAt:   m.CreatedAt,
@@ -111,14 +126,21 @@ func fromTaskDomain(t *entity.Task) *TaskModel {
 	for i, u := range t.AssignedTo {
 		users[i] = *fromDomain(u)
 	}
+	var key *string
+	if t.Key != "" {
+		key = &t.Key
+	}
 
 	return &TaskModel{
 		ID:          t.ID,
+		Key:         key,
 		Task:        t.Task,
 		Description: t.Description,
 		Icon:        t.Icon,
 		Assigned:    users,
+		Status:      t.Status,
 		Priority:    t.Priority,
+		Progress:    t.Progress,
 		OwnerID:     t.OwnerID,
 		FolderID:    t.FolderID,
 		SprintID:    t.SprintID,
@@ -132,7 +154,49 @@ func fromTaskDomain(t *entity.Task) *TaskModel {
 
 func (r *TaskRepository) Create(ctx context.Context, task *entity.Task) error {
 	model := fromTaskDomain(task)
-	return r.db.WithContext(ctx).Create(model).Error
+	return r.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+		if task.Status == "" {
+			task.Status = string(domaintask.StatusTodo)
+			model.Status = task.Status
+		}
+		if model.WorkspaceID != nil && *model.WorkspaceID != "" {
+			key, err := r.nextWorkspaceTaskKey(ctx, tx, *model.WorkspaceID)
+			if err != nil {
+				return err
+			}
+			task.Key = key
+			model.Key = &task.Key
+		}
+		return tx.WithContext(ctx).Create(model).Error
+	})
+}
+
+func (r *TaskRepository) nextWorkspaceTaskKey(ctx context.Context, tx *gorm.DB, workspaceID string) (string, error) {
+	var workspace WorkspaceModel
+	if err := tx.WithContext(ctx).
+		Clauses(clause.Locking{Strength: "UPDATE"}).
+		Select("id", "name", "key_prefix", "task_seq").
+		First(&workspace, "id = ?", workspaceID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return "", ErrWorkspaceNotFound
+		}
+		return "", err
+	}
+
+	prefix := workspace.KeyPrefix
+	if prefix == "" {
+		prefix = domainworkspace.DeriveKeyPrefix(workspace.Name)
+	}
+	nextSeq := workspace.TaskSeq + 1
+	if err := tx.WithContext(ctx).Model(&WorkspaceModel{}).
+		Where("id = ?", workspaceID).
+		Updates(map[string]interface{}{
+			"key_prefix": prefix,
+			"task_seq":   nextSeq,
+		}).Error; err != nil {
+		return "", err
+	}
+	return fmt.Sprintf("%s-%d", prefix, nextSeq), nil
 }
 
 func (r *TaskRepository) Get(ctx context.Context, id string) (*entity.Task, error) {
@@ -153,7 +217,7 @@ func (r *TaskRepository) Get(ctx context.Context, id string) (*entity.Task, erro
 
 func (r *TaskRepository) Update(ctx context.Context, id string, data *entity.Task, assigned []string) (*entity.Task, error) {
 	var task TaskModel
-	if err := r.db.Preload("Assigned").Where("id = ?", id).First(&task).Error; err != nil {
+	if err := r.db.WithContext(ctx).Preload("Assigned").Where("id = ?", id).First(&task).Error; err != nil {
 		return nil, err
 	}
 
@@ -169,6 +233,9 @@ func (r *TaskRepository) Update(ctx context.Context, id string, data *entity.Tas
 	}
 	if data.Progress != "" {
 		updates["progress"] = data.Progress
+	}
+	if data.Status != "" {
+		updates["status"] = data.Status
 	}
 
 	if len(updates) > 0 {
@@ -190,15 +257,15 @@ func (r *TaskRepository) Update(ctx context.Context, id string, data *entity.Tas
 
 	if assigned != nil {
 		var users []UserModel
-		if err := r.db.Where("id IN ?", assigned).Find(&users).Error; err != nil {
+		if err := r.db.WithContext(ctx).Where("id IN ?", assigned).Find(&users).Error; err != nil {
 			return nil, err
 		}
-		if err := r.db.Model(&task).Association("Assigned").Replace(users); err != nil {
+		if err := r.db.WithContext(ctx).Model(&task).Association("Assigned").Replace(users); err != nil {
 			return nil, err
 		}
 	}
 
-	if err := r.db.Preload("Assigned").Where("id = ?", id).First(&task).Error; err != nil {
+	if err := r.db.WithContext(ctx).Preload("Assigned").Where("id = ?", id).First(&task).Error; err != nil {
 		return nil, err
 	}
 
@@ -260,6 +327,17 @@ func (r *TaskRepository) UpdateProgress(ctx context.Context, id string, progress
 	return nil
 }
 
+func (r *TaskRepository) UpdateStatus(ctx context.Context, id string, status string) error {
+	result := r.db.WithContext(ctx).Model(&TaskModel{}).Where("id = ?", id).Update("status", status)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
 func (r *TaskRepository) UpdateAssignees(ctx context.Context, id string, assigned []string) error {
 	var task TaskModel
 	if err := r.db.WithContext(ctx).Where("id = ?", id).First(&task).Error; err != nil {
@@ -282,14 +360,14 @@ func (r *TaskRepository) UpdateAssignees(ctx context.Context, id string, assigne
 
 func (r *TaskRepository) Delete(ctx context.Context, id string) error {
 	var task TaskModel
-	if err := r.db.Preload("Assigned").Where("id = ?", id).First(&task).Error; err != nil {
+	if err := r.db.WithContext(ctx).Preload("Assigned").Where("id = ?", id).First(&task).Error; err != nil {
 		return err
 	}
-	if err := r.db.Model(&task).Association("Assigned").Clear(); err != nil {
+	if err := r.db.WithContext(ctx).Model(&task).Association("Assigned").Clear(); err != nil {
 		return err
 	}
 
-	return r.db.Delete(&task).Error
+	return r.db.WithContext(ctx).Delete(&task).Error
 }
 
 func (r *TaskRepository) GetWorkspaceTasks(ctx context.Context, workspaceID string) ([]*entity.Task, error) {
@@ -339,10 +417,10 @@ func (r *TaskRepository) GetFolderTasks(ctx context.Context, folderID string) ([
 
 func (r *TaskRepository) MoveTaskToFolder(ctx context.Context, taskID, folderID string) error {
 	var task TaskModel
-	if err := r.db.Preload("Assigned").Where("id = ?", taskID).First(&task).Error; err != nil {
+	if err := r.db.WithContext(ctx).Preload("Assigned").Where("id = ?", taskID).First(&task).Error; err != nil {
 		return err
 	}
-	if err := r.db.Model(&task).Update("folder_id", folderID).Error; err != nil {
+	if err := r.db.WithContext(ctx).Model(&task).Update("folder_id", folderID).Error; err != nil {
 		return err
 	}
 	return nil
