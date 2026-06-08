@@ -1,9 +1,10 @@
 import React, { Suspense, useEffect, useRef, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { ChevronDown, Layers } from 'lucide-react';
 import { useDebounce } from '@/shared/hooks/useDebounce.js';
 import { taskService, userService } from '@/services/api/index.js';
 import { useAuth } from '@/contexts/AuthContext.js';
+import { useWorkspace } from '@/contexts/WorkspaceContext.js';
 import type { CreateTaskRequest, TaskDTO, WorkspaceDTO } from '@/types/dto.js';
 import { useTasks } from '@/hooks/useTasks.js';
 import { showToast } from '@/shared/lib/toast.js';
@@ -105,13 +106,18 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { userId } = useAuth();
+  const { activeWorkspaceId } = useWorkspace();
+  const [searchParams] = useSearchParams();
   const tasksHook = useTasks();
 
   const locationState = location.state as Record<string, unknown> | null;
 
   // ── new-task workspace / project context ──
   const [workspaceId, setWorkspaceId] = useState<string | null>(
-    (locationState?.workspace_id as string) ?? null
+    (locationState?.workspace_id as string)
+    ?? searchParams.get('workspaceId')
+    ?? activeWorkspaceId
+    ?? null
   );
   const [projectId] = useState<string | null>(
     (locationState?.project_id as string) ?? null
@@ -122,15 +128,15 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
   // Lazily load workspaces when creating a new task and no workspace preset
   useEffect(() => {
     if (!isNew) return;
-    if (workspaceId) return; // already have one from state
+    if (workspaceId) return; // already have one from context/query/state
     let cancelled = false;
     userService.getWorkspaces().then(ws => {
       if (cancelled) return;
       setWorkspaces(ws);
-      if (ws.length === 1) setWorkspaceId(ws[0].id); // auto-select sole workspace
+      if (ws.length === 1) setWorkspaceId(ws[0].id);
     }).catch(() => {});
     return () => { cancelled = true; };
-  }, [isNew]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isNew, workspaceId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── task editing state ──
   const [task, setTask] = useState<Partial<TaskDTO>>({
