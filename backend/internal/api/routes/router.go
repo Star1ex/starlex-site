@@ -118,6 +118,7 @@ func setupWorkspaceRoutes(api fiber.Router, h *handlers.Handlers) {
 	workspaces.Patch("/:id/name", h.PatchWorkspaceName)
 	workspaces.Patch("/:id/description", h.PatchWorkspaceDescription)
 	workspaces.Patch("/:id/icon", h.PatchWorkspaceIcon)
+	workspaces.Patch("/:id/color", h.PatchWorkspaceColor)
 
 	workspaces.Get("/:id/users", h.GetUsers)
 	workspaces.Post("/:id/users", h.AddUserToWorkspace)

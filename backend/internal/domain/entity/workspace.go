@@ -5,6 +5,7 @@ type Workspace struct {
 	Name         string
 	Description  string
 	Icon         string
+	Color        string
 	OwnerID      string
 	KeyPrefix    string
 	TaskSeq      int64

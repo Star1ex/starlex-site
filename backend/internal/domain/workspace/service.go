@@ -14,6 +14,7 @@ type Service interface {
 	UpdateWorkspaceName(ctx context.Context, workspaceID, name, userID string) error
 	UpdateWorkspaceDescription(ctx context.Context, workspaceID, description, userID string) error
 	UpdateWorkspaceIcon(ctx context.Context, workspaceID, icon, userID string) error
+	UpdateWorkspaceColor(ctx context.Context, workspaceID, color, userID string) error
 	// Retrieves all users from workspace
 	GetUsers(ctx context.Context, workspaceId string) ([]*entity.User, error)
 	ListMembers(ctx context.Context, workspaceID string) ([]*Member, error)

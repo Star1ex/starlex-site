@@ -19,6 +19,7 @@ type WorkspaceResponse struct {
 	Name         string `json:"name"`
 	Description  string `json:"description"`
 	Icon         string `json:"icon"`
+	Color        string `json:"color"`
 	Role         string `json:"role"`
 	MemberCount  int    `json:"member_count"`
 	ProjectCount int    `json:"project_count"`
@@ -28,6 +29,10 @@ type UpdateWorkspaceIcon struct {
 	Icon *string `json:"icon"`
 }
 
+type UpdateWorkspaceColor struct {
+	Color *string `json:"color"`
+}
+
 func ToWorkspaceResponse(workspace *entity.Workspace) *WorkspaceResponse {
 	return &WorkspaceResponse{
 		WorkspaceID:  workspace.ID,
@@ -35,6 +40,7 @@ func ToWorkspaceResponse(workspace *entity.Workspace) *WorkspaceResponse {
 		Name:         workspace.Name,
 		Description:  workspace.Description,
 		Icon:         workspace.Icon,
+		Color:        workspace.Color,
 		Role:         workspace.Role,
 		MemberCount:  workspace.MemberCount,
 		ProjectCount: workspace.ProjectCount,
@@ -81,6 +87,7 @@ func ToWorkspacesResponse(workspaces []*entity.Workspace) []WorkspaceResponse {
 			Name:         workspace.Name,
 			Description:  workspace.Description,
 			Icon:         workspace.Icon,
+			Color:        workspace.Color,
 			Role:         workspace.Role,
 			MemberCount:  workspace.MemberCount,
 			ProjectCount: workspace.ProjectCount,

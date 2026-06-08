@@ -3,8 +3,10 @@ package service
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
+	domainlabel "github.com/Star1ex/starlex-site/internal/domain/label"
 	"github.com/Star1ex/starlex-site/internal/domain/user"
 	"github.com/Star1ex/starlex-site/internal/domain/workspace"
 	"github.com/Star1ex/starlex-site/internal/repository"
@@ -35,6 +37,7 @@ func (s *WorkspaceService) CreateWorkspace(ctx context.Context, name, descriptio
 		ID:           newId,
 		Name:         name,
 		Description:  description,
+		Color:        "#6366f1",
 		OwnerID:      userID,
 		KeyPrefix:    workspace.DeriveKeyPrefix(name),
 		Role:         string(workspace.RoleOwner),
@@ -82,6 +85,17 @@ func (s *WorkspaceService) UpdateWorkspaceIcon(ctx context.Context, workspaceID,
 		return err
 	}
 	return s.workspaceRepo.UpdateIcon(ctx, workspaceID, icon)
+}
+
+func (s *WorkspaceService) UpdateWorkspaceColor(ctx context.Context, workspaceID, color, userID string) error {
+	if err := s.requireRole(ctx, workspaceID, userID, workspace.RoleAdmin); err != nil {
+		return err
+	}
+	color = strings.TrimSpace(color)
+	if !hexColorPattern.MatchString(color) {
+		return domainlabel.ErrInvalidColor
+	}
+	return s.workspaceRepo.UpdateColor(ctx, workspaceID, color)
 }
 
 func (s *WorkspaceService) GetUsers(ctx context.Context, workspaceId string) ([]*entity.User, error) {

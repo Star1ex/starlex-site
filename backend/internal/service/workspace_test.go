@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
+	domainlabel "github.com/Star1ex/starlex-site/internal/domain/label"
 	"github.com/Star1ex/starlex-site/internal/domain/user"
 	"github.com/Star1ex/starlex-site/internal/domain/workspace"
 	"github.com/Star1ex/starlex-site/internal/repository"
@@ -20,6 +21,7 @@ type workspaceRoleRepo struct {
 	added   map[string]workspace.Role
 	updated map[string]workspace.Role
 	removed map[string]bool
+	colors  map[string]string
 }
 
 func newWorkspaceRoleRepo() *workspaceRoleRepo {
@@ -30,6 +32,7 @@ func newWorkspaceRoleRepo() *workspaceRoleRepo {
 		added:   map[string]workspace.Role{},
 		updated: map[string]workspace.Role{},
 		removed: map[string]bool{},
+		colors:  map[string]string{},
 	}
 }
 
@@ -77,6 +80,11 @@ func (m *workspaceRoleRepo) RemoveUserFromWorkspace(_ context.Context, workspace
 	}
 	delete(m.roles[workspaceID], userID)
 	m.removed[userID] = true
+	return nil
+}
+
+func (m *workspaceRoleRepo) UpdateColor(_ context.Context, workspaceID string, color string) error {
+	m.colors[workspaceID] = color
 	return nil
 }
 
@@ -327,6 +335,36 @@ func TestWorkspaceServiceRemoveMemberGuards(t *testing.T) {
 			}
 			if repo.removed["target"] != tt.wantRemoved {
 				t.Fatalf("want removed=%v, got %v", tt.wantRemoved, repo.removed["target"])
+			}
+		})
+	}
+}
+
+func TestWorkspaceServiceUpdateWorkspaceColor(t *testing.T) {
+	tests := []struct {
+		name          string
+		requesterRole workspace.Role
+		color         string
+		wantErr       error
+		wantColor     string
+	}{
+		{name: "admin can update color", requesterRole: workspace.RoleAdmin, color: "#22aa99", wantColor: "#22aa99"},
+		{name: "guest cannot update color", requesterRole: workspace.RoleGuest, color: "#22aa99", wantErr: ErrWorkspaceForbidden},
+		{name: "invalid color rejected", requesterRole: workspace.RoleAdmin, color: "blue", wantErr: domainlabel.ErrInvalidColor},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := newWorkspaceRoleRepo()
+			repo.roles["ws1"] = map[string]workspace.Role{"requester": tt.requesterRole}
+			service := NewWorkspaceService(repo, &workspaceUserRepo{})
+
+			err := service.UpdateWorkspaceColor(context.Background(), "ws1", tt.color, "requester")
+			if !errors.Is(err, tt.wantErr) {
+				t.Fatalf("want error %v, got %v", tt.wantErr, err)
+			}
+			if repo.colors["ws1"] != tt.wantColor {
+				t.Fatalf("want color %q, got %q", tt.wantColor, repo.colors["ws1"])
 			}
 		})
 	}

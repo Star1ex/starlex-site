@@ -71,8 +71,9 @@ func ToInviteWorkspacePreview(workspace *entity.Workspace) *InviteWorkspacePrevi
 		return nil
 	}
 	return &InviteWorkspacePreview{
-		ID:   workspace.ID,
-		Name: workspace.Name,
-		Icon: workspace.Icon,
+		ID:    workspace.ID,
+		Name:  workspace.Name,
+		Icon:  workspace.Icon,
+		Color: workspace.Color,
 	}
 }

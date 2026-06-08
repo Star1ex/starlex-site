@@ -205,6 +205,55 @@ func (h *Handlers) PatchWorkspaceIcon(ctx *fiber.Ctx) error {
 	return ctx.SendStatus(fiber.StatusNoContent)
 }
 
+// PatchWorkspaceColor godoc
+// @Summary      Update workspace color
+// @Description  Updates the workspace color. Requires admin or owner.
+// @Tags         workspace
+// @Accept       json
+// @Produce      json
+// @Param        id     path      string                    true  "Workspace ID"
+// @Param        color  body      dto.UpdateWorkspaceColor  true  "Workspace color"
+// @Success      204
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      403  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Security     BearerAuth
+// @Router       /workspaces/{id}/color [patch]
+func (h *Handlers) PatchWorkspaceColor(ctx *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+
+	workspaceID := ctx.Params("id")
+	if workspaceID == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "workspace id is required"})
+	}
+
+	var input dto.UpdateWorkspaceColor
+	if err := ctx.BodyParser(&input); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
+	}
+	if input.Color == nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "color field is required"})
+	}
+
+	err := h.workspaceService.UpdateWorkspaceColor(ctx.Context(), workspaceID, *input.Color, userID)
+	if err != nil {
+		switch {
+		case errors.Is(err, repository.ErrWorkspaceNotFound):
+			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "workspace not found"})
+		case errors.Is(err, appservice.ErrWorkspaceForbidden):
+			return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
+		default:
+			return h.writeLabelError(ctx, err)
+		}
+	}
+
+	return ctx.SendStatus(fiber.StatusNoContent)
+}
+
 // Swagger disabled: GetUsers godoc
 // Swagger disabled: Summary 		Get all users from workspace
 // Swagger disabled: Description 	Return all users from workspace

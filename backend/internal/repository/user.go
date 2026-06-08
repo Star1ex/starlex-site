@@ -190,6 +190,7 @@ func (r *UserRepository) GetUserWorkspaces(ctx context.Context, userID string) (
 		Name         string
 		Description  string
 		Icon         string
+		Color        string
 		OwnerID      string
 		Role         string
 		MemberCount  int
@@ -199,7 +200,7 @@ func (r *UserRepository) GetUserWorkspaces(ctx context.Context, userID string) (
 	var rows []workspaceRow
 	err := r.db.WithContext(ctx).
 		Table("workspace_models AS w").
-		Select(`w.id, w.name, w.description, w.icon, w.owner_id, wm.role,
+		Select(`w.id, w.name, w.description, w.icon, w.color, w.owner_id, wm.role,
 			(SELECT COUNT(*) FROM workspace_members WHERE workspace_id = w.id) AS member_count,
 			(SELECT COUNT(*) FROM project_models WHERE workspace_id = w.id) AS project_count`).
 		Joins("JOIN workspace_members wm ON wm.workspace_id = w.id").
@@ -217,6 +218,7 @@ func (r *UserRepository) GetUserWorkspaces(ctx context.Context, userID string) (
 			Name:         row.Name,
 			Description:  row.Description,
 			Icon:         row.Icon,
+			Color:        row.Color,
 			OwnerID:      row.OwnerID,
 			Role:         row.Role,
 			MemberCount:  row.MemberCount,

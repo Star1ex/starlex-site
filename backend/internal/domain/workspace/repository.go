@@ -26,5 +26,6 @@ type Repository interface {
 	UpdateName(ctx context.Context, workspaceID string, name string) error
 	UpdateDescription(ctx context.Context, workspaceID string, description string) error
 	UpdateIcon(ctx context.Context, workspaceID string, icon string) error
+	UpdateColor(ctx context.Context, workspaceID string, color string) error
 	Delete(ctx context.Context, workspaceID string) error
 }

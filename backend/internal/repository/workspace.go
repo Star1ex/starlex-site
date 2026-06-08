@@ -16,6 +16,7 @@ type WorkspaceModel struct {
 	Name        string      `gorm:"unique;not null"`
 	Description string      `gorm:"not null"`
 	Icon        string      `gorm:"not null;default:''"`
+	Color       string      `gorm:"not null;default:'#6366f1'"`
 	OwnerID     string      `gorm:"not null"`
 	KeyPrefix   string      `gorm:"not null;default:''"`
 	TaskSeq     int64       `gorm:"not null;default:0"`
@@ -41,6 +42,7 @@ func fromDomainToWorkspace(workspace *entity.Workspace) *WorkspaceModel {
 		Name:        workspace.Name,
 		Description: workspace.Description,
 		Icon:        workspace.Icon,
+		Color:       workspace.Color,
 		OwnerID:     workspace.OwnerID,
 		KeyPrefix:   workspace.KeyPrefix,
 		TaskSeq:     workspace.TaskSeq,
@@ -53,6 +55,7 @@ func toWorkspaceDomain(Workspace *WorkspaceModel) *entity.Workspace {
 		Name:        Workspace.Name,
 		Description: Workspace.Description,
 		Icon:        Workspace.Icon,
+		Color:       Workspace.Color,
 		OwnerID:     Workspace.OwnerID,
 		KeyPrefix:   Workspace.KeyPrefix,
 		TaskSeq:     Workspace.TaskSeq,
@@ -164,6 +167,17 @@ func (t *WorkspaceRepository) UpdateName(ctx context.Context, workspaceID string
 
 func (t *WorkspaceRepository) UpdateIcon(ctx context.Context, workspaceID string, icon string) error {
 	result := t.db.WithContext(ctx).Model(&WorkspaceModel{}).Where("id = ?", workspaceID).Update("icon", icon)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return ErrWorkspaceNotFound
+	}
+	return nil
+}
+
+func (t *WorkspaceRepository) UpdateColor(ctx context.Context, workspaceID string, color string) error {
+	result := t.db.WithContext(ctx).Model(&WorkspaceModel{}).Where("id = ?", workspaceID).Update("color", color)
 	if result.Error != nil {
 		return result.Error
 	}
