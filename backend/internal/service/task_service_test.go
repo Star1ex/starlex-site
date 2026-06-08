@@ -10,6 +10,7 @@ import (
 	"github.com/Star1ex/starlex-site/internal/domain/task"
 	"github.com/Star1ex/starlex-site/internal/domain/user"
 	"github.com/Star1ex/starlex-site/internal/domain/workspace"
+	"github.com/Star1ex/starlex-site/internal/events"
 )
 
 // --- mocks (embed interfaces so only used methods need implementing) ---
@@ -221,5 +222,34 @@ func TestUpdateTaskDueDate(t *testing.T) {
 	}
 	if tr.dueDateUpdates["task1"] != nil {
 		t.Fatalf("due date was not cleared: %#v", tr.dueDateUpdates["task1"])
+	}
+}
+
+func TestCreateWorkspaceTaskPublishesRealtimeEvent(t *testing.T) {
+	tr := &mockTaskRepo{statusUpdates: map[string]string{}, dueDateUpdates: map[string]*time.Time{}}
+	wr := &mockTaskWorkspaceRepo{existing: map[string]*entity.Workspace{
+		"ws1": {ID: "ws1", OwnerID: "owner"},
+	}}
+	ur := &mockTaskUserRepo{byID: map[string]*entity.User{}}
+	bus := events.NewBus()
+	received := make(chan events.WorkspaceMutationEvent, 1)
+	bus.Subscribe(events.WorkspaceMutationEventName, func(event events.Event) {
+		if mutation, ok := event.(events.WorkspaceMutationEvent); ok {
+			received <- mutation
+		}
+	})
+	svc := NewTaskService(tr, ur, wr, bus)
+
+	if err := svc.CreateWorkspaceTask(context.Background(), "ws1", nil, &entity.Task{Task: "x"}, "actor"); err != nil {
+		t.Fatalf("create task failed: %v", err)
+	}
+
+	select {
+	case event := <-received:
+		if event.Type != "task.created" || event.WorkspaceID != "ws1" || event.ActorID != "actor" {
+			t.Fatalf("unexpected event: %#v", event)
+		}
+	case <-time.After(time.Second):
+		t.Fatalf("timed out waiting for task.created event")
 	}
 }

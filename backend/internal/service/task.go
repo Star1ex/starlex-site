@@ -9,6 +9,7 @@ import (
 	taskdomain "github.com/Star1ex/starlex-site/internal/domain/task"
 	"github.com/Star1ex/starlex-site/internal/domain/user"
 	"github.com/Star1ex/starlex-site/internal/domain/workspace"
+	"github.com/Star1ex/starlex-site/internal/events"
 	"github.com/google/uuid"
 )
 
@@ -16,14 +17,19 @@ type TaskService struct {
 	taskRepo      taskdomain.Repository
 	userRepo      user.Repository
 	workspaceRepo workspace.Repository
+	bus           *events.Bus
 }
 
-func NewTaskService(taskRepo taskdomain.Repository, userRepo user.Repository, workspaceRepo workspace.Repository) *TaskService {
-	return &TaskService{
+func NewTaskService(taskRepo taskdomain.Repository, userRepo user.Repository, workspaceRepo workspace.Repository, bus ...*events.Bus) *TaskService {
+	service := &TaskService{
 		taskRepo:      taskRepo,
 		userRepo:      userRepo,
 		workspaceRepo: workspaceRepo,
 	}
+	if len(bus) > 0 {
+		service.bus = bus[0]
+	}
+	return service
 }
 
 func (s *TaskService) CreateWorkspaceTask(
@@ -64,7 +70,11 @@ func (s *TaskService) CreateWorkspaceTask(
 	task.ID = uuid.New().String()
 	task.Status = string(status)
 
-	return s.taskRepo.Create(ctx, task)
+	if err := s.taskRepo.Create(ctx, task); err != nil {
+		return err
+	}
+	s.publishTaskEvent("task.created", task, userId)
+	return nil
 }
 
 // CreateProjectTask creates a task attached to a project. Project membership
@@ -93,7 +103,11 @@ func (s *TaskService) CreateProjectTask(
 	task.ProjectID = &pid
 	task.ID = uuid.New().String()
 	task.Status = string(status)
-	return s.taskRepo.Create(ctx, task)
+	if err := s.taskRepo.Create(ctx, task); err != nil {
+		return err
+	}
+	s.publishTaskEvent("task.created", task, "")
+	return nil
 }
 
 func (s *TaskService) GetProjectTasks(ctx context.Context, projectID string) ([]*entity.Task, error) {
@@ -112,7 +126,12 @@ func (s *TaskService) Update(ctx context.Context, id string, data *entity.Task, 
 		}
 		data.Status = string(status)
 	}
-	return s.taskRepo.Update(ctx, id, data, assignedTo)
+	updated, err := s.taskRepo.Update(ctx, id, data, assignedTo)
+	if err != nil {
+		return nil, err
+	}
+	s.publishTaskEvent("task.updated", updated, "")
+	return updated, nil
 }
 
 func (s *TaskService) GetWorkspaceTasks(ctx context.Context, workspaceID string) ([]*entity.Task, error) {
@@ -127,23 +146,40 @@ func (s *TaskService) UpdateTaskProgress(ctx context.Context, taskID, progress s
 	if err := s.taskRepo.UpdateProgress(ctx, taskID, progress); err != nil {
 		return nil, err
 	}
-	return s.taskRepo.Get(ctx, taskID)
+	updated, err := s.taskRepo.Get(ctx, taskID)
+	if err != nil {
+		return nil, err
+	}
+	s.publishTaskEvent("task.updated", updated, "")
+	return updated, nil
 }
 
 func (s *TaskService) UpdateTaskIcon(ctx context.Context, taskID, icon string) error {
-	return s.taskRepo.UpdateIcon(ctx, taskID, icon)
+	if err := s.taskRepo.UpdateIcon(ctx, taskID, icon); err != nil {
+		return err
+	}
+	return s.publishTaskUpdated(ctx, taskID)
 }
 
 func (s *TaskService) UpdateTaskTitle(ctx context.Context, taskID, title string) error {
-	return s.taskRepo.UpdateTitle(ctx, taskID, title)
+	if err := s.taskRepo.UpdateTitle(ctx, taskID, title); err != nil {
+		return err
+	}
+	return s.publishTaskUpdated(ctx, taskID)
 }
 
 func (s *TaskService) UpdateTaskDescription(ctx context.Context, taskID, description string) error {
-	return s.taskRepo.UpdateDescription(ctx, taskID, description)
+	if err := s.taskRepo.UpdateDescription(ctx, taskID, description); err != nil {
+		return err
+	}
+	return s.publishTaskUpdated(ctx, taskID)
 }
 
 func (s *TaskService) UpdateTaskPriority(ctx context.Context, taskID, priority string) error {
-	return s.taskRepo.UpdatePriority(ctx, taskID, priority)
+	if err := s.taskRepo.UpdatePriority(ctx, taskID, priority); err != nil {
+		return err
+	}
+	return s.publishTaskUpdated(ctx, taskID)
 }
 
 func (s *TaskService) UpdateTaskStatus(ctx context.Context, taskID, statusValue string) error {
@@ -151,23 +187,43 @@ func (s *TaskService) UpdateTaskStatus(ctx context.Context, taskID, statusValue 
 	if err != nil {
 		return err
 	}
-	return s.taskRepo.UpdateStatus(ctx, taskID, string(status))
+	if err := s.taskRepo.UpdateStatus(ctx, taskID, string(status)); err != nil {
+		return err
+	}
+	return s.publishTaskUpdated(ctx, taskID)
 }
 
 func (s *TaskService) UpdateTaskDueDate(ctx context.Context, taskID string, dueDate *time.Time) error {
-	return s.taskRepo.UpdateDueDate(ctx, taskID, dueDate)
+	if err := s.taskRepo.UpdateDueDate(ctx, taskID, dueDate); err != nil {
+		return err
+	}
+	return s.publishTaskUpdated(ctx, taskID)
 }
 
 func (s *TaskService) UpdateTaskAssignees(ctx context.Context, taskID string, assignedTo []string) error {
-	return s.taskRepo.UpdateAssignees(ctx, taskID, assignedTo)
+	if err := s.taskRepo.UpdateAssignees(ctx, taskID, assignedTo); err != nil {
+		return err
+	}
+	return s.publishTaskUpdated(ctx, taskID)
 }
 
 func (s *TaskService) UpdateTaskLabels(ctx context.Context, taskID string, labelIDs []string) error {
-	return s.taskRepo.UpdateLabels(ctx, taskID, labelIDs)
+	if err := s.taskRepo.UpdateLabels(ctx, taskID, labelIDs); err != nil {
+		return err
+	}
+	return s.publishTaskUpdated(ctx, taskID)
 }
 
 func (s *TaskService) Delete(ctx context.Context, id string) error {
-	return s.taskRepo.Delete(ctx, id)
+	var taskEntity *entity.Task
+	if s.bus != nil {
+		taskEntity, _ = s.taskRepo.Get(ctx, id)
+	}
+	if err := s.taskRepo.Delete(ctx, id); err != nil {
+		return err
+	}
+	s.publishTaskEvent("task.deleted", taskEntity, "")
+	return nil
 }
 
 func (s *TaskService) GetFolderTasks(ctx context.Context, folderID string) ([]*entity.Task, error) {
@@ -175,9 +231,40 @@ func (s *TaskService) GetFolderTasks(ctx context.Context, folderID string) ([]*e
 }
 
 func (s *TaskService) MoveTaskToFolder(ctx context.Context, taskID, folderID string) error {
-	return s.taskRepo.MoveTaskToFolder(ctx, taskID, folderID)
+	if err := s.taskRepo.MoveTaskToFolder(ctx, taskID, folderID); err != nil {
+		return err
+	}
+	return s.publishTaskUpdated(ctx, taskID)
 }
 
 func (s *TaskService) SearchInWorkspaces(ctx context.Context, workspaceIDs []string, query string) ([]*entity.Task, error) {
 	return s.taskRepo.SearchInWorkspaces(ctx, workspaceIDs, query)
+}
+
+func (s *TaskService) publishTaskUpdated(ctx context.Context, taskID string) error {
+	if s.bus == nil {
+		return nil
+	}
+	taskEntity, err := s.taskRepo.Get(ctx, taskID)
+	if err != nil {
+		return err
+	}
+	s.publishTaskEvent("task.updated", taskEntity, "")
+	return nil
+}
+
+func (s *TaskService) publishTaskEvent(eventType string, taskEntity *entity.Task, actorID string) {
+	if s.bus == nil || taskEntity == nil || taskEntity.WorkspaceID == "" {
+		return
+	}
+	s.bus.Publish(events.WorkspaceMutationEvent{
+		Type:        eventType,
+		WorkspaceID: taskEntity.WorkspaceID,
+		ActorID:     actorID,
+		OccurredAt:  time.Now().UTC(),
+		Payload: map[string]string{
+			"task_id": taskEntity.ID,
+			"key":     taskEntity.Key,
+		},
+	})
 }

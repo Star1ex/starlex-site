@@ -4,6 +4,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Star1ex/starlex-site/internal/events"
 	"github.com/gofiber/contrib/websocket"
 )
 
@@ -105,5 +106,21 @@ func NewClient(conn *websocket.Conn, hub *Hub, workspaceID, userID string) *Clie
 		WorkspaceID: workspaceID,
 		UserID:      userID,
 		Send:        make(chan Envelope, sendBufferSize),
+	}
+}
+
+func WorkspaceMutationHandler(hub *Hub) events.Handler {
+	return func(event events.Event) {
+		mutation, ok := event.(events.WorkspaceMutationEvent)
+		if !ok || hub == nil || mutation.WorkspaceID == "" {
+			return
+		}
+		hub.Broadcast(mutation.WorkspaceID, Envelope{
+			Type:        mutation.Type,
+			WorkspaceID: mutation.WorkspaceID,
+			Payload:     mutation.Payload,
+			ActorID:     mutation.ActorID,
+			TS:          mutation.OccurredAt,
+		})
 	}
 }

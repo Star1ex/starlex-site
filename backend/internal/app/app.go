@@ -111,6 +111,10 @@ func StartServer() {
 		"user.login",
 		handlers.UserLoginTelegramHandler(tg),
 	)
+	bus.Subscribe(
+		events.WorkspaceMutationEventName,
+		realtime.WorkspaceMutationHandler(realtimeHub),
+	)
 
 	userRepo := repository.NewUserRepository(db.DB)
 	workspaceRepo := repository.NewWorkspaceRepository(db.DB)
@@ -140,7 +144,7 @@ func StartServer() {
 	userService := service.NewUserService(userRepo, storage, bus)
 	workspaceService := service.NewWorkspaceService(workspaceRepo, userRepo)
 	projectService := service.NewProjectService(projectRepo, workspaceRepo, userRepo)
-	taskService := service.NewTaskService(taskRepo, userRepo, workspaceRepo)
+	taskService := service.NewTaskService(taskRepo, userRepo, workspaceRepo, bus)
 	labelService := service.NewLabelService(labelRepo, workspaceRepo)
 	folderService := service.NewFolderService(folderRepo)
 	sprintService := service.NewSprintService(sprintRepo)
