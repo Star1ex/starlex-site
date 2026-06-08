@@ -119,4 +119,19 @@ export const workspaceService = {
   async revokeInvite(inviteId: string): Promise<void> {
     await httpClient.delete(`/api/invites/${inviteId}`);
   },
+
+  async patchWorkspaceSettings(
+    workspaceId: string,
+    settings: {
+      name?: string;
+      description?: string;
+      icon?: string;
+      color?: string;
+      key_prefix?: string;
+      default_task_status?: string;
+      member_default_role?: string;
+    },
+  ): Promise<void> {
+    await httpClient.patch(`/api/workspaces/${workspaceId}/settings`, settings);
+  },
 };

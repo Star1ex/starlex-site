@@ -2,18 +2,19 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
-import { Palette, Shield, User, SlidersHorizontal, LifeBuoy, Info, X } from 'lucide-react';
+import { Palette, Shield, User, SlidersHorizontal, LifeBuoy, Info, X, Building2 } from 'lucide-react';
 import { userService } from '@/services/api/index.js';
 import { Appearance } from '@/pages/settings/Appearance.js';
 import { ChangePassword } from '@/pages/settings/ChangePassword.js';
 import { ConnectedAccounts } from '@/pages/settings/ConnectedAccounts.js';
 import { Contributing } from '@/pages/settings/Contributing.js';
 import { Support } from '@/pages/settings/Support.js';
+import { WorkspaceSettings } from '@/pages/settings/WorkspaceSettings.js';
 import AboutUs from '@/pages/about-us/AboutUs.js';
 import Avatar from '@/shared/ui/Avatar.js';
 import type { User as UserEntity } from '@/entities/types.js';
 
-type TabId = 'appearance' | 'accounts' | 'password' | 'contributing' | 'support' | 'about';
+type TabId = 'appearance' | 'accounts' | 'password' | 'contributing' | 'support' | 'about' | 'workspace';
 
 interface ProfileState {
   firstName?: string;
@@ -28,6 +29,7 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: 'accounts',     label: 'Account',     icon: User },
   { id: 'password',     label: 'Security',    icon: Shield },
   { id: 'contributing', label: 'Preferences', icon: SlidersHorizontal },
+  { id: 'workspace',    label: 'Workspace',   icon: Building2 },
   { id: 'support',      label: 'Support',     icon: LifeBuoy },
   { id: 'about',        label: 'About',       icon: Info },
 ];
@@ -89,6 +91,7 @@ export const SettingsModal: React.FC = () => {
       case 'accounts':     return <ConnectedAccounts />;
       case 'password':     return <ChangePassword />;
       case 'contributing': return <Contributing />;
+      case 'workspace':    return <WorkspaceSettings />;
       case 'support':      return <Support />;
       case 'about':        return <AboutUs variant="settings" />;
       default:             return <Appearance />;
