@@ -148,6 +148,15 @@ func (s *TaskService) GetWorkspaceTasks(ctx context.Context, workspaceID string)
 	return tasks, nil
 }
 
+func (s *TaskService) QueryWorkspaceTasks(ctx context.Context, query taskdomain.Query) (*taskdomain.QueryResult, error) {
+	query = normalizeTaskQuery(query)
+	return s.taskRepo.QueryWorkspaceTasks(ctx, query)
+}
+
+func (s *TaskService) GetWorkspaceTaskCategories(ctx context.Context, workspaceID string) (*taskdomain.WorkspaceTaskCategories, error) {
+	return s.taskRepo.GetWorkspaceTaskCategories(ctx, workspaceID)
+}
+
 func (s *TaskService) UpdateTaskProgress(ctx context.Context, taskID, progress string) (*entity.Task, error) {
 	if err := s.taskRepo.UpdateProgress(ctx, taskID, progress); err != nil {
 		return nil, err
@@ -242,6 +251,34 @@ func parseTaskStatusWithWorkspaceDefault(status string, workspaceEntity *entity.
 		status = workspaceEntity.DefaultTaskStatus
 	}
 	return taskdomain.ParseStatus(status)
+}
+
+func normalizeTaskQuery(query taskdomain.Query) taskdomain.Query {
+	if !validTaskSort(query.SortBy) {
+		query.SortBy = taskdomain.SortUpdatedAt
+	}
+	if query.Direction != taskdomain.SortAsc && query.Direction != taskdomain.SortDesc {
+		query.Direction = taskdomain.SortDesc
+	}
+	if query.Limit <= 0 || query.Limit > 100 {
+		query.Limit = 50
+	}
+	query.Search = strings.TrimSpace(query.Search)
+	return query
+}
+
+func validTaskSort(sortBy taskdomain.SortField) bool {
+	switch sortBy {
+	case taskdomain.SortUpdatedAt,
+		taskdomain.SortCreatedAt,
+		taskdomain.SortDueDate,
+		taskdomain.SortPriority,
+		taskdomain.SortStatus,
+		taskdomain.SortKey:
+		return true
+	default:
+		return false
+	}
 }
 
 func (s *TaskService) publishTaskUpdated(ctx context.Context, taskID string) error {

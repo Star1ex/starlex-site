@@ -19,6 +19,8 @@ type Service interface {
 	GetWorkspaceTasks(ctx context.Context, workspaceID string) ([]*entity.Task, error)
 	// Get tasks from project
 	GetProjectTasks(ctx context.Context, projectID string) ([]*entity.Task, error)
+	QueryWorkspaceTasks(ctx context.Context, query Query) (*QueryResult, error)
+	GetWorkspaceTaskCategories(ctx context.Context, workspaceID string) (*WorkspaceTaskCategories, error)
 
 	Update(ctx context.Context, id string, data *entity.Task, assignedTo []string) (*entity.Task, error)
 	// Update task

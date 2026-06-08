@@ -33,21 +33,21 @@ type TaskModel struct {
 	Task        string  `gorm:"not null"`
 	Description string  `gorm:"not null"`
 	Icon        string  `gorm:"not null;default:''"`
-	Status      string  `gorm:"not null;default:'todo';index"`
-	Priority    string  `gorm:"not null"`
+	Status      string  `gorm:"not null;default:'todo';index;index:idx_task_workspace_status,priority:2"`
+	Priority    string  `gorm:"not null;index:idx_task_workspace_priority,priority:2"`
 	Progress    string
 	Assigned    []UserModel  `gorm:"many2many:task_users"`
 	Labels      []LabelModel `gorm:"many2many:task_labels"`
 
-	WorkspaceID *string        `gorm:"default:null"`
+	WorkspaceID *string        `gorm:"default:null;index:idx_task_workspace_updated,priority:1;index:idx_task_workspace_created,priority:1;index:idx_task_workspace_status,priority:1;index:idx_task_workspace_priority,priority:1;index:idx_task_workspace_project,priority:1;index:idx_task_workspace_sprint,priority:1;index:idx_task_workspace_due,priority:1"`
 	OwnerID     string         `gorm:"not null;index"`
-	SprintID    *string        `gorm:"default:null;index:idx_task_sprint"`
-	ProjectID   *string        `gorm:"default:null;index:idx_task_project"`
-	DueDate     *time.Time     `gorm:"default:null;index"`
+	SprintID    *string        `gorm:"default:null;index:idx_task_sprint;index:idx_task_workspace_sprint,priority:2"`
+	ProjectID   *string        `gorm:"default:null;index:idx_task_project;index:idx_task_workspace_project,priority:2"`
+	DueDate     *time.Time     `gorm:"default:null;index;index:idx_task_workspace_due,priority:2"`
 	Position    int            `gorm:"not null;default:0"`
 	Subtasks    []SubtaskModel `gorm:"foreignKey:TaskID"`
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
+	CreatedAt   time.Time      `gorm:"index:idx_task_workspace_created,priority:2"`
+	UpdatedAt   time.Time      `gorm:"index:idx_task_workspace_updated,priority:2"`
 }
 
 type TaskRepository struct {

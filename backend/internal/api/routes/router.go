@@ -125,6 +125,8 @@ func setupWorkspaceRoutes(api fiber.Router, h *handlers.Handlers) {
 	{
 		workspaceTasks.Post("/", h.CreateWorkspaceTask)
 		workspaceTasks.Get("/", h.GetWorkspaceTasks)
+		workspaceTasks.Get("/query", h.QueryWorkspaceTasks)
+		workspaceTasks.Get("/categories", h.GetWorkspaceTaskCategories)
 		workspaceTasks.Get("/user/:user_id", h.GetUserTasks)
 		workspaceTasks.Put("/:id", h.UpdateTask)
 		workspaceTasks.Put("/:id/progress", h.UpdateTaskProgress)

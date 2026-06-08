@@ -3,6 +3,7 @@ package handlers
 import (
 	"encoding/json"
 	"errors"
+	"strconv"
 	"strings"
 	"time"
 
@@ -468,6 +469,88 @@ func (h *Handlers) GetWorkspaceTasks(ctx *fiber.Ctx) error {
 	return ctx.Status(fiber.StatusOK).JSON(response)
 }
 
+// QueryWorkspaceTasks godoc
+// @Summary      Query workspace tasks
+// @Description  Returns workspace tasks with indexed filters, sorting, and keyset pagination.
+// @Tags         tasks
+// @Produce      json
+// @Param        workspace_id  path   string  true   "Workspace ID"
+// @Param        project_id    query  string  false  "Comma-separated project IDs or __none"
+// @Param        sprint_id     query  string  false  "Comma-separated sprint IDs or __none"
+// @Param        status        query  string  false  "Comma-separated task statuses"
+// @Param        priority      query  string  false  "Comma-separated priorities"
+// @Param        assignee_id   query  string  false  "Comma-separated assignee IDs"
+// @Param        label_id      query  string  false  "Comma-separated label IDs"
+// @Param        q             query  string  false  "Search text"
+// @Param        due_from      query  string  false  "RFC3339 or YYYY-MM-DD"
+// @Param        due_to        query  string  false  "RFC3339 or YYYY-MM-DD"
+// @Param        sort_by       query  string  false  "updated_at|created_at|due_date|priority|status|key"
+// @Param        direction     query  string  false  "asc|desc"
+// @Param        limit         query  int     false  "Page size, max 100"
+// @Param        cursor        query  string  false  "Opaque cursor from previous response"
+// @Success      200           {object} dto.TaskQueryResponse
+// @Failure      400           {object} map[string]string
+// @Failure      401           {object} map[string]string
+// @Failure      403           {object} map[string]string
+// @Security     BearerAuth
+// @Router       /workspaces/{workspace_id}/tasks/query [get]
+func (h *Handlers) QueryWorkspaceTasks(ctx *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+	workspaceID := ctx.Params("workspace_id")
+	if workspaceID == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "workspace ID is required in URL"})
+	}
+	if err := h.requireWorkspaceMember(ctx, workspaceID, userID); err != nil {
+		return err
+	}
+
+	query, err := parseTaskQuery(ctx, workspaceID)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+	result, err := h.taskService.QueryWorkspaceTasks(ctx.Context(), query)
+	if err != nil {
+		logger.Log.Errorw("query workspace tasks failed", "error", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
+	}
+	return ctx.Status(fiber.StatusOK).JSON(dto.ToTaskQueryResponse(result, query))
+}
+
+// GetWorkspaceTaskCategories godoc
+// @Summary      Get workspace task categories
+// @Description  Returns computed task category facets for fast workspace filtering.
+// @Tags         tasks
+// @Produce      json
+// @Param        workspace_id  path  string  true  "Workspace ID"
+// @Success      200           {object} dto.WorkspaceTaskCategoriesResponse
+// @Failure      401           {object} map[string]string
+// @Failure      403           {object} map[string]string
+// @Security     BearerAuth
+// @Router       /workspaces/{workspace_id}/tasks/categories [get]
+func (h *Handlers) GetWorkspaceTaskCategories(ctx *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+	workspaceID := ctx.Params("workspace_id")
+	if workspaceID == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "workspace ID is required in URL"})
+	}
+	if err := h.requireWorkspaceMember(ctx, workspaceID, userID); err != nil {
+		return err
+	}
+
+	categories, err := h.taskService.GetWorkspaceTaskCategories(ctx.Context(), workspaceID)
+	if err != nil {
+		logger.Log.Errorw("get workspace task categories failed", "error", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
+	}
+	return ctx.Status(fiber.StatusOK).JSON(dto.ToWorkspaceTaskCategoriesResponse(categories))
+}
+
 // Swagger disabled: GetUserTasks godoc
 // Swagger disabled: Summary      Get user's tasks
 // Swagger disabled: Description  Returns a list of all tasks assigned to a specific user.
@@ -610,4 +693,73 @@ func (h *Handlers) GetTaskByID(ctx *fiber.Ctx) error {
 		})
 	}
 	return ctx.Status(200).JSON(dto.ToTaskResponse(task))
+}
+
+func parseTaskQuery(ctx *fiber.Ctx, workspaceID string) (domaintask.Query, error) {
+	cursor, err := dto.DecodeTaskCursor(strings.TrimSpace(ctx.Query("cursor")))
+	if err != nil {
+		return domaintask.Query{}, err
+	}
+	limit := 0
+	if rawLimit := strings.TrimSpace(ctx.Query("limit")); rawLimit != "" {
+		limit, err = strconv.Atoi(rawLimit)
+		if err != nil {
+			return domaintask.Query{}, err
+		}
+	}
+	dueFrom, err := parseOptionalQueryTime(ctx.Query("due_from"))
+	if err != nil {
+		return domaintask.Query{}, err
+	}
+	dueTo, err := parseOptionalQueryTime(ctx.Query("due_to"))
+	if err != nil {
+		return domaintask.Query{}, err
+	}
+	return domaintask.Query{
+		WorkspaceID: workspaceID,
+		ProjectIDs:  splitQueryList(ctx.Query("project_id")),
+		SprintIDs:   splitQueryList(ctx.Query("sprint_id")),
+		Statuses:    splitQueryList(ctx.Query("status")),
+		Priorities:  splitQueryList(ctx.Query("priority")),
+		AssigneeIDs: splitQueryList(ctx.Query("assignee_id")),
+		LabelIDs:    splitQueryList(ctx.Query("label_id")),
+		Search:      strings.TrimSpace(ctx.Query("q")),
+		DueFrom:     dueFrom,
+		DueTo:       dueTo,
+		SortBy:      domaintask.SortField(strings.TrimSpace(ctx.Query("sort_by"))),
+		Direction:   domaintask.SortDirection(strings.TrimSpace(ctx.Query("direction"))),
+		Limit:       limit,
+		Cursor:      cursor,
+	}, nil
+}
+
+func splitQueryList(value string) []string {
+	if strings.TrimSpace(value) == "" {
+		return nil
+	}
+	parts := strings.Split(value, ",")
+	out := make([]string, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part != "" {
+			out = append(out, part)
+		}
+	}
+	return out
+}
+
+func parseOptionalQueryTime(value string) (*time.Time, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil, nil
+	}
+	parsed, err := time.Parse(time.RFC3339, value)
+	if err == nil {
+		return &parsed, nil
+	}
+	parsed, err = time.Parse("2006-01-02", value)
+	if err != nil {
+		return nil, err
+	}
+	return &parsed, nil
 }
