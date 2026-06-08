@@ -1,4 +1,4 @@
-import { MarkdownEditor } from '@/components/TaskView/MarkdownEditor.js';
+import { MarkdownEditor } from '@/features/markdown/RichEditor.js';
 
 export { MarkdownEditor };
 export default MarkdownEditor;

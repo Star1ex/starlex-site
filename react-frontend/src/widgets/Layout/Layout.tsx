@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
+
 import { GlobalSidebar } from '@/widgets/GlobalSidebar/GlobalSidebar.js';
 import { Topbar } from '@/widgets/Topbar/Topbar.js';
 import { SearchModal } from '@/widgets/SearchModal/SearchModal.js';
 import { ToastHost } from '@/shared/ui/ToastHost.js';
+import { useRealtimeConnection } from '@/shared/hooks/useRealtime.js';
 import { Menu, X } from 'lucide-react';
 
 interface LayoutProps {
@@ -11,6 +13,7 @@ interface LayoutProps {
 }
 
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
+  useRealtimeConnection();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth < 768 : false,

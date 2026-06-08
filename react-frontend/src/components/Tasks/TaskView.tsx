@@ -14,7 +14,7 @@ import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle.js';
 import { IconPicker } from '@/shared/ui/IconPicker.js';
 
 const MarkdownEditor = React.lazy(() =>
-  import('@/components/TaskView/MarkdownEditor.js').then((m) => ({ default: m.MarkdownEditor }))
+  import('@/features/markdown/RichEditor.js').then((m) => ({ default: m.MarkdownEditor }))
 );
 
 const updateRecentTasks = (taskId: string, title: string) => {
