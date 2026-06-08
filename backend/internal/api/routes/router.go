@@ -33,7 +33,6 @@ func InitRoutes(app *fiber.App, h *handlers.Handlers) {
 		protected.Delete("/auth/unlink-github", h.UnlinkGithub)
 		setupUserRoutes(protected, h)
 		setupSearchRoutes(protected, h)
-		setupFolderRoutes(protected, h)
 		setupTaskRoutes(protected, h)
 		setupWorkspaceRoutes(protected, h)
 		setupInviteRoutes(protected, h)
@@ -79,19 +78,6 @@ func setupSearchRoutes(api fiber.Router, h *handlers.Handlers) {
 	api.Get("/search", h.GlobalSearch)
 }
 
-func setupFolderRoutes(api fiber.Router, h *handlers.Handlers) {
-	folders := api.Group("/folders")
-
-	folders.Post("/", h.CreateFolder)
-	folders.Get("/:id", h.GetFolderByID)
-	folders.Put("/:id", h.UpdateFolder)
-	folders.Delete("/:id", h.DeleteFolder)
-	folders.Put("/:id/move", h.MoveFolder)
-
-	folders.Get("/workspace/:workspace_id", h.GetFoldersByWorkspace)
-	folders.Get("/:id/children", h.GetFoldersByParentID)
-}
-
 func setupTaskRoutes(api fiber.Router, h *handlers.Handlers) {
 	tasks := api.Group("/tasks")
 
@@ -110,8 +96,6 @@ func setupTaskRoutes(api fiber.Router, h *handlers.Handlers) {
 	tasks.Patch("/:id/assignees", h.PatchTaskAssignees)
 	tasks.Patch("/:id/labels", h.PatchTaskLabels)
 
-	tasks.Get("/folder/:folder_id", h.GetFolderTasks)
-	tasks.Put("/:id/move", h.MoveTaskToFolder)
 }
 
 func setupWorkspaceRoutes(api fiber.Router, h *handlers.Handlers) {
@@ -218,9 +202,7 @@ func setupSprintRoutes(api fiber.Router, h *handlers.Handlers) {
 
 func setupDiscussionRoutes(api fiber.Router, h *handlers.Handlers) {
 	api.Post("/tasks/:id/discussions", h.CreateTaskDiscussion)
-	api.Post("/folders/:id/discussions", h.CreateFolderDiscussion)
 	api.Get("/tasks/:id/discussions", h.GetTaskDiscussions)
-	api.Get("/folders/:id/discussions", h.GetFolderDiscussions)
 	api.Get("/discussions/:id", h.GetDiscussionByID)
 	api.Patch("/discussions/:id", h.UpdateDiscussion)
 	api.Delete("/discussions/:id", h.DeleteDiscussion)
@@ -228,76 +210,3 @@ func setupDiscussionRoutes(api fiber.Router, h *handlers.Handlers) {
 	api.Patch("/discussions/:did/messages/:mid", h.UpdateDiscussionMessage)
 	api.Delete("/discussions/:did/messages/:mid", h.DeleteDiscussionMessage)
 }
-
-//		----- OLD ROUTES -----
-
-/*
-func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
-
-	// --- Swagger ---
-
-	app.Static("/uploads", "./uploads")
-
-	app.Get("/swagger/*", fiberSwagger.WrapHandler)
-
-	api := app.Group("/api")
-
-	users := api.Group("/users", handlers.UserIndentity)
-	{
-		users.Post("/photo", handlers.UploadPhoto)
-		users.Get("/workspaces", handlers.GetWorkspaces)
-		users.Get("/photo", handlers.GetPhoto)
-		users.Put("/update", handlers.UserUpdate)
-		users.Get("/profile", handlers.GetUser)
-	}
-
-	auth := api.Group("/auth")
-	{
-		auth.Post("/login", handlers.Login)
-		auth.Post("/register", handlers.Register)
-		auth.Post("/resend-code", handlers.ResendCode)
-		auth.Post("/verify", handlers.VerifyEmail)
-	}
-
-	folder := api.Group("/folder", handlers.UserIndentity)
-	{
-		folder.Post("/", handlers.CreateFolder)
-		folder.Get("/", handlers.GetFolderByID)
-		folder.Get("/workspace/:workspace_id", handlers.GetFoldersByWorkspace)
-		folder.Get("/sub", handlers.GetFoldersByParentID)
-		folder.Put("/update", handlers.UpdateFolder)
-		folder.Delete("/delete", handlers.DeleteFolder)
-		folder.Put("/move", handlers.MoveFolder)
-	}
-
-	app.Get("/api/health", func(c *fiber.Ctx) error {
-		return c.SendString("healthy")
-	})
-
-	search := api.Group("/search", handlers.UserIndentity)
-	{
-		search.Get("/:email", handlers.Search)
-	}
-
-	// After we add a dashboard with UserIndentity by jwt
-
-	workspace := api.Group("/workspace", handlers.UserIndentity)
-	{
-		workspace.Post("/", handlers.CreateWorkspace)
-		workspace.Get("/:id", handlers.GetUsers)
-		workspace.Delete("/:id/users", handlers.RemoveUserFromWorkspace)
-		workspace.Post("/:id/add", handlers.AddUserToWorkspace)
-		workspace.Delete("/delete", handlers.DeleteWorkspace)
-		tasks := workspace.Group("/:workspace_id/tasks")
-		{
-			tasks.Post("/", handlers.CreateTask)
-			tasks.Get("/", handlers.GetWorkspaceTasks)
-			tasks.Get("/assigned/:user_id", handlers.GetUserTasks)
-			tasks.Put("/:task_id/update_progress", handlers.UpdateTaskProgress)
-			tasks.Put("/:task_id/update", handlers.UpdateTask)
-			tasks.Delete("/:task_id", handlers.DeleteTask)
-		}
-	}
-}
-
-*/

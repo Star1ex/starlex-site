@@ -69,17 +69,6 @@ func assertSQLContains(t *testing.T, sql string, required ...string) {
 	}
 }
 
-func TestFolderRepositoryGetWorkspaceFoldersScopesByWorkspaceID(t *testing.T) {
-	capture := &sqlCaptureLogger{}
-	repo := NewFolderRepository(newDryRunDB(t, capture))
-
-	if _, err := repo.GetWorkspaceFolders(context.Background(), "ws-1"); err != nil {
-		t.Fatalf("get workspace folders: %v", err)
-	}
-
-	assertSQLContains(t, capture.sql, `FROM "folder_models"`, `WHERE workspace_id = 'ws-1'`)
-}
-
 func TestSprintRepositoryGetWorkspaceSprintsScopesByWorkspaceID(t *testing.T) {
 	capture := &sqlCaptureLogger{}
 	repo := NewSprintRepository(newDryRunDB(t, capture))

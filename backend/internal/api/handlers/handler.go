@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/Star1ex/starlex-site/internal/db"
-	"github.com/Star1ex/starlex-site/internal/domain/folder"
 	domaininvite "github.com/Star1ex/starlex-site/internal/domain/invite"
 	domainlabel "github.com/Star1ex/starlex-site/internal/domain/label"
 	"github.com/Star1ex/starlex-site/internal/domain/password"
@@ -24,7 +23,6 @@ type Handlers struct {
 	workspaceService    workspace.Service
 	projectService      project.Service
 	taskService         task.Service
-	folderService       folder.Service
 	registrationService *service.RegistrationService
 	passwordService     password.Service
 	sprintService       *service.SprintService
@@ -44,7 +42,6 @@ func NewHandlers(userService user.Service,
 	workspaceService workspace.Service,
 	projectService project.Service,
 	taskService task.Service,
-	folderService folder.Service,
 	registrationService *service.RegistrationService,
 	passwordService password.Service,
 	sprintService *service.SprintService,
@@ -64,7 +61,6 @@ func NewHandlers(userService user.Service,
 		workspaceService:    workspaceService,
 		projectService:      projectService,
 		taskService:         taskService,
-		folderService:       folderService,
 		registrationService: registrationService,
 		passwordService:     passwordService,
 		sprintService:       sprintService,

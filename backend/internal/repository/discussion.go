@@ -12,8 +12,7 @@ import (
 type DiscussionModel struct {
 	ID          string  `gorm:"primaryKey"`
 	Title       string  `gorm:"not null;default:''"`
-	TaskID      *string `gorm:"index:idx_discussion_task;check:discussion_parent_check,((task_id IS NOT NULL AND folder_id IS NULL) OR (task_id IS NULL AND folder_id IS NOT NULL))"`
-	FolderID    *string `gorm:"index:idx_discussion_folder"`
+	TaskID      *string `gorm:"index:idx_discussion_task"`
 	WorkspaceID *string `gorm:"index:idx_discussion_workspace"`
 	CreatedBy   string  `gorm:"not null"`
 	IsResolved  bool    `gorm:"not null;default:false"`
@@ -46,7 +45,6 @@ func toDiscussionDomain(model DiscussionModel) *entity.Discussion {
 		ID:          model.ID,
 		Title:       model.Title,
 		TaskID:      model.TaskID,
-		FolderID:    model.FolderID,
 		WorkspaceID: model.WorkspaceID,
 		CreatedBy:   model.CreatedBy,
 		IsResolved:  model.IsResolved,
@@ -94,7 +92,6 @@ func fromDiscussionDomain(entity *entity.Discussion) *DiscussionModel {
 		ID:          entity.ID,
 		Title:       entity.Title,
 		TaskID:      entity.TaskID,
-		FolderID:    entity.FolderID,
 		WorkspaceID: entity.WorkspaceID,
 		CreatedBy:   entity.CreatedBy,
 		IsResolved:  entity.IsResolved,
@@ -127,17 +124,6 @@ func (r *DiscussionRepository) GetByTask(ctx context.Context, taskID string) ([]
 	var models []DiscussionModel
 	if err := r.db.WithContext(ctx).
 		Where("task_id = ?", taskID).
-		Order("created_at DESC").
-		Find(&models).Error; err != nil {
-		return nil, err
-	}
-	return toDiscussionDomains(models), nil
-}
-
-func (r *DiscussionRepository) GetByFolder(ctx context.Context, folderID string) ([]*entity.Discussion, error) {
-	var models []DiscussionModel
-	if err := r.db.WithContext(ctx).
-		Where("folder_id = ?", folderID).
 		Order("created_at DESC").
 		Find(&models).Error; err != nil {
 		return nil, err

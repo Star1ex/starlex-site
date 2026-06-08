@@ -232,17 +232,6 @@ func (s *TaskService) Delete(ctx context.Context, id string) error {
 	return nil
 }
 
-func (s *TaskService) GetFolderTasks(ctx context.Context, folderID string) ([]*entity.Task, error) {
-	return s.taskRepo.GetFolderTasks(ctx, folderID)
-}
-
-func (s *TaskService) MoveTaskToFolder(ctx context.Context, taskID, folderID string) error {
-	if err := s.taskRepo.MoveTaskToFolder(ctx, taskID, folderID); err != nil {
-		return err
-	}
-	return s.publishTaskUpdated(ctx, taskID)
-}
-
 func (s *TaskService) SearchInWorkspaces(ctx context.Context, workspaceIDs []string, query string) ([]*entity.Task, error) {
 	return s.taskRepo.SearchInWorkspaces(ctx, workspaceIDs, query)
 }

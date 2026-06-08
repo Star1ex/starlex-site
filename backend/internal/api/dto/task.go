@@ -14,7 +14,6 @@ type TaskApi struct {
 	Progress     string     `json:"progress"`
 	DueDate      *time.Time `json:"due_date"`
 	Priority     string     `json:"priority"`
-	FolderID     *string    `json:"folder_id"`
 	WorkspaceID  *string    `json:"workspace_id"`
 	ProjectID    *string    `json:"project_id"`
 	OwnerID      string     `json:"owner_id"`
@@ -29,7 +28,6 @@ type TaskResponse struct {
 	Icon        string            `json:"icon"`
 	Assignees   []UserResponse    `json:"assignees"`
 	WorkspaceID string            `json:"workspace_id"`
-	FolderID    *string           `json:"folder_id"`
 	ProjectID   *string           `json:"project_id"`
 	OwnerID     string            `json:"owner_id"`
 	Status      string            `json:"status"`
@@ -52,7 +50,6 @@ type UpdateTask struct {
 	AssignedTo  []string  `json:"user_ids"`
 	Status      string    `json:"status"`
 	Priority    string    `json:"priority"`
-	FolderID    *string   `json:"folder_id"`
 	OwnerID     string    `json:"owner_id"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
@@ -111,7 +108,6 @@ func ToTaskResponse(task *entity.Task) *TaskResponse {
 		Icon:        task.Icon,
 		Assignees:   assignees,
 		WorkspaceID: task.WorkspaceID,
-		FolderID:    task.FolderID,
 		ProjectID:   task.ProjectID,
 		OwnerID:     task.OwnerID,
 		Status:      task.Status,
@@ -158,7 +154,6 @@ type UpdateDto struct {
 	AssignedToID *[]string `json:"user_id"`
 	Task         *string   `json:"task"`
 	Description  *string   `json:"description"`
-	FolderID     *string   `json:"folder_id"`
 	WorkspaceID  *string   `json:"workspace_id"`
 	OwnerID      *string   `json:"owner_id"`
 	Progress     *string   `json:"progress"`

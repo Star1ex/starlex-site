@@ -51,39 +51,13 @@ func (h *Handlers) requireTaskAccess(c *fiber.Ctx, taskID, userID string) (*enti
 	if err != nil {
 		return nil, c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "task not found"})
 	}
-
-	if taskEntity.OwnerID == userID {
-		return taskEntity, nil
+	if taskEntity.WorkspaceID == "" {
+		return nil, c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
 	}
-
-	if taskEntity.WorkspaceID != "" {
-		if err := h.requireWorkspaceMember(c, taskEntity.WorkspaceID, userID); err != nil {
-			return nil, err
-		}
-		return taskEntity, nil
+	if err := h.requireWorkspaceMember(c, taskEntity.WorkspaceID, userID); err != nil {
+		return nil, err
 	}
-
-	return nil, c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
-}
-
-func (h *Handlers) requireFolderAccess(c *fiber.Ctx, folderID, userID string) (*entity.Folder, error) {
-	folderEntity, err := h.folderService.GetByID(c.Context(), folderID)
-	if err != nil {
-		return nil, c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "folder not found"})
-	}
-
-	if folderEntity.OwnerID == userID {
-		return folderEntity, nil
-	}
-
-	if folderEntity.WorkspaceID != nil && *folderEntity.WorkspaceID != "" {
-		if err := h.requireWorkspaceMember(c, *folderEntity.WorkspaceID, userID); err != nil {
-			return nil, err
-		}
-		return folderEntity, nil
-	}
-
-	return nil, c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
+	return taskEntity, nil
 }
 
 func (h *Handlers) requireDiscussionAccess(c *fiber.Ctx, discussionID, userID string) (*entity.Discussion, error) {
@@ -95,11 +69,13 @@ func (h *Handlers) requireDiscussionAccess(c *fiber.Ctx, discussionID, userID st
 		if _, err := h.requireTaskAccess(c, *disc.TaskID, userID); err != nil {
 			return nil, err
 		}
+		return disc, nil
 	}
-	if disc.FolderID != nil {
-		if _, err := h.requireFolderAccess(c, *disc.FolderID, userID); err != nil {
+	if disc.WorkspaceID != nil && *disc.WorkspaceID != "" {
+		if err := h.requireWorkspaceMember(c, *disc.WorkspaceID, userID); err != nil {
 			return nil, err
 		}
+		return disc, nil
 	}
-	return disc, nil
+	return nil, c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
 }

@@ -40,8 +40,7 @@ type TaskModel struct {
 	Labels      []LabelModel `gorm:"many2many:task_labels"`
 
 	WorkspaceID *string        `gorm:"default:null"`
-	OwnerID     string         `gorm:"not null;index:idx_owner_folder"`
-	FolderID    *string        `gorm:"default:null;index:idx_owner_folder"`
+	OwnerID     string         `gorm:"not null;index"`
 	SprintID    *string        `gorm:"default:null;index:idx_task_sprint"`
 	ProjectID   *string        `gorm:"default:null;index:idx_task_project"`
 	DueDate     *time.Time     `gorm:"default:null;index"`
@@ -88,7 +87,6 @@ func toTaskDomain(m TaskModel) *entity.Task {
 		AssignedTo:  users,
 		WorkspaceID: workspaceID,
 		OwnerID:     m.OwnerID,
-		FolderID:    m.FolderID,
 		SprintID:    m.SprintID,
 		ProjectID:   m.ProjectID,
 		DueDate:     m.DueDate,
@@ -151,7 +149,6 @@ func fromTaskDomain(t *entity.Task) *TaskModel {
 		Priority:    t.Priority,
 		Progress:    t.Progress,
 		OwnerID:     t.OwnerID,
-		FolderID:    t.FolderID,
 		SprintID:    t.SprintID,
 		ProjectID:   t.ProjectID,
 		DueDate:     t.DueDate,
@@ -457,33 +454,6 @@ func (r *TaskRepository) GetProjectTasks(ctx context.Context, projectID string) 
 		return nil, err
 	}
 	return toTaskDomains(models), nil
-}
-
-func (r *TaskRepository) GetFolderTasks(ctx context.Context, folderID string) ([]*entity.Task, error) {
-	var models []TaskModel
-
-	err := r.db.WithContext(ctx).
-		Preload("Assigned").
-		Preload("Labels").
-		Preload("Subtasks", orderByPosition).
-		Where("folder_id = ?", folderID).
-		Find(&models).Error
-
-	if err != nil {
-		return nil, err
-	}
-	return toTaskDomains(models), nil
-}
-
-func (r *TaskRepository) MoveTaskToFolder(ctx context.Context, taskID, folderID string) error {
-	var task TaskModel
-	if err := r.db.WithContext(ctx).Preload("Assigned").Where("id = ?", taskID).First(&task).Error; err != nil {
-		return err
-	}
-	if err := r.db.WithContext(ctx).Model(&task).Update("folder_id", folderID).Error; err != nil {
-		return err
-	}
-	return nil
 }
 
 func (r *TaskRepository) SearchInWorkspaces(ctx context.Context, workspaceIDs []string, query string) ([]*entity.Task, error) {

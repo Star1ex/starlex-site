@@ -6,7 +6,6 @@ type Discussion struct {
 	ID          string
 	Title       string
 	TaskID      *string
-	FolderID    *string
 	WorkspaceID *string
 	CreatedBy   string
 	IsResolved  bool

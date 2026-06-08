@@ -30,7 +30,7 @@ func NewDiscussionService(repo *repository.DiscussionRepository) *DiscussionServ
 	return &DiscussionService{repo: repo}
 }
 
-func (s *DiscussionService) CreateDiscussion(ctx context.Context, taskID *string, folderID *string, workspaceID, createdBy, title, content, contentType string) (*entity.Discussion, error) {
+func (s *DiscussionService) CreateDiscussion(ctx context.Context, taskID *string, workspaceID, createdBy, title, content, contentType string) (*entity.Discussion, error) {
 	now := time.Now().UTC()
 	var workspaceIDPtr *string
 	if strings.TrimSpace(workspaceID) != "" {
@@ -41,7 +41,6 @@ func (s *DiscussionService) CreateDiscussion(ctx context.Context, taskID *string
 		ID:          security.GenerateNewID(),
 		Title:       title,
 		TaskID:      taskID,
-		FolderID:    folderID,
 		WorkspaceID: workspaceIDPtr,
 		CreatedBy:   createdBy,
 		IsResolved:  false,
@@ -73,10 +72,6 @@ func (s *DiscussionService) CreateDiscussion(ctx context.Context, taskID *string
 
 func (s *DiscussionService) GetDiscussionsByTask(ctx context.Context, taskID string) ([]*entity.Discussion, error) {
 	return s.repo.GetByTask(ctx, taskID)
-}
-
-func (s *DiscussionService) GetDiscussionsByFolder(ctx context.Context, folderID string) ([]*entity.Discussion, error) {
-	return s.repo.GetByFolder(ctx, folderID)
 }
 
 func (s *DiscussionService) GetDiscussionByID(ctx context.Context, id string) (*entity.Discussion, error) {

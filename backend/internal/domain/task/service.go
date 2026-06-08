@@ -17,8 +17,6 @@ type Service interface {
 	GetTaskByID(ctx context.Context, taskID string) (*entity.Task, error)
 	// Get all tasks from workspace by ID
 	GetWorkspaceTasks(ctx context.Context, workspaceID string) ([]*entity.Task, error)
-	// Get tasks from folder
-	GetFolderTasks(ctx context.Context, folderID string) ([]*entity.Task, error)
 	// Get tasks from project
 	GetProjectTasks(ctx context.Context, projectID string) ([]*entity.Task, error)
 
@@ -35,9 +33,6 @@ type Service interface {
 	UpdateTaskLabels(ctx context.Context, taskID string, labelIDs []string) error
 	// Delete task
 	Delete(ctx context.Context, id string) error
-
-	// Move task to folder
-	MoveTaskToFolder(ctx context.Context, taskID, folderID string) error
 
 	// Search tasks across multiple workspaces
 	SearchInWorkspaces(ctx context.Context, workspaceIDs []string, query string) ([]*entity.Task, error)

@@ -33,7 +33,6 @@ type SprintTaskResponse struct {
 	Description string            `json:"description"`
 	Assignees   []UserResponse    `json:"assignees"`
 	WorkspaceID string            `json:"workspace_id"`
-	FolderID    *string           `json:"folder_id"`
 	ProjectID   *string           `json:"project_id"`
 	OwnerID     string            `json:"owner_id"`
 	Status      string            `json:"status"`
@@ -102,7 +101,6 @@ func toSprintTaskResponse(t *entity.Task) SprintTaskResponse {
 		Description: t.Description,
 		Assignees:   users,
 		WorkspaceID: t.WorkspaceID,
-		FolderID:    t.FolderID,
 		ProjectID:   t.ProjectID,
 		OwnerID:     t.OwnerID,
 		Status:      t.Status,

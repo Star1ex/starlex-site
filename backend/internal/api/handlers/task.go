@@ -586,68 +586,6 @@ func (h *Handlers) DeleteTask(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON("Successfuly deleted task")
 }
 
-func (h *Handlers) GetFolderTasks(ctx *fiber.Ctx) error {
-
-	userID, authErr := h.getAuthenticatedUserID(ctx)
-	if authErr != nil {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "unauthorized",
-		})
-	}
-
-	folderID := ctx.Params("folder_id")
-	if folderID == "nil" || folderID == "" {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "folder ID is required in URL"})
-	}
-	if _, err := h.requireFolderAccess(ctx, folderID, userID); err != nil {
-		return err
-	}
-
-	tasks, err := h.taskService.GetFolderTasks(ctx.Context(), folderID)
-	if err != nil {
-		logger.Log.Errorw("get folder tasks failed", "error", err)
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "internal server error",
-		})
-	}
-	return ctx.Status(fiber.StatusOK).JSON(dto.WorkspaceTasksList(tasks))
-}
-
-func (h *Handlers) MoveTaskToFolder(ctx *fiber.Ctx) error {
-	userID, authErr := h.getAuthenticatedUserID(ctx)
-	if authErr != nil {
-		return authErr
-	}
-
-	taskID := ctx.Params("id")
-	folderID := ctx.Query("folder_id")
-	if taskID == "nil" || folderID == "nil" || taskID == "" || folderID == "" {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID and folder ID are required in URL"})
-	}
-	taskEntity, err := h.requireTaskAccess(ctx, taskID, userID)
-	if err != nil {
-		return err
-	}
-	folderEntity, err := h.requireFolderAccess(ctx, folderID, userID)
-	if err != nil {
-		return err
-	}
-	if taskEntity.WorkspaceID != "" {
-		if folderEntity.WorkspaceID == nil || *folderEntity.WorkspaceID != taskEntity.WorkspaceID {
-			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "workspace task must remain in same workspace folder"})
-		}
-	}
-
-	err = h.taskService.MoveTaskToFolder(ctx.Context(), taskID, folderID)
-	if err != nil {
-		logger.Log.Errorw("move task to folder failed", "error", err)
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "internal server error",
-		})
-	}
-	return ctx.Status(fiber.StatusOK).JSON("Successfully moved task to folder")
-}
-
 func (h *Handlers) GetTaskByID(ctx *fiber.Ctx) error {
 	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {

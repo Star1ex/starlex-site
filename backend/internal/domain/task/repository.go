@@ -25,10 +25,7 @@ type Repository interface {
 
 	// Getters
 	GetWorkspaceTasks(ctx context.Context, workspaceID string) ([]*entity.Task, error)
-	GetFolderTasks(ctx context.Context, folderID string) ([]*entity.Task, error)
 	GetProjectTasks(ctx context.Context, projectID string) ([]*entity.Task, error)
-
-	MoveTaskToFolder(ctx context.Context, taskID, folderID string) error
 
 	SearchInWorkspaces(ctx context.Context, workspaceIDs []string, query string) ([]*entity.Task, error)
 }

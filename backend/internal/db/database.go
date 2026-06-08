@@ -83,7 +83,6 @@ func migrate(db *DB) error {
 		&repository.LabelModel{},
 		&repository.TaskModel{},
 		&repository.SubtaskModel{},
-		&repository.FolderModel{},
 		&repository.DiscussionModel{},
 		&repository.DiscussionMessageModel{},
 		&repository.SessionModel{},

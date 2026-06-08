@@ -20,7 +20,6 @@ type Task struct {
 	Labels      []*domainlabel.Label
 
 	OwnerID   string
-	FolderID  *string
 	SprintID  *string
 	ProjectID *string
 	DueDate   *time.Time
@@ -41,13 +40,12 @@ type UpdateTask struct {
 	Progress    string
 
 	OwnerID   string
-	FolderID  *string
 	SprintID  *string
 	Position  int
 	CreatedAt time.Time
 }
 
-func NewTask(ID, task, description, priority, progress string, ownerID string, folderID *string, AssignedTo []*User) *Task {
+func NewTask(ID, task, description, priority, progress string, ownerID string, AssignedTo []*User) *Task {
 	return &Task{
 		ID:          ID,
 		Task:        task,
@@ -56,6 +54,5 @@ func NewTask(ID, task, description, priority, progress string, ownerID string, f
 		Progress:    progress,
 		Priority:    priority,
 		OwnerID:     ownerID,
-		FolderID:    folderID,
 	}
 }
