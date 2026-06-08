@@ -27,20 +27,25 @@ type SprintTaskUserResponse struct {
 }
 
 type SprintTaskResponse struct {
-	ID          string                   `json:"id"`
-	Task        string                   `json:"task"`
-	Description string                   `json:"description"`
-	UserIDs     []SprintTaskUserResponse `json:"user_ids"`
-	WorkspaceID string                   `json:"workspace_id"`
-	FolderID    *string                  `json:"folder_id"`
-	OwnerID     string                   `json:"owner_id"`
-	Priority    string                   `json:"priority"`
-	Progress    string                   `json:"progress"`
-	SprintID    *string                  `json:"sprint_id"`
-	Position    int                      `json:"position"`
-	Subtasks    []SubtaskResponse        `json:"subtasks"`
-	CreatedAt   time.Time                `json:"created_at"`
-	UpdatedAt   time.Time                `json:"updated_at"`
+	ID          string            `json:"id"`
+	Key         string            `json:"key"`
+	Task        string            `json:"task"`
+	Description string            `json:"description"`
+	Assignees   []UserResponse    `json:"assignees"`
+	WorkspaceID string            `json:"workspace_id"`
+	FolderID    *string           `json:"folder_id"`
+	ProjectID   *string           `json:"project_id"`
+	OwnerID     string            `json:"owner_id"`
+	Status      string            `json:"status"`
+	Priority    string            `json:"priority"`
+	Progress    string            `json:"progress"`
+	DueDate     *time.Time        `json:"due_date"`
+	Labels      []LabelResponse   `json:"labels"`
+	SprintID    *string           `json:"sprint_id"`
+	Position    int               `json:"position"`
+	Subtasks    []SubtaskResponse `json:"subtasks"`
+	CreatedAt   time.Time         `json:"created_at"`
+	UpdatedAt   time.Time         `json:"updated_at"`
 }
 
 type SprintResponse struct {
@@ -82,9 +87,9 @@ func toSprintTaskUserResponse(u *entity.User) SprintTaskUserResponse {
 }
 
 func toSprintTaskResponse(t *entity.Task) SprintTaskResponse {
-	users := make([]SprintTaskUserResponse, len(t.AssignedTo))
+	users := make([]UserResponse, len(t.AssignedTo))
 	for i, u := range t.AssignedTo {
-		users[i] = toSprintTaskUserResponse(u)
+		users[i] = *ToUserResponse(u)
 	}
 	subtasks := make([]SubtaskResponse, len(t.Subtasks))
 	for i, s := range t.Subtasks {
@@ -92,14 +97,19 @@ func toSprintTaskResponse(t *entity.Task) SprintTaskResponse {
 	}
 	return SprintTaskResponse{
 		ID:          t.ID,
+		Key:         t.Key,
 		Task:        t.Task,
 		Description: t.Description,
-		UserIDs:     users,
+		Assignees:   users,
 		WorkspaceID: t.WorkspaceID,
 		FolderID:    t.FolderID,
+		ProjectID:   t.ProjectID,
 		OwnerID:     t.OwnerID,
+		Status:      t.Status,
 		Priority:    t.Priority,
 		Progress:    t.Progress,
+		DueDate:     t.DueDate,
+		Labels:      ToLabelResponses(t.Labels),
 		SprintID:    t.SprintID,
 		Position:    t.Position,
 		Subtasks:    subtasks,

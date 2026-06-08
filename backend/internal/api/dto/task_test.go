@@ -39,3 +39,22 @@ func TestToTaskResponse_NoSubtasks(t *testing.T) {
 		t.Errorf("want 0 subtasks, got %d", len(resp.Subtasks))
 	}
 }
+
+func TestToTaskResponse_AssigneesAreFullUsers(t *testing.T) {
+	task := &entity.Task{
+		ID:   "t1",
+		Task: "Assigned",
+		AssignedTo: []*entity.User{
+			{ID: "u1", Email: "u1@example.com", FirstName: "Ada", LastName: "Lovelace", Role: "member"},
+		},
+	}
+
+	resp := ToTaskResponse(task)
+	if len(resp.Assignees) != 1 {
+		t.Fatalf("want 1 assignee, got %d", len(resp.Assignees))
+	}
+	assignee := resp.Assignees[0]
+	if assignee.ID != "u1" || assignee.Email != "u1@example.com" || assignee.FirstName != "Ada" {
+		t.Fatalf("assignee not mapped as full user: %#v", assignee)
+	}
+}

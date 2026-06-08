@@ -27,7 +27,7 @@ type TaskResponse struct {
 	Task        string            `json:"task" binding:"required"`
 	Description string            `json:"description"`
 	Icon        string            `json:"icon"`
-	AssignedTo  []string          `json:"user_ids"`
+	Assignees   []UserResponse    `json:"assignees"`
 	WorkspaceID string            `json:"workspace_id"`
 	FolderID    *string           `json:"folder_id"`
 	ProjectID   *string           `json:"project_id"`
@@ -86,9 +86,9 @@ type UpdateTaskAssignees struct {
 }
 
 func ToTaskResponse(task *entity.Task) *TaskResponse {
-	assignedIDs := make([]string, len(task.AssignedTo))
+	assignees := make([]UserResponse, len(task.AssignedTo))
 	for i, u := range task.AssignedTo {
-		assignedIDs[i] = u.ID
+		assignees[i] = *ToUserResponse(u)
 	}
 
 	subtasks := make([]SubtaskResponse, len(task.Subtasks))
@@ -109,7 +109,7 @@ func ToTaskResponse(task *entity.Task) *TaskResponse {
 		Task:        task.Task,
 		Description: task.Description,
 		Icon:        task.Icon,
-		AssignedTo:  assignedIDs,
+		Assignees:   assignees,
 		WorkspaceID: task.WorkspaceID,
 		FolderID:    task.FolderID,
 		ProjectID:   task.ProjectID,
