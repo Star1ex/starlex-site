@@ -233,6 +233,9 @@ func (t *WorkspaceRepository) GetRole(ctx context.Context, workspaceID, userID s
 		Where("workspace_id = ? AND user_id = ?", workspaceID, userID).
 		First(&member).Error
 	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return "", ErrUserNotInWorkspace
+		}
 		return "", err
 	}
 	role, err := domainworkspace.ParseRole(member.Role)
@@ -253,6 +256,14 @@ func (t *WorkspaceRepository) CountOwners(ctx context.Context, workspaceID strin
 func (t *WorkspaceRepository) CountMembers(ctx context.Context, workspaceID string) (int64, error) {
 	var count int64
 	err := t.db.WithContext(ctx).Model(&WorkspaceMemberModel{}).
+		Where("workspace_id = ?", workspaceID).
+		Count(&count).Error
+	return count, err
+}
+
+func (t *WorkspaceRepository) CountProjects(ctx context.Context, workspaceID string) (int64, error) {
+	var count int64
+	err := t.db.WithContext(ctx).Model(&ProjectModel{}).
 		Where("workspace_id = ?", workspaceID).
 		Count(&count).Error
 	return count, err

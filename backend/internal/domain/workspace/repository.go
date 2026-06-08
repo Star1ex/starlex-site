@@ -18,6 +18,7 @@ type Repository interface {
 	GetRole(ctx context.Context, workspaceID, userID string) (Role, error)
 	CountOwners(ctx context.Context, workspaceID string) (int64, error)
 	CountMembers(ctx context.Context, workspaceID string) (int64, error)
+	CountProjects(ctx context.Context, workspaceID string) (int64, error)
 	AddUserToWorkspace(ctx context.Context, workspaceID string, userID string) error
 	AddMember(ctx context.Context, workspaceID, userID string, role Role) error
 	UpdateMemberRole(ctx context.Context, workspaceID, userID string, role Role) error

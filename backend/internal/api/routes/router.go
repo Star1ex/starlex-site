@@ -17,6 +17,7 @@ func InitRoutes(app *fiber.App, h *handlers.Handlers) {
 	api.Get("/health", h.HealthCheck)
 
 	setupAuthRoutes(api, h)
+	api.Get("/invites/:token", h.GetInvitePreview)
 
 	protected := api.Group("", h.UserIndentity, h.CSRFProtect)
 	{
@@ -33,6 +34,7 @@ func InitRoutes(app *fiber.App, h *handlers.Handlers) {
 		setupFolderRoutes(protected, h)
 		setupTaskRoutes(protected, h)
 		setupWorkspaceRoutes(protected, h)
+		setupInviteRoutes(protected, h)
 		setupProjectRoutes(protected, h)
 		setupSprintRoutes(protected, h)
 		setupDiscussionRoutes(protected, h)
@@ -120,6 +122,8 @@ func setupWorkspaceRoutes(api fiber.Router, h *handlers.Handlers) {
 	workspaces.Post("/:id/members", h.AddWorkspaceMember)
 	workspaces.Patch("/:id/members/:user_id", h.PatchWorkspaceMemberRole)
 	workspaces.Delete("/:id/members/:user_id", h.DeleteWorkspaceMember)
+	workspaces.Get("/:id/invites", h.ListWorkspaceInvites)
+	workspaces.Post("/:id/invites", h.CreateWorkspaceInvite)
 
 	workspaceTasks := workspaces.Group("/:workspace_id/tasks")
 	{
@@ -136,6 +140,12 @@ func setupWorkspaceRoutes(api fiber.Router, h *handlers.Handlers) {
 		workspaceTasks.Patch("/:id/assignees", h.PatchTaskAssignees)
 		workspaceTasks.Delete("/:id", h.DeleteTask)
 	}
+}
+
+func setupInviteRoutes(api fiber.Router, h *handlers.Handlers) {
+	invites := api.Group("/invites")
+	invites.Post("/:token/accept", h.AcceptInvite)
+	invites.Delete("/:id", h.DeleteInvite)
 }
 
 func setupProjectRoutes(api fiber.Router, h *handlers.Handlers) {

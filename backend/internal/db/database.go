@@ -88,6 +88,7 @@ func migrate(db *DB) error {
 		&repository.PendingRegistrationModel{},
 		&repository.PasswordResetTokenModel{},
 		&repository.PasswordAuditLogModel{},
+		&repository.InviteModel{},
 	); err != nil {
 		return fmt.Errorf("error migrating models: %v", err)
 	}

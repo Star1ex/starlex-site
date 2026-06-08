@@ -6,14 +6,14 @@ import (
 
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
 	domainworkspace "github.com/Star1ex/starlex-site/internal/domain/workspace"
+	"github.com/Star1ex/starlex-site/internal/repository"
 	"github.com/gofiber/fiber/v2"
-	"gorm.io/gorm"
 )
 
 func (h *Handlers) isWorkspaceMember(ctx context.Context, workspaceID, userID string) (bool, error) {
 	_, err := h.workspaceService.GetRole(ctx, workspaceID, userID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if errors.Is(err, repository.ErrUserNotInWorkspace) {
 			return false, nil
 		}
 		return false, err
@@ -35,7 +35,7 @@ func (h *Handlers) requireWorkspaceMember(c *fiber.Ctx, workspaceID, userID stri
 func (h *Handlers) requireWorkspaceRole(c *fiber.Ctx, workspaceID, userID string, minRole domainworkspace.Role) error {
 	role, err := h.workspaceService.GetRole(c.Context(), workspaceID, userID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+		if errors.Is(err, repository.ErrUserNotInWorkspace) {
 			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
 		}
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "workspace not found"})
