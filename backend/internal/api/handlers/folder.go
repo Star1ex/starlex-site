@@ -100,36 +100,6 @@ func (h *Handlers) GetFolderByID(ctx *fiber.Ctx) error {
 	return ctx.Status(200).JSON(dto.FromDomainFolder(folder))
 }
 
-// Swagger disabled: GetFoldersByUserID godoc
-// Swagger disabled: Summary      Get folders of the authenticated user
-// Swagger disabled: Description  Returns all folders owned by the currently authenticated user. User ID is extracted from the JWT token.
-// Swagger disabled: Tags         folders
-// Swagger disabled: Accept       json
-// Swagger disabled: Produce      json
-// Swagger disabled: Success      200          {array}   dto.FolderDTO             "List of user folders"
-// Swagger disabled: Failure      401          {object}  map[string]string         "User not authorized"
-// Swagger disabled: Failure      500          {object}  map[string]string         "Internal server error"
-// Swagger disabled: Security     BearerAuth
-// Swagger disabled: Router       /folder/direct [get]
-func (h *Handlers) GetFoldersByUserID(ctx *fiber.Ctx) error {
-	userID, authErr := h.getAuthenticatedUserID(ctx)
-	if authErr != nil {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "unauthorized",
-		})
-	}
-
-	folders, err := h.folderService.GetUserFolders(ctx.Context(), userID)
-	if err != nil {
-		logger.Log.Errorw("get user folders failed", "error", err)
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "internal server error",
-		})
-	}
-
-	return ctx.Status(fiber.StatusOK).JSON(dto.FromDomainFolders(folders))
-}
-
 // Swagger disabled: GetFoldersByWorkspace godoc
 // Swagger disabled: Summary      Get folders by workspace ID
 // Swagger disabled: Description  Returns all folders belonging to a specific workspace. Requires JWT authentication.

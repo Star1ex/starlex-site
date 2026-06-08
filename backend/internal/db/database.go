@@ -83,7 +83,6 @@ func migrate(db *DB) error {
 		&repository.FolderModel{},
 		&repository.DiscussionModel{},
 		&repository.DiscussionMessageModel{},
-		&repository.VerificationCodeModel{},
 		&repository.PendingRegistrationModel{},
 		&repository.PasswordResetTokenModel{},
 		&repository.PasswordAuditLogModel{},

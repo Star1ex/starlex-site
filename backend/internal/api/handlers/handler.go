@@ -9,7 +9,6 @@ import (
 	"github.com/Star1ex/starlex-site/internal/domain/project"
 	"github.com/Star1ex/starlex-site/internal/domain/task"
 	"github.com/Star1ex/starlex-site/internal/domain/user"
-	"github.com/Star1ex/starlex-site/internal/domain/verification"
 	"github.com/Star1ex/starlex-site/internal/domain/workspace"
 	"github.com/Star1ex/starlex-site/internal/service"
 )
@@ -21,7 +20,6 @@ type Handlers struct {
 	projectService      project.Service
 	taskService         task.Service
 	folderService       folder.Service
-	verificationService verification.Service
 	registrationService *service.RegistrationService
 	passwordService     password.Service
 	sprintService       *service.SprintService
@@ -37,7 +35,6 @@ func NewHandlers(userService user.Service,
 	projectService project.Service,
 	taskService task.Service,
 	folderService folder.Service,
-	verificationService verification.Service,
 	registrationService *service.RegistrationService,
 	passwordService password.Service,
 	sprintService *service.SprintService,
@@ -53,7 +50,6 @@ func NewHandlers(userService user.Service,
 		projectService:      projectService,
 		taskService:         taskService,
 		folderService:       folderService,
-		verificationService: verificationService,
 		registrationService: registrationService,
 		passwordService:     passwordService,
 		sprintService:       sprintService,

@@ -79,7 +79,6 @@ func setupFolderRoutes(api fiber.Router, h *handlers.Handlers) {
 	folders.Delete("/:id", h.DeleteFolder)
 	folders.Put("/:id/move", h.MoveFolder)
 
-	folders.Get("/", h.GetFoldersByUserID)
 	folders.Get("/workspace/:workspace_id", h.GetFoldersByWorkspace)
 	folders.Get("/:id/children", h.GetFoldersByParentID)
 }
@@ -227,7 +226,6 @@ func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
 	{
 		folder.Post("/", handlers.CreateFolder)
 		folder.Get("/", handlers.GetFolderByID)
-		folder.Get("/direct", handlers.GetFoldersByUserID)
 		folder.Get("/workspace/:workspace_id", handlers.GetFoldersByWorkspace)
 		folder.Get("/sub", handlers.GetFoldersByParentID)
 		folder.Put("/update", handlers.UpdateFolder)

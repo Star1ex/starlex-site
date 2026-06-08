@@ -1,10 +1,8 @@
 package main
 
 import (
-	"context"
 	"fmt"
 
-	"github.com/Star1ex/starlex-site/internal/api/dto"
 	"github.com/Star1ex/starlex-site/internal/api/handlers"
 	"github.com/Star1ex/starlex-site/internal/config"
 	"github.com/Star1ex/starlex-site/internal/db"
@@ -27,8 +25,6 @@ func main() {
 		return
 	}
 
-	ctx := context.Background()
-
 	bus := events.NewBus()
 
 	tg, _ := telegram.New(
@@ -44,12 +40,5 @@ func main() {
 	userRepo := repository.NewUserRepository(db.DB)
 	serviceUser := service.NewUserService(userRepo, storage, bus)
 
-	u := dto.UserApi{
-		Email:     "eblan@gmail.com",
-		Password:  "1234",
-		FirstName: "John",
-		LastName:  "Strawb",
-	}
-
-	serviceUser.Create(ctx, &u)
+	fmt.Printf("User service ready: %T\n", serviceUser)
 }

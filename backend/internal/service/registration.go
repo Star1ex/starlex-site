@@ -73,7 +73,7 @@ func (s *RegistrationService) Start(ctx context.Context, email, password, firstN
 		return err
 	}
 
-	if err := s.emailService.SendVerificationCode(email, firstName, code); err != nil {
+	if err := s.emailService.SendRegistrationCode(email, firstName, code); err != nil {
 		return fmt.Errorf("failed to send verification email: %w", err)
 	}
 	return nil
@@ -143,7 +143,7 @@ func (s *RegistrationService) Resend(ctx context.Context, email string) error {
 		return err
 	}
 
-	if err := s.emailService.SendVerificationCode(email, pending.FirstName, code); err != nil {
+	if err := s.emailService.SendRegistrationCode(email, pending.FirstName, code); err != nil {
 		return fmt.Errorf("failed to send verification email: %w", err)
 	}
 	return nil

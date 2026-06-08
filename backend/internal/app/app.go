@@ -117,7 +117,6 @@ func StartServer() {
 	folderRepo := repository.NewFolderRepository(db.DB)
 	sprintRepo := repository.NewSprintRepository(db.DB)
 	discussionRepo := repository.NewDiscussionRepository(db.DB)
-	verificationRepo := repository.NewVerificationRepository(db.DB)
 	pendingRegistrationRepo := repository.NewPendingRegistrationRepository(db.DB)
 	passwordResetRepo := repository.NewPasswordResetRepository(db.DB)
 	passwordAuditRepo := repository.NewPasswordAuditRepository(db.DB)
@@ -131,7 +130,6 @@ func StartServer() {
 		FromName:     config.EmailConfig.FromName,
 	})
 
-	verificationService := service.NewVerificationService(verificationRepo, userRepo, emailService)
 	registrationService := service.NewRegistrationService(pendingRegistrationRepo, userRepo, emailService, bus)
 	passwordService := service.NewPasswordService(userRepo, passwordResetRepo, passwordAuditRepo, emailService, config.FrontendBaseURL)
 	userService := service.NewUserService(userRepo, storage, bus)
@@ -153,7 +151,7 @@ func StartServer() {
 			GithubCallbackURL:  config.OAuthConfig.GithubCallbackURL,
 		},
 	}
-	httpHandlers := handlers.NewHandlers(userService, workspaceService, projectService, taskService, folderService, verificationService, registrationService, passwordService, sprintService, discussionService, db, authConfig)
+	httpHandlers := handlers.NewHandlers(userService, workspaceService, projectService, taskService, folderService, registrationService, passwordService, sprintService, discussionService, db, authConfig)
 	routes.InitRoutes(app, httpHandlers)
 
 	go func() {

@@ -93,21 +93,6 @@ func (r *FolderRepository) GetByID(ctx context.Context, id string) (*entity.Fold
 	return toFolderDomain(folder), nil
 }
 
-// retrieves all user folders
-func (r *FolderRepository) GetUserFolders(ctx context.Context, userID string) ([]*entity.Folder, error) {
-	var folders []FolderModel
-	result := r.db.WithContext(ctx).
-		Where("owner_id = ?", userID).
-		Find(&folders)
-	if result.Error != nil {
-		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
-			return nil, gorm.ErrRecordNotFound
-		}
-		return nil, result.Error
-	}
-	return toFolderDomains(folders), nil
-}
-
 // retrieves all workspace folders
 func (r *FolderRepository) GetWorkspaceFolders(ctx context.Context, workspaceID string) ([]*entity.Folder, error) {
 	var folders []FolderModel

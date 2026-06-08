@@ -8,7 +8,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/Star1ex/starlex-site/internal/api/dto"
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
 	"github.com/Star1ex/starlex-site/internal/domain/user"
 	"github.com/Star1ex/starlex-site/internal/events"
@@ -65,30 +64,6 @@ func NewUserService(repo user.Repository, storage storage.Storage, bus *events.B
 	return &UserService{
 		repo: repo, storage: storage, bus: bus,
 	}
-}
-
-func (s *UserService) CreateUnverified(ctx context.Context, u *dto.UserApi) (string, error) {
-	id := security.GenerateNewID()
-	hashedPassword, err := security.HashPassword(u.Password)
-	if err != nil {
-		return "", err
-	}
-	newUser := entity.NewUser(id, u.Email, hashedPassword, u.FirstName, u.LastName)
-	// User is created as unverified (IsVerified = false by default)
-
-	if err := s.repo.Create(ctx, newUser); err != nil {
-		return "", err
-	}
-
-	s.PublishUserRegistered(newUser)
-
-	return newUser.ID, nil
-}
-
-// Old Create method - keep for backward compatibility if needed, or remove
-func (s *UserService) Create(ctx context.Context, u *dto.UserApi) error {
-	_, err := s.CreateUnverified(ctx, u)
-	return err
 }
 
 func (s *UserService) CreateOAuth(ctx context.Context, u *entity.User) error {

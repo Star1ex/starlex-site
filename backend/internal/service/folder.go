@@ -28,11 +28,6 @@ func (s *FolderService) GetByID(ctx context.Context, id string) (*entity.Folder,
 	return s.folderRepo.GetByID(ctx, id)
 }
 
-// retrieves all user folders
-func (s *FolderService) GetUserFolders(ctx context.Context, userID string) ([]*entity.Folder, error) {
-	return s.folderRepo.GetUserFolders(ctx, userID)
-}
-
 // retrieves all workspace folders
 func (s *FolderService) GetWorkspaceFolders(ctx context.Context, workspaceID string) ([]*entity.Folder, error) {
 	return s.folderRepo.GetWorkspaceFolders(ctx, workspaceID)
