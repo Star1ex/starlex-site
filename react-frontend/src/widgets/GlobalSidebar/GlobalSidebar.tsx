@@ -26,7 +26,7 @@ interface GlobalSidebarProps {
 const NAV_ITEMS = [
   { label: 'Home',       icon: Home,         path: (wsId: string) => `/workspace/${wsId}` },
   { label: 'Projects',   icon: FolderKanban, path: (wsId: string) => `/workspace/${wsId}?view=projects` },
-  { label: 'My Issues',  icon: CircleCheck,  path: (wsId: string) => `/workspace/${wsId}?view=my-issues` },
+  { label: 'My Issues',  icon: CircleCheck,  path: (_wsId: string) => `/my-issues` },
   { label: 'Inbox',      icon: Bell,         path: (wsId: string) => `/workspace/${wsId}?view=inbox` },
 ] as const;
 

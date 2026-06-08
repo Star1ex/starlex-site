@@ -30,19 +30,39 @@ export interface FolderMoveRequest {
 // ==================== TASK DTOs ====================
 export type TaskProgress = 'not_started' | 'in_progress' | 'done';
 export type TaskPriority = 'low' | 'medium' | 'high';
+export type TaskStatus = 'backlog' | 'todo' | 'in_progress' | 'in_review' | 'done';
+
+export interface TaskLabelDTO {
+  id: string;
+  name: string;
+  color: string;
+}
+
+export interface TaskAssigneeDTO {
+  id: string;
+  firstName: string;
+  lastName: string;
+  photo_url: string | null;
+  avatar_url?: string | null;
+}
 
 export interface TaskDTO {
   id: string;
+  key?: string;
   task: string;
   description: string;
   icon?: string;
   user_ids: string[];
+  assignees?: TaskAssigneeDTO[];
   workspace_id: string | null;
   folder_id: string | null;
   project_id: string | null;
   owner_id: string;
   priority: TaskPriority;
   progress: TaskProgress;
+  status?: TaskStatus;
+  labels?: TaskLabelDTO[];
+  due_date?: string | null;
   subtasks: SubtaskDTO[];
   created_at: string;
   updated_at: string;
@@ -53,6 +73,7 @@ export interface CreateTaskRequest {
   task: string;
   description?: string;
   progress?: TaskProgress;
+  status?: TaskStatus;
   priority?: TaskPriority;
   folder_id?: string | null;
   workspace_id?: string | null;
@@ -72,6 +93,48 @@ export interface UpdateTaskRequest {
 
 export interface UpdateProgressRequest {
   progress: TaskProgress;
+}
+
+// ==================== TASK QUERY DTOs ====================
+
+export interface TaskQueryParams {
+  project_id?: string;
+  sprint_id?: string;
+  status?: string;
+  priority?: string;
+  assignee_id?: string;
+  label_id?: string;
+  q?: string;
+  due_from?: string;
+  due_to?: string;
+  sort_by?: 'updated_at' | 'created_at' | 'due_date' | 'priority' | 'status' | 'key';
+  direction?: 'asc' | 'desc';
+  limit?: number;
+  cursor?: string;
+}
+
+export interface TaskQueryResponse {
+  tasks: TaskDTO[];
+  next_cursor: string | null;
+  limit: number;
+  sort_by: string;
+  direction: string;
+}
+
+export interface TaskCategoryItem {
+  id: string;
+  name: string;
+  color?: string;
+  count: number;
+}
+
+export interface TaskCategoryGroup {
+  type: string;
+  items: TaskCategoryItem[];
+}
+
+export interface TaskCategoriesResponse {
+  categories: TaskCategoryGroup[];
 }
 
 // ==================== WORKSPACE DTOs ====================

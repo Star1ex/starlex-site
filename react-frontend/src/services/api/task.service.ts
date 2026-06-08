@@ -1,6 +1,6 @@
 import type { AxiosError } from 'axios';
 import { httpClient } from './client.js';
-import { TaskDTO, CreateTaskRequest, UpdateTaskRequest, TaskProgress } from '../../types/dto.js';
+import type { TaskDTO, CreateTaskRequest, UpdateTaskRequest, TaskProgress, TaskStatus, TaskQueryParams, TaskQueryResponse, TaskCategoriesResponse } from '../../types/dto.js';
 import { showToast } from '@/shared/lib/toast.js';
 
 const maybeHandleStaleUpdate = (error: unknown) => {
@@ -127,5 +127,39 @@ export const taskService = {
   async deleteWorkspaceTask(workspaceId: string, taskId: string): Promise<string> {
     const response = await httpClient.delete<string>(`/api/workspaces/${workspaceId}/tasks/${taskId}`);
     return response.data;
+  },
+
+  // New Linear-style APIs
+  async queryTasks(workspaceId: string, params: TaskQueryParams = {}): Promise<TaskQueryResponse> {
+    const query = new URLSearchParams();
+    Object.entries(params).forEach(([k, v]) => {
+      if (v !== undefined && v !== null && v !== '') query.set(k, String(v));
+    });
+    const qs = query.toString();
+    const response = await httpClient.get<TaskQueryResponse>(
+      `/api/workspaces/${workspaceId}/tasks/query${qs ? `?${qs}` : ''}`,
+    );
+    return response.data;
+  },
+
+  async getTaskCategories(workspaceId: string): Promise<TaskCategoriesResponse> {
+    const response = await httpClient.get<TaskCategoriesResponse>(`/api/workspaces/${workspaceId}/tasks/categories`);
+    return response.data;
+  },
+
+  async patchTaskStatus(taskId: string, status: TaskStatus): Promise<void> {
+    await httpClient.patch(`/api/tasks/${taskId}/status`, { status });
+  },
+
+  async patchTaskLabels(workspaceId: string, taskId: string, labelIds: string[]): Promise<void> {
+    await httpClient.patch(`/api/workspaces/${workspaceId}/tasks/${taskId}/labels`, { label_ids: labelIds });
+  },
+
+  async patchTaskDueDate(workspaceId: string, taskId: string, dueDate: string | null): Promise<void> {
+    await httpClient.patch(`/api/workspaces/${workspaceId}/tasks/${taskId}/due-date`, { due_date: dueDate });
+  },
+
+  async patchTaskAssigneesWs(workspaceId: string, taskId: string, userIds: string[]): Promise<void> {
+    await httpClient.patch(`/api/workspaces/${workspaceId}/tasks/${taskId}/assignees`, { user_ids: userIds });
   },
 };

@@ -25,6 +25,7 @@ const UserProfilePage = React.lazy(() => import('@/pages/profile/UserProfilePage
 const TaskView        = React.lazy(() => import('@/components/Tasks/TaskView.js').then(m => ({ default: m.default })));
 const SettingsModal     = React.lazy(() => import('@/widgets/SettingsModal/SettingsModal.js').then(m => ({ default: m.SettingsModal })));
 const InviteAcceptPage  = React.lazy(() => import('@/pages/invite/InviteAcceptPage.js').then(m => ({ default: m.InviteAcceptPage })));
+const MyIssuesPage      = React.lazy(() => import('@/pages/tasks/MyIssuesPage.js').then(m => ({ default: m.MyIssuesPage })));
 
 function preloadRoutes() {
   import('@/pages/workspace/WorkspacePage.js');
@@ -93,6 +94,9 @@ const AnimatedRoutes = () => {
           />
           <Route path="/personal"
             element={withEB(<RequireAuth><DashboardRedirect /></RequireAuth>)}
+          />
+          <Route path="/my-issues"
+            element={withEB(<RequireAuth><Layout><MyIssuesPage /></Layout></RequireAuth>)}
           />
           <Route path="/workspace/:workspaceId"
             element={withEB(<RequireAuth><Layout><WorkspacePage /></Layout></RequireAuth>)}
