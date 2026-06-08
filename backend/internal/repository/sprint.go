@@ -96,13 +96,24 @@ func (r *SprintRepository) GetWorkspaceSprints(ctx context.Context, workspaceID 
 }
 
 func (r *SprintRepository) GetByID(ctx context.Context, id string) (*entity.Sprint, error) {
+	return r.getByID(ctx, id, "")
+}
+
+func (r *SprintRepository) GetByIDInWorkspace(ctx context.Context, id, workspaceID string) (*entity.Sprint, error) {
+	return r.getByID(ctx, id, workspaceID)
+}
+
+func (r *SprintRepository) getByID(ctx context.Context, id, workspaceID string) (*entity.Sprint, error) {
 	var model SprintModel
-	result := r.db.WithContext(ctx).
+	query := r.db.WithContext(ctx).
 		Preload("Tasks").
 		Preload("Tasks.Assigned").
 		Preload("Tasks.Subtasks").
-		Where("id = ?", id).
-		First(&model)
+		Where("id = ?", id)
+	if workspaceID != "" {
+		query = query.Where("workspace_id = ?", workspaceID)
+	}
+	result := query.First(&model)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, gorm.ErrRecordNotFound
@@ -113,6 +124,14 @@ func (r *SprintRepository) GetByID(ctx context.Context, id string) (*entity.Spri
 }
 
 func (r *SprintRepository) Update(ctx context.Context, sprint *entity.Sprint) error {
+	return r.update(ctx, sprint, "")
+}
+
+func (r *SprintRepository) UpdateInWorkspace(ctx context.Context, sprint *entity.Sprint, workspaceID string) error {
+	return r.update(ctx, sprint, workspaceID)
+}
+
+func (r *SprintRepository) update(ctx context.Context, sprint *entity.Sprint, workspaceID string) error {
 	updates := map[string]interface{}{}
 	if sprint.Name != "" {
 		updates["name"] = sprint.Name
@@ -132,13 +151,42 @@ func (r *SprintRepository) Update(ctx context.Context, sprint *entity.Sprint) er
 	if len(updates) == 0 {
 		return nil
 	}
-	return r.db.WithContext(ctx).Model(&SprintModel{}).
-		Where("id = ?", sprint.ID).
-		Updates(updates).Error
+	query := r.db.WithContext(ctx).Model(&SprintModel{}).
+		Where("id = ?", sprint.ID)
+	if workspaceID != "" {
+		query = query.Where("workspace_id = ?", workspaceID)
+	}
+	result := query.Updates(updates)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }
 
 func (r *SprintRepository) Delete(ctx context.Context, id string) error {
-	return r.db.WithContext(ctx).Delete(&SprintModel{}, "id = ?", id).Error
+	return r.delete(ctx, id, "")
+}
+
+func (r *SprintRepository) DeleteInWorkspace(ctx context.Context, id, workspaceID string) error {
+	return r.delete(ctx, id, workspaceID)
+}
+
+func (r *SprintRepository) delete(ctx context.Context, id, workspaceID string) error {
+	query := r.db.WithContext(ctx).Where("id = ?", id)
+	if workspaceID != "" {
+		query = query.Where("workspace_id = ?", workspaceID)
+	}
+	result := query.Delete(&SprintModel{})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }
 
 func (r *SprintRepository) HasActiveSprint(ctx context.Context, workspaceID, excludeID string) (bool, error) {
@@ -173,16 +221,30 @@ func (r *SprintRepository) MoveIncompleteTasks(ctx context.Context, sprintID str
 		Updates(updates).Error
 }
 
-func (r *SprintRepository) UpdateTaskSprint(ctx context.Context, taskID string, sprintID *string) error {
-	return r.db.WithContext(ctx).Model(&TaskModel{}).
-		Where("id = ?", taskID).
-		Update("sprint_id", sprintID).Error
+func (r *SprintRepository) UpdateTaskSprint(ctx context.Context, taskID, workspaceID string, sprintID *string) error {
+	result := r.db.WithContext(ctx).Model(&TaskModel{}).
+		Where("id = ? AND workspace_id = ?", taskID, workspaceID).
+		Update("sprint_id", sprintID)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }
 
-func (r *SprintRepository) UpdateTaskPosition(ctx context.Context, taskID string, position int) error {
-	return r.db.WithContext(ctx).Model(&TaskModel{}).
-		Where("id = ?", taskID).
-		Update("position", position).Error
+func (r *SprintRepository) UpdateTaskPosition(ctx context.Context, taskID, workspaceID string, position int) error {
+	result := r.db.WithContext(ctx).Model(&TaskModel{}).
+		Where("id = ? AND workspace_id = ?", taskID, workspaceID).
+		Update("position", position)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }
 
 func (r *SprintRepository) CreateSubtask(ctx context.Context, subtask *entity.Subtask) error {
@@ -207,8 +269,20 @@ func (r *SprintRepository) CountSubtasks(ctx context.Context, taskID string) (in
 }
 
 func (r *SprintRepository) GetSubtask(ctx context.Context, id string) (*entity.Subtask, error) {
+	return r.getSubtask(ctx, "", id)
+}
+
+func (r *SprintRepository) GetSubtaskForTask(ctx context.Context, taskID, id string) (*entity.Subtask, error) {
+	return r.getSubtask(ctx, taskID, id)
+}
+
+func (r *SprintRepository) getSubtask(ctx context.Context, taskID, id string) (*entity.Subtask, error) {
 	var model SubtaskModel
-	result := r.db.WithContext(ctx).Where("id = ?", id).First(&model)
+	query := r.db.WithContext(ctx).Where("id = ?", id)
+	if taskID != "" {
+		query = query.Where("task_id = ?", taskID)
+	}
+	result := query.First(&model)
 	if result.Error != nil {
 		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
 			return nil, gorm.ErrRecordNotFound
@@ -218,17 +292,33 @@ func (r *SprintRepository) GetSubtask(ctx context.Context, id string) (*entity.S
 	return toSubtaskDomain(model), nil
 }
 
-func (r *SprintRepository) UpdateSubtask(ctx context.Context, id string, updates map[string]interface{}) error {
+func (r *SprintRepository) UpdateSubtask(ctx context.Context, taskID, id string, updates map[string]interface{}) error {
 	if len(updates) == 0 {
 		return nil
 	}
-	return r.db.WithContext(ctx).Model(&SubtaskModel{}).
-		Where("id = ?", id).
-		Updates(updates).Error
+	result := r.db.WithContext(ctx).Model(&SubtaskModel{}).
+		Where("id = ? AND task_id = ?", id, taskID).
+		Updates(updates)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }
 
-func (r *SprintRepository) DeleteSubtask(ctx context.Context, id string) error {
-	return r.db.WithContext(ctx).Delete(&SubtaskModel{}, "id = ?", id).Error
+func (r *SprintRepository) DeleteSubtask(ctx context.Context, taskID, id string) error {
+	result := r.db.WithContext(ctx).
+		Where("id = ? AND task_id = ?", id, taskID).
+		Delete(&SubtaskModel{})
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
 }
 
 func (r *SprintRepository) SearchInWorkspaces(ctx context.Context, workspaceIDs []string, query string) ([]*entity.Sprint, error) {

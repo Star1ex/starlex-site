@@ -11,8 +11,8 @@ import (
 	"github.com/Star1ex/starlex-site/internal/security"
 )
 
-// ProjectService implements project use cases. Project membership is a subset
-// of workspace membership; any project member may manage the project.
+// ProjectService implements project use cases. Project membership controls
+// read access; project leaders and workspace admins manage the project.
 type ProjectService struct {
 	projectRepo   project.Repository
 	workspaceRepo workspace.Repository
@@ -57,6 +57,49 @@ func (s *ProjectService) requireProjectMember(ctx context.Context, projectID, us
 	return nil
 }
 
+func (s *ProjectService) requireWorkspaceRole(ctx context.Context, workspaceID, userID string, minRole workspace.Role) error {
+	role, err := s.workspaceRepo.GetRole(ctx, workspaceID, userID)
+	if err != nil {
+		return project.ErrNotMember
+	}
+	if !role.AtLeast(minRole) {
+		return project.ErrNotMember
+	}
+	return nil
+}
+
+func (s *ProjectService) canReadProject(ctx context.Context, p *entity.Project, userID string) error {
+	role, err := s.workspaceRepo.GetRole(ctx, p.WorkspaceID, userID)
+	if err != nil {
+		return project.ErrNotMember
+	}
+	if role.AtLeast(workspace.RoleAdmin) {
+		return nil
+	}
+	ok, err := s.projectRepo.IsMember(ctx, p.ID, userID)
+	if err != nil {
+		return err
+	}
+	if ok {
+		return nil
+	}
+	return project.ErrNotMember
+}
+
+func (s *ProjectService) canManageProject(ctx context.Context, p *entity.Project, userID string) error {
+	role, err := s.workspaceRepo.GetRole(ctx, p.WorkspaceID, userID)
+	if err != nil {
+		return project.ErrNotMember
+	}
+	if role.AtLeast(workspace.RoleAdmin) {
+		return nil
+	}
+	if p.LeaderID == userID && role.AtLeast(workspace.RoleMember) {
+		return nil
+	}
+	return project.ErrNotMember
+}
+
 func normalizeStatus(raw string) (project.Status, error) {
 	if strings.TrimSpace(raw) == "" {
 		return project.DefaultStatus, nil
@@ -80,11 +123,7 @@ func normalizePriority(raw string) (project.Priority, error) {
 }
 
 func (s *ProjectService) CreateProject(ctx context.Context, workspaceID string, in project.CreateInput, userID string) (*entity.Project, error) {
-	ok, err := s.isWorkspaceMember(ctx, workspaceID, userID)
-	if err != nil {
-		return nil, err
-	}
-	if !ok {
+	if err := s.requireWorkspaceRole(ctx, workspaceID, userID, workspace.RoleMember); err != nil {
 		return nil, project.ErrNotMember
 	}
 
@@ -149,10 +188,14 @@ func (s *ProjectService) CreateProject(ctx context.Context, workspaceID string, 
 }
 
 func (s *ProjectService) GetProjectByID(ctx context.Context, projectID, userID string) (*entity.Project, error) {
-	if err := s.requireProjectMember(ctx, projectID, userID); err != nil {
+	p, err := s.projectRepo.GetByID(ctx, projectID)
+	if err != nil {
 		return nil, err
 	}
-	return s.projectRepo.GetByID(ctx, projectID)
+	if err := s.canReadProject(ctx, p, userID); err != nil {
+		return nil, err
+	}
+	return p, nil
 }
 
 func (s *ProjectService) GetWorkspaceProjects(ctx context.Context, workspaceID, userID string) ([]*entity.Project, error) {
@@ -167,7 +210,11 @@ func (s *ProjectService) GetWorkspaceProjects(ctx context.Context, workspaceID, 
 }
 
 func (s *ProjectService) UpdateProject(ctx context.Context, projectID string, fields project.UpdateFields, userID string) (*entity.Project, error) {
-	if err := s.requireProjectMember(ctx, projectID, userID); err != nil {
+	p, err := s.projectRepo.GetByID(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.canManageProject(ctx, p, userID); err != nil {
 		return nil, err
 	}
 
@@ -210,25 +257,33 @@ func (s *ProjectService) UpdateProject(ctx context.Context, projectID string, fi
 }
 
 func (s *ProjectService) Delete(ctx context.Context, projectID, userID string) error {
-	if err := s.requireProjectMember(ctx, projectID, userID); err != nil {
+	p, err := s.projectRepo.GetByID(ctx, projectID)
+	if err != nil {
+		return err
+	}
+	if err := s.canManageProject(ctx, p, userID); err != nil {
 		return err
 	}
 	return s.projectRepo.Delete(ctx, projectID)
 }
 
 func (s *ProjectService) GetMembers(ctx context.Context, projectID, userID string) ([]*entity.User, error) {
-	if err := s.requireProjectMember(ctx, projectID, userID); err != nil {
+	p, err := s.projectRepo.GetByID(ctx, projectID)
+	if err != nil {
+		return nil, err
+	}
+	if err := s.canReadProject(ctx, p, userID); err != nil {
 		return nil, err
 	}
 	return s.projectRepo.GetMembers(ctx, projectID)
 }
 
 func (s *ProjectService) AddMember(ctx context.Context, projectID, email, requesterID string) error {
-	if err := s.requireProjectMember(ctx, projectID, requesterID); err != nil {
-		return err
-	}
 	p, err := s.projectRepo.GetByID(ctx, projectID)
 	if err != nil {
+		return err
+	}
+	if err := s.canManageProject(ctx, p, requesterID); err != nil {
 		return err
 	}
 	target, err := s.userRepo.GetByEmail(ctx, email)
@@ -254,11 +309,11 @@ func (s *ProjectService) AddMember(ctx context.Context, projectID, email, reques
 }
 
 func (s *ProjectService) RemoveMember(ctx context.Context, projectID, userIDToRemove, requesterID string) error {
-	if err := s.requireProjectMember(ctx, projectID, requesterID); err != nil {
-		return err
-	}
 	p, err := s.projectRepo.GetByID(ctx, projectID)
 	if err != nil {
+		return err
+	}
+	if err := s.canManageProject(ctx, p, requesterID); err != nil {
 		return err
 	}
 	if p.LeaderID == userIDToRemove {

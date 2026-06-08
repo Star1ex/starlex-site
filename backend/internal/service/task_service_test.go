@@ -47,6 +47,7 @@ func (m *mockTaskRepo) UpdateDueDate(_ context.Context, id string, dueDate *time
 type mockTaskWorkspaceRepo struct {
 	workspace.Repository
 	existing map[string]*entity.Workspace
+	roles    map[string]map[string]workspace.Role
 }
 
 func (m *mockTaskWorkspaceRepo) GetWorkspaceByID(_ context.Context, id string) (*entity.Workspace, error) {
@@ -55,6 +56,24 @@ func (m *mockTaskWorkspaceRepo) GetWorkspaceByID(_ context.Context, id string) (
 		return nil, errors.New("workspace not found")
 	}
 	return ws, nil
+}
+
+func (m *mockTaskWorkspaceRepo) GetRole(_ context.Context, workspaceID, userID string) (workspace.Role, error) {
+	if _, ok := m.existing[workspaceID]; !ok {
+		return "", errors.New("workspace not found")
+	}
+	if m.roles == nil {
+		return workspace.RoleMember, nil
+	}
+	workspaceRoles, ok := m.roles[workspaceID]
+	if !ok {
+		return workspace.RoleMember, nil
+	}
+	role, ok := workspaceRoles[userID]
+	if !ok {
+		return "", errors.New("user not in workspace")
+	}
+	return role, nil
 }
 
 type mockTaskUserRepo struct {
@@ -158,6 +177,30 @@ func TestCreateWorkspaceTask_AssignsUsers(t *testing.T) {
 	}
 	if n := len(tr.created[0].AssignedTo); n != 2 {
 		t.Errorf("want 2 assignees, got %d", n)
+	}
+}
+
+func TestCreateWorkspaceTask_AssigneeMustBelongToWorkspace(t *testing.T) {
+	tr := &mockTaskRepo{statusUpdates: map[string]string{}, dueDateUpdates: map[string]*time.Time{}}
+	wr := &mockTaskWorkspaceRepo{
+		existing: map[string]*entity.Workspace{
+			"ws1": {ID: "ws1", OwnerID: "owner"},
+		},
+		roles: map[string]map[string]workspace.Role{
+			"ws1": {"member": workspace.RoleMember},
+		},
+	}
+	ur := &mockTaskUserRepo{byID: map[string]*entity.User{
+		"outsider": {ID: "outsider"},
+	}}
+	svc := NewTaskService(tr, ur, wr)
+
+	err := svc.CreateWorkspaceTask(context.Background(), "ws1", []string{"outsider"}, &entity.Task{Task: "x"}, "member")
+	if !errors.Is(err, ErrTaskAssigneeNotWorkspaceMember) {
+		t.Fatalf("want assignee workspace error, got %v", err)
+	}
+	if len(tr.created) != 0 {
+		t.Fatal("task should not be created with an outsider assignee")
 	}
 }
 

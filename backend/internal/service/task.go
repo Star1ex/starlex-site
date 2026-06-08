@@ -21,6 +21,8 @@ type TaskService struct {
 	bus           *events.Bus
 }
 
+var ErrTaskAssigneeNotWorkspaceMember = errors.New("task: assignee must belong to workspace")
+
 func NewTaskService(taskRepo taskdomain.Repository, userRepo user.Repository, workspaceRepo workspace.Repository, bus ...*events.Bus) *TaskService {
 	service := &TaskService{
 		taskRepo:      taskRepo,
@@ -48,6 +50,10 @@ func (s *TaskService) CreateWorkspaceTask(
 	// API layer (any workspace member may create tasks).
 	workspaceEntity, err := s.workspaceRepo.GetWorkspaceByID(ctx, workspaceID)
 	if err != nil {
+		return err
+	}
+
+	if err := s.ensureWorkspaceMembers(ctx, workspaceID, assignedIDs); err != nil {
 		return err
 	}
 
@@ -87,6 +93,9 @@ func (s *TaskService) CreateProjectTask(
 	assignedIDs []string,
 	task *entity.Task,
 ) error {
+	if err := s.ensureWorkspaceMembers(ctx, workspaceID, assignedIDs); err != nil {
+		return err
+	}
 	var users []*entity.User
 	if len(assignedIDs) > 0 {
 		var err error
@@ -125,6 +134,15 @@ func (s *TaskService) GetTaskByID(ctx context.Context, taskID string) (*entity.T
 }
 
 func (s *TaskService) Update(ctx context.Context, id string, data *entity.Task, assignedTo []string) (*entity.Task, error) {
+	existing, err := s.taskRepo.Get(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	if assignedTo != nil {
+		if err := s.ensureWorkspaceMembers(ctx, existing.WorkspaceID, assignedTo); err != nil {
+			return nil, err
+		}
+	}
 	if data.Status != "" {
 		status, err := taskdomain.ParseStatus(data.Status)
 		if err != nil {
@@ -216,6 +234,13 @@ func (s *TaskService) UpdateTaskDueDate(ctx context.Context, taskID string, dueD
 }
 
 func (s *TaskService) UpdateTaskAssignees(ctx context.Context, taskID string, assignedTo []string) error {
+	taskEntity, err := s.taskRepo.Get(ctx, taskID)
+	if err != nil {
+		return err
+	}
+	if err := s.ensureWorkspaceMembers(ctx, taskEntity.WorkspaceID, assignedTo); err != nil {
+		return err
+	}
 	if err := s.taskRepo.UpdateAssignees(ctx, taskID, assignedTo); err != nil {
 		return err
 	}
@@ -307,4 +332,25 @@ func (s *TaskService) publishTaskEvent(eventType string, taskEntity *entity.Task
 			"key":     taskEntity.Key,
 		},
 	})
+}
+
+func (s *TaskService) ensureWorkspaceMembers(ctx context.Context, workspaceID string, userIDs []string) error {
+	if len(userIDs) == 0 {
+		return nil
+	}
+	seen := make(map[string]struct{}, len(userIDs))
+	for _, userID := range userIDs {
+		userID = strings.TrimSpace(userID)
+		if userID == "" {
+			continue
+		}
+		if _, ok := seen[userID]; ok {
+			continue
+		}
+		seen[userID] = struct{}{}
+		if _, err := s.workspaceRepo.GetRole(ctx, workspaceID, userID); err != nil {
+			return ErrTaskAssigneeNotWorkspaceMember
+		}
+	}
+	return nil
 }

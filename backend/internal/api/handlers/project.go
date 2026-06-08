@@ -8,6 +8,7 @@ import (
 	"github.com/Star1ex/starlex-site/internal/domain/project"
 	"github.com/Star1ex/starlex-site/internal/logger"
 	"github.com/Star1ex/starlex-site/internal/repository"
+	appservice "github.com/Star1ex/starlex-site/internal/service"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -32,6 +33,8 @@ func projectError(c *fiber.Ctx, err error) error {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "user must belong to the workspace"})
 	case errors.Is(err, repository.ErrUserNotFound):
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "user not found"})
+	case errors.Is(err, appservice.ErrTaskAssigneeNotWorkspaceMember):
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "assignee must belong to workspace"})
 	default:
 		logger.Log.Errorw("project handler failed", "error", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})

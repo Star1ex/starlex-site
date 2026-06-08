@@ -163,7 +163,7 @@ func (h *Handlers) PatchTaskLabels(ctx *fiber.Ctx) error {
 	if taskID == "" || taskID == "nil" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
 	}
-	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+	if _, err := h.requireTaskWriteAccess(ctx, taskID, userID); err != nil {
 		return err
 	}
 	var input dto.UpdateTaskLabelsRequest

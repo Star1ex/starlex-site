@@ -10,8 +10,10 @@ import (
 	"github.com/Star1ex/starlex-site/internal/api/dto"
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
 	domaintask "github.com/Star1ex/starlex-site/internal/domain/task"
+	domainworkspace "github.com/Star1ex/starlex-site/internal/domain/workspace"
 	"github.com/Star1ex/starlex-site/internal/logger"
 	"github.com/Star1ex/starlex-site/internal/repository"
+	appservice "github.com/Star1ex/starlex-site/internal/service"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
@@ -40,8 +42,7 @@ func (h *Handlers) CreateWorkspaceTask(ctx *fiber.Ctx) error {
 	if authErr != nil {
 		return authErr
 	}
-	// Any member of the workspace may create tasks.
-	if err := h.requireWorkspaceMember(ctx, workspaceID, userID); err != nil {
+	if err := h.requireWorkspaceRole(ctx, workspaceID, userID, domainworkspace.RoleMember); err != nil {
 		return err
 	}
 	var input dto.TaskApi
@@ -63,6 +64,9 @@ func (h *Handlers) CreateWorkspaceTask(ctx *fiber.Ctx) error {
 	err := h.taskService.CreateWorkspaceTask(ctx.Context(), workspaceID, input.AssignedToID, entityTask, userID)
 
 	if err != nil {
+		if errors.Is(err, appservice.ErrTaskAssigneeNotWorkspaceMember) {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "assignee must belong to workspace"})
+		}
 		logger.Log.Errorw("create workspace task failed", "error", err)
 		return ctx.Status(500).JSON(fiber.Map{"error": "internal server error"})
 	}
@@ -88,7 +92,7 @@ func (h *Handlers) UpdateTask(c *fiber.Ctx) error {
 			"error": "unauthorized",
 		})
 	}
-	if _, err := h.requireTaskAccess(c, taskID, userID); err != nil {
+	if _, err := h.requireTaskWriteAccess(c, taskID, userID); err != nil {
 		return err
 	}
 
@@ -117,6 +121,9 @@ func (h *Handlers) UpdateTask(c *fiber.Ctx) error {
 				"error": "task was modified by someone else, please refresh",
 			})
 		}
+		if errors.Is(err, appservice.ErrTaskAssigneeNotWorkspaceMember) {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "assignee must belong to workspace"})
+		}
 		logger.Log.Errorw("update task failed", "error", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "internal server error",
@@ -136,7 +143,7 @@ func (h *Handlers) PatchTaskIcon(ctx *fiber.Ctx) error {
 	if taskID == "" || taskID == "nil" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
 	}
-	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+	if _, err := h.requireTaskWriteAccess(ctx, taskID, userID); err != nil {
 		return err
 	}
 
@@ -169,7 +176,7 @@ func (h *Handlers) PatchTaskTitle(ctx *fiber.Ctx) error {
 	if taskID == "" || taskID == "nil" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
 	}
-	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+	if _, err := h.requireTaskWriteAccess(ctx, taskID, userID); err != nil {
 		return err
 	}
 
@@ -206,7 +213,7 @@ func (h *Handlers) PatchTaskDescription(ctx *fiber.Ctx) error {
 	if taskID == "" || taskID == "nil" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
 	}
-	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+	if _, err := h.requireTaskWriteAccess(ctx, taskID, userID); err != nil {
 		return err
 	}
 
@@ -239,7 +246,7 @@ func (h *Handlers) PatchTaskPriority(ctx *fiber.Ctx) error {
 	if taskID == "" || taskID == "nil" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
 	}
-	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+	if _, err := h.requireTaskWriteAccess(ctx, taskID, userID); err != nil {
 		return err
 	}
 
@@ -277,7 +284,7 @@ func (h *Handlers) PatchTaskProgress(ctx *fiber.Ctx) error {
 	if taskID == "" || taskID == "nil" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
 	}
-	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+	if _, err := h.requireTaskWriteAccess(ctx, taskID, userID); err != nil {
 		return err
 	}
 
@@ -330,7 +337,7 @@ func (h *Handlers) PatchTaskStatus(ctx *fiber.Ctx) error {
 	if taskID == "" || taskID == "nil" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
 	}
-	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+	if _, err := h.requireTaskWriteAccess(ctx, taskID, userID); err != nil {
 		return err
 	}
 
@@ -383,7 +390,7 @@ func (h *Handlers) PatchTaskDueDate(ctx *fiber.Ctx) error {
 	if taskID == "" || taskID == "nil" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
 	}
-	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+	if _, err := h.requireTaskWriteAccess(ctx, taskID, userID); err != nil {
 		return err
 	}
 
@@ -417,7 +424,7 @@ func (h *Handlers) PatchTaskAssignees(ctx *fiber.Ctx) error {
 	if taskID == "" || taskID == "nil" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
 	}
-	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+	if _, err := h.requireTaskWriteAccess(ctx, taskID, userID); err != nil {
 		return err
 	}
 
@@ -430,6 +437,9 @@ func (h *Handlers) PatchTaskAssignees(ctx *fiber.Ctx) error {
 	}
 
 	if err := h.taskService.UpdateTaskAssignees(ctx.Context(), taskID, *input.UserIDs); err != nil {
+		if errors.Is(err, appservice.ErrTaskAssigneeNotWorkspaceMember) {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "assignee must belong to workspace"})
+		}
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "task not found"})
 		}
@@ -617,7 +627,7 @@ func (h *Handlers) UpdateTaskProgress(ctx *fiber.Ctx) error {
 	if taskId == "" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
 	}
-	if _, err := h.requireTaskAccess(ctx, taskId, userID); err != nil {
+	if _, err := h.requireTaskWriteAccess(ctx, taskId, userID); err != nil {
 		return err
 	}
 	var updates dto.UpdateDto
@@ -654,7 +664,7 @@ func (h *Handlers) DeleteTask(c *fiber.Ctx) error {
 	if taskID == "nil" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
 	}
-	if _, err := h.requireTaskAccess(c, taskID, userID); err != nil {
+	if _, err := h.requireTaskDeleteAccess(c, taskID, userID); err != nil {
 		return err
 	}
 

@@ -120,6 +120,7 @@ func (m *mockProjectRepo) GetWorkspaceProjects(_ context.Context, workspaceID, u
 type mockWorkspaceRepo struct {
 	workspace.Repository
 	members map[string][]string // workspaceID -> userIDs
+	roles   map[string]map[string]workspace.Role
 }
 
 func (m *mockWorkspaceRepo) GetWorkspace(_ context.Context, workspaceID string) ([]*entity.User, error) {
@@ -129,6 +130,22 @@ func (m *mockWorkspaceRepo) GetWorkspace(_ context.Context, workspaceID string) 
 		out[i] = &entity.User{ID: id}
 	}
 	return out, nil
+}
+
+func (m *mockWorkspaceRepo) GetRole(_ context.Context, workspaceID, userID string) (workspace.Role, error) {
+	if workspaceRoles, ok := m.roles[workspaceID]; ok {
+		role, ok := workspaceRoles[userID]
+		if !ok {
+			return "", errors.New("user not in workspace")
+		}
+		return role, nil
+	}
+	for _, id := range m.members[workspaceID] {
+		if id == userID {
+			return workspace.RoleMember, nil
+		}
+	}
+	return "", errors.New("user not in workspace")
 }
 
 type mockUserRepo struct {
@@ -178,6 +195,18 @@ func TestCreateProject_Success(t *testing.T) {
 func TestCreateProject_NonWorkspaceMember(t *testing.T) {
 	svc, _, _, _ := newServiceWithWorkspace("ws1", "u1")
 	_, err := svc.CreateProject(context.Background(), "ws1", project.CreateInput{Name: "X"}, "intruder")
+	if !errors.Is(err, project.ErrNotMember) {
+		t.Fatalf("want ErrNotMember, got %v", err)
+	}
+}
+
+func TestCreateProject_GuestCannotCreate(t *testing.T) {
+	svc, _, wr, _ := newServiceWithWorkspace("ws1", "guest")
+	wr.roles = map[string]map[string]workspace.Role{
+		"ws1": {"guest": workspace.RoleGuest},
+	}
+
+	_, err := svc.CreateProject(context.Background(), "ws1", project.CreateInput{Name: "X"}, "guest")
 	if !errors.Is(err, project.ErrNotMember) {
 		t.Fatalf("want ErrNotMember, got %v", err)
 	}
@@ -298,6 +327,40 @@ func TestUpdateProject_Success(t *testing.T) {
 	}
 }
 
+func TestUpdateProject_ProjectMemberCannotManage(t *testing.T) {
+	svc, _, _, _ := newServiceWithWorkspace("ws1", "u1", "u2")
+	p, _ := svc.CreateProject(context.Background(), "ws1", project.CreateInput{
+		Name:      "X",
+		MemberIDs: []string{"u2"},
+	}, "u1")
+
+	name := "Renamed"
+	_, err := svc.UpdateProject(context.Background(), p.ID, project.UpdateFields{Name: &name}, "u2")
+	if !errors.Is(err, project.ErrNotMember) {
+		t.Fatalf("want ErrNotMember, got %v", err)
+	}
+}
+
+func TestUpdateProject_WorkspaceAdminCanManageWithoutProjectMembership(t *testing.T) {
+	svc, _, wr, _ := newServiceWithWorkspace("ws1", "u1", "admin")
+	wr.roles = map[string]map[string]workspace.Role{
+		"ws1": {
+			"u1":    workspace.RoleMember,
+			"admin": workspace.RoleAdmin,
+		},
+	}
+	p, _ := svc.CreateProject(context.Background(), "ws1", project.CreateInput{Name: "X"}, "u1")
+
+	name := "Admin renamed"
+	updated, err := svc.UpdateProject(context.Background(), p.ID, project.UpdateFields{Name: &name}, "admin")
+	if err != nil {
+		t.Fatalf("admin should manage workspace project: %v", err)
+	}
+	if updated.Name != name {
+		t.Fatalf("want renamed project, got %q", updated.Name)
+	}
+}
+
 func TestUpdateProject_LeaderMustBeMember(t *testing.T) {
 	svc, _, _, _ := newServiceWithWorkspace("ws1", "u1", "u2")
 	p, _ := svc.CreateProject(context.Background(), "ws1", project.CreateInput{Name: "X"}, "u1")
@@ -323,7 +386,7 @@ func TestDeleteAndGetMembers(t *testing.T) {
 	if err := svc.Delete(context.Background(), p.ID, "u1"); err != nil {
 		t.Fatalf("delete failed: %v", err)
 	}
-	if _, err := svc.GetProjectByID(context.Background(), p.ID, "u1"); !errors.Is(err, project.ErrNotMember) {
+	if _, err := svc.GetProjectByID(context.Background(), p.ID, "u1"); !errors.Is(err, project.ErrProjectNotFound) {
 		t.Errorf("deleted project should be gone (no membership), got %v", err)
 	}
 }
