@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { apiClient } from '@/services/api/client.js';
 import { authService, userService } from '@/services/api/index.js';
 import { clearAuthStorage, setAuthUser } from '@/shared/lib/authManager.js';
+import { realtimeClient } from '@/shared/lib/realtime.js';
 
 type AuthContextType = {
   userId: string | null;
@@ -79,12 +80,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const logout = async () => {
-    // Revoke session server-side first, then clear local state.
     try {
       await authService.logout();
     } catch {
       // best-effort; still clear locally
     } finally {
+      realtimeClient.disconnect();
       apiClient.clearAccessToken();
       clearAuthStorage();
       setUserId(null);
@@ -95,7 +96,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    console.debug('AuthProvider initializing...');
     refreshUser();
   }, []);
 
