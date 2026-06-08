@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { workspaceService, projectService, userService } from '@/services/api/index.js';
 import type { ProjectDTO, UserDTO, UserProfileDTO, WorkspaceDTO } from '@/types/dto.js';
@@ -11,6 +11,7 @@ import { useWorkspace } from '@/contexts/WorkspaceContext.js';
 import { WorkspaceWelcome } from './WorkspaceWelcome.js';
 import { WorkspaceBento } from './WorkspaceBento.js';
 import { WorkspaceProjects } from './WorkspaceProjects.js';
+import { MembersPanel } from '@/features/members/MembersPanel.js';
 
 // ─── loading skeleton ──────────────────────────────────────────────────────────
 
@@ -30,43 +31,13 @@ function PageSkeleton() {
   );
 }
 
-// ─── members panel ─────────────────────────────────────────────────────────────
-
-function MembersPanel({ members, workspaceId }: { members: UserDTO[]; workspaceId: string }) {
-  const navigate = useNavigate();
-  if (members.length === 0) return null;
-
-  return (
-    <section className="mt-10">
-      <div className="h-px bg-white/5 mb-8" />
-      <h2 className="label-caps text-white/40 mb-4">Members</h2>
-      <div className="flex flex-wrap gap-2">
-        {members.map(m => (
-          <button
-            key={m.id}
-            onClick={() => navigate(`/profile/${m.id}`)}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-label-sm text-white/70 bg-white/5 border border-transparent hover:border-white/12 hover:text-white/90 transition-all"
-          >
-            {m.photo_url || m.avatar_url ? (
-              <img src={(m.photo_url || m.avatar_url)!} className="w-5 h-5 rounded-full object-cover" alt="" />
-            ) : (
-              <span className="w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center bg-white/10 text-white/50">
-                {m.firstName.charAt(0)}
-              </span>
-            )}
-            {m.firstName} {m.lastName}
-          </button>
-        ))}
-      </div>
-    </section>
-  );
-}
-
 // ─── main page ─────────────────────────────────────────────────────────────────
 
 export const WorkspacePage: React.FC = () => {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const view = new URLSearchParams(location.search).get('view');
   const { setActiveWorkspace } = useWorkspace();
 
   const [workspace, setWorkspace] = useState<WorkspaceDTO | null>(null);
@@ -139,6 +110,14 @@ export const WorkspacePage: React.FC = () => {
     );
   }
 
+  if (view === 'members') {
+    return (
+      <motion.div className="pb-16" variants={pageVariants} initial="initial" animate="animate" exit="exit">
+        <MembersPanel workspaceId={workspaceId!} currentRole={workspace?.role} />
+      </motion.div>
+    );
+  }
+
   return (
     <motion.div
       className="pb-16 space-y-10"
@@ -172,8 +151,6 @@ export const WorkspacePage: React.FC = () => {
         showCreate={showCreate}
         onCreateClose={() => setShowCreate(false)}
       />
-
-      <MembersPanel members={members} workspaceId={workspaceId!} />
     </motion.div>
   );
 };

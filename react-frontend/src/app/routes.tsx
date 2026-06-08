@@ -23,7 +23,8 @@ const AboutUs         = React.lazy(() => import('@/pages/about-us/AboutUs.js').t
 const ProfilePage     = React.lazy(() => import('@/pages/profile/UserProfile.js').then(m => ({ default: m.default })));
 const UserProfilePage = React.lazy(() => import('@/pages/profile/UserProfilePage.js').then(m => ({ default: m.UserProfilePage })));
 const TaskView        = React.lazy(() => import('@/components/Tasks/TaskView.js').then(m => ({ default: m.default })));
-const SettingsModal   = React.lazy(() => import('@/widgets/SettingsModal/SettingsModal.js').then(m => ({ default: m.SettingsModal })));
+const SettingsModal     = React.lazy(() => import('@/widgets/SettingsModal/SettingsModal.js').then(m => ({ default: m.SettingsModal })));
+const InviteAcceptPage  = React.lazy(() => import('@/pages/invite/InviteAcceptPage.js').then(m => ({ default: m.InviteAcceptPage })));
 
 function preloadRoutes() {
   import('@/pages/workspace/WorkspacePage.js');
@@ -68,6 +69,7 @@ const AnimatedRoutes = () => {
           <Route path="/reset-password"    element={withEB(<ResetPasswordPage />)} />
           <Route path="/verify-email"      element={withEB(<VerifyEmailPage />)} />
           <Route path="/about-us"          element={withEB(<AboutUs />)} />
+          <Route path="/invite/:token"     element={withEB(<InviteAcceptPage />)} />
 
           {/* Onboarding — authed, no layout shell */}
           <Route path="/onboarding"

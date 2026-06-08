@@ -102,6 +102,32 @@ export interface RemoveUserFromWorkspaceRequest {
   userId: string;
 }
 
+export type WorkspaceRole = 'owner' | 'admin' | 'member' | 'guest';
+
+export interface WorkspaceMemberDTO {
+  user: UserDTO;
+  role: WorkspaceRole;
+  joined_at: string;
+}
+
+export interface WorkspaceInviteDTO {
+  id: string;
+  workspace_id: string;
+  token: string;
+  role: string;
+  created_by: string;
+  expires_at: string | null;
+  max_uses: number | null;
+  use_count: number;
+  revoked_at: string | null;
+  created_at: string;
+}
+
+export interface InvitePreviewDTO {
+  workspace: { id: string; name: string; icon: string; color: string } | null;
+  valid: boolean;
+}
+
 // ==================== PROJECT DTOs ====================
 export type ProjectStatus =
   | 'backlog'
