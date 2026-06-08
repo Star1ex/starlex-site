@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"encoding/json"
 	"errors"
 	"strings"
+	"time"
 
 	"github.com/Star1ex/starlex-site/internal/api/dto"
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
@@ -350,6 +352,55 @@ func (h *Handlers) PatchTaskStatus(ctx *fiber.Ctx) error {
 			logger.Log.Errorw("update task status failed", "error", err)
 			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
 		}
+	}
+
+	return ctx.SendStatus(fiber.StatusNoContent)
+}
+
+// PatchTaskDueDate godoc
+// @Summary      Update task due date
+// @Description  Sets or clears the due_date field of an existing task.
+// @Tags         tasks
+// @Accept       json
+// @Produce      json
+// @Param        id        path  string                 true  "Task ID"
+// @Param        due_date  body  dto.UpdateTaskDueDate  true  "Due date or null"
+// @Success      204
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      403  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Security     BearerAuth
+// @Router       /tasks/{id}/due-date [patch]
+func (h *Handlers) PatchTaskDueDate(ctx *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+
+	taskID := ctx.Params("id")
+	if taskID == "" || taskID == "nil" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
+	}
+	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+		return err
+	}
+
+	payload := map[string]*time.Time{}
+	if err := json.Unmarshal(ctx.Body(), &payload); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad json"})
+	}
+	dueDate, ok := payload["due_date"]
+	if !ok {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "due_date field is required"})
+	}
+
+	if err := h.taskService.UpdateTaskDueDate(ctx.Context(), taskID, dueDate); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "task not found"})
+		}
+		logger.Log.Errorw("update task due date failed", "error", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
 	}
 
 	return ctx.SendStatus(fiber.StatusNoContent)

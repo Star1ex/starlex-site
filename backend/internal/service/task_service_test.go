@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
 	"github.com/Star1ex/starlex-site/internal/domain/task"
@@ -15,8 +16,9 @@ import (
 
 type mockTaskRepo struct {
 	task.Repository
-	created       []*entity.Task
-	statusUpdates map[string]string
+	created        []*entity.Task
+	statusUpdates  map[string]string
+	dueDateUpdates map[string]*time.Time
 }
 
 func (m *mockTaskRepo) Create(_ context.Context, t *entity.Task) error {
@@ -30,6 +32,14 @@ func (m *mockTaskRepo) UpdateStatus(_ context.Context, id string, status string)
 		m.statusUpdates = map[string]string{}
 	}
 	m.statusUpdates[id] = status
+	return nil
+}
+
+func (m *mockTaskRepo) UpdateDueDate(_ context.Context, id string, dueDate *time.Time) error {
+	if m.dueDateUpdates == nil {
+		m.dueDateUpdates = map[string]*time.Time{}
+	}
+	m.dueDateUpdates[id] = dueDate
 	return nil
 }
 
@@ -62,7 +72,7 @@ func (m *mockTaskUserRepo) GetByIDs(_ context.Context, ids []string) ([]*entity.
 }
 
 func newTaskService(wsID, ownerID string) (*TaskService, *mockTaskRepo) {
-	tr := &mockTaskRepo{statusUpdates: map[string]string{}}
+	tr := &mockTaskRepo{statusUpdates: map[string]string{}, dueDateUpdates: map[string]*time.Time{}}
 	wr := &mockTaskWorkspaceRepo{existing: map[string]*entity.Workspace{
 		wsID: {ID: wsID, OwnerID: ownerID},
 	}}
@@ -192,5 +202,24 @@ func TestUpdateTaskStatus(t *testing.T) {
 				t.Fatalf("want status %q, got %q", tt.wantStatus, tr.statusUpdates["task1"])
 			}
 		})
+	}
+}
+
+func TestUpdateTaskDueDate(t *testing.T) {
+	svc, tr := newTaskService("ws1", "owner")
+	dueDate := time.Date(2026, 6, 9, 12, 0, 0, 0, time.UTC)
+
+	if err := svc.UpdateTaskDueDate(context.Background(), "task1", &dueDate); err != nil {
+		t.Fatalf("set due date failed: %v", err)
+	}
+	if tr.dueDateUpdates["task1"] == nil || !tr.dueDateUpdates["task1"].Equal(dueDate) {
+		t.Fatalf("due date was not set: %#v", tr.dueDateUpdates["task1"])
+	}
+
+	if err := svc.UpdateTaskDueDate(context.Background(), "task1", nil); err != nil {
+		t.Fatalf("clear due date failed: %v", err)
+	}
+	if tr.dueDateUpdates["task1"] != nil {
+		t.Fatalf("due date was not cleared: %#v", tr.dueDateUpdates["task1"])
 	}
 }

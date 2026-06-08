@@ -7,17 +7,18 @@ import (
 )
 
 type TaskApi struct {
-	AssignedToID []string  `json:"user_ids"` // Optional: can be empty array
-	Task         string    `json:"task" binding:"required"`
-	Description  string    `json:"description"`
-	Status       string    `json:"status"`
-	Progress     string    `json:"progress"`
-	Priority     string    `json:"priority"`
-	FolderID     *string   `json:"folder_id"`
-	WorkspaceID  *string   `json:"workspace_id"`
-	ProjectID    *string   `json:"project_id"`
-	OwnerID      string    `json:"owner_id"`
-	CreatedAt    time.Time `json:"created_at"`
+	AssignedToID []string   `json:"user_ids"` // Optional: can be empty array
+	Task         string     `json:"task" binding:"required"`
+	Description  string     `json:"description"`
+	Status       string     `json:"status"`
+	Progress     string     `json:"progress"`
+	DueDate      *time.Time `json:"due_date"`
+	Priority     string     `json:"priority"`
+	FolderID     *string    `json:"folder_id"`
+	WorkspaceID  *string    `json:"workspace_id"`
+	ProjectID    *string    `json:"project_id"`
+	OwnerID      string     `json:"owner_id"`
+	CreatedAt    time.Time  `json:"created_at"`
 }
 
 type TaskResponse struct {
@@ -34,6 +35,7 @@ type TaskResponse struct {
 	Status      string            `json:"status"`
 	Priority    string            `json:"priority"`
 	Progress    string            `json:"progress"`
+	DueDate     *time.Time        `json:"due_date"`
 	Labels      []LabelResponse   `json:"labels"`
 	Subtasks    []SubtaskResponse `json:"subtasks"`
 	CreatedAt   time.Time         `json:"created_at,omitempty"`
@@ -75,6 +77,10 @@ type UpdateTaskStatus struct {
 	Status *string `json:"status"`
 }
 
+type UpdateTaskDueDate struct {
+	DueDate *time.Time `json:"due_date"`
+}
+
 type UpdateTaskAssignees struct {
 	UserIDs *[]string `json:"user_ids"`
 }
@@ -111,6 +117,7 @@ func ToTaskResponse(task *entity.Task) *TaskResponse {
 		Status:      task.Status,
 		Priority:    task.Priority,
 		Progress:    task.Progress,
+		DueDate:     task.DueDate,
 		Labels:      labels,
 		Subtasks:    subtasks,
 		CreatedAt:   createdAt,
@@ -133,6 +140,7 @@ func FromTaskApi(api *TaskApi) (*entity.Task, []string) {
 		Status:      api.Status,
 		Priority:    api.Priority,
 		Progress:    api.Progress,
+		DueDate:     api.DueDate,
 	}, api.AssignedToID
 }
 

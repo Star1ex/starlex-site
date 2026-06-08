@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+	"time"
 
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
 )
@@ -29,6 +30,7 @@ type Service interface {
 	UpdateTaskDescription(ctx context.Context, taskID, description string) error
 	UpdateTaskPriority(ctx context.Context, taskID, priority string) error
 	UpdateTaskStatus(ctx context.Context, taskID, status string) error
+	UpdateTaskDueDate(ctx context.Context, taskID string, dueDate *time.Time) error
 	UpdateTaskAssignees(ctx context.Context, taskID string, assignedTo []string) error
 	UpdateTaskLabels(ctx context.Context, taskID string, labelIDs []string) error
 	// Delete task

@@ -102,6 +102,7 @@ func setupTaskRoutes(api fiber.Router, h *handlers.Handlers) {
 	tasks.Patch("/:id/priority", h.PatchTaskPriority)
 	tasks.Patch("/:id/progress", h.PatchTaskProgress)
 	tasks.Patch("/:id/status", h.PatchTaskStatus)
+	tasks.Patch("/:id/due-date", h.PatchTaskDueDate)
 	tasks.Patch("/:id/assignees", h.PatchTaskAssignees)
 	tasks.Patch("/:id/labels", h.PatchTaskLabels)
 
@@ -143,6 +144,7 @@ func setupWorkspaceRoutes(api fiber.Router, h *handlers.Handlers) {
 		workspaceTasks.Patch("/:id/priority", h.PatchTaskPriority)
 		workspaceTasks.Patch("/:id/progress", h.PatchTaskProgress)
 		workspaceTasks.Patch("/:id/status", h.PatchTaskStatus)
+		workspaceTasks.Patch("/:id/due-date", h.PatchTaskDueDate)
 		workspaceTasks.Patch("/:id/assignees", h.PatchTaskAssignees)
 		workspaceTasks.Patch("/:id/labels", h.PatchTaskLabels)
 		workspaceTasks.Delete("/:id", h.DeleteTask)

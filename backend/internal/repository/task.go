@@ -44,6 +44,7 @@ type TaskModel struct {
 	FolderID    *string        `gorm:"default:null;index:idx_owner_folder"`
 	SprintID    *string        `gorm:"default:null;index:idx_task_sprint"`
 	ProjectID   *string        `gorm:"default:null;index:idx_task_project"`
+	DueDate     *time.Time     `gorm:"default:null;index"`
 	Position    int            `gorm:"not null;default:0"`
 	Subtasks    []SubtaskModel `gorm:"foreignKey:TaskID"`
 	CreatedAt   time.Time
@@ -90,6 +91,7 @@ func toTaskDomain(m TaskModel) *entity.Task {
 		FolderID:    m.FolderID,
 		SprintID:    m.SprintID,
 		ProjectID:   m.ProjectID,
+		DueDate:     m.DueDate,
 		Position:    m.Position,
 		Subtasks:    toSubtaskDomains(m.Subtasks),
 		Status:      m.Status,
@@ -152,6 +154,7 @@ func fromTaskDomain(t *entity.Task) *TaskModel {
 		FolderID:    t.FolderID,
 		SprintID:    t.SprintID,
 		ProjectID:   t.ProjectID,
+		DueDate:     t.DueDate,
 		Position:    t.Position,
 		WorkspaceID: &t.WorkspaceID,
 		CreatedAt:   t.CreatedAt,
@@ -337,6 +340,17 @@ func (r *TaskRepository) UpdateProgress(ctx context.Context, id string, progress
 
 func (r *TaskRepository) UpdateStatus(ctx context.Context, id string, status string) error {
 	result := r.db.WithContext(ctx).Model(&TaskModel{}).Where("id = ?", id).Update("status", status)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return gorm.ErrRecordNotFound
+	}
+	return nil
+}
+
+func (r *TaskRepository) UpdateDueDate(ctx context.Context, id string, dueDate *time.Time) error {
+	result := r.db.WithContext(ctx).Model(&TaskModel{}).Where("id = ?", id).Update("due_date", dueDate)
 	if result.Error != nil {
 		return result.Error
 	}

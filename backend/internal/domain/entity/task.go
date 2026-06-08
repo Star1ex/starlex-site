@@ -23,6 +23,7 @@ type Task struct {
 	FolderID  *string
 	SprintID  *string
 	ProjectID *string
+	DueDate   *time.Time
 	Position  int
 	Subtasks  []*Subtask
 

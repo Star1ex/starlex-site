@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"time"
 
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
 	taskdomain "github.com/Star1ex/starlex-site/internal/domain/task"
@@ -151,6 +152,10 @@ func (s *TaskService) UpdateTaskStatus(ctx context.Context, taskID, statusValue 
 		return err
 	}
 	return s.taskRepo.UpdateStatus(ctx, taskID, string(status))
+}
+
+func (s *TaskService) UpdateTaskDueDate(ctx context.Context, taskID string, dueDate *time.Time) error {
+	return s.taskRepo.UpdateDueDate(ctx, taskID, dueDate)
 }
 
 func (s *TaskService) UpdateTaskAssignees(ctx context.Context, taskID string, assignedTo []string) error {
