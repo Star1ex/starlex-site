@@ -5,6 +5,8 @@ import (
 	"strings"
 
 	"github.com/Star1ex/starlex-site/internal/api/dto"
+	domainlabel "github.com/Star1ex/starlex-site/internal/domain/label"
+	domaintask "github.com/Star1ex/starlex-site/internal/domain/task"
 	domainworkspace "github.com/Star1ex/starlex-site/internal/domain/workspace"
 	"github.com/Star1ex/starlex-site/internal/logger"
 	"github.com/Star1ex/starlex-site/internal/repository"
@@ -252,6 +254,50 @@ func (h *Handlers) PatchWorkspaceColor(ctx *fiber.Ctx) error {
 	}
 
 	return ctx.SendStatus(fiber.StatusNoContent)
+}
+
+// PatchWorkspaceSettings godoc
+// @Summary      Update workspace settings
+// @Description  Partially updates workspace settings. Requires admin or owner.
+// @Tags         workspace
+// @Accept       json
+// @Produce      json
+// @Param        id        path      string                             true  "Workspace ID"
+// @Param        settings  body      dto.PatchWorkspaceSettingsRequest  true  "Workspace settings patch"
+// @Success      200       {object}  dto.WorkspaceResponse
+// @Failure      400       {object}  map[string]string
+// @Failure      401       {object}  map[string]string
+// @Failure      403       {object}  map[string]string
+// @Failure      404       {object}  map[string]string
+// @Failure      409       {object}  map[string]string
+// @Security     BearerAuth
+// @Router       /workspaces/{id}/settings [patch]
+func (h *Handlers) PatchWorkspaceSettings(ctx *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+
+	workspaceID := ctx.Params("id")
+	if workspaceID == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "workspace id is required"})
+	}
+
+	var input dto.PatchWorkspaceSettingsRequest
+	if err := ctx.BodyParser(&input); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
+	}
+
+	updated, err := h.workspaceService.UpdateWorkspaceSettings(
+		ctx.Context(),
+		workspaceID,
+		dto.FromPatchWorkspaceSettingsRequest(input),
+		userID,
+	)
+	if err != nil {
+		return h.writeWorkspaceSettingsError(ctx, err)
+	}
+	return ctx.Status(fiber.StatusOK).JSON(dto.ToWorkspaceResponse(updated))
 }
 
 // Swagger disabled: GetUsers godoc
@@ -579,6 +625,32 @@ func (h *Handlers) writeWorkspaceMemberError(ctx *fiber.Ctx, err error) error {
 	case errors.Is(err, appservice.ErrCannotDemoteLastOwner):
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "last owner cannot be demoted or removed"})
 	default:
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
+	}
+}
+
+func (h *Handlers) writeWorkspaceSettingsError(ctx *fiber.Ctx, err error) error {
+	switch {
+	case errors.Is(err, repository.ErrWorkspaceNotFound):
+		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "workspace not found"})
+	case errors.Is(err, repository.ErrWorkspaceAlreadyExists):
+		return ctx.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "workspace name already exists"})
+	case errors.Is(err, appservice.ErrWorkspaceForbidden):
+		return ctx.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
+	case errors.Is(err, domainworkspace.ErrInvalidName):
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "workspace name cannot be empty"})
+	case errors.Is(err, domainworkspace.ErrInvalidKeyPrefix):
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid key_prefix"})
+	case errors.Is(err, domainworkspace.ErrInvalidRole):
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid member_default_role"})
+	case errors.Is(err, domainworkspace.ErrInvalidMemberDefaultRole):
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "member_default_role cannot be owner"})
+	case errors.Is(err, domainlabel.ErrInvalidColor):
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid color"})
+	case errors.Is(err, domaintask.ErrInvalidStatus):
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid default_task_status"})
+	default:
+		logger.Log.Errorw("update workspace settings failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
 	}
 }

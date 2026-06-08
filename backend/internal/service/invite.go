@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
@@ -31,6 +32,13 @@ func (s *InviteService) Create(ctx context.Context, workspaceID, roleValue, requ
 	requesterRole, err := s.requireWorkspaceRole(ctx, workspaceID, requesterID, domainworkspace.RoleAdmin)
 	if err != nil {
 		return nil, err
+	}
+	if strings.TrimSpace(roleValue) == "" {
+		workspaceEntity, err := s.workspaceRepo.GetWorkspaceByID(ctx, workspaceID)
+		if err != nil {
+			return nil, err
+		}
+		roleValue = workspaceEntity.MemberDefaultRole
 	}
 	role, err := domainworkspace.ParseRole(roleValue)
 	if err != nil {

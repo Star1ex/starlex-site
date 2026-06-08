@@ -186,21 +186,25 @@ func (r *UserRepository) GetByGithubID(ctx context.Context, githubID string) (*e
 
 func (r *UserRepository) GetUserWorkspaces(ctx context.Context, userID string) ([]*entity.Workspace, error) {
 	type workspaceRow struct {
-		ID           string
-		Name         string
-		Description  string
-		Icon         string
-		Color        string
-		OwnerID      string
-		Role         string
-		MemberCount  int
-		ProjectCount int
+		ID                string
+		Name              string
+		Description       string
+		Icon              string
+		Color             string
+		OwnerID           string
+		KeyPrefix         string
+		DefaultTaskStatus string
+		MemberDefaultRole string
+		Role              string
+		MemberCount       int
+		ProjectCount      int
 	}
 
 	var rows []workspaceRow
 	err := r.db.WithContext(ctx).
 		Table("workspace_models AS w").
-		Select(`w.id, w.name, w.description, w.icon, w.color, w.owner_id, wm.role,
+		Select(`w.id, w.name, w.description, w.icon, w.color, w.owner_id, w.key_prefix,
+			w.default_task_status, w.member_default_role, wm.role,
 			(SELECT COUNT(*) FROM workspace_members WHERE workspace_id = w.id) AS member_count,
 			(SELECT COUNT(*) FROM project_models WHERE workspace_id = w.id) AS project_count`).
 		Joins("JOIN workspace_members wm ON wm.workspace_id = w.id").
@@ -214,15 +218,18 @@ func (r *UserRepository) GetUserWorkspaces(ctx context.Context, userID string) (
 	workspaces := make([]*entity.Workspace, len(rows))
 	for i, row := range rows {
 		workspaces[i] = &entity.Workspace{
-			ID:           row.ID,
-			Name:         row.Name,
-			Description:  row.Description,
-			Icon:         row.Icon,
-			Color:        row.Color,
-			OwnerID:      row.OwnerID,
-			Role:         row.Role,
-			MemberCount:  row.MemberCount,
-			ProjectCount: row.ProjectCount,
+			ID:                row.ID,
+			Name:              row.Name,
+			Description:       row.Description,
+			Icon:              row.Icon,
+			Color:             row.Color,
+			OwnerID:           row.OwnerID,
+			KeyPrefix:         row.KeyPrefix,
+			DefaultTaskStatus: row.DefaultTaskStatus,
+			MemberDefaultRole: row.MemberDefaultRole,
+			Role:              row.Role,
+			MemberCount:       row.MemberCount,
+			ProjectCount:      row.ProjectCount,
 		}
 	}
 	return workspaces, nil

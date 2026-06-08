@@ -111,6 +111,24 @@ func TestCreateWorkspaceTask_NonOwnerAllowed(t *testing.T) {
 	}
 }
 
+func TestCreateWorkspaceTask_UsesWorkspaceDefaultStatus(t *testing.T) {
+	tr := &mockTaskRepo{statusUpdates: map[string]string{}, dueDateUpdates: map[string]*time.Time{}}
+	wr := &mockTaskWorkspaceRepo{existing: map[string]*entity.Workspace{
+		"ws1": {ID: "ws1", DefaultTaskStatus: string(task.StatusInReview)},
+	}}
+	ur := &mockTaskUserRepo{byID: map[string]*entity.User{}}
+	svc := NewTaskService(tr, ur, wr)
+
+	taskEntity := &entity.Task{Task: "Review plan", Priority: "medium"}
+	err := svc.CreateWorkspaceTask(context.Background(), "ws1", nil, taskEntity, "owner")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if tr.created[0].Status != string(task.StatusInReview) {
+		t.Fatalf("want in_review, got %q", tr.created[0].Status)
+	}
+}
+
 func TestCreateWorkspaceTask_RequiresWorkspaceID(t *testing.T) {
 	svc, _ := newTaskService("ws1", "owner")
 	err := svc.CreateWorkspaceTask(context.Background(), "", nil, &entity.Task{Task: "x"}, "u1")

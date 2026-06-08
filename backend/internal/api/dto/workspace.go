@@ -14,15 +14,18 @@ type WorkspaceApi struct {
 }
 
 type WorkspaceResponse struct {
-	WorkspaceID  string `json:"workspace_id"`
-	ID           string `json:"id"`
-	Name         string `json:"name"`
-	Description  string `json:"description"`
-	Icon         string `json:"icon"`
-	Color        string `json:"color"`
-	Role         string `json:"role"`
-	MemberCount  int    `json:"member_count"`
-	ProjectCount int    `json:"project_count"`
+	WorkspaceID       string `json:"workspace_id"`
+	ID                string `json:"id"`
+	Name              string `json:"name"`
+	Description       string `json:"description"`
+	Icon              string `json:"icon"`
+	Color             string `json:"color"`
+	KeyPrefix         string `json:"key_prefix"`
+	DefaultTaskStatus string `json:"default_task_status"`
+	MemberDefaultRole string `json:"member_default_role"`
+	Role              string `json:"role"`
+	MemberCount       int    `json:"member_count"`
+	ProjectCount      int    `json:"project_count"`
 }
 
 type UpdateWorkspaceIcon struct {
@@ -33,17 +36,42 @@ type UpdateWorkspaceColor struct {
 	Color *string `json:"color"`
 }
 
+type PatchWorkspaceSettingsRequest struct {
+	Name              *string `json:"name"`
+	Description       *string `json:"description"`
+	Icon              *string `json:"icon"`
+	Color             *string `json:"color"`
+	KeyPrefix         *string `json:"key_prefix"`
+	DefaultTaskStatus *string `json:"default_task_status"`
+	MemberDefaultRole *string `json:"member_default_role"`
+}
+
+func FromPatchWorkspaceSettingsRequest(req PatchWorkspaceSettingsRequest) domainworkspace.SettingsUpdate {
+	return domainworkspace.SettingsUpdate{
+		Name:              req.Name,
+		Description:       req.Description,
+		Icon:              req.Icon,
+		Color:             req.Color,
+		KeyPrefix:         req.KeyPrefix,
+		DefaultTaskStatus: req.DefaultTaskStatus,
+		MemberDefaultRole: req.MemberDefaultRole,
+	}
+}
+
 func ToWorkspaceResponse(workspace *entity.Workspace) *WorkspaceResponse {
 	return &WorkspaceResponse{
-		WorkspaceID:  workspace.ID,
-		ID:           workspace.ID,
-		Name:         workspace.Name,
-		Description:  workspace.Description,
-		Icon:         workspace.Icon,
-		Color:        workspace.Color,
-		Role:         workspace.Role,
-		MemberCount:  workspace.MemberCount,
-		ProjectCount: workspace.ProjectCount,
+		WorkspaceID:       workspace.ID,
+		ID:                workspace.ID,
+		Name:              workspace.Name,
+		Description:       workspace.Description,
+		Icon:              workspace.Icon,
+		Color:             workspace.Color,
+		KeyPrefix:         workspace.KeyPrefix,
+		DefaultTaskStatus: workspace.DefaultTaskStatus,
+		MemberDefaultRole: workspace.MemberDefaultRole,
+		Role:              workspace.Role,
+		MemberCount:       workspace.MemberCount,
+		ProjectCount:      workspace.ProjectCount,
 	}
 }
 
@@ -82,15 +110,18 @@ func ToWorkspacesResponse(workspaces []*entity.Workspace) []WorkspaceResponse {
 	response := make([]WorkspaceResponse, len(workspaces))
 	for i, workspace := range workspaces {
 		response[i] = WorkspaceResponse{
-			WorkspaceID:  workspace.ID,
-			ID:           workspace.ID,
-			Name:         workspace.Name,
-			Description:  workspace.Description,
-			Icon:         workspace.Icon,
-			Color:        workspace.Color,
-			Role:         workspace.Role,
-			MemberCount:  workspace.MemberCount,
-			ProjectCount: workspace.ProjectCount,
+			WorkspaceID:       workspace.ID,
+			ID:                workspace.ID,
+			Name:              workspace.Name,
+			Description:       workspace.Description,
+			Icon:              workspace.Icon,
+			Color:             workspace.Color,
+			KeyPrefix:         workspace.KeyPrefix,
+			DefaultTaskStatus: workspace.DefaultTaskStatus,
+			MemberDefaultRole: workspace.MemberDefaultRole,
+			Role:              workspace.Role,
+			MemberCount:       workspace.MemberCount,
+			ProjectCount:      workspace.ProjectCount,
 		}
 	}
 	return response

@@ -7,6 +7,7 @@ import (
 
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
 	domainlabel "github.com/Star1ex/starlex-site/internal/domain/label"
+	domaintask "github.com/Star1ex/starlex-site/internal/domain/task"
 	"github.com/Star1ex/starlex-site/internal/domain/user"
 	"github.com/Star1ex/starlex-site/internal/domain/workspace"
 	"github.com/Star1ex/starlex-site/internal/repository"
@@ -34,15 +35,17 @@ func (s *WorkspaceService) CreateWorkspace(ctx context.Context, name, descriptio
 	newId := security.GenerateNewID()
 
 	newWorkspace := &entity.Workspace{
-		ID:           newId,
-		Name:         name,
-		Description:  description,
-		Color:        "#6366f1",
-		OwnerID:      userID,
-		KeyPrefix:    workspace.DeriveKeyPrefix(name),
-		Role:         string(workspace.RoleOwner),
-		MemberCount:  1,
-		ProjectCount: 0,
+		ID:                newId,
+		Name:              name,
+		Description:       description,
+		Color:             "#6366f1",
+		OwnerID:           userID,
+		KeyPrefix:         workspace.DeriveKeyPrefix(name),
+		DefaultTaskStatus: string(domaintask.StatusTodo),
+		MemberDefaultRole: string(workspace.RoleMember),
+		Role:              string(workspace.RoleOwner),
+		MemberCount:       1,
+		ProjectCount:      0,
 	}
 
 	err := s.workspaceRepo.CreateAndAddCreator(ctx, newWorkspace, userID)
@@ -96,6 +99,30 @@ func (s *WorkspaceService) UpdateWorkspaceColor(ctx context.Context, workspaceID
 		return domainlabel.ErrInvalidColor
 	}
 	return s.workspaceRepo.UpdateColor(ctx, workspaceID, color)
+}
+
+func (s *WorkspaceService) UpdateWorkspaceSettings(
+	ctx context.Context,
+	workspaceID string,
+	settings workspace.SettingsUpdate,
+	userID string,
+) (*entity.Workspace, error) {
+	role, err := s.workspaceRepo.GetRole(ctx, workspaceID, userID)
+	if err != nil {
+		return nil, err
+	}
+	if !role.AtLeast(workspace.RoleAdmin) {
+		return nil, ErrWorkspaceForbidden
+	}
+	normalized, err := normalizeWorkspaceSettings(settings)
+	if err != nil {
+		return nil, err
+	}
+	updated, err := s.workspaceRepo.UpdateSettings(ctx, workspaceID, normalized)
+	if err != nil {
+		return nil, err
+	}
+	return s.withWorkspaceSummary(ctx, updated, role)
 }
 
 func (s *WorkspaceService) GetUsers(ctx context.Context, workspaceId string) ([]*entity.User, error) {
@@ -233,4 +260,76 @@ func (s *WorkspaceService) ensureNotLastOwner(ctx context.Context, workspaceID s
 		return ErrCannotDemoteLastOwner
 	}
 	return nil
+}
+
+func (s *WorkspaceService) withWorkspaceSummary(
+	ctx context.Context,
+	workspaceEntity *entity.Workspace,
+	role workspace.Role,
+) (*entity.Workspace, error) {
+	memberCount, err := s.workspaceRepo.CountMembers(ctx, workspaceEntity.ID)
+	if err != nil {
+		return nil, err
+	}
+	projectCount, err := s.workspaceRepo.CountProjects(ctx, workspaceEntity.ID)
+	if err != nil {
+		return nil, err
+	}
+	workspaceEntity.Role = string(role)
+	workspaceEntity.MemberCount = int(memberCount)
+	workspaceEntity.ProjectCount = int(projectCount)
+	return workspaceEntity, nil
+}
+
+func normalizeWorkspaceSettings(settings workspace.SettingsUpdate) (workspace.SettingsUpdate, error) {
+	var normalized workspace.SettingsUpdate
+	if settings.Name != nil {
+		name := strings.TrimSpace(*settings.Name)
+		if name == "" {
+			return normalized, workspace.ErrInvalidName
+		}
+		normalized.Name = &name
+	}
+	if settings.Description != nil {
+		description := strings.TrimSpace(*settings.Description)
+		normalized.Description = &description
+	}
+	if settings.Icon != nil {
+		icon := strings.TrimSpace(*settings.Icon)
+		normalized.Icon = &icon
+	}
+	if settings.Color != nil {
+		color := strings.TrimSpace(*settings.Color)
+		if !hexColorPattern.MatchString(color) {
+			return normalized, domainlabel.ErrInvalidColor
+		}
+		normalized.Color = &color
+	}
+	if settings.KeyPrefix != nil {
+		prefix, err := workspace.NormalizeKeyPrefix(*settings.KeyPrefix)
+		if err != nil {
+			return normalized, err
+		}
+		normalized.KeyPrefix = &prefix
+	}
+	if settings.DefaultTaskStatus != nil {
+		status, err := domaintask.ParseStatus(strings.TrimSpace(*settings.DefaultTaskStatus))
+		if err != nil {
+			return normalized, err
+		}
+		value := string(status)
+		normalized.DefaultTaskStatus = &value
+	}
+	if settings.MemberDefaultRole != nil {
+		role, err := workspace.ParseRole(strings.TrimSpace(*settings.MemberDefaultRole))
+		if err != nil {
+			return normalized, err
+		}
+		if role == workspace.RoleOwner {
+			return normalized, workspace.ErrInvalidMemberDefaultRole
+		}
+		value := string(role)
+		normalized.MemberDefaultRole = &value
+	}
+	return normalized, nil
 }

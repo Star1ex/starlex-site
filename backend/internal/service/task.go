@@ -3,6 +3,7 @@ package service
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
@@ -45,7 +46,8 @@ func (s *TaskService) CreateWorkspaceTask(
 
 	// Ensure the workspace exists. Membership authorization is enforced by the
 	// API layer (any workspace member may create tasks).
-	if _, err := s.workspaceRepo.GetWorkspaceByID(ctx, workspaceID); err != nil {
+	workspaceEntity, err := s.workspaceRepo.GetWorkspaceByID(ctx, workspaceID)
+	if err != nil {
 		return err
 	}
 
@@ -59,7 +61,7 @@ func (s *TaskService) CreateWorkspaceTask(
 		}
 	}
 	// If assignedIDs is empty, users will be nil/empty, which is valid
-	status, err := taskdomain.ParseStatus(task.Status)
+	status, err := parseTaskStatusWithWorkspaceDefault(task.Status, workspaceEntity)
 	if err != nil {
 		return err
 	}
@@ -93,7 +95,11 @@ func (s *TaskService) CreateProjectTask(
 			return err
 		}
 	}
-	status, err := taskdomain.ParseStatus(task.Status)
+	workspaceEntity, err := s.workspaceRepo.GetWorkspaceByID(ctx, workspaceID)
+	if err != nil {
+		return err
+	}
+	status, err := parseTaskStatusWithWorkspaceDefault(task.Status, workspaceEntity)
 	if err != nil {
 		return err
 	}
@@ -239,6 +245,14 @@ func (s *TaskService) MoveTaskToFolder(ctx context.Context, taskID, folderID str
 
 func (s *TaskService) SearchInWorkspaces(ctx context.Context, workspaceIDs []string, query string) ([]*entity.Task, error) {
 	return s.taskRepo.SearchInWorkspaces(ctx, workspaceIDs, query)
+}
+
+func parseTaskStatusWithWorkspaceDefault(status string, workspaceEntity *entity.Workspace) (taskdomain.Status, error) {
+	status = strings.TrimSpace(status)
+	if status == "" && workspaceEntity != nil {
+		status = workspaceEntity.DefaultTaskStatus
+	}
+	return taskdomain.ParseStatus(status)
 }
 
 func (s *TaskService) publishTaskUpdated(ctx context.Context, taskID string) error {

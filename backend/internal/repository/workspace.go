@@ -12,15 +12,17 @@ import (
 )
 
 type WorkspaceModel struct {
-	ID          string      `gorm:"primaryKey"`
-	Name        string      `gorm:"unique;not null"`
-	Description string      `gorm:"not null"`
-	Icon        string      `gorm:"not null;default:''"`
-	Color       string      `gorm:"not null;default:'#6366f1'"`
-	OwnerID     string      `gorm:"not null"`
-	KeyPrefix   string      `gorm:"not null;default:''"`
-	TaskSeq     int64       `gorm:"not null;default:0"`
-	Users       []UserModel `gorm:"many2many:users_workspaces"`
+	ID                string      `gorm:"primaryKey"`
+	Name              string      `gorm:"unique;not null"`
+	Description       string      `gorm:"not null"`
+	Icon              string      `gorm:"not null;default:''"`
+	Color             string      `gorm:"not null;default:'#6366f1'"`
+	OwnerID           string      `gorm:"not null"`
+	KeyPrefix         string      `gorm:"not null;default:''"`
+	TaskSeq           int64       `gorm:"not null;default:0"`
+	DefaultTaskStatus string      `gorm:"not null;default:'todo'"`
+	MemberDefaultRole string      `gorm:"not null;default:'member'"`
+	Users             []UserModel `gorm:"many2many:users_workspaces"`
 }
 
 type WorkspaceMemberModel struct {
@@ -38,27 +40,31 @@ func (WorkspaceMemberModel) TableName() string {
 
 func fromDomainToWorkspace(workspace *entity.Workspace) *WorkspaceModel {
 	return &WorkspaceModel{
-		ID:          workspace.ID,
-		Name:        workspace.Name,
-		Description: workspace.Description,
-		Icon:        workspace.Icon,
-		Color:       workspace.Color,
-		OwnerID:     workspace.OwnerID,
-		KeyPrefix:   workspace.KeyPrefix,
-		TaskSeq:     workspace.TaskSeq,
+		ID:                workspace.ID,
+		Name:              workspace.Name,
+		Description:       workspace.Description,
+		Icon:              workspace.Icon,
+		Color:             workspace.Color,
+		OwnerID:           workspace.OwnerID,
+		KeyPrefix:         workspace.KeyPrefix,
+		TaskSeq:           workspace.TaskSeq,
+		DefaultTaskStatus: workspace.DefaultTaskStatus,
+		MemberDefaultRole: workspace.MemberDefaultRole,
 	}
 }
 
 func toWorkspaceDomain(Workspace *WorkspaceModel) *entity.Workspace {
 	return &entity.Workspace{
-		ID:          Workspace.ID,
-		Name:        Workspace.Name,
-		Description: Workspace.Description,
-		Icon:        Workspace.Icon,
-		Color:       Workspace.Color,
-		OwnerID:     Workspace.OwnerID,
-		KeyPrefix:   Workspace.KeyPrefix,
-		TaskSeq:     Workspace.TaskSeq,
+		ID:                Workspace.ID,
+		Name:              Workspace.Name,
+		Description:       Workspace.Description,
+		Icon:              Workspace.Icon,
+		Color:             Workspace.Color,
+		OwnerID:           Workspace.OwnerID,
+		KeyPrefix:         Workspace.KeyPrefix,
+		TaskSeq:           Workspace.TaskSeq,
+		DefaultTaskStatus: Workspace.DefaultTaskStatus,
+		MemberDefaultRole: Workspace.MemberDefaultRole,
 	}
 }
 
@@ -196,6 +202,53 @@ func (t *WorkspaceRepository) UpdateDescription(ctx context.Context, workspaceID
 		return ErrWorkspaceNotFound
 	}
 	return nil
+}
+
+func (t *WorkspaceRepository) UpdateSettings(
+	ctx context.Context,
+	workspaceID string,
+	settings domainworkspace.SettingsUpdate,
+) (*entity.Workspace, error) {
+	updates := workspaceSettingsUpdates(settings)
+	if len(updates) > 0 {
+		result := t.db.WithContext(ctx).Model(&WorkspaceModel{}).Where("id = ?", workspaceID).Updates(updates)
+		if result.Error != nil {
+			if errors.Is(result.Error, gorm.ErrDuplicatedKey) {
+				return nil, ErrWorkspaceAlreadyExists
+			}
+			return nil, result.Error
+		}
+		if result.RowsAffected == 0 {
+			return nil, ErrWorkspaceNotFound
+		}
+	}
+	return t.GetWorkspaceByID(ctx, workspaceID)
+}
+
+func workspaceSettingsUpdates(settings domainworkspace.SettingsUpdate) map[string]interface{} {
+	updates := map[string]interface{}{}
+	if settings.Name != nil {
+		updates["name"] = *settings.Name
+	}
+	if settings.Description != nil {
+		updates["description"] = *settings.Description
+	}
+	if settings.Icon != nil {
+		updates["icon"] = *settings.Icon
+	}
+	if settings.Color != nil {
+		updates["color"] = *settings.Color
+	}
+	if settings.KeyPrefix != nil {
+		updates["key_prefix"] = *settings.KeyPrefix
+	}
+	if settings.DefaultTaskStatus != nil {
+		updates["default_task_status"] = *settings.DefaultTaskStatus
+	}
+	if settings.MemberDefaultRole != nil {
+		updates["member_default_role"] = *settings.MemberDefaultRole
+	}
+	return updates
 }
 
 // AddUserToWorkspace

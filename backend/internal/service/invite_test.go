@@ -308,6 +308,12 @@ func TestInviteServiceCreateRoleGuards(t *testing.T) {
 			wantRole:      string(domainworkspace.RoleOwner),
 		},
 		{
+			name:          "empty role uses workspace default invite role",
+			requesterRole: domainworkspace.RoleAdmin,
+			role:          "",
+			wantRole:      string(domainworkspace.RoleGuest),
+		},
+		{
 			name:          "invalid expiration rejected",
 			requesterRole: domainworkspace.RoleOwner,
 			role:          string(domainworkspace.RoleMember),
@@ -328,6 +334,11 @@ func TestInviteServiceCreateRoleGuards(t *testing.T) {
 			inviteRepo := newInviteRepoMock()
 			workspaceRepo := newInviteWorkspaceRepoMock()
 			workspaceRepo.roles["ws1"] = map[string]domainworkspace.Role{"requester": tt.requesterRole}
+			workspaceRepo.workspaces["ws1"] = &entity.Workspace{
+				ID:                "ws1",
+				Name:              "Workspace",
+				MemberDefaultRole: string(domainworkspace.RoleGuest),
+			}
 			service := NewInviteService(inviteRepo, workspaceRepo)
 
 			invite, err := service.Create(context.Background(), "ws1", tt.role, "requester", tt.expiresHours, tt.maxUses)
