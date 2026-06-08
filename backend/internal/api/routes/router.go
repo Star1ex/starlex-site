@@ -67,6 +67,8 @@ func setupUserRoutes(api fiber.Router, h *handlers.Handlers) {
 	users := api.Group("/users")
 	users.Get("/profile", h.GetUser)
 	users.Get("/workspaces", h.GetWorkspaces)
+	users.Get("/preferences", h.GetUserPreferences)
+	users.Patch("/preferences", h.PatchUserPreferences)
 	users.Put("/update", h.UserUpdate)
 	users.Post("/photo", h.UploadPhoto)
 	users.Get("/photo", h.GetPhoto)

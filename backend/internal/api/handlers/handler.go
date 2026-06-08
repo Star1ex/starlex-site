@@ -8,6 +8,7 @@ import (
 	domaininvite "github.com/Star1ex/starlex-site/internal/domain/invite"
 	domainlabel "github.com/Star1ex/starlex-site/internal/domain/label"
 	"github.com/Star1ex/starlex-site/internal/domain/password"
+	domainpreference "github.com/Star1ex/starlex-site/internal/domain/preference"
 	"github.com/Star1ex/starlex-site/internal/domain/project"
 	domainSession "github.com/Star1ex/starlex-site/internal/domain/session"
 	"github.com/Star1ex/starlex-site/internal/domain/task"
@@ -31,6 +32,7 @@ type Handlers struct {
 	sessionService      domainSession.Service
 	inviteService       domaininvite.Service
 	labelService        domainlabel.Service
+	preferenceService   domainpreference.Service
 	realtimeHub         *realtime.Hub
 	jwtSecret           string
 	frontendBaseURL     string
@@ -50,6 +52,7 @@ func NewHandlers(userService user.Service,
 	sessionService domainSession.Service,
 	inviteService domaininvite.Service,
 	labelService domainlabel.Service,
+	preferenceService domainpreference.Service,
 	realtimeHub *realtime.Hub,
 	db *db.DB,
 	authConfig AuthConfig,
@@ -69,6 +72,7 @@ func NewHandlers(userService user.Service,
 		sessionService:      sessionService,
 		inviteService:       inviteService,
 		labelService:        labelService,
+		preferenceService:   preferenceService,
 		realtimeHub:         realtimeHub,
 		jwtSecret:           authConfig.JWTSecret,
 		frontendBaseURL:     authConfig.FrontendBaseURL,

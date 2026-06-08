@@ -126,6 +126,7 @@ func StartServer() {
 	discussionRepo := repository.NewDiscussionRepository(db.DB)
 	sessionRepo := repository.NewSessionRepository(db.DB)
 	inviteRepo := repository.NewInviteRepository(db.DB)
+	preferenceRepo := repository.NewUserPreferenceRepository(db.DB)
 	pendingRegistrationRepo := repository.NewPendingRegistrationRepository(db.DB)
 	passwordResetRepo := repository.NewPasswordResetRepository(db.DB)
 	passwordAuditRepo := repository.NewPasswordAuditRepository(db.DB)
@@ -151,6 +152,7 @@ func StartServer() {
 	discussionService := service.NewDiscussionService(discussionRepo)
 	sessionService := service.NewSessionService(sessionRepo)
 	inviteService := service.NewInviteService(inviteRepo, workspaceRepo)
+	preferenceService := service.NewUserPreferenceService(preferenceRepo, workspaceRepo)
 	authConfig := handlers.AuthConfig{
 		JWTSecret:       config.JWTSecret,
 		FrontendBaseURL: config.FrontendBaseURL,
@@ -163,7 +165,7 @@ func StartServer() {
 			GithubCallbackURL:  config.OAuthConfig.GithubCallbackURL,
 		},
 	}
-	httpHandlers := handlers.NewHandlers(userService, workspaceService, projectService, taskService, folderService, registrationService, passwordService, sprintService, discussionService, sessionService, inviteService, labelService, realtimeHub, db, authConfig)
+	httpHandlers := handlers.NewHandlers(userService, workspaceService, projectService, taskService, folderService, registrationService, passwordService, sprintService, discussionService, sessionService, inviteService, labelService, preferenceService, realtimeHub, db, authConfig)
 	routes.InitRoutes(app, httpHandlers)
 
 	go func() {
