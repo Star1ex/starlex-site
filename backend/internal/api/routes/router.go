@@ -3,6 +3,7 @@ package routes
 import (
 	//  _ "github.com/Star1ex/starlex-site/docs"
 	"github.com/Star1ex/starlex-site/internal/api/handlers"
+	fiberws "github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	// fiberSwagger "github.com/swaggo/fiber-swagger"
 )
@@ -18,6 +19,7 @@ func InitRoutes(app *fiber.App, h *handlers.Handlers) {
 
 	setupAuthRoutes(api, h)
 	api.Get("/invites/:token", h.GetInvitePreview)
+	api.Get("/ws", h.PrepareWorkspaceWebSocket, fiberws.New(h.HandleWorkspaceWebSocket))
 
 	protected := api.Group("", h.UserIndentity, h.CSRFProtect)
 	{

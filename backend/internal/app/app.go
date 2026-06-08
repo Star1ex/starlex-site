@@ -14,6 +14,7 @@ import (
 	emailService "github.com/Star1ex/starlex-site/internal/infra/email"
 	"github.com/Star1ex/starlex-site/internal/logger"
 	"github.com/Star1ex/starlex-site/internal/notifications/telegram"
+	"github.com/Star1ex/starlex-site/internal/realtime"
 	"github.com/Star1ex/starlex-site/internal/repository"
 	"github.com/Star1ex/starlex-site/internal/service"
 	"github.com/Star1ex/starlex-site/internal/storage"
@@ -96,6 +97,7 @@ func StartServer() {
 	}))
 
 	bus := events.NewBus()
+	realtimeHub := realtime.NewHub()
 
 	tg, _ := telegram.New(
 		config.TelegramNotifications.Token,
@@ -157,7 +159,7 @@ func StartServer() {
 			GithubCallbackURL:  config.OAuthConfig.GithubCallbackURL,
 		},
 	}
-	httpHandlers := handlers.NewHandlers(userService, workspaceService, projectService, taskService, folderService, registrationService, passwordService, sprintService, discussionService, sessionService, inviteService, labelService, db, authConfig)
+	httpHandlers := handlers.NewHandlers(userService, workspaceService, projectService, taskService, folderService, registrationService, passwordService, sprintService, discussionService, sessionService, inviteService, labelService, realtimeHub, db, authConfig)
 	routes.InitRoutes(app, httpHandlers)
 
 	go func() {
