@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Home, FolderKanban, CircleCheck, Bell, Settings, ChevronDown, Plus, LogOut, User as UserIcon } from 'lucide-react';
 import Avatar from '@/shared/ui/Avatar.js';
 import { getAuthUser } from '@/shared/lib/authManager.js';
+import { WorkspaceGlyph } from '@/shared/lib/workspaceIcon.js';
 import { userService, workspaceService } from '@/services/api/index.js';
 import { useAuth } from '@/contexts/AuthContext.js';
 import { WorkspaceCreateModal } from '@/widgets/WorkspaceCreateModal/WorkspaceCreateModal.js';
@@ -30,21 +31,18 @@ const NAV_ITEMS = [
   { label: 'Inbox',      icon: Bell,         path: (wsId: string) => `/workspace/${wsId}?view=inbox` },
 ] as const;
 
-function WorkspaceGlyph({ workspace }: { workspace: Workspace }) {
-  const letter = workspace.name?.charAt(0).toUpperCase() ?? '?';
-  const bg = workspace.color ?? '#6366f1';
-  return (
-    <div
-      className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold text-white flex-shrink-0 font-hanken"
-      style={{ backgroundColor: bg }}
-    >
-      {workspace.icon && workspace.icon.length <= 2 && !workspace.icon.startsWith('/') ? (
+function WsGlyph({ workspace }: { workspace: Workspace }) {
+  if (workspace.icon && workspace.icon.length <= 2 && !workspace.icon.startsWith('/')) {
+    return (
+      <div
+        className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold text-white flex-shrink-0"
+        style={{ backgroundColor: workspace.color || '#6366f1' }}
+      >
         <span className="text-base leading-none">{workspace.icon}</span>
-      ) : (
-        letter
-      )}
-    </div>
-  );
+      </div>
+    );
+  }
+  return <WorkspaceGlyph name={workspace.name} color={workspace.color} size={32} />;
 }
 
 export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) => {
@@ -153,7 +151,7 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
         <div className="mb-5 px-1">
           {activeWorkspace ? (
             <div className="flex items-center gap-3">
-              <WorkspaceGlyph workspace={activeWorkspace} />
+              <WsGlyph workspace={activeWorkspace} />
               <div className="flex-1 min-w-0">
                 <p className="text-headline-md font-hanken font-bold text-white truncate leading-none mb-0.5">
                   {activeWorkspace.name}
@@ -204,7 +202,7 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
                         ws.id === activeWorkspaceId && '!text-white !bg-white/8',
                       )}
                     >
-                      <WorkspaceGlyph workspace={ws} />
+                      <WsGlyph workspace={ws} />
                       <span className="truncate">{ws.name}</span>
                     </button>
                   ))
