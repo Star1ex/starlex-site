@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Users } from 'lucide-react';
+import { Users, LayoutList, Kanban } from 'lucide-react';
 import { projectService, taskService } from '@/services/api/index.js';
 import type { ProjectDTO, TaskDTO, UserDTO } from '@/types/dto.js';
 import { pageVariants } from '@/shared/lib/animations.js';
@@ -10,6 +10,7 @@ import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle.js';
 import { showToast } from '@/shared/lib/toast.js';
 import { ProjectHeader } from './ProjectHeader.js';
 import { ProjectTaskList } from './ProjectTaskList.js';
+import { ProjectBoard } from './ProjectBoard.js';
 
 // ─── page skeleton ─────────────────────────────────────────────────────────────
 
@@ -73,6 +74,7 @@ export const ProjectPage: React.FC = () => {
   const [members, setMembers] = useState<UserDTO[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
+  const [view, setView] = useState<'list' | 'board'>('list');
 
   useDocumentTitle(project?.name ?? 'Project');
 
@@ -150,19 +152,39 @@ export const ProjectPage: React.FC = () => {
         />
       )}
 
-      <div className="h-px bg-white/5 mb-6" />
+      <div className="h-px bg-white/5 mb-4" />
 
-      <ProjectTaskList
-        tasks={tasks}
-        projectId={projectId!}
-        workspaceId={workspaceId!}
-        showCreate={showCreate}
-        onCreateOpen={() => setShowCreate(true)}
-        onCreateClose={() => setShowCreate(false)}
-        onTaskCreated={handleTaskCreated}
-        onTaskDeleted={handleDeleteTask}
-        onTaskNavigate={id => navigate(`/task/${id}`)}
-      />
+      {/* View toggle */}
+      <div className="flex items-center gap-1 mb-5">
+        <button
+          onClick={() => setView('list')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-label-sm transition-all ${view === 'list' ? 'bg-white/8 text-white' : 'text-white/40 hover:text-white/70'}`}
+        >
+          <LayoutList size={13} /> List
+        </button>
+        <button
+          onClick={() => setView('board')}
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-label-sm transition-all ${view === 'board' ? 'bg-white/8 text-white' : 'text-white/40 hover:text-white/70'}`}
+        >
+          <Kanban size={13} /> Board
+        </button>
+      </div>
+
+      {view === 'list' ? (
+        <ProjectTaskList
+          tasks={tasks}
+          projectId={projectId!}
+          workspaceId={workspaceId!}
+          showCreate={showCreate}
+          onCreateOpen={() => setShowCreate(true)}
+          onCreateClose={() => setShowCreate(false)}
+          onTaskCreated={handleTaskCreated}
+          onTaskDeleted={handleDeleteTask}
+          onTaskNavigate={id => navigate(`/task/${id}`)}
+        />
+      ) : (
+        <ProjectBoard tasks={tasks} onTasksChange={setTasks} />
+      )}
 
       <ProjectMembersPreview members={members} />
     </motion.div>
