@@ -2,9 +2,11 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Search, Users, Layers, FileText, ArrowRight, Loader } from 'lucide-react';
+import { Search, Users, Layers, FileText, ArrowRight, Loader, Plus, CircleCheck, Home, FolderKanban } from 'lucide-react';
 import { searchService, type GlobalSearchResponse } from '@/services/api/search.service.js';
 import { useDebounce } from '@/shared/hooks/useDebounce.js';
+import { useWorkspace } from '@/contexts/WorkspaceContext.js';
+import { getAllViews } from '@/shared/lib/savedViews.js';
 
 interface SearchModalProps {
   isOpen: boolean;
@@ -16,6 +18,8 @@ type ResultItem =
   | { kind: 'sprint';    id: string; name: string; url: string; status: string }
   | { kind: 'task';      id: string; name: string; url: string; progress: string };
 
+interface QuickAction { id: string; label: string; icon: React.ReactNode; url: string; hint?: string }
+
 const KIND_ICON = {
   workspace: <Users size={14} />,
   sprint:    <Layers size={14} />,
@@ -26,6 +30,7 @@ const KIND_LABEL = { workspace: 'Workspace', sprint: 'Sprint', task: 'Task' };
 
 export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
+  const { activeWorkspaceId } = useWorkspace();
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
@@ -33,6 +38,26 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
   const [selected, setSelected] = useState(0);
   const debouncedQuery = useDebounce(query, 200);
   const abortRef = useRef<AbortController | null>(null);
+
+  const quickActions = useCallback((): QuickAction[] => {
+    const wsId = activeWorkspaceId ?? '';
+    const actions: QuickAction[] = [
+      { id: 'new-task',  label: 'New task',      icon: <Plus size={14} />,         url: wsId ? `/task/new?workspaceId=${wsId}` : '/task/new',  hint: 'C' },
+      { id: 'home',      label: 'Home',           icon: <Home size={14} />,         url: wsId ? `/workspace/${wsId}` : '/dashboard' },
+      { id: 'projects',  label: 'Projects',       icon: <FolderKanban size={14} />, url: wsId ? `/workspace/${wsId}?view=projects` : '/dashboard' },
+      { id: 'my-issues', label: 'My Issues',      icon: <CircleCheck size={14} />,  url: '/my-issues' },
+    ];
+    const views = getAllViews();
+    for (const v of views.slice(0, 4)) {
+      actions.push({ id: `view-${v.id}`, label: v.name, icon: <FileText size={14} />, url: `/my-issues?view=${v.id}` });
+    }
+    return actions;
+  }, [activeWorkspaceId]);
+
+  const openAction = useCallback((url: string) => {
+    navigate(url);
+    onClose();
+  }, [navigate, onClose]);
 
   // Focus input when opens
   useEffect(() => {
@@ -98,10 +123,15 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
 
   // Keyboard navigation
   const onKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowDown') { e.preventDefault(); setSelected(s => Math.min(s + 1, results.length - 1)); }
+    const actions = !query.trim() ? quickActions() : [];
+    const listLen = query.trim() ? results.length : actions.length;
+    if (e.key === 'ArrowDown') { e.preventDefault(); setSelected(s => Math.min(s + 1, listLen - 1)); }
     if (e.key === 'ArrowUp')   { e.preventDefault(); setSelected(s => Math.max(s - 1, 0)); }
-    if (e.key === 'Enter' && results[selected]) open(results[selected]);
-  }, [results, selected, open]);
+    if (e.key === 'Enter') {
+      if (query.trim() && results[selected]) open(results[selected]);
+      else if (!query.trim() && actions[selected]) openAction(actions[selected].url);
+    }
+  }, [results, selected, open, query, quickActions, openAction]);
 
   return createPortal(
     <AnimatePresence>
@@ -198,21 +228,36 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
               </div>
             )}
 
-            {/* Hint */}
-            {!query && (
-              <div className="px-4 py-3 flex items-center gap-4" style={{ borderTop: '0' }}>
-                <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                  <kbd className="px-1.5 py-0.5 rounded text-xs font-mono" style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>↑↓</kbd>
-                  {' '}navigate
-                </span>
-                <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                  <kbd className="px-1.5 py-0.5 rounded text-xs font-mono" style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>↵</kbd>
-                  {' '}open
-                </span>
-                <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                  <kbd className="px-1.5 py-0.5 rounded text-xs font-mono" style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>Esc</kbd>
-                  {' '}close
-                </span>
+            {/* Quick actions when no query */}
+            {!query.trim() && (
+              <div>
+                <div className="px-4 pt-3 pb-1">
+                  <span className="label-caps text-white/30">Quick actions</span>
+                </div>
+                {quickActions().map((action, i) => (
+                  <button
+                    key={action.id}
+                    onClick={() => openAction(action.url)}
+                    onMouseEnter={() => setSelected(i)}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors"
+                    style={{ background: selected === i ? 'var(--bg-secondary)' : 'transparent', color: 'var(--text-primary)' }}
+                  >
+                    <span style={{ color: 'var(--text-secondary)' }}>{action.icon}</span>
+                    <span className="flex-1 text-sm">{action.label}</span>
+                    {action.hint && (
+                      <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono" style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
+                        {action.hint}
+                      </kbd>
+                    )}
+                  </button>
+                ))}
+                <div className="flex items-center gap-4 px-4 py-2.5 mt-1" style={{ borderTop: '1px solid var(--border-color)' }}>
+                  {[['↑↓','navigate'],['↵','open'],['Esc','close']].map(([k, l]) => (
+                    <span key={k} className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                      <kbd className="px-1.5 py-0.5 rounded text-xs font-mono mr-1" style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>{k}</kbd>{l}
+                    </span>
+                  ))}
+                </div>
               </div>
             )}
           </motion.div>
