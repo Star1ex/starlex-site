@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService, userService } from '@/services/api/index.js';
 import { FaGoogle, FaGithub } from 'react-icons/fa';
+import { EmailChange } from './EmailChange.js';
 
 type Provider = 'local' | 'google' | 'github';
 
@@ -104,6 +105,7 @@ export const ConnectedAccounts: React.FC = () => {
           onAction={() => navigate('/settings?tab=password')}
         />
 
+
         <AccountRow
           title="Google"
           icon={<FaGoogle className="w-4 h-4 text-gray-900 dark:text-white" />}
@@ -136,6 +138,8 @@ export const ConnectedAccounts: React.FC = () => {
           loading={actionLoading === 'github'}
         />
       </div>
+
+      {profile?.email && <EmailChange currentEmail={profile.email} />}
     </div>
   );
 };

@@ -1,5 +1,5 @@
 import { httpClient } from './client.js';
-import { UserDTO, UserProfileDTO, UpdateUserRequest, WorkspaceDTO } from '../../types/dto.js';
+import { UserDTO, UserProfileDTO, UpdateUserRequest, WorkspaceDTO, NotificationPreferences } from '../../types/dto.js';
 
 export const userService = {
   async getProfile(): Promise<UserProfileDTO> {
@@ -88,5 +88,14 @@ export const userService = {
       avatar_url: d.avatar_url ?? null,
       role: d.role,
     };
+  },
+
+  async getNotificationPreferences(): Promise<NotificationPreferences> {
+    const response = await httpClient.get<NotificationPreferences>('/api/users/preferences/notifications');
+    return response.data;
+  },
+
+  async updateNotificationPreferences(data: Partial<NotificationPreferences>): Promise<void> {
+    await httpClient.patch('/api/users/preferences/notifications', data);
   },
 };

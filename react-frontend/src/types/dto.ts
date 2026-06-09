@@ -419,3 +419,47 @@ export interface UpdateSubtaskRequest {
   is_done?: boolean;
   position?: number;
 }
+
+// ==================== WORKSPACE LABEL DTOs ====================
+export interface WorkspaceLabelDTO {
+  id: string;
+  name: string;
+  color: string;
+  workspace_id: string;
+  created_at?: string;
+}
+
+export interface CreateLabelRequest {
+  name: string;
+  color: string;
+}
+
+export interface UpdateLabelRequest {
+  name?: string;
+  color?: string;
+}
+
+// ==================== SESSION DTOs ====================
+export interface SessionDTO {
+  id: string;
+  user_agent?: string;
+  ip?: string;
+  created_at: string;
+  last_seen_at?: string;
+  is_current?: boolean;
+}
+
+// ==================== NOTIFICATION PREFERENCES ====================
+export interface NotificationPreferences {
+  email_on_assign: boolean;
+  email_on_mention: boolean;
+}
+
+// ==================== EMAIL CHANGE ====================
+export interface RequestEmailChangeRequest {
+  new_email: string;
+}
+
+export interface ConfirmEmailChangeRequest {
+  code: string;
+}

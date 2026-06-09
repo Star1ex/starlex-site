@@ -2,6 +2,7 @@ import { httpClient } from './client.js';
 import type {
   CreateWorkspaceRequest, WorkspaceDTO, UserDTO,
   WorkspaceMemberDTO, WorkspaceInviteDTO, InvitePreviewDTO, WorkspaceRole,
+  WorkspaceLabelDTO, CreateLabelRequest, UpdateLabelRequest,
 } from '../../types/dto.js';
 
 function normalizeWorkspace(raw: unknown): WorkspaceDTO {
@@ -133,5 +134,25 @@ export const workspaceService = {
     },
   ): Promise<void> {
     await httpClient.patch(`/api/workspaces/${workspaceId}/settings`, settings);
+  },
+
+  // Labels
+  async listLabels(workspaceId: string): Promise<WorkspaceLabelDTO[]> {
+    const response = await httpClient.get<WorkspaceLabelDTO[]>(`/api/workspaces/${workspaceId}/labels`);
+    return Array.isArray(response.data) ? response.data : [];
+  },
+
+  async createLabel(workspaceId: string, data: CreateLabelRequest): Promise<WorkspaceLabelDTO> {
+    const response = await httpClient.post<WorkspaceLabelDTO>(`/api/workspaces/${workspaceId}/labels`, data);
+    return response.data;
+  },
+
+  async updateLabel(workspaceId: string, labelId: string, data: UpdateLabelRequest): Promise<WorkspaceLabelDTO> {
+    const response = await httpClient.patch<WorkspaceLabelDTO>(`/api/workspaces/${workspaceId}/labels/${labelId}`, data);
+    return response.data;
+  },
+
+  async deleteLabel(workspaceId: string, labelId: string): Promise<void> {
+    await httpClient.delete(`/api/workspaces/${workspaceId}/labels/${labelId}`);
   },
 };

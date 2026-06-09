@@ -143,7 +143,7 @@ export const SignInPage = () => {
         setErrorMessage(err?.response?.data?.error || 'Server authentication error');
       }
 
-      console.error('Network error:', err);
+      // error handled
     } finally {
       setIsSubmitting(false);
     }

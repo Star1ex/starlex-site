@@ -3,6 +3,7 @@ import { Eye, EyeOff } from 'lucide-react';
 import { authService, userService } from '@/services/api/index.js';
 import { useAuth } from '@/contexts/AuthContext.js';
 import { PasswordStrengthMeter } from '@/shared/ui/PasswordStrengthMeter.js';
+import { SecuritySessions } from './SecuritySessions.js';
 
 interface ChangePasswordProps {
   onSubmit?: (data: {
@@ -127,7 +128,7 @@ export const ChangePassword: React.FC<ChangePasswordProps> = ({ onSubmit }) => {
   );
 
   return (
-    <div className="space-y-8 text-center max-w-3xl mx-auto">
+    <div className="space-y-8 max-w-3xl mx-auto">
       <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text mb-2">
           {requiresCurrent ? 'Change Password' : 'Set Password'}
@@ -194,6 +195,8 @@ export const ChangePassword: React.FC<ChangePasswordProps> = ({ onSubmit }) => {
           )}
         </button>
       </form>
+
+      <SecuritySessions />
     </div>
   );
 };

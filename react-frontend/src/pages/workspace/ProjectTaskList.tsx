@@ -5,6 +5,7 @@ import { projectService } from '@/services/api/index.js';
 import type { TaskDTO, TaskPriority, CreateTaskRequest, WorkspaceRole } from '@/types/dto.js';
 import { listVariants, listItemVariants, modalBackdropVariants, modalContentVariants } from '@/shared/lib/animations.js';
 import { can } from '@/shared/lib/permissions.js';
+import { InlineLabelChips } from '@/shared/ui/LabelPicker.js';
 
 const PRIORITY_META: Record<string, { label: string; cls: string }> = {
   high:   { label: 'High',   cls: 'text-orange-400' },
@@ -162,6 +163,12 @@ function TaskRow({ task, onNavigate, onDelete }: TaskRowProps) {
       <span className={`flex-1 text-body-md min-w-0 truncate ${isDone ? 'line-through text-white/30' : 'text-white/80'}`}>
         {task.task}
       </span>
+
+      {task.labels && task.labels.length > 0 && (
+        <div className="flex-shrink-0 hidden sm:flex">
+          <InlineLabelChips labels={task.labels} maxVisible={2} />
+        </div>
+      )}
 
       {pm && <span className={`text-label-sm font-medium flex-shrink-0 ${pm.cls}`}>{pm.label}</span>}
 

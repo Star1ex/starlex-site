@@ -14,6 +14,9 @@ import {
   PasswordResetRequest,
   PasswordResetVerifyRequest,
   PasswordResetConfirmRequest,
+  SessionDTO,
+  RequestEmailChangeRequest,
+  ConfirmEmailChangeRequest,
 } from '../../types/dto.js';
 
 export const authService = {
@@ -129,5 +132,24 @@ export const authService = {
 
   isAuthenticated(): boolean {
     return apiClient.getAccessToken() !== null;
+  },
+
+  async listSessions(): Promise<SessionDTO[]> {
+    const response = await httpClient.get<SessionDTO[]>('/api/auth/sessions');
+    return Array.isArray(response.data) ? response.data : [];
+  },
+
+  async revokeSession(sessionId: string): Promise<void> {
+    await httpClient.delete(`/api/auth/sessions/${sessionId}`);
+  },
+
+  async requestEmailChange(data: RequestEmailChangeRequest): Promise<void> {
+    await this.ensureCsrfToken();
+    await httpClient.post('/api/auth/email-change/request', data);
+  },
+
+  async confirmEmailChange(data: ConfirmEmailChangeRequest): Promise<void> {
+    await this.ensureCsrfToken();
+    await httpClient.post('/api/auth/email-change/confirm', data);
   },
 };

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { workspaceService, userService } from '@/services/api/index.js';
 import { useWorkspace } from '@/contexts/WorkspaceContext.js';
 import { showToast } from '@/shared/lib/toast.js';
+import { LabelsManager } from './LabelsManager.js';
 import type { WorkspaceDTO } from '@/types/dto.js';
 
 const ACCENT_PRESETS = [
@@ -200,6 +201,13 @@ export const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = () => {
       >
         {saving ? 'Saving…' : 'Save settings'}
       </button>
+
+      {activeWorkspaceId && (
+        <LabelsManager
+          workspaceId={activeWorkspaceId}
+          isAdmin={workspace?.role === 'admin' || workspace?.role === 'owner'}
+        />
+      )}
     </form>
   );
 };

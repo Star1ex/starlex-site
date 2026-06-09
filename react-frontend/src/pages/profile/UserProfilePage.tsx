@@ -116,7 +116,6 @@ export const UserProfilePage: React.FC = () => {
           }
         }
       } catch (err) {
-        console.error('Error fetching user profile:', err);
         setError(err instanceof Error ? err.message : 'Failed to load user profile. Please try again.');
       } finally {
         setLoading(false);

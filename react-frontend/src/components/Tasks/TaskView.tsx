@@ -5,13 +5,14 @@ import { useDebounce } from '@/shared/hooks/useDebounce.js';
 import { taskService, userService } from '@/services/api/index.js';
 import { useAuth } from '@/contexts/AuthContext.js';
 import { useWorkspace } from '@/contexts/WorkspaceContext.js';
-import type { CreateTaskRequest, TaskDTO, WorkspaceDTO } from '@/types/dto.js';
+import type { CreateTaskRequest, TaskDTO, TaskLabelDTO, WorkspaceDTO } from '@/types/dto.js';
 import { useTasks } from '@/hooks/useTasks.js';
 import { showToast } from '@/shared/lib/toast.js';
 import BreadcrumbBack from '@/shared/ui/BreadcrumbBack.js';
 import { trackItem } from '@/shared/lib/recentItems.js';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle.js';
 import { IconPicker } from '@/shared/ui/IconPicker.js';
+import { LabelPicker, InlineLabelChips } from '@/shared/ui/LabelPicker.js';
 
 const MarkdownEditor = React.lazy(() =>
   import('@/features/markdown/RichEditor.js').then((m) => ({ default: m.MarkdownEditor }))
@@ -152,6 +153,7 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [progress, setProgress] = useState<'not_started' | 'in_progress' | 'done'>('not_started');
+  const [labels, setLabels] = useState<TaskLabelDTO[]>([]);
 
   const locationFolderId = locationState?.folder_id as string | null ?? null;
 
@@ -177,6 +179,7 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
         setDescription(data.description || '');
         setPriority((data.priority as any) || 'medium');
         setProgress((data.progress as any) || 'not_started');
+        setLabels(data.labels ?? []);
         lastSentRef.current = {
           title: data.task || '',
           description: data.description || '',
@@ -184,8 +187,8 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
           progress: (data.progress as any) || 'not_started',
         };
         if (data?.id) updateRecentTasks(data.id, data.task || 'Untitled');
-      } catch (err) {
-        console.error('Failed to load task', err);
+      } catch {
+        // error shown via empty state
       } finally {
         setTimeout(() => { if (mounted) setIsInitialLoad(false); }, 10);
       }
@@ -268,9 +271,8 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
           };
           lastSaveRef.current = Date.now();
         }
-      } catch (err: any) {
-        if (err?.name === 'AbortError') { cancelled = true; return; }
-        console.error('Save failed:', err);
+      } catch (err: unknown) {
+        if ((err as { name?: string })?.name === 'AbortError') { cancelled = true; return; }
       } finally {
         if (!cancelled) setIsSavingCombined(false);
       }
@@ -283,6 +285,17 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
     title, description, priority, progress,
     taskIdParam, isInitialLoad, invalidTaskId,
   ]);
+
+  // ── label update (existing tasks only) ──
+  const handleLabelsChange = async (next: TaskLabelDTO[]) => {
+    setLabels(next);
+    if (!taskIdParam || taskIdParam === 'new' || !workspaceId) return;
+    try {
+      await taskService.patchTaskLabels(workspaceId, taskIdParam as string, next.map(l => l.id));
+    } catch {
+      showToast('Failed to update labels');
+    }
+  };
 
   // ── create new task ──
   const [isCreating, setIsCreating] = useState(false);
@@ -321,8 +334,7 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
         await tasksHook.refreshTasks();
         showToast('Task created, but could not open it automatically.');
       }
-    } catch (err) {
-      console.error('Failed to create task', err);
+    } catch {
       showToast('Failed to create task. Please try again.');
     } finally {
       setIsCreating(false);
@@ -406,6 +418,21 @@ export const TaskView: React.FC<{ taskIdProp?: string }> = ({ taskIdProp }) => {
               />
             </Suspense>
           </div>
+
+          {/* Labels (existing tasks only) */}
+          {!isNew && workspaceId && (
+            <div className="mt-6 flex items-center gap-2">
+              <span className="text-label-sm text-white/30 w-20 flex-shrink-0">Labels</span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <InlineLabelChips labels={labels} maxVisible={5} />
+                <LabelPicker
+                  workspaceId={workspaceId}
+                  selected={labels}
+                  onChange={handleLabelsChange}
+                />
+              </div>
+            </div>
+          )}
 
           {/* Create button (new tasks only) */}
           {isNew && (

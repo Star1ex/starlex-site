@@ -99,7 +99,7 @@ export const SignUpPage = () => {
         setErrorMessage(err?.message || 'Unknown registration error');
       }
 
-      console.error('Network or server error:', err);
+      // error handled
     } finally {
       setIsLoading(false);
     }

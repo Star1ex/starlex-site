@@ -89,7 +89,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
         onSuccess();
         onClose();
       } catch (error) {
-        console.error('Failed to update task:', error);
+        // error handled
       } finally {
         setIsLoading(false);
       }

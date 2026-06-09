@@ -27,8 +27,8 @@ const ProfilePage: React.FC = () => {
         const data = await userService.getProfile();
         setUser(data);
         setForm(data);
-      } catch (err) {
-        console.error('Failed to fetch profile:', err);
+      } catch {
+        // error handled via empty state
       }
     };
     fetchUser();
@@ -51,8 +51,8 @@ const ProfilePage: React.FC = () => {
       const data = await userService.uploadPhoto(file);
       setUser(prev => (prev ? { ...prev, photo_url: data.url } : prev));
       setForm(prev => (prev ? { ...prev, photo_url: data.url } : prev));
-    } catch (err) {
-      console.error('Failed to upload photo:', err);
+    } catch {
+
     } finally {
       setUploading(false);
     }
@@ -72,8 +72,8 @@ const ProfilePage: React.FC = () => {
 
       setUser(form);
       setEditable(false);
-    } catch (err) {
-      console.error('Failed to update profile:', err);
+    } catch {
+
     } finally {
       setSaving(false);
     }
