@@ -306,7 +306,7 @@ export const HomePage = () => {
             applicationCategory: "ProjectManagement",
             operatingSystem: "Web",
             offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-            description: "Task management with sprints, folders, and real-time collaboration.",
+            description: "Task management with sprints, projects, and real-time collaboration.",
             url: "https://starlex.cc",
           })}
         </script>

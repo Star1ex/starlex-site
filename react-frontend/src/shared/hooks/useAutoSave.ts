@@ -30,7 +30,7 @@ export function useAutoSave<T = any>(
 
   useEffect(() => {
     // Validation guard
-    if (!taskId || taskId === '' || taskId === 'new' || taskId === 'without-folder') {
+    if (!taskId || taskId === '' || taskId === 'new') {
       // skip saving for invalid ids
       return;
     }

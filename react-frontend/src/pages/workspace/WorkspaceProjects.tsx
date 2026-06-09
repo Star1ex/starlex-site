@@ -1,129 +1,397 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Layers, MoreHorizontal, Trash2, Users } from 'lucide-react';
-import type { ProjectDTO } from '@/types/dto.js';
-import { listVariants, listItemVariants } from '@/shared/lib/animations.js';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
+import {
+  CalendarDays,
+  CircleDashed,
+  Layers,
+  MoreHorizontal,
+  Plus,
+  Trash2,
+  UserRound,
+  UsersRound,
+} from 'lucide-react';
+import type { ProjectDTO, ProjectPriority, ProjectStatus, UserDTO } from '@/types/dto.js';
+import { listItemVariants, listVariants } from '@/shared/lib/animations.js';
+import Avatar from '@/shared/ui/Avatar.js';
+import { projectService } from '@/services/api/index.js';
+import { showToast } from '@/shared/lib/toast.js';
 import { CreateProjectModal } from './CreateProjectModal.js';
 
-// ─── constants ────────────────────────────────────────────────────────────────
+const ICON_STROKE = 1.55;
 
-const STATUS_META: Record<string, { label: string; dot: string; pillClass: string }> = {
-  backlog:     { label: 'Backlog',      dot: '#475569', pillClass: 'bg-slate-800/60 text-slate-400' },
-  planned:     { label: 'Planned',      dot: '#a78bfa', pillClass: 'bg-violet-900/30 text-violet-300' },
-  in_progress: { label: 'In Progress',  dot: '#3b82f6', pillClass: 'bg-blue-900/30 text-blue-300' },
-  paused:      { label: 'Paused',       dot: '#f59e0b', pillClass: 'bg-amber-900/30 text-amber-300' },
-  completed:   { label: 'Completed',    dot: '#22c55e', pillClass: 'bg-green-900/30 text-green-300' },
-  cancelled:   { label: 'Cancelled',    dot: '#ef4444', pillClass: 'bg-red-900/30 text-red-400' },
+const STATUS_META: Record<ProjectStatus, { label: string; dot: string; progress: number }> = {
+  backlog:     { label: 'Backlog',     dot: '#64748b', progress: 0 },
+  planned:     { label: 'Planned',     dot: '#a78bfa', progress: 20 },
+  in_progress: { label: 'In Progress', dot: '#38bdf8', progress: 55 },
+  paused:      { label: 'Paused',      dot: '#f59e0b', progress: 35 },
+  completed:   { label: 'Completed',   dot: '#34d399', progress: 100 },
+  cancelled:   { label: 'Cancelled',   dot: '#f87171', progress: 0 },
 };
 
-const PRIORITY_META: Record<string, { label: string; cls: string }> = {
-  none:   { label: '',       cls: '' },
-  urgent: { label: 'Urgent', cls: 'text-red-400' },
-  high:   { label: 'High',   cls: 'text-orange-400' },
-  medium: { label: 'Medium', cls: 'text-amber-400' },
-  low:    { label: 'Low',    cls: 'text-blue-400' },
+const ALL_STATUSES = Object.keys(STATUS_META) as ProjectStatus[];
+
+const PRIORITY_META: Record<ProjectPriority, { label: string; bars: number; color: string }> = {
+  none:   { label: 'No priority', bars: 0, color: 'rgba(255,255,255,0.24)' },
+  low:    { label: 'Low',         bars: 1, color: '#60a5fa' },
+  medium: { label: 'Medium',      bars: 2, color: '#a78bfa' },
+  high:   { label: 'High',        bars: 3, color: '#fb923c' },
+  urgent: { label: 'Urgent',      bars: 4, color: '#f87171' },
 };
 
-// ─── project card ──────────────────────────────────────────────────────────────
+const ALL_PRIORITIES = Object.keys(PRIORITY_META) as ProjectPriority[];
 
-interface ProjectCardProps {
+function formatDate(value: string | null): string {
+  if (!value) return 'No target';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return 'No target';
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function toInputDate(value: string | null): string {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return date.toISOString().slice(0, 10);
+}
+
+function getMemberName(member?: UserDTO): string {
+  if (!member) return 'No lead';
+  return `${member.firstName || ''}${member.lastName ? ` ${member.lastName}` : ''}`.trim() || member.email;
+}
+
+function getProjectGlyph(project: ProjectDTO) {
+  if (project.icon) return project.icon;
+  return project.name.trim().charAt(0).toUpperCase() || 'P';
+}
+
+function PriorityBars({ priority }: { priority: ProjectPriority }) {
+  const meta = PRIORITY_META[priority] ?? PRIORITY_META.none;
+  return (
+    <span className="project-priority" title={meta.label}>
+      {Array.from({ length: 4 }).map((_, idx) => (
+        <span
+          key={idx}
+          className="project-priority__bar"
+          data-active={idx < meta.bars}
+          style={{ ['--priority-color' as string]: meta.color }}
+        />
+      ))}
+      <span className="sr-only">{meta.label}</span>
+    </span>
+  );
+}
+
+interface ProjectRowProps {
   project: ProjectDTO;
+  members: UserDTO[];
+  lead?: UserDTO;
+  onProjectUpdated: (project: ProjectDTO) => void;
   onDelete: (id: string) => void;
   onClick: () => void;
 }
 
-function ProjectCard({ project, onDelete, onClick }: ProjectCardProps) {
-  const [menuOpen, setMenuOpen] = useState(false);
+function ProjectRow({ project, members, lead, onProjectUpdated, onDelete, onClick }: ProjectRowProps) {
+  const [menuOpen, setMenuOpen] = useState<'actions' | 'status' | 'priority' | 'lead' | null>(null);
+  const [saving, setSaving] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const sm = STATUS_META[project.status] ?? STATUS_META.backlog;
-  const pm = PRIORITY_META[project.priority] ?? PRIORITY_META.none;
+  const status = STATUS_META[project.status] ?? STATUS_META.backlog;
+  const membersCount = project.member_ids.length;
 
   useEffect(() => {
     if (!menuOpen) return;
-    const h = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    const handleClick = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setMenuOpen(null);
+      }
     };
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
   }, [menuOpen]);
+
+  const updateProject = async (next: ProjectDTO, request: Promise<ProjectDTO>) => {
+    const previous = project;
+    setSaving(true);
+    onProjectUpdated(next);
+    try {
+      const updated = await request;
+      onProjectUpdated(updated);
+    } catch {
+      onProjectUpdated(previous);
+      showToast('Failed to update project');
+    } finally {
+      setSaving(false);
+      setMenuOpen(null);
+    }
+  };
+
+  const handleStatusChange = (statusValue: ProjectStatus) => {
+    if (statusValue === project.status) {
+      setMenuOpen(null);
+      return;
+    }
+    void updateProject(
+      { ...project, status: statusValue },
+      projectService.updateProjectStatus(project.id, statusValue),
+    );
+  };
+
+  const handlePriorityChange = (priority: ProjectPriority) => {
+    if (priority === project.priority) {
+      setMenuOpen(null);
+      return;
+    }
+    void updateProject(
+      { ...project, priority },
+      projectService.updateProjectPriority(project.id, priority),
+    );
+  };
+
+  const handleLeadChange = (leaderId: string) => {
+    if (leaderId === project.leader_id) {
+      setMenuOpen(null);
+      return;
+    }
+    void updateProject(
+      { ...project, leader_id: leaderId },
+      projectService.updateProject(project.id, { leader_id: leaderId }),
+    );
+  };
+
+  const handleDeadlineChange = (value: string) => {
+    const nextDeadline = value ? new Date(`${value}T12:00:00`).toISOString() : null;
+    if (nextDeadline === project.deadline) return;
+    void updateProject(
+      { ...project, deadline: nextDeadline },
+      projectService.updateProject(project.id, value ? { deadline: nextDeadline } : { clear_deadline: true }),
+    );
+  };
 
   return (
     <motion.div
+      ref={menuRef}
       variants={listItemVariants}
-      className="group glass-card rounded-xl p-4 cursor-pointer hover:border-white/15 transition-all duration-150 select-none"
+      className="projects-list-row group"
       onClick={onClick}
-      whileHover={{ scale: 1.005 }}
-      whileTap={{ scale: 0.995 }}
+      whileHover={{ x: 2 }}
+      whileTap={{ scale: 0.998 }}
     >
-      <div className="flex items-start justify-between gap-2 mb-3">
-        <div className="flex items-center gap-2 min-w-0">
-          {project.icon ? (
-            <span className="text-xl leading-none flex-shrink-0">{project.icon}</span>
-          ) : (
-            <div className="w-7 h-7 rounded-lg flex-shrink-0 flex items-center justify-center text-xs font-bold bg-white/8 text-white/50">
-              {project.name.charAt(0).toUpperCase()}
-            </div>
-          )}
-          <span className="font-medium text-body-md text-white truncate">{project.name}</span>
+      <div className="projects-list-name">
+        <div className="project-row-glyph">
+          {getProjectGlyph(project)}
         </div>
-
-        <div ref={menuRef} className="relative flex-shrink-0">
-          <button
-            onClick={e => { e.stopPropagation(); setMenuOpen(p => !p); }}
-            className="w-6 h-6 flex items-center justify-center rounded text-white/30 opacity-0 group-hover:opacity-100 hover:text-white/80 transition-all"
-          >
-            <MoreHorizontal size={14} />
-          </button>
-          <AnimatePresence>
-            {menuOpen && (
-              <motion.div
-                className="dropdown-menu absolute right-0 top-7 z-20 min-w-[130px]"
-                initial={{ opacity: 0, scale: 0.95, y: -4 }}
-                animate={{ opacity: 1, scale: 1, y: 0, transition: { duration: 0.12 } }}
-                exit={{ opacity: 0, scale: 0.95, y: -4, transition: { duration: 0.08 } }}
-              >
-                <button
-                  onClick={e => { e.stopPropagation(); onDelete(project.id); setMenuOpen(false); }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-label-sm text-red-400 hover:bg-red-900/20 transition-colors rounded-lg"
-                >
-                  <Trash2 size={13} />
-                  Delete
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
+        <div className="min-w-0">
+          <div className="project-row-title">{project.name}</div>
+          {project.description && (
+            <div className="project-row-description">{project.description}</div>
+          )}
         </div>
       </div>
 
-      {project.description && (
-        <p className="text-label-sm text-white/40 mb-3 line-clamp-2">{project.description}</p>
-      )}
+      <div className="project-cell project-health">
+        <CircleDashed size={14} strokeWidth={ICON_STROKE} />
+        <span>No updates</span>
+      </div>
 
-      <div className="flex items-center gap-1.5 flex-wrap">
-        <span className={`inline-flex items-center gap-1 text-label-sm px-2 py-0.5 rounded-full font-medium ${sm.pillClass}`}>
-          <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: sm.dot }} />
-          {sm.label}
-        </span>
-        {project.priority !== 'none' && (
-          <span className={`text-label-sm font-medium ${pm.cls}`}>{pm.label}</span>
-        )}
-        {project.member_ids.length > 0 && (
-          <span className="flex items-center gap-0.5 text-label-sm text-white/30 ml-auto">
-            <Users size={11} />
-            {project.member_ids.length}
-          </span>
-        )}
+      <div className="project-cell project-inline-menu">
+        <button
+          type="button"
+          className="project-inline-button"
+          disabled={saving}
+          onClick={(event) => {
+            event.stopPropagation();
+            setMenuOpen((open) => open === 'priority' ? null : 'priority');
+          }}
+        >
+          <PriorityBars priority={project.priority} />
+        </button>
+        <AnimatePresence>
+          {menuOpen === 'priority' && (
+            <motion.div
+              className="dropdown-menu project-inline-dropdown"
+              initial={{ opacity: 0, scale: 0.96, y: -4 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: -4 }}
+              transition={{ duration: 0.12 }}
+            >
+              {ALL_PRIORITIES.map((priority) => (
+                <button
+                  key={priority}
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handlePriorityChange(priority);
+                  }}
+                  className="dropdown-menu-item"
+                >
+                  <PriorityBars priority={priority} />
+                  {PRIORITY_META[priority].label}
+                </button>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <div className="project-cell project-lead project-inline-menu">
+        <button
+          type="button"
+          className="project-inline-button project-lead-button"
+          disabled={saving}
+          onClick={(event) => {
+            event.stopPropagation();
+            setMenuOpen((open) => open === 'lead' ? null : 'lead');
+          }}
+        >
+          {lead ? (
+            <Avatar user={lead} size="xs" className="project-lead-avatar" />
+          ) : (
+            <UserRound size={14} strokeWidth={ICON_STROKE} />
+          )}
+          <span>{getMemberName(lead)}</span>
+        </button>
+        <AnimatePresence>
+          {menuOpen === 'lead' && (
+            <motion.div
+              className="dropdown-menu project-inline-dropdown project-inline-dropdown--wide"
+              initial={{ opacity: 0, scale: 0.96, y: -4 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: -4 }}
+              transition={{ duration: 0.12 }}
+            >
+              {members.map((member) => (
+                <button
+                  key={member.id}
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    handleLeadChange(member.id);
+                  }}
+                  className="dropdown-menu-item"
+                >
+                  <Avatar user={member} size="xs" className="project-lead-avatar" />
+                  {getMemberName(member)}
+                </button>
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <label className="project-cell project-date-control" onClick={(event) => event.stopPropagation()}>
+        <CalendarDays size={14} strokeWidth={ICON_STROKE} />
+        <span>{formatDate(project.deadline)}</span>
+        <input
+          type="date"
+          value={toInputDate(project.deadline)}
+          disabled={saving}
+          onChange={(event) => handleDeadlineChange(event.target.value)}
+          aria-label="Project target date"
+        />
+      </label>
+
+      <div className="project-cell">
+        <UsersRound size={14} strokeWidth={ICON_STROKE} />
+        <span>{membersCount || '-'}</span>
+      </div>
+
+      <div className="project-cell project-status-cell project-inline-menu">
+        <button
+          type="button"
+          className="project-inline-button project-status-button"
+          disabled={saving}
+          onClick={(event) => {
+            event.stopPropagation();
+            setMenuOpen((open) => open === 'status' ? null : 'status');
+          }}
+        >
+          <span className="project-status-dot" style={{ background: status.dot }} />
+          <span>{status.label}</span>
+        </button>
+        <AnimatePresence>
+          {menuOpen === 'status' && (
+            <motion.div
+              className="dropdown-menu project-inline-dropdown project-inline-dropdown--wide"
+              initial={{ opacity: 0, scale: 0.96, y: -4 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: -4 }}
+              transition={{ duration: 0.12 }}
+            >
+              {ALL_STATUSES.map((statusValue) => {
+                const item = STATUS_META[statusValue];
+                return (
+                  <button
+                    key={statusValue}
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      handleStatusChange(statusValue);
+                    }}
+                    className="dropdown-menu-item"
+                  >
+                    <span className="project-status-dot" style={{ background: item.dot }} />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <div className="project-progress-cell">
+        <span>{status.progress}%</span>
+        <div className="project-row-progress">
+          <div style={{ width: `${status.progress}%`, background: status.dot }} />
+        </div>
+      </div>
+
+      <div className="project-row-menu">
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            setMenuOpen((open) => open === 'actions' ? null : 'actions');
+          }}
+          className="project-row-menu-button"
+          aria-label="Project actions"
+        >
+          <MoreHorizontal size={15} strokeWidth={ICON_STROKE} />
+        </button>
+        <AnimatePresence>
+          {menuOpen === 'actions' && (
+            <motion.div
+              className="dropdown-menu absolute right-0 top-8 z-30 min-w-[140px]"
+              initial={{ opacity: 0, scale: 0.96, y: -4 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: -4 }}
+              transition={{ duration: 0.12 }}
+            >
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onDelete(project.id);
+                  setMenuOpen(null);
+                }}
+                className="dropdown-menu-item !text-[#fca5a5] hover:!bg-[rgba(239,68,68,0.12)]"
+              >
+                <Trash2 size={14} strokeWidth={ICON_STROKE} />
+                Delete
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </motion.div>
   );
 }
 
-// ─── main export ───────────────────────────────────────────────────────────────
-
 interface WorkspaceProjectsProps {
   workspaceId: string;
   projects: ProjectDTO[];
+  members: UserDTO[];
   onProjectCreated: (p: ProjectDTO) => void;
+  onProjectUpdated: (p: ProjectDTO) => void;
   onProjectDeleted: (id: string) => void;
   onProjectClick: (id: string) => void;
   onCreateOpen: () => void;
@@ -134,62 +402,92 @@ interface WorkspaceProjectsProps {
 export const WorkspaceProjects: React.FC<WorkspaceProjectsProps> = ({
   workspaceId,
   projects,
+  members,
   onProjectCreated,
+  onProjectUpdated,
   onProjectDeleted,
   onProjectClick,
   onCreateOpen,
   showCreate,
   onCreateClose,
-}) => (
-  <section>
-    <div className="flex items-center justify-between mb-5">
-      <h2 className="label-caps text-white/40">Projects</h2>
-      <button onClick={onCreateOpen} className="liquid-button gap-1.5 !py-1.5 !px-3 !text-label-sm">
-        <Plus size={13} />
-        New Project
-      </button>
-    </div>
+}) => {
+  const memberById = useMemo(() => new Map(members.map((member) => [member.id, member])), [members]);
 
-    {projects.length === 0 ? (
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0, transition: { delay: 0.1 } }}
-        className="flex flex-col items-center justify-center py-16 text-center rounded-2xl"
-        style={{ border: '1.5px dashed rgba(255,255,255,0.08)' }}
-      >
-        <div className="w-12 h-12 rounded-full flex items-center justify-center bg-white/5 mb-3">
-          <Layers size={20} className="text-white/20" />
+  return (
+    <section>
+      <div className="projects-list-toolbar">
+        <div>
+          <h2 className="projects-list-heading">Projects</h2>
+          <p className="projects-list-subtitle">{projects.length} project{projects.length === 1 ? '' : 's'} in this workspace</p>
         </div>
-        <p className="text-body-md font-medium text-white/60 mb-1">No projects yet</p>
-        <p className="text-label-sm text-white/30 mb-5">Create your first project to get started</p>
-        <button onClick={onCreateOpen} className="liquid-button gap-1.5 !bg-[--accent] !border-transparent !text-white">
-          <Plus size={14} />
-          Create Project
-        </button>
-      </motion.div>
-    ) : (
-      <motion.div
-        className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"
-        variants={listVariants}
-        initial="initial"
-        animate="animate"
-      >
-        {projects.map(p => (
-          <ProjectCard
-            key={p.id}
-            project={p}
-            onDelete={onProjectDeleted}
-            onClick={() => onProjectClick(p.id)}
-          />
-        ))}
-      </motion.div>
-    )}
 
-    <CreateProjectModal
-      isOpen={showCreate}
-      onClose={onCreateClose}
-      onCreated={onProjectCreated}
-      workspaceId={workspaceId}
-    />
-  </section>
-);
+        <div className="flex items-center gap-2">
+          <span className="projects-view-pill">
+            <Layers size={13} strokeWidth={ICON_STROKE} />
+            All projects
+          </span>
+          <button onClick={onCreateOpen} className="liquid-button gap-1.5 !py-1.5 !px-3 !text-label-sm">
+            <Plus size={13} strokeWidth={ICON_STROKE} />
+            New Project
+          </button>
+        </div>
+      </div>
+
+      {projects.length === 0 ? (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0, transition: { delay: 0.1 } }}
+          className="projects-empty-state"
+        >
+          <div className="projects-empty-icon">
+            <Layers size={20} strokeWidth={ICON_STROKE} />
+          </div>
+          <p className="text-body-md font-medium text-white/60 mb-1">No projects yet</p>
+          <p className="text-label-sm text-white/30 mb-5">Create your first project to get started</p>
+          <button onClick={onCreateOpen} className="liquid-button gap-1.5 !bg-[--accent] !border-transparent !text-white">
+            <Plus size={14} strokeWidth={ICON_STROKE} />
+            Create Project
+          </button>
+        </motion.div>
+      ) : (
+        <motion.div
+          className="projects-list-shell"
+          variants={listVariants}
+          initial="initial"
+          animate="animate"
+        >
+          <div className="projects-list-header">
+            <span>Name</span>
+            <span>Health</span>
+            <span>Priority</span>
+            <span>Lead</span>
+            <span>Target</span>
+            <span>Team</span>
+            <span>Status</span>
+            <span>Progress</span>
+            <span />
+          </div>
+
+          {projects.map((project) => (
+            <ProjectRow
+              key={project.id}
+              project={project}
+              members={members}
+              lead={memberById.get(project.leader_id)}
+              onProjectUpdated={onProjectUpdated}
+              onDelete={onProjectDeleted}
+              onClick={() => onProjectClick(project.id)}
+            />
+          ))}
+        </motion.div>
+      )}
+
+      <CreateProjectModal
+        isOpen={showCreate}
+        onClose={onCreateClose}
+        onCreated={onProjectCreated}
+        workspaceId={workspaceId}
+      />
+    </section>
+  );
+};

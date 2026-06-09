@@ -3,6 +3,7 @@ import { workspaceService, userService } from '@/services/api/index.js';
 import { useWorkspace } from '@/contexts/WorkspaceContext.js';
 import { showToast } from '@/shared/lib/toast.js';
 import { LabelsManager } from './LabelsManager.js';
+import { DarkSelect } from '@/shared/ui/DarkSelect.js';
 import type { WorkspaceDTO } from '@/types/dto.js';
 
 const ACCENT_PRESETS = [
@@ -32,15 +33,15 @@ interface FieldProps { label: string; children: React.ReactNode; hint?: string }
 
 function Field({ label, children, hint }: FieldProps) {
   return (
-    <div>
-      <label className="block label-caps text-white/40 mb-1.5">{label}</label>
+    <div className="settings-field">
+      <label className="settings-label">{label}</label>
       {children}
-      {hint && <p className="text-label-sm text-white/30 mt-1">{hint}</p>}
+      {hint && <p className="settings-hint">{hint}</p>}
     </div>
   );
 }
 
-const inputCls = 'w-full px-3 py-2.5 rounded-xl text-body-md text-white bg-white/5 border border-white/10 outline-none focus:border-white/25 transition-all disabled:opacity-40 placeholder:text-white/30';
+const inputCls = 'settings-input';
 
 interface WorkspaceSettingsProps {
   onClose?: () => void;
@@ -69,6 +70,9 @@ export const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = () => {
         setName(ws.name ?? '');
         setDescription(ws.description ?? '');
         setColor(ws.color ?? '#6366f1');
+        setKeyPrefix(ws.key_prefix ?? '');
+        setDefaultStatus(ws.default_task_status ?? '');
+        setMemberRole(ws.member_default_role ?? 'member');
       }
     }).catch(() => {}).finally(() => setLoading(false));
   }, [activeWorkspaceId]);
@@ -99,108 +103,118 @@ export const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = () => {
   };
 
   if (!activeWorkspaceId) {
-    return <p className="text-body-md text-white/40 py-8 text-center">No active workspace selected</p>;
+    return <p className="settings-section text-body-md text-white/40 py-8 text-center">No active workspace selected</p>;
   }
 
   if (loading) {
     return (
-      <div className="space-y-4 animate-pulse">
+      <div className="settings-page animate-pulse">
         {[0,1,2].map(i => <div key={i} className="h-12 rounded-xl bg-white/5" />)}
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSave} className="space-y-5">
-      <div>
-        <h3 className="text-headline-sm font-hanken font-semibold text-white mb-4">
-          {workspace?.name ?? 'Workspace'} Settings
-        </h3>
-        <p className="text-label-sm text-white/40 -mt-2 mb-4">
-          Changes apply to all members of this workspace.
-        </p>
-      </div>
-
-      <Field label="Workspace name">
-        <input
-          value={name}
-          onChange={e => { setName(e.target.value); setError(''); }}
-          placeholder="My Workspace"
-          disabled={saving}
-          className={inputCls}
-        />
-      </Field>
-
-      <Field label="Description">
-        <textarea
-          value={description}
-          onChange={e => setDescription(e.target.value)}
-          placeholder="What does this workspace do?"
-          rows={3}
-          disabled={saving}
-          className={`${inputCls} resize-none`}
-        />
-      </Field>
-
-      <Field label="Accent color">
-        <div className="flex flex-wrap gap-2 mt-1">
-          {ACCENT_PRESETS.map(p => (
-            <button
-              key={p.value}
-              type="button"
-              onClick={() => setColor(p.value)}
-              className="w-7 h-7 rounded-lg transition-all hover:scale-110"
-              style={{
-                background: p.value,
-                boxShadow: color === p.value ? `0 0 0 2px #fff, 0 0 0 4px ${p.value}` : undefined,
-                outline: color === p.value ? `2px solid ${p.value}` : 'none',
-                outlineOffset: color === p.value ? '3px' : undefined,
-              }}
-              title={p.label}
-            />
-          ))}
-          <input
-            type="color"
-            value={color}
-            onChange={e => setColor(e.target.value)}
-            className="w-7 h-7 rounded-lg cursor-pointer border border-white/20 bg-transparent p-0.5"
-            title="Custom color"
-          />
+    <form onSubmit={handleSave} className="settings-page settings-page--wide">
+      <section className="settings-section">
+        <div className="settings-section-header">
+          <h3 className="settings-section-title">
+            {workspace?.name ?? 'Workspace'} settings
+          </h3>
+          <p className="settings-section-description">
+            Changes apply to all members of this workspace.
+          </p>
         </div>
-      </Field>
 
-      <Field label="Key prefix" hint="Used to prefix task keys, e.g. ENG → ENG-1">
-        <input
-          value={keyPrefix}
-          onChange={e => setKeyPrefix(e.target.value.toUpperCase().slice(0, 6))}
-          placeholder="e.g. ENG"
-          disabled={saving}
-          className={`${inputCls} font-mono uppercase`}
-          maxLength={6}
-        />
-      </Field>
+        <div className="grid gap-4">
+          <Field label="Workspace name">
+            <input
+              value={name}
+              onChange={e => { setName(e.target.value); setError(''); }}
+              placeholder="My Workspace"
+              disabled={saving}
+              className={inputCls}
+            />
+          </Field>
 
-      <Field label="Default task status">
-        <select value={defaultStatus} onChange={e => setDefaultStatus(e.target.value)} disabled={saving} className={`${inputCls} cursor-pointer`}>
-          {TASK_STATUS_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-      </Field>
+          <Field label="Description">
+            <textarea
+              value={description}
+              onChange={e => setDescription(e.target.value)}
+              placeholder="What does this workspace do?"
+              rows={3}
+              disabled={saving}
+              className={`${inputCls} resize-none`}
+            />
+          </Field>
 
-      <Field label="Default member role" hint="Role assigned when a new member accepts an invite">
-        <select value={memberRole} onChange={e => setMemberRole(e.target.value)} disabled={saving} className={`${inputCls} cursor-pointer`}>
-          {ROLE_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-        </select>
-      </Field>
+          <Field label="Accent color">
+            <div className="flex flex-wrap gap-2 pt-1">
+              {ACCENT_PRESETS.map(p => (
+                <button
+                  key={p.value}
+                  type="button"
+                  onClick={() => setColor(p.value)}
+                  className="size-7 rounded-lg transition-all hover:scale-105"
+                  style={{
+                    background: p.value,
+                    boxShadow: color === p.value ? `0 0 0 1px rgba(255,255,255,0.9), 0 0 0 4px ${p.value}44` : undefined,
+                  }}
+                  title={p.label}
+                />
+              ))}
+              <input
+                type="color"
+                value={color}
+                onChange={e => setColor(e.target.value)}
+                className="size-7 rounded-lg cursor-pointer border border-white/10 bg-transparent p-0.5"
+                title="Custom color"
+              />
+            </div>
+          </Field>
 
-      {error && <p className="text-label-sm text-[#fca5a5]">{error}</p>}
+          <Field label="Key prefix" hint="Used to prefix task keys, e.g. ENG → ENG-1">
+            <input
+              value={keyPrefix}
+              onChange={e => setKeyPrefix(e.target.value.toUpperCase().slice(0, 6))}
+              placeholder="e.g. ENG"
+              disabled={saving}
+              className={`${inputCls} font-mono uppercase`}
+              maxLength={6}
+            />
+          </Field>
 
-      <button
-        type="submit"
-        disabled={saving || !name.trim()}
-        className="liquid-button !bg-[--accent] !border-transparent !text-white font-semibold disabled:opacity-40"
-      >
-        {saving ? 'Saving…' : 'Save settings'}
-      </button>
+          <Field label="Default task status">
+            <DarkSelect
+              value={defaultStatus}
+              onChange={setDefaultStatus}
+              options={TASK_STATUS_OPTIONS}
+              disabled={saving}
+              className={`${inputCls} h-11 cursor-pointer`}
+            />
+          </Field>
+
+          <Field label="Default member role" hint="Role assigned when a new member accepts an invite">
+            <DarkSelect
+              value={memberRole}
+              onChange={setMemberRole}
+              options={ROLE_OPTIONS}
+              disabled={saving}
+              className={`${inputCls} h-11 cursor-pointer`}
+            />
+          </Field>
+        </div>
+
+        {error && <p className="settings-message settings-message--error mt-4">{error}</p>}
+
+        <button
+          type="submit"
+          disabled={saving || !name.trim()}
+          className="settings-button settings-button--primary mt-5"
+        >
+          {saving ? 'Saving…' : 'Save settings'}
+        </button>
+      </section>
 
       {activeWorkspaceId && (
         <LabelsManager

@@ -1,11 +1,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, CheckCircle2, Circle, Clock, MoreHorizontal, Trash2, ChevronRight, X } from 'lucide-react';
+import { Plus, CheckCircle2, MoreHorizontal, Trash2, ChevronRight, X } from 'lucide-react';
 import { projectService } from '@/services/api/index.js';
-import type { TaskDTO, TaskPriority, CreateTaskRequest, WorkspaceRole } from '@/types/dto.js';
+import type { TaskDTO, TaskPriority, CreateTaskRequest, WorkspaceRole, TaskStatus } from '@/types/dto.js';
 import { listVariants, listItemVariants, modalBackdropVariants, modalContentVariants } from '@/shared/lib/animations.js';
 import { can } from '@/shared/lib/permissions.js';
 import { InlineLabelChips } from '@/shared/ui/LabelPicker.js';
+import { StatusMenu } from '@/features/taskStatus/StatusMenu.js';
+import { DarkSelect } from '@/shared/ui/DarkSelect.js';
 
 const PRIORITY_META: Record<string, { label: string; cls: string }> = {
   high:   { label: 'High',   cls: 'text-orange-400' },
@@ -101,9 +103,13 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
               </div>
               <div>
                 <label className="label-caps text-white/40 block mb-1.5">Priority</label>
-                <select value={priority} onChange={e => setPriority(e.target.value as TaskPriority)} disabled={loading} className={`${inputCls} cursor-pointer`}>
-                  {PRIORITY_OPTIONS.map(p => <option key={p} value={p}>{PRIORITY_META[p].label}</option>)}
-                </select>
+                <DarkSelect
+                  value={priority}
+                  onChange={(value) => setPriority(value as TaskPriority)}
+                  options={PRIORITY_OPTIONS.map(p => ({ value: p, label: PRIORITY_META[p].label }))}
+                  disabled={loading}
+                  className={`${inputCls} h-11 cursor-pointer`}
+                />
               </div>
               {error && <p className="text-label-sm text-[#fca5a5]">{error}</p>}
               <div className="flex gap-2 pt-1">
@@ -126,14 +132,15 @@ interface TaskRowProps {
   task: TaskDTO;
   onNavigate: (id: string) => void;
   onDelete?: (id: string) => void;
+  canEditStatus: boolean;
+  onStatusChange: (id: string, status: TaskStatus) => void;
 }
 
-function TaskRow({ task, onNavigate, onDelete }: TaskRowProps) {
+function TaskRow({ task, onNavigate, onDelete, canEditStatus, onStatusChange }: TaskRowProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const pm = PRIORITY_META[task.priority];
-  const isDone = task.progress === 'done';
-  const isInProgress = task.progress === 'in_progress';
+  const isDone = task.status === 'done';
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -151,13 +158,12 @@ function TaskRow({ task, onNavigate, onDelete }: TaskRowProps) {
       onClick={() => onNavigate(task.id)}
     >
       <div className="flex-shrink-0" onClick={e => e.stopPropagation()}>
-        {isDone ? (
-          <CheckCircle2 size={17} className="text-green-400" />
-        ) : isInProgress ? (
-          <Clock size={17} className="text-blue-400" />
-        ) : (
-          <Circle size={17} className="text-white/20" />
-        )}
+        <StatusMenu
+          taskId={task.id}
+          status={task.status}
+          canEdit={canEditStatus}
+          onStatusChange={(status) => onStatusChange(task.id, status)}
+        />
       </div>
 
       <span className={`flex-1 text-body-md min-w-0 truncate ${isDone ? 'line-through text-white/30' : 'text-white/80'}`}>
@@ -222,6 +228,7 @@ interface ProjectTaskListProps {
   onCreateClose: () => void;
   onTaskCreated: (t: TaskDTO) => void;
   onTaskDeleted: (id: string) => void;
+  onTaskStatusChange: (id: string, status: TaskStatus) => void;
   onTaskNavigate: (id: string) => void;
   role?: WorkspaceRole;
   currentUserId?: string;
@@ -236,11 +243,13 @@ export const ProjectTaskList: React.FC<ProjectTaskListProps> = ({
   onCreateClose,
   onTaskCreated,
   onTaskDeleted,
+  onTaskStatusChange,
   onTaskNavigate,
   role,
   currentUserId,
 }) => {
   const canCreate = can.createTask(role);
+  const canEditStatus = can.editTask(role);
   return (
   <section>
     <div className="flex items-center justify-between mb-4">
@@ -279,6 +288,8 @@ export const ProjectTaskList: React.FC<ProjectTaskListProps> = ({
             task={t}
             onNavigate={onTaskNavigate}
             onDelete={can.deleteTask(role, t.owner_id === currentUserId) ? onTaskDeleted : undefined}
+            canEditStatus={canEditStatus}
+            onStatusChange={onTaskStatusChange}
           />
         ))}
       </motion.div>

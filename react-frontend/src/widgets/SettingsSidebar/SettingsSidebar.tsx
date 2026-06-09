@@ -1,5 +1,17 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, FileText, Home, Info, LifeBuoy, Lock, Moon, Palette, Settings, Link2 } from 'lucide-react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  House,
+  Info,
+  LifeBuoy,
+  Link2,
+  Lock,
+  Moon,
+  MoreVertical,
+  Palette,
+  Settings2,
+} from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Avatar from '@/shared/ui/Avatar.js';
 import { getAuthUser } from '@/shared/lib/authManager.js';
@@ -11,8 +23,8 @@ import { useSidebarResize } from '@/hooks/useSidebarResize.js';
 
 interface SettingsSidebarProps {
   isOpen: boolean;
-  activeTab: 'contributing' | 'appearance' | 'password' | 'accounts' | 'about' | 'support';
-  onTabChange: (tab: 'contributing' | 'appearance' | 'password' | 'accounts' | 'about' | 'support') => void;
+  activeTab: 'appearance' | 'password' | 'accounts' | 'about' | 'support';
+  onTabChange: (tab: 'appearance' | 'password' | 'accounts' | 'about' | 'support') => void;
   onClose: () => void;
   onBack?: () => void;
   backLabel?: string;
@@ -22,16 +34,16 @@ const settingsTabs = [
   { id: 'appearance', label: 'Appearance', icon: Palette },
   { id: 'password', label: 'Change Password', icon: Lock },
   { id: 'accounts', label: 'Connected Accounts', icon: Link2 },
-  { id: 'contributing', label: 'Contributing', icon: FileText },
   { id: 'about', label: 'About Us', icon: Info },
   { id: 'support', label: 'Support', icon: LifeBuoy },
 ] as const;
+
+const ICON_STROKE = 1.55;
 
 export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
   isOpen,
   activeTab,
   onTabChange,
-  onClose,
   onBack,
   backLabel = 'Back',
 }) => {
@@ -41,30 +53,29 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
   const { logout } = useAuth();
 
   const [user, setUser] = useState<User | null>(null);
-  const [userInfo, setUserInfo] = useState<{ firstName: string; lastName: string; email?: string } | null>(null);
+  const [userInfo, setUserInfo] = useState<{ firstName: string; lastName: string; email?: string } | null>(() => {
+    const storedUser = getAuthUser();
+    if (!storedUser?.firstName) return null;
+    return {
+      firstName: storedUser.firstName || '',
+      lastName: storedUser.lastName || '',
+      email: storedUser.email || '',
+    };
+  });
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const profileMenuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const storedUser = getAuthUser();
-    if (storedUser && storedUser.firstName) {
-      setUserInfo({
-        firstName: storedUser.firstName || '',
-        lastName: storedUser.lastName || '',
-        email: storedUser.email || '',
-      });
-    }
-
     const fetchUser = async () => {
       try {
         const data = await userService.getProfile();
         setUser(data as unknown as User);
         setUserInfo({
-          firstName: (data as any).firstName || '',
-          lastName: (data as any).lastName || '',
-          email: (data as any).email || '',
+          firstName: data.firstName || '',
+          lastName: data.lastName || '',
+          email: data.email || '',
         });
-      } catch (err) {
+      } catch {
         // Ignore profile errors here; sidebar still renders
       }
     };
@@ -85,8 +96,8 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
 
   const displayName = useMemo(() => {
     if (user) {
-      const first = (user as any).firstName || (user as any).first_name || '';
-      const last = (user as any).lastName || (user as any).last_name || '';
+      const first = user.firstName || '';
+      const last = user.lastName || '';
       return `${first}${last ? ` ${last}` : ''}`.trim() || 'User';
     }
     if (userInfo) {
@@ -119,7 +130,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
         <div className="h-full flex flex-col">
           <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100 dark:border-dark-border">
             <button onClick={collapse} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-dark-border text-gray-500" aria-label="Collapse sidebar">
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-4 h-4" strokeWidth={ICON_STROKE} />
             </button>
           </div>
 
@@ -130,7 +141,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
               aria-label={backLabel}
               title={backLabel}
             >
-              <ChevronLeft className="w-4 h-4 flex-shrink-0" />
+              <ChevronLeft className="w-4 h-4 flex-shrink-0" strokeWidth={ICON_STROKE} />
               <span className="text-sm truncate">{backLabel}</span>
             </button>
 
@@ -138,7 +149,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
               onClick={handleNavigateHome}
               className="flex items-center gap-3 w-full px-3 py-2 rounded-md transition-colors text-left text-gray-700 dark:text-dark-text-muted hover:bg-gray-100 dark:hover:bg-dark-border"
             >
-              <Home className="w-4 h-4 flex-shrink-0" />
+              <House className="w-4 h-4 flex-shrink-0" strokeWidth={ICON_STROKE} />
               <span className="text-sm truncate">Home</span>
             </button>
 
@@ -148,7 +159,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                   onClick={() => onTabChange(activeTab)}
                   className="flex items-center gap-2 flex-1 px-2 py-1 hover:bg-gray-100 dark:hover:bg-dark-border rounded-md transition-colors text-left"
                 >
-                  <ChevronRight className="w-4 h-4 text-gray-500 transition-transform rotate-90" />
+                  <ChevronRight className="w-4 h-4 text-gray-500 transition-transform rotate-90" strokeWidth={ICON_STROKE} />
                   <span className="text-[11px] font-semibold text-gray-500 dark:text-dark-text-muted uppercase tracking-wider">
                     SETTINGS
                   </span>
@@ -168,7 +179,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                           : 'text-gray-700 dark:text-dark-text-muted hover:bg-gray-100 dark:hover:bg-dark-border'
                       }`}
                     >
-                      <Icon className="w-4 h-4 flex-shrink-0" />
+                      <Icon className="w-4 h-4 flex-shrink-0" strokeWidth={ICON_STROKE} />
                       <span className="truncate flex-1">{tab.label}</span>
                     </button>
                   );
@@ -182,7 +193,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
               onClick={toggleTheme}
               className="w-full flex items-center gap-3 px-2 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-dark-border transition-colors text-left"
             >
-              <Moon className="w-4 h-4" />
+              <Moon className="w-4 h-4" strokeWidth={ICON_STROKE} />
               <span className="text-sm">
                 {theme === 'light' ? 'Light' : 'Dark'}{' '}Mode
               </span>
@@ -191,7 +202,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
               onClick={handleNavigateSettings}
               className="w-full flex items-center gap-3 px-2 py-2 rounded-md hover:bg-gray-50 dark:hover:bg-dark-border transition-colors text-left"
             >
-              <Settings className="w-4 h-4" />
+              <Settings2 className="w-4 h-4" strokeWidth={ICON_STROKE} />
               <span className="text-sm">Settings</span>
             </button>
 
@@ -210,11 +221,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
                   <p className="text-sm font-medium truncate">{displayName}</p>
                   <p className="text-xs text-gray-500 dark:text-dark-text-muted truncate">{userInfo?.email || ''}</p>
                 </div>
-                <svg className="w-4 h-4 text-gray-500 dark:text-dark-text-muted" fill="currentColor" viewBox="0 0 16 16">
-                  <circle cx="8" cy="4" r="1.5" />
-                  <circle cx="8" cy="8" r="1.5" />
-                  <circle cx="8" cy="12" r="1.5" />
-                </svg>
+                <MoreVertical className="w-4 h-4 text-gray-500 dark:text-dark-text-muted" strokeWidth={ICON_STROKE} />
               </button>
 
               {showProfileMenu && (
@@ -265,7 +272,7 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
           className="fixed left-0 top-4 z-50 p-2 bg-white dark:bg-dark-surface border border-gray-200 dark:border-dark-border rounded-r-md shadow-md hover:bg-gray-50"
           aria-label={backLabel}
         >
-          <ChevronRight className="w-5 h-5" />
+          <ChevronRight className="w-5 h-5" strokeWidth={ICON_STROKE} />
         </button>
       )}
     </aside>

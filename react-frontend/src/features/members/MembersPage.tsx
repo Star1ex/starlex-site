@@ -39,6 +39,12 @@ function fmtDate(iso: string) {
   return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+function apiErrorMessage(error: unknown, fallback: string) {
+  return (error as { response?: { data?: { error?: string; message?: string } } })?.response?.data?.error
+    ?? (error as { response?: { data?: { message?: string } } })?.response?.data?.message
+    ?? fallback;
+}
+
 export const MembersPage: React.FC = () => {
   const { workspaceId } = useParams<{ workspaceId: string }>();
   const { activeWorkspace } = useWorkspace();
@@ -104,14 +110,13 @@ export const MembersPage: React.FC = () => {
     if (!workspaceId || !addEmail.trim()) return;
     setAddLoading(true);
     try {
-      const member = await workspaceService.addMember(workspaceId, addEmail.trim(), addRole);
-      setMembers((ms) => [...ms, member]);
+      await workspaceService.addMember(workspaceId, addEmail.trim(), addRole);
+      await workspaceService.listMembers(workspaceId).then(setMembers);
       setAddEmail('');
       setAddOpen(false);
       showToast('Member added');
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Failed to add member';
-      showToast(msg);
+      showToast(apiErrorMessage(err, 'Failed to add member'));
     } finally {
       setAddLoading(false);
     }
@@ -208,9 +213,9 @@ export const MembersPage: React.FC = () => {
                     <SelectTrigger className="w-[100px] h-7 glass-input border-white/10 text-label-sm px-2">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent className="glass-card border-white/10 bg-black/80 backdrop-blur-2xl">
+                    <SelectContent className="glass-menu rounded-xl p-1">
                       {ROLES.map((r) => (
-                        <SelectItem key={r} value={r} className="text-label-sm text-white/70 hover:text-white focus:text-white">
+                        <SelectItem key={r} value={r} className="glass-menu-item text-label-sm hover:text-white focus:text-white">
                           {ROLE_META[r].label}
                         </SelectItem>
                       ))}
@@ -251,9 +256,9 @@ export const MembersPage: React.FC = () => {
               <SelectTrigger className="w-[120px] h-8 glass-input border-white/10 text-label-sm">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="glass-card border-white/10 bg-black/80 backdrop-blur-2xl">
+              <SelectContent className="glass-menu rounded-xl p-1">
                 {ROLES.map((r) => (
-                  <SelectItem key={r} value={r} className="text-label-sm text-white/70">
+                  <SelectItem key={r} value={r} className="glass-menu-item text-label-sm">
                     {ROLE_META[r].label}
                   </SelectItem>
                 ))}
@@ -306,9 +311,9 @@ export const MembersPage: React.FC = () => {
               <SelectTrigger className="glass-input border-white/10 text-body-sm h-9">
                 <SelectValue />
               </SelectTrigger>
-              <SelectContent className="glass-card border-white/10 bg-black/80 backdrop-blur-2xl">
+              <SelectContent className="glass-menu rounded-xl p-1">
                 {ROLES.map((r) => (
-                  <SelectItem key={r} value={r} className="text-label-sm text-white/70">
+                  <SelectItem key={r} value={r} className="glass-menu-item text-label-sm">
                     {ROLE_META[r].label}
                   </SelectItem>
                 ))}

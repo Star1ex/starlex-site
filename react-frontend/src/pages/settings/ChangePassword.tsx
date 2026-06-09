@@ -13,6 +13,10 @@ interface ChangePasswordProps {
   }) => void;
 }
 
+function getErrorMessage(err: unknown, fallback: string): string {
+  return (err as { response?: { status?: number; data?: { error?: string } } })?.response?.data?.error || fallback;
+}
+
 export const ChangePassword: React.FC<ChangePasswordProps> = ({ onSubmit }) => {
   const { login } = useAuth();
   const [currentPassword, setCurrentPassword] = useState('');
@@ -31,8 +35,8 @@ export const ChangePassword: React.FC<ChangePasswordProps> = ({ onSubmit }) => {
         const profile = await userService.getProfile();
         const providers = Array.isArray(profile.auth_providers) ? profile.auth_providers : [];
         setRequiresCurrent(providers.includes('local'));
-      } catch (err) {
-        setRequiresCurrent(true);
+    } catch {
+      setRequiresCurrent(true);
       }
     };
     loadProfile();
@@ -81,12 +85,12 @@ export const ChangePassword: React.FC<ChangePasswordProps> = ({ onSubmit }) => {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
-    } catch (err: any) {
-      const status = err?.response?.status;
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
       if (status === 400) {
-        setMessage({ type: 'error', text: err?.response?.data?.error || 'Invalid password details' });
+        setMessage({ type: 'error', text: getErrorMessage(err, 'Invalid password details') });
       } else {
-        setMessage({ type: 'error', text: err?.response?.data?.error || 'Failed to update password' });
+        setMessage({ type: 'error', text: getErrorMessage(err, 'Failed to update password') });
       }
     } finally {
       setLoading(false);
@@ -101,8 +105,8 @@ export const ChangePassword: React.FC<ChangePasswordProps> = ({ onSubmit }) => {
     onToggleShow: () => void,
     placeholder: string
   ) => (
-    <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700 dark:text-dark-text">
+    <div className="settings-field">
+      <label className="settings-label">
         {label}
       </label>
       <div className="relative">
@@ -112,13 +116,13 @@ export const ChangePassword: React.FC<ChangePasswordProps> = ({ onSubmit }) => {
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
           disabled={loading}
-          className="w-full px-0 py-2 bg-transparent border-0 border-b border-gray-200/80 dark:border-dark-border/60 text-gray-900 dark:text-dark-text placeholder-gray-500 dark:placeholder-dark-text-muted focus:outline-none focus:ring-0 focus:border-gray-400 dark:focus:border-dark-text-muted disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="settings-input pr-11"
         />
         <button
           type="button"
           onClick={onToggleShow}
           disabled={loading}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 dark:text-dark-text-muted hover:text-gray-600 dark:hover:text-dark-text transition-colors disabled:cursor-not-allowed"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-white/35 hover:text-white/75 transition-colors disabled:cursor-not-allowed"
           aria-label={showPassword ? 'Hide password' : 'Show password'}
         >
           {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
@@ -128,73 +132,73 @@ export const ChangePassword: React.FC<ChangePasswordProps> = ({ onSubmit }) => {
   );
 
   return (
-    <div className="space-y-8 max-w-3xl mx-auto">
-      <div>
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-dark-text mb-2">
-          {requiresCurrent ? 'Change Password' : 'Set Password'}
-        </h3>
-        <p className="text-sm text-gray-600 dark:text-dark-text-muted">
-          {requiresCurrent ? 'Update your password to keep your account secure' : 'Create a password for email sign-in'}
-        </p>
-      </div>
+    <div className="settings-page">
+      <section className="settings-section">
+        <div className="settings-section-header">
+          <h3 className="settings-section-title">
+            {requiresCurrent ? 'Change password' : 'Set password'}
+          </h3>
+          <p className="settings-section-description">
+            {requiresCurrent ? 'Update your password to keep your account secure.' : 'Create a password for email sign-in.'}
+          </p>
+        </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4 text-left max-w-2xl mx-auto">
-        {requiresCurrent && passwordField(
-          'Current Password',
-          currentPassword,
-          setCurrentPassword,
-          showCurrentPassword,
-          () => setShowCurrentPassword(!showCurrentPassword),
-          'Enter your current password'
-        )}
-
-        {passwordField(
-          'New Password',
-          newPassword,
-          setNewPassword,
-          showNewPassword,
-          () => setShowNewPassword(!showNewPassword),
-          'Enter your new password (min 8 characters)'
-        )}
-
-        <PasswordStrengthMeter password={newPassword} />
-
-        {passwordField(
-          'Confirm New Password',
-          confirmPassword,
-          setConfirmPassword,
-          showConfirmPassword,
-          () => setShowConfirmPassword(!showConfirmPassword),
-          'Confirm your new password'
-        )}
-
-        {message && (
-          <div
-            className={`p-4 rounded-lg text-sm font-medium transition-all ${
-              message.type === 'success'
-                ? 'bg-green-50 dark:bg-green-950 text-green-700 dark:text-green-400'
-                : 'bg-red-50 dark:bg-red-950 text-red-700 dark:text-red-400'
-            }`}
-          >
-            {message.text}
-          </div>
-        )}
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="w-full px-4 py-3 bg-gray-900 text-white dark:bg-white dark:text-black font-medium rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-        >
-          {loading ? (
-            <>
-              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-              Updating...
-            </>
-          ) : (
-            requiresCurrent ? 'Update Password' : 'Set Password'
+        <form onSubmit={handleSubmit} className="space-y-4 text-left">
+          {requiresCurrent && passwordField(
+            'Current Password',
+            currentPassword,
+            setCurrentPassword,
+            showCurrentPassword,
+            () => setShowCurrentPassword(!showCurrentPassword),
+            'Enter your current password'
           )}
-        </button>
-      </form>
+
+          {passwordField(
+            'New Password',
+            newPassword,
+            setNewPassword,
+            showNewPassword,
+            () => setShowNewPassword(!showNewPassword),
+            'Enter your new password (min 8 characters)'
+          )}
+
+          <PasswordStrengthMeter password={newPassword} />
+
+          {passwordField(
+            'Confirm New Password',
+            confirmPassword,
+            setConfirmPassword,
+            showConfirmPassword,
+            () => setShowConfirmPassword(!showConfirmPassword),
+            'Confirm your new password'
+          )}
+
+          {message && (
+            <div
+              className={`settings-message ${
+                message.type === 'success' ? 'settings-message--success' : 'settings-message--error'
+              }`}
+            >
+              {message.text}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="settings-button settings-button--primary w-full"
+          >
+            {loading ? (
+              <>
+                <div className="size-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                Updating...
+              </>
+            ) : (
+              requiresCurrent ? 'Update Password' : 'Set Password'
+            )}
+          </button>
+        </form>
+      </section>
 
       <SecuritySessions />
     </div>

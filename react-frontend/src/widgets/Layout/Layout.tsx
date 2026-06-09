@@ -6,6 +6,7 @@ import { Topbar } from '@/widgets/Topbar/Topbar.js';
 import { SearchModal } from '@/widgets/SearchModal/SearchModal.js';
 import { ToastHost } from '@/shared/ui/ToastHost.js';
 import { useRealtimeConnection } from '@/shared/hooks/useRealtime.js';
+import { useWorkspace } from '@/contexts/WorkspaceContext.js';
 import { Menu, X } from 'lucide-react';
 
 interface LayoutProps {
@@ -15,6 +16,7 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   useRealtimeConnection();
   const navigate = useNavigate();
+  const { activeWorkspaceId } = useWorkspace();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth < 768 : false,
@@ -33,10 +35,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   }, []);
 
   useEffect(() => {
-    setMobileSidebarOpen(false);
+    queueMicrotask(() => setMobileSidebarOpen(false));
   }, [location.pathname]);
 
   const openSearch = useCallback(() => setSearchOpen(true), []);
+  const newTaskPath = activeWorkspaceId ? `/task/new?workspaceId=${activeWorkspaceId}` : '/dashboard';
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -47,12 +50,12 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         setSearchOpen((s) => !s);
       }
       if (!editing && !e.metaKey && !e.ctrlKey && !e.altKey && e.key === 'c') {
-        navigate('/task/new');
+        navigate(newTaskPath);
       }
     };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
-  }, [navigate]);
+  }, [navigate, newTaskPath]);
 
   // Track last non-settings route
   useEffect(() => {
@@ -118,7 +121,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         className={
           isMobile
             ? 'pt-12 pb-6 px-4'
-            : 'ml-[240px] pt-[100px] px-12 pb-12 max-w-[1640px]'
+            : 'ml-[236px] pt-[100px] px-12 pb-12 max-w-[1640px]'
         }
       >
         <div className={isMobile ? '' : 'max-w-container mx-auto flex flex-col gap-10'}>

@@ -14,10 +14,10 @@ interface ToggleRowProps {
 
 function ToggleRow({ label, description, checked, onChange, disabled }: ToggleRowProps) {
   return (
-    <div className="flex items-center justify-between gap-4 py-3">
+    <div className="settings-row">
       <div className="min-w-0">
-        <p className="text-body-md text-white/80 font-medium">{label}</p>
-        <p className="text-label-sm text-white/40 mt-0.5">{description}</p>
+        <p className="settings-row-title">{label}</p>
+        <p className="settings-row-description">{description}</p>
       </div>
       <button
         type="button"
@@ -25,15 +25,10 @@ function ToggleRow({ label, description, checked, onChange, disabled }: ToggleRo
         aria-checked={checked}
         onClick={() => onChange(!checked)}
         disabled={disabled}
-        className={`flex-shrink-0 relative w-10 h-5.5 rounded-full transition-all duration-200 ${
-          checked ? 'bg-[--accent]' : 'bg-white/10'
-        } disabled:opacity-40`}
-        style={{ width: 40, height: 22 }}
+        className="settings-toggle disabled:opacity-40"
+        data-checked={checked}
       >
-        <span
-          className="absolute top-0.5 transition-all duration-200 w-[18px] h-[18px] rounded-full bg-white shadow-sm"
-          style={{ left: checked ? 20 : 2 }}
-        />
+        <span className="settings-toggle-knob" />
       </button>
     </div>
   );
@@ -75,41 +70,50 @@ export const NotificationsSettings: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="space-y-3 animate-pulse">
+      <div className="settings-page animate-pulse">
         {[0, 1].map(i => <div key={i} className="h-14 rounded-xl bg-white/4" />)}
       </div>
     );
   }
 
   return (
-    <div className="space-y-1">
-      <div className="flex items-center gap-2 mb-4">
-        <Bell size={14} className="text-white/40" />
-        <h3 className="label-caps text-white/40">Email notifications</h3>
-      </div>
+    <div className="settings-page">
+      <section className="settings-section">
+        <div className="settings-section-header flex items-center gap-3">
+          <span className="settings-row-icon">
+            <Bell size={16} />
+          </span>
+          <div>
+            <h3 className="settings-section-title">Email notifications</h3>
+            <p className="settings-section-description">
+              Choose which workspace updates should reach your inbox.
+            </p>
+          </div>
+        </div>
 
-      {error && <p className="text-label-sm text-[#fca5a5] mb-3">{error}</p>}
+        {error && <p className="settings-message settings-message--error mb-3">{error}</p>}
 
-      <div className="divide-y divide-white/5">
-        <ToggleRow
-          label="Task assigned"
-          description="Receive an email when a task is assigned to you"
-          checked={prefs.email_on_assign}
-          onChange={v => handleChange('email_on_assign', v)}
-          disabled={saving}
-        />
-        <ToggleRow
-          label="Mentioned"
-          description="Receive an email when someone @mentions you in a comment"
-          checked={prefs.email_on_mention}
-          onChange={v => handleChange('email_on_mention', v)}
-          disabled={saving}
-        />
-      </div>
+        <div className="space-y-3">
+          <ToggleRow
+            label="Task assigned"
+            description="Receive an email when a task is assigned to you"
+            checked={prefs.email_on_assign}
+            onChange={v => handleChange('email_on_assign', v)}
+            disabled={saving}
+          />
+          <ToggleRow
+            label="Mentioned"
+            description="Receive an email when someone @mentions you in a comment"
+            checked={prefs.email_on_mention}
+            onChange={v => handleChange('email_on_mention', v)}
+            disabled={saving}
+          />
+        </div>
 
-      <p className="text-label-sm text-white/25 pt-4">
-        You will always receive important security emails regardless of these settings.
-      </p>
+        <p className="settings-hint pt-4">
+          You will always receive important security emails regardless of these settings.
+        </p>
+      </section>
     </div>
   );
 };

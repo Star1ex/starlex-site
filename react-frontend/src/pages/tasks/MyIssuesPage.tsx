@@ -1,15 +1,17 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { CheckCircle2, Circle, Clock, ChevronRight, MoreHorizontal, Trash2 } from 'lucide-react';
+import { CheckCircle2, ChevronRight, MoreHorizontal, Trash2 } from 'lucide-react';
 import { taskService } from '@/services/api/index.js';
-import type { TaskDTO, TaskQueryParams } from '@/types/dto.js';
+import type { TaskDTO, TaskQueryParams, TaskStatus } from '@/types/dto.js';
 import { useWorkspace } from '@/contexts/WorkspaceContext.js';
 import { useAuth } from '@/contexts/AuthContext.js';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle.js';
 import { showToast } from '@/shared/lib/toast.js';
 import { getAllViews, type SavedView } from '@/shared/lib/savedViews.js';
 import { pageVariants, listItemVariants, listVariants } from '@/shared/lib/animations.js';
+import { StatusMenu } from '@/features/taskStatus/StatusMenu.js';
+import { can } from '@/shared/lib/permissions.js';
 
 const PRIORITY_CLS: Record<string, string> = {
   high:   'text-orange-400',
@@ -19,11 +21,22 @@ const PRIORITY_CLS: Record<string, string> = {
 
 // ─── task row ──────────────────────────────────────────────────────────────────
 
-function TaskRow({ task, onNavigate, onDelete }: { task: TaskDTO; onNavigate: (id: string) => void; onDelete: (id: string) => void }) {
+function TaskRow({
+  task,
+  canEditStatus,
+  onNavigate,
+  onDelete,
+  onStatusChange,
+}: {
+  task: TaskDTO;
+  canEditStatus: boolean;
+  onNavigate: (id: string) => void;
+  onDelete: (id: string) => void;
+  onStatusChange: (id: string, status: TaskStatus) => void;
+}) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const isDone = task.progress === 'done' || task.status === 'done';
-  const isInProgress = task.progress === 'in_progress' || task.status === 'in_progress';
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -41,13 +54,12 @@ function TaskRow({ task, onNavigate, onDelete }: { task: TaskDTO; onNavigate: (i
       onClick={() => onNavigate(task.id)}
     >
       <div className="flex-shrink-0" onClick={e => e.stopPropagation()}>
-        {isDone ? (
-          <CheckCircle2 size={16} className="text-green-400" />
-        ) : isInProgress ? (
-          <Clock size={16} className="text-blue-400" />
-        ) : (
-          <Circle size={16} className="text-white/20" />
-        )}
+        <StatusMenu
+          taskId={task.id}
+          status={task.status}
+          canEdit={canEditStatus}
+          onStatusChange={(status) => onStatusChange(task.id, status)}
+        />
       </div>
 
       {task.key && (
@@ -121,7 +133,7 @@ function ViewTabs({ views, activeId, onChange }: { views: SavedView[]; activeId:
 export const MyIssuesPage: React.FC = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { activeWorkspaceId } = useWorkspace();
+  const { activeWorkspace, activeWorkspaceId } = useWorkspace();
   const { userId } = useAuth();
 
   useDocumentTitle('My Issues');
@@ -168,6 +180,10 @@ export const MyIssuesPage: React.FC = () => {
     }
   }, [tasks]);
 
+  const handleStatusChange = useCallback((id: string, status: TaskStatus) => {
+    setTasks((prev) => prev.map((task) => task.id === id ? { ...task, status } : task));
+  }, []);
+
   const handleLoadMore = useCallback(() => {
     if (!nextCursor || !activeView) return;
     load({ ...activeView.params, cursor: nextCursor }, true);
@@ -212,8 +228,10 @@ export const MyIssuesPage: React.FC = () => {
                 <TaskRow
                   key={t.id}
                   task={t}
+                  canEditStatus={can.editTask(activeWorkspace?.role)}
                   onNavigate={id => navigate(`/task/${id}`)}
                   onDelete={handleDeleteTask}
+                  onStatusChange={handleStatusChange}
                 />
               ))}
             </motion.div>

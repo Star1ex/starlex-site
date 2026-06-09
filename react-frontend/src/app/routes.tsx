@@ -1,11 +1,13 @@
 import React, { Suspense, useEffect } from 'react';
-import { Route, Routes, useLocation, Navigate } from 'react-router-dom';
+import { Route, Routes, useLocation, Navigate, Outlet } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { Layout } from '@/widgets/Layout/Layout.js';
 import { ErrorBoundary } from '@/components/ErrorBoundary.js';
 import { authService } from '@/services/api/index.js';
 import { apiClient } from '@/services/api/client.js';
 import { getLastWorkspaceId } from '@/contexts/WorkspaceContext.js';
+import { SettingsModal } from '@/widgets/SettingsModal/SettingsModal.js';
+import AboutUs from '@/pages/about-us/AboutUs.js';
 
 // Lazy-loaded pages
 const HomePage        = React.lazy(() => import('@/pages/home/HomePage.js').then(m => ({ default: m.HomePage })));
@@ -18,10 +20,8 @@ const OnboardingPage  = React.lazy(() => import('@/pages/onboarding/OnboardingPa
 const VerifyEmailPage = React.lazy(() => import('@/pages/verify/VerifyEmailPage.js').then(m => ({ default: m.VerifyEmailPage })));
 const WorkspacePage   = React.lazy(() => import('@/pages/workspace/WorkspacePage.js').then(m => ({ default: m.WorkspacePage })));
 const ProjectPage     = React.lazy(() => import('@/pages/workspace/ProjectPage.js').then(m => ({ default: m.ProjectPage })));
-const AboutUs         = React.lazy(() => import('@/pages/about-us/AboutUs.js').then(m => ({ default: m.default })));
 const ProfilePage     = React.lazy(() => import('@/pages/profile/UserProfile.js').then(m => ({ default: m.default })));
 const UserProfilePage = React.lazy(() => import('@/pages/profile/UserProfilePage.js').then(m => ({ default: m.UserProfilePage })));
-const SettingsModal     = React.lazy(() => import('@/widgets/SettingsModal/SettingsModal.js').then(m => ({ default: m.SettingsModal })));
 const InviteAcceptPage  = React.lazy(() => import('@/pages/invite/InviteAcceptPage.js').then(m => ({ default: m.InviteAcceptPage })));
 const MyIssuesPage      = React.lazy(() => import('@/pages/tasks/MyIssuesPage.js').then(m => ({ default: m.MyIssuesPage })));
 const TaskDetailPage    = React.lazy(() => import('@/pages/tasks/TaskDetailPage.js').then(m => ({ default: m.TaskDetailPage })));
@@ -30,6 +30,11 @@ const MembersPage       = React.lazy(() => import('@/features/members/MembersPag
 
 function preloadRoutes() {
   import('@/pages/workspace/WorkspacePage.js');
+  import('@/pages/workspace/ProjectPage.js');
+  import('@/pages/tasks/MyIssuesPage.js');
+  import('@/pages/tasks/TaskExplorerPage.js');
+  import('@/pages/tasks/TaskDetailPage.js');
+  import('@/features/members/MembersPage.js');
   import('@/pages/profile/UserProfile.js');
   import('@/pages/profile/UserProfilePage.js');
 }
@@ -38,14 +43,35 @@ const Fallback = () => (
   <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }} />
 );
 
+const RouteContentFallback = () => (
+  <div className="route-content-fallback" aria-hidden="true" />
+);
+
 const withEB = (el: React.ReactNode) => <ErrorBoundary>{el}</ErrorBoundary>;
+const publicRoute = (el: React.ReactNode) => withEB(<Suspense fallback={<Fallback />}>{el}</Suspense>);
+const authedRoute = (el: React.ReactNode) => (
+  withEB(<RequireAuth><Suspense fallback={<Fallback />}>{el}</Suspense></RequireAuth>)
+);
 
 export const AppRoutes = () => {
-  useEffect(() => { preloadRoutes(); }, []);
+  useEffect(() => {
+    if (typeof window === 'undefined') return undefined;
+    const idleWindow = window as Window & typeof globalThis & {
+      requestIdleCallback?: (callback: () => void, options?: { timeout?: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+
+    if (idleWindow.requestIdleCallback) {
+      const id = idleWindow.requestIdleCallback(preloadRoutes, { timeout: 900 });
+      return () => idleWindow.cancelIdleCallback?.(id);
+    }
+
+    const id = window.setTimeout(preloadRoutes, 250);
+    return () => window.clearTimeout(id);
+  }, []);
+
   return (
-    <Suspense fallback={<Fallback />}>
-      <AnimatedRoutes />
-    </Suspense>
+    <AnimatedRoutes />
   );
 };
 
@@ -55,69 +81,40 @@ const AnimatedRoutes = () => {
 
   return (
     <>
-      <AnimatePresence mode="sync" initial={false}>
-        <Routes
-          location={background || location}
-          key={(background || location).pathname}
-        >
-          {/* Public */}
-          <Route path="/"                  element={withEB(<HomePage />)} />
-          <Route path="/sign-in"           element={withEB(<SignInPage />)} />
-          <Route path="/sign-up"           element={withEB(<SignUpPage />)} />
-          <Route path="/oauth/callback"    element={withEB(<OAuthCallbackPage />)} />
-          <Route path="/login"             element={withEB(<Navigate to="/sign-in" replace />)} />
-          <Route path="/forgot-password"   element={withEB(<ForgotPasswordPage />)} />
-          <Route path="/reset-password"    element={withEB(<ResetPasswordPage />)} />
-          <Route path="/verify-email"      element={withEB(<VerifyEmailPage />)} />
-          <Route path="/about-us"          element={withEB(<AboutUs />)} />
-          <Route path="/invite/:token"     element={withEB(<InviteAcceptPage />)} />
+      <Routes location={background || location}>
+        {/* Public */}
+        <Route path="/"                element={publicRoute(<HomePage />)} />
+        <Route path="/sign-in"         element={publicRoute(<SignInPage />)} />
+        <Route path="/sign-up"         element={publicRoute(<SignUpPage />)} />
+        <Route path="/oauth/callback"  element={publicRoute(<OAuthCallbackPage />)} />
+        <Route path="/login"           element={withEB(<Navigate to="/sign-in" replace />)} />
+        <Route path="/forgot-password" element={publicRoute(<ForgotPasswordPage />)} />
+        <Route path="/reset-password"  element={publicRoute(<ResetPasswordPage />)} />
+        <Route path="/verify-email"    element={publicRoute(<VerifyEmailPage />)} />
+        <Route path="/about-us"        element={publicRoute(<AboutUs />)} />
+        <Route path="/invite/:token"   element={publicRoute(<InviteAcceptPage />)} />
 
-          {/* Onboarding — authed, no layout shell */}
-          <Route path="/onboarding"
-            element={withEB(<RequireAuth><OnboardingPage /></RequireAuth>)}
-          />
+        {/* Onboarding — authed, no layout shell */}
+        <Route path="/onboarding" element={authedRoute(<OnboardingPage />)} />
 
-          {/* Dashboard redirect → active workspace */}
-          <Route path="/dashboard"
-            element={withEB(<RequireAuth><DashboardRedirect /></RequireAuth>)}
-          />
+        {/* Dashboard redirect → active workspace */}
+        <Route path="/dashboard" element={withEB(<RequireAuth><DashboardRedirect /></RequireAuth>)} />
+        <Route path="/personal" element={withEB(<RequireAuth><DashboardRedirect /></RequireAuth>)} />
 
-          {/* Protected routes with Layout */}
-          <Route path="/settings"
-            element={withEB(<RequireAuth><Layout><div /></Layout></RequireAuth>)}
-          />
-          <Route path="/profile"
-            element={withEB(<RequireAuth><Layout><ProfilePage /></Layout></RequireAuth>)}
-          />
-          <Route path="/profile/:userId"
-            element={withEB(<RequireAuth><Layout><UserProfilePage /></Layout></RequireAuth>)}
-          />
-          <Route path="/personal"
-            element={withEB(<RequireAuth><DashboardRedirect /></RequireAuth>)}
-          />
-          <Route path="/my-issues"
-            element={withEB(<RequireAuth><Layout><MyIssuesPage /></Layout></RequireAuth>)}
-          />
-          <Route path="/workspace/:workspaceId"
-            element={withEB(<RequireAuth><Layout><WorkspacePage /></Layout></RequireAuth>)}
-          />
-          <Route path="/workspace/:workspaceId/projects/:projectId"
-            element={withEB(<RequireAuth><Layout><ProjectPage /></Layout></RequireAuth>)}
-          />
-          <Route path="/workspace/:workspaceId/tasks"
-            element={withEB(<RequireAuth><Layout><TaskExplorerPage /></Layout></RequireAuth>)}
-          />
-          <Route path="/workspace/:workspaceId/members"
-            element={withEB(<RequireAuth><Layout><MembersPage /></Layout></RequireAuth>)}
-          />
-          <Route path="/task/new"
-            element={withEB(<RequireAuth><Layout><TaskDetailPage /></Layout></RequireAuth>)}
-          />
-          <Route path="/task/:taskId"
-            element={withEB(<RequireAuth><Layout><TaskDetailPage /></Layout></RequireAuth>)}
-          />
-        </Routes>
-      </AnimatePresence>
+        {/* Protected routes with persistent shell */}
+        <Route element={withEB(<ShellRoute />)}>
+          <Route path="/settings" element={<div />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/profile/:userId" element={<UserProfilePage />} />
+          <Route path="/my-issues" element={<MyIssuesPage />} />
+          <Route path="/workspace/:workspaceId" element={<WorkspacePage />} />
+          <Route path="/workspace/:workspaceId/projects/:projectId" element={<ProjectPage />} />
+          <Route path="/workspace/:workspaceId/tasks" element={<TaskExplorerPage />} />
+          <Route path="/workspace/:workspaceId/members" element={<MembersPage />} />
+          <Route path="/task/new" element={<TaskDetailPage />} />
+          <Route path="/task/:taskId" element={<TaskDetailPage />} />
+        </Route>
+      </Routes>
 
       {/* Settings modal overlay */}
       <AnimatePresence>
@@ -128,6 +125,16 @@ const AnimatedRoutes = () => {
     </>
   );
 };
+
+const ShellRoute: React.FC = () => (
+  <RequireAuth>
+    <Layout>
+      <Suspense fallback={<RouteContentFallback />}>
+        <Outlet />
+      </Suspense>
+    </Layout>
+  </RequireAuth>
+);
 
 /** Redirect to the last-visited workspace, or /onboarding if none. */
 const DashboardRedirect: React.FC = () => {

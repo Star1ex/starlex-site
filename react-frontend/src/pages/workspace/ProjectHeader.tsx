@@ -78,15 +78,16 @@ interface ProjectHeaderProps {
   members: UserDTO[];
   tasks: { status?: string }[];
   workspaceRole?: WorkspaceRole;
+  currentUserId?: string;
   onBack: () => void;
   onProjectChange?: (updated: ProjectDTO) => void;
   onProjectDeleted?: () => void;
 }
 
 export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
-  project, members, tasks, workspaceRole, onBack, onProjectChange, onProjectDeleted,
+  project, members, tasks, workspaceRole, currentUserId, onBack, onProjectChange, onProjectDeleted,
 }) => {
-  const isLeader = false; // TODO: compare with current user id
+  const isLeader = Boolean(currentUserId && project.leader_id === currentUserId);
   const canManage = can.manageProject(workspaceRole, isLeader);
 
   const sm = STATUS_META[project.status] ?? STATUS_META.backlog;
@@ -177,11 +178,11 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
               <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: sm.dot }} />
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="glass-card border-white/10 bg-black/80 backdrop-blur-2xl">
+            <SelectContent className="glass-menu rounded-xl p-1">
               {ALL_STATUSES.map((s) => {
                 const meta = STATUS_META[s];
                 return (
-                  <SelectItem key={s} value={s} className="text-label-sm text-white/70 focus:text-white">
+                  <SelectItem key={s} value={s} className="glass-menu-item text-label-sm focus:text-white">
                     <span className="flex items-center gap-2">
                       <span className="w-1.5 h-1.5 rounded-full" style={{ background: meta.dot }} />
                       {meta.label}
@@ -204,9 +205,9 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
             <SelectTrigger className="h-auto px-2.5 py-1 rounded-full border-white/10 bg-white/5 text-label-sm font-medium gap-1">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="glass-card border-white/10 bg-black/80 backdrop-blur-2xl">
+            <SelectContent className="glass-menu rounded-xl p-1">
               {ALL_PRIORITIES.map((p) => (
-                <SelectItem key={p} value={p} className="text-label-sm text-white/70 focus:text-white">
+                <SelectItem key={p} value={p} className="glass-menu-item text-label-sm focus:text-white">
                   <span style={{ color: PRIORITY_META[p].color }}>{PRIORITY_META[p].label}</span>
                 </SelectItem>
               ))}

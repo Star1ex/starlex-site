@@ -14,6 +14,12 @@ const teamMembers = [
   { name: "Artur",  role: "DevOps",             github: "Oget565",  description: "Infrastructure, CI/CD pipelines, and keeping the platform running." },
 ];
 
+const settingsTeam = [
+  { name: "Artem",  role: "Product & frontend", body: "Leads product direction, interface, and user experience." },
+  { name: "Zakhar", role: "Backend",            body: "Builds the API, database model, and core task workflow." },
+  { name: "Artur",  role: "DevOps",             body: "Handles infrastructure, deployment, and reliability." },
+];
+
 const values = [
   { title: "Open by default", body: "Source is public. No hidden roadmaps, no lock-in." },
   { title: "Calm tools",      body: "No clutter, no noise. Every feature earns its place." },
@@ -22,7 +28,7 @@ const values = [
 ];
 
 const changelog = [
-  { date: "Mar 2026", tag: "Feature",       title: "Global search with icon picker and recents.",      body: "Find anything instantly — tasks, folders, and teams — with a keyboard-first search modal." },
+  { date: "Mar 2026", tag: "Feature",       title: "Global search with icon picker and recents.",      body: "Find anything instantly — tasks, projects, and teams — with a keyboard-first search modal." },
   { date: "Feb 2026", tag: "Sprints",       title: "Sprint integration with velocity tracking.",        body: "Plan iterations, close sprints cleanly, and track team velocity over time." },
   { date: "Feb 2026", tag: "Collaboration", title: "Live collaboration with assignee pings.",           body: "See teammate changes the moment they happen. No refresh needed." },
   { date: "Feb 2026", tag: "Editor",        title: "Markdown editor refresh.",                          body: "Write once, preview instantly. Large task notes now feel snappy with BlockNote." },
@@ -75,6 +81,42 @@ export default function AboutUs({ variant = "page" }: AboutUsProps) {
     return () => window.removeEventListener("scroll", handler);
   }, [isSettings]);
 
+  if (isSettings) {
+    return (
+      <div className="settings-page settings-page--wide">
+        <section className="settings-section">
+          <div className="settings-section-header">
+            <p className="settings-label">About Starlex</p>
+            <h3 className="settings-section-title mt-2">Minimal task management for teams</h3>
+            <p className="settings-section-description">
+              Starlex helps teams organize projects, tasks, members, and updates in one focused workspace.
+              It is built to stay fast, quiet, and easy to scan.
+            </p>
+          </div>
+        </section>
+
+        <section className="settings-section settings-section--subtle">
+          <div className="settings-section-header">
+            <h3 className="settings-section-title">Team</h3>
+            <p className="settings-section-description">Small team, clear ownership.</p>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-3">
+            {settingsTeam.map((member) => (
+              <div key={member.name} className="settings-row !items-start !justify-start !flex-col">
+                <div>
+                  <div className="settings-row-title">{member.name}</div>
+                  <div className="settings-status-pill mt-2">{member.role}</div>
+                </div>
+                <p className="settings-row-description">{member.body}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      </div>
+    );
+  }
+
   const darkVars = theme === "dark" ? ({
     "--bg-primary":        "#0b090a",
     "--bg-secondary":      "#121011",
@@ -126,15 +168,15 @@ export default function AboutUs({ variant = "page" }: AboutUsProps) {
         </nav>
       )}
 
-      <div className={`max-w-6xl mx-auto px-6 sm:px-10 relative ${isSettings ? "py-6" : "pt-36 pb-10"}`}>
+      <div className={isSettings ? "settings-page settings-page--wide" : "max-w-6xl mx-auto px-6 sm:px-10 relative pt-36 pb-10"}>
 
         {/* ── Hero ── */}
-        <SectionWrapper className="flex flex-col items-center text-center gap-8 pb-20 sm:pb-28">
-          <motion.p variants={fadeUp} className="text-xs uppercase tracking-[0.4em] text-[color:var(--text-secondary)]">About Us</motion.p>
-          <motion.h1 variants={fadeUp} className={`tt-font-display leading-[1.08] max-w-4xl ${isSettings ? "text-3xl sm:text-4xl" : "text-5xl sm:text-6xl lg:text-7xl"}`}>
+        <SectionWrapper className={isSettings ? "settings-section flex flex-col gap-4" : "flex flex-col items-center text-center gap-8 pb-20 sm:pb-28"}>
+          <motion.p variants={fadeUp} className={isSettings ? "settings-label" : "text-xs uppercase tracking-[0.4em] text-[color:var(--text-secondary)]"}>About Us</motion.p>
+          <motion.h1 variants={fadeUp} className={`tt-font-display leading-[1.08] max-w-4xl ${isSettings ? "text-2xl sm:text-3xl text-white/95" : "text-5xl sm:text-6xl lg:text-7xl"}`}>
             A small team building calm, open collaboration.
           </motion.h1>
-          <motion.p variants={fadeUp} className="text-[color:var(--text-secondary)] text-lg sm:text-xl leading-relaxed max-w-2xl">
+          <motion.p variants={fadeUp} className={isSettings ? "settings-section-description !mt-0 max-w-2xl" : "text-[color:var(--text-secondary)] text-lg sm:text-xl leading-relaxed max-w-2xl"}>
             Starlex is built in the open with a minimalist mindset. Simple, fast, and thoughtfully
             designed so teams stay focused on momentum — not tooling.
           </motion.p>
@@ -170,11 +212,11 @@ export default function AboutUs({ variant = "page" }: AboutUsProps) {
         )}
 
         {/* ── Team ── */}
-        <SectionWrapper className={isSettings ? "pb-10" : "py-16 sm:py-20"}>
-          <motion.div variants={fadeUp} className="flex items-center justify-between gap-4 mb-10">
+        <SectionWrapper className={isSettings ? "settings-section" : "py-16 sm:py-20"}>
+          <motion.div variants={fadeUp} className={isSettings ? "flex items-center justify-between gap-4 mb-5" : "flex items-center justify-between gap-4 mb-10"}>
             <div className="flex flex-col gap-2">
-              <p className="text-xs uppercase tracking-[0.4em] text-[color:var(--text-secondary)]">The people</p>
-              <h2 className="tt-font-display text-3xl sm:text-4xl">Team</h2>
+              <p className={isSettings ? "settings-label" : "text-xs uppercase tracking-[0.4em] text-[color:var(--text-secondary)]"}>The people</p>
+              <h2 className={isSettings ? "settings-section-title" : "tt-font-display text-3xl sm:text-4xl"}>Team</h2>
             </div>
             {!isSettings && (
               <a href="https://github.com/Star1ex" target="_blank" rel="noopener noreferrer" className="tt-link text-sm shrink-0">
@@ -182,15 +224,15 @@ export default function AboutUs({ variant = "page" }: AboutUsProps) {
               </a>
             )}
           </motion.div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+          <div className={isSettings ? "grid grid-cols-1 md:grid-cols-3 gap-3" : "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5"}>
             {teamMembers.map((member) => (
-              <motion.div key={member.github} variants={fadeUp} className="rounded-2xl bg-[color:var(--bg-secondary)]/80 p-6 flex flex-col gap-4 border border-[color:var(--border-color)]">
-                <img src={`https://github.com/${member.github}.png`} alt={member.name} loading="lazy" decoding="async" className="w-14 h-14 rounded-full object-cover" />
+              <motion.div key={member.github} variants={fadeUp} className={isSettings ? "settings-row !items-start !justify-start !flex-col" : "rounded-2xl bg-[color:var(--bg-secondary)]/80 p-6 flex flex-col gap-4 border border-[color:var(--border-color)]"}>
+                <img src={`https://github.com/${member.github}.png`} alt={member.name} loading="lazy" decoding="async" className="size-12 rounded-full object-cover" />
                 <div className="flex flex-col gap-1">
-                  <div className="tt-font-display text-xl">{member.name}</div>
+                  <div className={isSettings ? "settings-row-title" : "tt-font-display text-xl"}>{member.name}</div>
                   <div className="text-xs uppercase tracking-[0.25em] text-[color:var(--text-secondary)]">{member.role}</div>
                 </div>
-                <p className="text-sm text-[color:var(--text-secondary)] leading-relaxed flex-1">{member.description}</p>
+                <p className={isSettings ? "settings-row-description flex-1" : "text-sm text-[color:var(--text-secondary)] leading-relaxed flex-1"}>{member.description}</p>
                 <a href={`https://github.com/${member.github}`} target="_blank" rel="noopener noreferrer" className="text-sm tt-link">
                   @{member.github}
                 </a>
@@ -200,14 +242,14 @@ export default function AboutUs({ variant = "page" }: AboutUsProps) {
         </SectionWrapper>
 
         {/* ── Changelog ── */}
-        <SectionWrapper className={isSettings ? "pb-10" : "py-16 sm:py-20"}>
-          <motion.div variants={fadeUp} className="flex flex-col gap-2 mb-10">
-            <p className="text-xs uppercase tracking-[0.4em] text-[color:var(--text-secondary)]">Latest Updates</p>
-            <h2 className="tt-font-display text-3xl sm:text-4xl">Changelog</h2>
+        <SectionWrapper className={isSettings ? "settings-section" : "py-16 sm:py-20"}>
+          <motion.div variants={fadeUp} className={isSettings ? "settings-section-header" : "flex flex-col gap-2 mb-10"}>
+            <p className={isSettings ? "settings-label" : "text-xs uppercase tracking-[0.4em] text-[color:var(--text-secondary)]"}>Latest Updates</p>
+            <h2 className={isSettings ? "settings-section-title mt-2" : "tt-font-display text-3xl sm:text-4xl"}>Changelog</h2>
           </motion.div>
-          <div className="flex flex-col divide-y divide-[color:var(--border-color)]">
+          <div className={isSettings ? "flex flex-col gap-2" : "flex flex-col divide-y divide-[color:var(--border-color)]"}>
             {displayedChangelog.map((entry) => (
-              <motion.div key={entry.title} variants={fadeUp} className="grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-3 sm:gap-10 py-7">
+              <motion.div key={entry.title} variants={fadeUp} className={isSettings ? "settings-row !items-start !grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-3" : "grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-3 sm:gap-10 py-7"}>
                 <div className="flex sm:flex-col gap-3 sm:gap-2">
                   <span className="text-xs text-[color:var(--text-secondary)] tracking-wide">{entry.date}</span>
                   <span className="text-xs uppercase tracking-[0.25em] font-medium" style={{ color: "var(--accent-blue)" }}>{entry.tag}</span>

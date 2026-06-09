@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { TriangleAlert } from 'lucide-react';
 import Avatar from '@/shared/ui/Avatar.js';
 import { userService, authService } from '@/services/api/index.js';
 import { searchService } from '@/services/api/index.js';
@@ -15,6 +16,10 @@ interface PublicUserProfile {
   photo_url?: string | null;
   avatar_url?: string | null;
 }
+
+type ProfileLocationState = {
+  user?: Partial<PublicUserProfile>;
+};
 
 export const UserProfilePage: React.FC = () => {
   const { userId } = useParams<{ userId: string }>();
@@ -42,7 +47,7 @@ export const UserProfilePage: React.FC = () => {
         setError(null);
 
         // Check if user data was passed via location state (from team members)
-        const userFromState = location.state?.user as any;
+        const userFromState = (location.state as ProfileLocationState | null)?.user;
         if (userFromState && (userFromState.id === userId || !userFromState.id)) {
           const normalizedUser: PublicUserProfile = {
             id: userFromState.id || userId,
@@ -72,7 +77,7 @@ export const UserProfilePage: React.FC = () => {
             role: userData.role,
           };
           setUser(normalizedUser);
-        } catch (err) {
+        } catch {
           // Fallback to basic user endpoint
           try {
             const data = await userService.getUserById(userId);
@@ -87,7 +92,7 @@ export const UserProfilePage: React.FC = () => {
               role: userData.role,
             };
             setUser(normalizedUser);
-          } catch (err2) {
+          } catch {
             // If looks like email, try search
             if (userId.includes('@')) {
               try {
@@ -107,7 +112,7 @@ export const UserProfilePage: React.FC = () => {
                 } else {
                   setError('User profile not found');
                 }
-              } catch (err3) {
+              } catch {
                 setError('User profile not found');
               }
             } else {
@@ -168,9 +173,7 @@ export const UserProfilePage: React.FC = () => {
       <div className="min-h-full flex items-center justify-center bg-white dark:bg-dark-bg transition-colors px-4">
         <div className="text-center max-w-md">
           <div className="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-            </svg>
+            <TriangleAlert className="w-8 h-8 text-red-600 dark:text-red-400" strokeWidth={1.55} />
           </div>
           <h2 className="text-xl font-bold text-gray-900 dark:text-dark-text mb-2">Profile Not Found</h2>
           <p className="text-gray-600 dark:text-dark-text-muted mb-6">{error || 'This user profile does not exist.'}</p>

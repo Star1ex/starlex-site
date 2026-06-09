@@ -11,7 +11,7 @@ const PRESET_COLORS = [
   '#0ea5e9', '#64748b', '#a3a3a3', '#e2e8f0',
 ];
 
-const inputCls = 'px-2.5 py-1.5 rounded-lg text-body-md text-white bg-white/5 border border-white/10 outline-none focus:border-white/25 transition-all placeholder:text-white/30 text-sm';
+const inputCls = 'settings-input !py-1.5 !text-sm';
 
 interface RowProps {
   label: WorkspaceLabelDTO;
@@ -69,9 +69,9 @@ function LabelRow({ label, onUpdated, onDeleted, workspaceId }: RowProps) {
 
   if (editing) {
     return (
-      <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/3 border border-white/8">
+      <div className="settings-row !items-center !py-2">
         <div className="relative flex-shrink-0">
-          <div className="w-5 h-5 rounded-full cursor-pointer border-2 border-white/20 overflow-hidden">
+          <div className="size-5 rounded-full cursor-pointer border border-white/15 overflow-hidden">
             <input
               type="color"
               value={color}
@@ -87,7 +87,7 @@ function LabelRow({ label, onUpdated, onDeleted, workspaceId }: RowProps) {
               key={c}
               type="button"
               onClick={() => setColor(c)}
-              className="w-3.5 h-3.5 rounded-full flex-shrink-0 transition-transform hover:scale-125"
+              className="size-3.5 rounded-full flex-shrink-0 transition-transform hover:scale-125"
               style={{
                 background: c,
                 boxShadow: color === c ? `0 0 0 1.5px white` : undefined,
@@ -107,14 +107,14 @@ function LabelRow({ label, onUpdated, onDeleted, workspaceId }: RowProps) {
         <button
           onClick={save}
           disabled={saving || !name.trim()}
-          className="w-7 h-7 flex items-center justify-center rounded-lg text-green-400 hover:bg-green-400/10 transition-colors disabled:opacity-40"
+          className="size-7 flex items-center justify-center rounded-lg text-green-400 hover:bg-green-400/10 transition-colors disabled:opacity-40"
         >
           <Check size={14} />
         </button>
         <button
           onClick={cancel}
           disabled={saving}
-          className="w-7 h-7 flex items-center justify-center rounded-lg text-white/40 hover:text-white/70 transition-colors"
+          className="size-7 flex items-center justify-center rounded-lg text-white/40 hover:text-white/70 transition-colors"
         >
           <X size={14} />
         </button>
@@ -123,20 +123,20 @@ function LabelRow({ label, onUpdated, onDeleted, workspaceId }: RowProps) {
   }
 
   return (
-    <div className="group flex items-center gap-3 px-3 py-2.5 rounded-xl hover:bg-white/3 transition-colors">
-      <span className="w-4 h-4 rounded-full flex-shrink-0" style={{ background: label.color }} />
+    <div className="group settings-row !py-2.5">
+      <span className="size-4 rounded-full flex-shrink-0" style={{ background: label.color }} />
       <span className="flex-1 text-body-md text-white/80 truncate">{label.name}</span>
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <button
           onClick={startEdit}
-          className="w-7 h-7 flex items-center justify-center rounded-lg text-white/30 hover:text-white/70 transition-colors"
+          className="size-7 flex items-center justify-center rounded-lg text-white/30 hover:text-white/70 transition-colors"
         >
           <Pencil size={13} />
         </button>
         <button
           onClick={handleDelete}
           disabled={deleting}
-          className="w-7 h-7 flex items-center justify-center rounded-lg text-white/30 hover:text-red-400 transition-colors disabled:opacity-40"
+          className="size-7 flex items-center justify-center rounded-lg text-white/30 hover:text-red-400 transition-colors disabled:opacity-40"
         >
           <Trash2 size={13} />
         </button>
@@ -187,7 +187,7 @@ function CreateRow({ workspaceId, onCreated }: CreateRowProps) {
     return (
       <button
         onClick={openCreate}
-        className="flex items-center gap-2 px-3 py-2 text-label-sm text-white/40 hover:text-white/70 hover:bg-white/3 rounded-xl transition-colors w-full"
+        className="settings-button !w-full !justify-start !bg-transparent !border-transparent"
       >
         <Plus size={14} />
         Add label
@@ -196,9 +196,9 @@ function CreateRow({ workspaceId, onCreated }: CreateRowProps) {
   }
 
   return (
-    <div className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/3 border border-white/8">
+    <div className="settings-row !items-center !py-2">
       <div className="relative flex-shrink-0">
-        <div className="w-5 h-5 rounded-full border-2 border-white/20 overflow-hidden cursor-pointer">
+        <div className="size-5 rounded-full border border-white/15 overflow-hidden cursor-pointer">
           <input
             type="color"
             value={color}
@@ -214,7 +214,7 @@ function CreateRow({ workspaceId, onCreated }: CreateRowProps) {
             key={c}
             type="button"
             onClick={() => setColor(c)}
-            className="w-3.5 h-3.5 rounded-full flex-shrink-0 transition-transform hover:scale-125"
+            className="size-3.5 rounded-full flex-shrink-0 transition-transform hover:scale-125"
             style={{ background: c, boxShadow: color === c ? `0 0 0 1.5px white` : undefined }}
           />
         ))}
@@ -231,14 +231,14 @@ function CreateRow({ workspaceId, onCreated }: CreateRowProps) {
       <button
         onClick={save}
         disabled={saving || !name.trim()}
-        className="w-7 h-7 flex items-center justify-center rounded-lg text-green-400 hover:bg-green-400/10 transition-colors disabled:opacity-40"
+        className="size-7 flex items-center justify-center rounded-lg text-green-400 hover:bg-green-400/10 transition-colors disabled:opacity-40"
       >
         <Check size={14} />
       </button>
       <button
         onClick={cancel}
         disabled={saving}
-        className="w-7 h-7 flex items-center justify-center rounded-lg text-white/40 hover:text-white/70 transition-colors"
+        className="size-7 flex items-center justify-center rounded-lg text-white/40 hover:text-white/70 transition-colors"
       >
         <X size={14} />
       </button>
@@ -277,14 +277,17 @@ export const LabelsManager: React.FC<LabelsManagerProps> = ({ workspaceId, isAdm
   };
 
   return (
-    <div className="mt-8 pt-6 border-t border-white/8">
+    <section className="settings-section settings-section--subtle">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="label-caps text-white/40">Labels</h3>
-        <span className="text-label-sm text-white/30">{labels.length} labels</span>
+        <div>
+          <h3 className="settings-section-title">Labels</h3>
+          <p className="settings-section-description">Reusable tags for tasks in this workspace.</p>
+        </div>
+        <span className="settings-status-pill">{labels.length} labels</span>
       </div>
 
       {!isAdmin && (
-        <p className="text-label-sm text-white/30 py-3">Only admins can manage labels.</p>
+        <p className="settings-hint py-3">Only admins can manage labels.</p>
       )}
 
       {loading ? (
@@ -292,9 +295,9 @@ export const LabelsManager: React.FC<LabelsManagerProps> = ({ workspaceId, isAdm
           {[0, 1, 2].map(i => <div key={i} className="h-9 rounded-xl bg-white/4" />)}
         </div>
       ) : (
-        <div className="space-y-0.5">
+        <div className="space-y-1.5">
           {labels.length === 0 && !isAdmin && (
-            <p className="text-label-sm text-white/30 py-2 px-3">No labels yet</p>
+            <p className="settings-hint py-2 px-3">No labels yet</p>
           )}
           {labels.map(l => (
             <LabelRow
@@ -308,7 +311,7 @@ export const LabelsManager: React.FC<LabelsManagerProps> = ({ workspaceId, isAdm
           {isAdmin && <CreateRow workspaceId={workspaceId} onCreated={handleCreated} />}
         </div>
       )}
-    </div>
+    </section>
   );
 };
 

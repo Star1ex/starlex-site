@@ -113,6 +113,9 @@ export interface WorkspaceDTO {
   description: string;
   icon?: string;
   color?: string;
+  key_prefix?: string;
+  default_task_status?: TaskStatus;
+  member_default_role?: WorkspaceRole;
   role?: 'owner' | 'admin' | 'member' | 'guest';
   member_count?: number;
   project_count?: number;

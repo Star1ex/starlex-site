@@ -13,6 +13,9 @@ function normalizeWorkspace(raw: unknown): WorkspaceDTO {
     description: (w.description ?? '') as string,
     icon: (w.icon ?? '') as string,
     color: (w.color ?? '') as string,
+    key_prefix: (w.key_prefix ?? undefined) as WorkspaceDTO['key_prefix'],
+    default_task_status: (w.default_task_status ?? undefined) as WorkspaceDTO['default_task_status'],
+    member_default_role: (w.member_default_role ?? undefined) as WorkspaceDTO['member_default_role'],
     role: (w.role ?? undefined) as WorkspaceDTO['role'],
     member_count: (w.member_count ?? 0) as number,
     project_count: (w.project_count ?? 0) as number,
@@ -78,12 +81,11 @@ export const workspaceService = {
     return response.data;
   },
 
-  async addMember(workspaceId: string, email: string, role: WorkspaceRole = 'member'): Promise<WorkspaceMemberDTO> {
-    const response = await httpClient.post<WorkspaceMemberDTO>(
+  async addMember(workspaceId: string, email: string, role: WorkspaceRole = 'member'): Promise<void> {
+    await httpClient.post(
       `/api/workspaces/${workspaceId}/members`,
       { email, role },
     );
-    return response.data;
   },
 
   async updateMemberRole(workspaceId: string, userId: string, role: WorkspaceRole): Promise<void> {
@@ -100,10 +102,14 @@ export const workspaceService = {
     return response.data;
   },
 
-  async createInvite(workspaceId: string, role: WorkspaceRole = 'member'): Promise<{ token: string; url: string }> {
+  async createInvite(
+    workspaceId: string,
+    role: WorkspaceRole = 'member',
+    options: { expires_in_hours?: number; max_uses?: number } = {},
+  ): Promise<{ token: string; url: string }> {
     const response = await httpClient.post<{ token: string; url: string }>(
       `/api/workspaces/${workspaceId}/invites`,
-      { role },
+      { role, ...options },
     );
     return response.data;
   },
@@ -113,8 +119,9 @@ export const workspaceService = {
     return response.data;
   },
 
-  async acceptInvite(token: string): Promise<void> {
-    await httpClient.post(`/api/invites/${token}/accept`);
+  async acceptInvite(token: string): Promise<WorkspaceDTO> {
+    const response = await httpClient.post<unknown>(`/api/invites/${token}/accept`);
+    return normalizeWorkspace(response.data);
   },
 
   async revokeInvite(inviteId: string): Promise<void> {
@@ -147,12 +154,12 @@ export const workspaceService = {
     return response.data;
   },
 
-  async updateLabel(workspaceId: string, labelId: string, data: UpdateLabelRequest): Promise<WorkspaceLabelDTO> {
-    const response = await httpClient.patch<WorkspaceLabelDTO>(`/api/workspaces/${workspaceId}/labels/${labelId}`, data);
+  async updateLabel(_workspaceId: string, labelId: string, data: UpdateLabelRequest): Promise<WorkspaceLabelDTO> {
+    const response = await httpClient.patch<WorkspaceLabelDTO>(`/api/labels/${labelId}`, data);
     return response.data;
   },
 
-  async deleteLabel(workspaceId: string, labelId: string): Promise<void> {
-    await httpClient.delete(`/api/workspaces/${workspaceId}/labels/${labelId}`);
+  async deleteLabel(_workspaceId: string, labelId: string): Promise<void> {
+    await httpClient.delete(`/api/labels/${labelId}`);
   },
 };

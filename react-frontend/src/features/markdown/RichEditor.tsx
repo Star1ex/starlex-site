@@ -141,6 +141,108 @@ export const MarkdownEditor: React.FC<MarkdownEditorProps> = ({
           line-height: 1.75;
         }
 
+        /* ── Task detail editor typography: keep headings useful, not hero-sized ── */
+        .notion-md-editor h1,
+        .notion-md-editor .bn-block-content[data-content-type="heading"][data-level="1"],
+        .notion-md-editor .bn-block-content[data-content-type="heading"][data-heading-level="1"],
+        .notion-md-editor .bn-block-content[data-content-type="heading"][data-prop-level="1"] {
+          font-size: 1.45rem !important;
+          line-height: 1.22 !important;
+          font-weight: 650 !important;
+          letter-spacing: 0 !important;
+          margin: 1.15rem 0 0.45rem !important;
+        }
+
+        .notion-md-editor h2,
+        .notion-md-editor .bn-block-content[data-content-type="heading"][data-level="2"],
+        .notion-md-editor .bn-block-content[data-content-type="heading"][data-heading-level="2"],
+        .notion-md-editor .bn-block-content[data-content-type="heading"][data-prop-level="2"] {
+          font-size: 1.2rem !important;
+          line-height: 1.3 !important;
+          font-weight: 640 !important;
+          letter-spacing: 0 !important;
+          margin: 1rem 0 0.4rem !important;
+        }
+
+        .notion-md-editor h3,
+        .notion-md-editor .bn-block-content[data-content-type="heading"][data-level="3"],
+        .notion-md-editor .bn-block-content[data-content-type="heading"][data-heading-level="3"],
+        .notion-md-editor .bn-block-content[data-content-type="heading"][data-prop-level="3"] {
+          font-size: 1.05rem !important;
+          line-height: 1.35 !important;
+          font-weight: 620 !important;
+          letter-spacing: 0 !important;
+          margin: 0.85rem 0 0.35rem !important;
+        }
+
+        .notion-md-editor .bn-block-content[data-content-type="heading"] {
+          color: rgba(255,255,255,0.88) !important;
+        }
+
+        /* ── Checklists: minimal dark controls instead of bright browser squares ── */
+        .notion-md-editor input[type="checkbox"] {
+          appearance: none;
+          -webkit-appearance: none;
+          width: 13px;
+          height: 13px;
+          margin: 0 8px 0 0;
+          border-radius: 3px;
+          border: 1px solid rgba(255,255,255,0.22);
+          background: rgba(0,0,0,0.35);
+          box-shadow: inset 0 1px 0 rgba(255,255,255,0.04);
+          display: inline-grid;
+          place-content: center;
+          flex-shrink: 0;
+          vertical-align: -2px;
+        }
+
+        .notion-md-editor input[type="checkbox"]:checked {
+          background: rgba(255,255,255,0.12);
+          border-color: rgba(255,255,255,0.32);
+        }
+
+        .notion-md-editor input[type="checkbox"]:checked::after {
+          content: "";
+          width: 7px;
+          height: 4px;
+          border-left: 1.5px solid rgba(255,255,255,0.78);
+          border-bottom: 1.5px solid rgba(255,255,255,0.78);
+          transform: translateY(-1px) rotate(-45deg);
+        }
+
+        .notion-md-editor .bn-block-content[data-content-type="checkListItem"],
+        .notion-md-editor .bn-block-content[data-content-type="checkList"],
+        .notion-md-editor .bn-block-content[data-content-type="todoListItem"] {
+          color: rgba(255,255,255,0.72) !important;
+        }
+
+        html:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)
+          .notion-md-editor input[type="checkbox"] {
+          border-color: rgba(15,23,42,0.22);
+          background: rgba(15,23,42,0.03);
+        }
+
+        html:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)
+          .notion-md-editor input[type="checkbox"]:checked {
+          background: rgba(15,23,42,0.10);
+          border-color: rgba(15,23,42,0.34);
+        }
+
+        html:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)
+          .notion-md-editor input[type="checkbox"]:checked::after {
+          border-color: rgba(15,23,42,0.78);
+        }
+
+        html.theme-ultra-dark .notion-md-editor input[type="checkbox"] {
+          border-color: rgba(255,255,255,0.18);
+          background: rgba(0,0,0,0.55);
+        }
+
+        html.theme-ultra-dark .notion-md-editor input[type="checkbox"]:checked {
+          background: rgba(255,255,255,0.10);
+          border-color: rgba(255,255,255,0.30);
+        }
+
         /* ── Code blocks: shared structure (restore border/bg only here) ── */
         .notion-md-editor .bn-block-content[data-content-type="codeBlock"] {
           border-radius: 8px !important;

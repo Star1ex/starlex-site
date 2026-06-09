@@ -8,6 +8,8 @@ import { getAllRecent, type RecentItem } from '@/shared/lib/recentItems.js';
 import { Clock, Users, Layers, FileText, Plus, Search } from 'lucide-react';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle.js';
 import { SearchModal } from '@/widgets/SearchModal/SearchModal.js';
+import { useWorkspace } from '@/contexts/WorkspaceContext.js';
+import type { UserProfileDTO } from '@/types/dto.js';
 
 function fmtDate(ts: number): string {
   const d = new Date(ts);
@@ -25,12 +27,11 @@ const TYPE_ICON: Record<RecentItem['type'], React.ReactNode> = {
   task:      <FileText size={20} />,
 };
 
-const TYPE_LABEL: Record<RecentItem['type'], string> = {
-  workspace: 'Workspace',
-  team:      'Workspace',
-  sprint:    'Sprint',
-  task:      'Task',
-};
+function storedFirstName(): string {
+  const storedUser = getAuthUser();
+  if (!storedUser?.firstName && !storedUser?.first_name) return '';
+  return (storedUser.firstName || storedUser.first_name || '').split(' ')[0];
+}
 
 const RecentCard: React.FC<{ item: RecentItem; index: number }> = ({ item, index }) => {
   const navigate = useNavigate();
@@ -79,25 +80,24 @@ const RecentCard: React.FC<{ item: RecentItem; index: number }> = ({ item, index
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
+  const { activeWorkspaceId } = useWorkspace();
   const [loading, setLoading] = useState(true);
-  const [userName, setUserName] = useState('');
+  const [userName, setUserName] = useState(storedFirstName);
   const [recent, setRecent] = useState(getAllRecent());
   const [searchOpen, setSearchOpen] = useState(false);
 
   const refreshRecent = useCallback(() => setRecent(getAllRecent()), []);
 
-  useEffect(() => {
-    const storedUser = getAuthUser();
-    if (storedUser?.firstName || storedUser?.first_name) {
-      setUserName((storedUser.firstName || storedUser.first_name || '').split(' ')[0]);
-    }
+  const newTaskPath = activeWorkspaceId ? `/task/new?workspaceId=${activeWorkspaceId}` : '/dashboard';
 
+  useEffect(() => {
     userService.getProfile()
-      .then((data: any) => {
+      .then((data: UserProfileDTO) => {
         setUserName((data.firstName || '').split(' ')[0] || '');
       })
-      .catch((err: any) => {
-        if (err?.response?.status === 401) navigate('/sign-in');
+      .catch((err: unknown) => {
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        if (status === 401) navigate('/sign-in');
       })
       .finally(() => setLoading(false));
   }, [navigate]);
@@ -186,7 +186,7 @@ export const Dashboard: React.FC = () => {
             >
               {/* Placeholder cards */}
               {[
-                { label: 'New task', icon: <FileText size={20} />, action: () => navigate('/task/new') },
+                { label: 'New task', icon: <FileText size={20} />, action: () => navigate(newTaskPath) },
               ].map((p, i) => (
                 <motion.button
                   key={i}
@@ -233,7 +233,7 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="flex flex-wrap gap-2">
             {[
-              { label: 'New task', icon: <FileText size={14} />, action: () => navigate('/task/new') },
+              { label: 'New task', icon: <FileText size={14} />, action: () => navigate(newTaskPath) },
             ].map((a, i) => (
               <motion.button
                 key={i}

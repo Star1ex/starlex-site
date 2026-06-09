@@ -11,6 +11,7 @@ import { useWorkspace } from '@/contexts/WorkspaceContext.js';
 import { WorkspaceWelcome } from './WorkspaceWelcome.js';
 import { WorkspaceBento } from './WorkspaceBento.js';
 import { WorkspaceProjects } from './WorkspaceProjects.js';
+import { CreateProjectModal } from './CreateProjectModal.js';
 import { MembersPanel } from '@/features/members/MembersPanel.js';
 
 // ─── loading skeleton ──────────────────────────────────────────────────────────
@@ -102,6 +103,10 @@ export const WorkspacePage: React.FC = () => {
     }
   }, [projects]);
 
+  const handleProjectUpdated = useCallback((updated: ProjectDTO) => {
+    setProjects(prev => prev.map(project => project.id === updated.id ? updated : project));
+  }, []);
+
   if (loading) {
     return (
       <motion.div className="pb-16" variants={pageVariants} initial="initial" animate="animate" exit="exit">
@@ -114,6 +119,25 @@ export const WorkspacePage: React.FC = () => {
     return (
       <motion.div className="pb-16" variants={pageVariants} initial="initial" animate="animate" exit="exit">
         <MembersPanel workspaceId={workspaceId!} currentRole={workspace?.role} />
+      </motion.div>
+    );
+  }
+
+  if (view === 'projects') {
+    return (
+      <motion.div className="pb-16" variants={pageVariants} initial="initial" animate="animate" exit="exit">
+        <WorkspaceProjects
+          workspaceId={workspaceId!}
+          projects={projects}
+          members={members}
+          onProjectCreated={handleProjectCreated}
+          onProjectUpdated={handleProjectUpdated}
+          onProjectDeleted={handleDeleteProject}
+          onProjectClick={id => navigate(`/workspace/${workspaceId}/projects/${id}`)}
+          onCreateOpen={() => setShowCreate(true)}
+          showCreate={showCreate}
+          onCreateClose={() => setShowCreate(false)}
+        />
       </motion.div>
     );
   }
@@ -139,17 +163,11 @@ export const WorkspacePage: React.FC = () => {
         onNewWorkspace={handleNewWorkspace}
       />
 
-      <div className="h-px bg-white/5" />
-
-      <WorkspaceProjects
+      <CreateProjectModal
+        isOpen={showCreate}
+        onClose={() => setShowCreate(false)}
+        onCreated={handleProjectCreated}
         workspaceId={workspaceId!}
-        projects={projects}
-        onProjectCreated={handleProjectCreated}
-        onProjectDeleted={handleDeleteProject}
-        onProjectClick={id => navigate(`/workspace/${workspaceId}/projects/${id}`)}
-        onCreateOpen={() => setShowCreate(true)}
-        showCreate={showCreate}
-        onCreateClose={() => setShowCreate(false)}
       />
     </motion.div>
   );

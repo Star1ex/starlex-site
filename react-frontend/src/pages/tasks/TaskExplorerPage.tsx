@@ -4,7 +4,8 @@ import { Filter, LayoutGrid, List, Plus, Search, X } from 'lucide-react';
 import { taskService } from '@/services/api/index.js';
 import { can } from '@/shared/lib/permissions.js';
 import { useWorkspace } from '@/contexts/WorkspaceContext.js';
-import { StatusMenu, StatusPill } from '@/features/taskStatus/StatusMenu.js';
+import { StatusMenu } from '@/features/taskStatus/StatusMenu.js';
+import { TaskBoard } from '@/features/taskBoard/TaskBoard.js';
 import type { TaskCategoriesResponse, TaskDTO, TaskQueryParams, TaskStatus } from '@/types/dto.js';
 
 // ─── priority chip ─────────────────────────────────────────────────────────────
@@ -247,15 +248,18 @@ export const TaskExplorerPage: React.FC = () => {
   useEffect(() => {
     if (!workspaceId) return;
     const ac = new AbortController();
-    setLoading(true);
-    taskService.queryTasks(workspaceId, params)
-      .then((res) => {
-        if (ac.signal.aborted) return;
-        setTasks(res.tasks);
-        setNextCursor(res.next_cursor);
-      })
-      .catch(() => {})
-      .finally(() => { if (!ac.signal.aborted) setLoading(false); });
+    void Promise.resolve().then(() => {
+      if (ac.signal.aborted) return;
+      setLoading(true);
+      taskService.queryTasks(workspaceId, params)
+        .then((res) => {
+          if (ac.signal.aborted) return;
+          setTasks(res.tasks);
+          setNextCursor(res.next_cursor);
+        })
+        .catch(() => {})
+        .finally(() => { if (!ac.signal.aborted) setLoading(false); });
+    });
     return () => ac.abort();
   }, [workspaceId, params]);
 
@@ -280,7 +284,7 @@ export const TaskExplorerPage: React.FC = () => {
         <div className="flex items-center gap-2">
           {can.createTask(role) && (
             <button
-              onClick={() => navigate('/task/new')}
+              onClick={() => navigate(`/task/new?workspaceId=${workspaceId}`)}
               className="liquid-button flex items-center gap-1.5 px-3 py-1.5 text-label-sm"
             >
               <Plus size={13} /> New task
@@ -355,7 +359,6 @@ export const TaskExplorerPage: React.FC = () => {
           <FilterRail categories={categories} params={params} onChange={updateParams} />
         )}
 
-        {/* Task list */}
         <div className="flex-1 overflow-y-auto glass-card rounded-2xl">
           {loading ? (
             <div className="flex flex-col gap-0">
@@ -378,6 +381,10 @@ export const TaskExplorerPage: React.FC = () => {
                   Clear filters
                 </button>
               )}
+            </div>
+          ) : viewMode === 'board' ? (
+            <div className="p-4">
+              <TaskBoard tasks={tasks} onTasksChange={setTasks} canEdit={canEdit} />
             </div>
           ) : (
             <>

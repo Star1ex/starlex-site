@@ -5,11 +5,12 @@ import { Users, LayoutList, Kanban } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext.js';
 import { useWorkspace } from '@/contexts/WorkspaceContext.js';
 import { projectService, taskService } from '@/services/api/index.js';
-import type { ProjectDTO, TaskDTO, UserDTO } from '@/types/dto.js';
+import type { ProjectDTO, TaskDTO, TaskStatus, UserDTO } from '@/types/dto.js';
 import { pageVariants } from '@/shared/lib/animations.js';
 import { trackItem } from '@/shared/lib/recentItems.js';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle.js';
 import { showToast } from '@/shared/lib/toast.js';
+import { can } from '@/shared/lib/permissions.js';
 import { ProjectHeader } from './ProjectHeader.js';
 import { ProjectTaskList } from './ProjectTaskList.js';
 import { ProjectBoard } from './ProjectBoard.js';
@@ -131,6 +132,10 @@ export const ProjectPage: React.FC = () => {
     }
   }, [tasks]);
 
+  const handleTaskStatusChange = useCallback((id: string, status: TaskStatus) => {
+    setTasks((prev) => prev.map((task) => task.id === id ? { ...task, status } : task));
+  }, []);
+
   if (loading) {
     return (
       <motion.div className="pb-16" variants={pageVariants} initial="initial" animate="animate" exit="exit">
@@ -153,6 +158,7 @@ export const ProjectPage: React.FC = () => {
           members={members}
           tasks={tasks}
           workspaceRole={activeWorkspace?.role}
+          currentUserId={userId ?? undefined}
           onBack={() => navigate(`/workspace/${workspaceId}`)}
           onProjectChange={setProject}
           onProjectDeleted={() => navigate(`/workspace/${workspaceId}`)}
@@ -187,12 +193,13 @@ export const ProjectPage: React.FC = () => {
           onCreateClose={() => setShowCreate(false)}
           onTaskCreated={handleTaskCreated}
           onTaskDeleted={handleDeleteTask}
+          onTaskStatusChange={handleTaskStatusChange}
           onTaskNavigate={id => navigate(`/task/${id}`)}
           role={activeWorkspace?.role}
           currentUserId={userId ?? undefined}
         />
       ) : (
-        <ProjectBoard tasks={tasks} onTasksChange={setTasks} />
+        <ProjectBoard tasks={tasks} onTasksChange={setTasks} canEdit={can.editTask(activeWorkspace?.role)} />
       )}
 
       <ProjectMembersPreview members={members} />

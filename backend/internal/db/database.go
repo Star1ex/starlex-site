@@ -94,11 +94,75 @@ func migrate(db *DB) error {
 		return fmt.Errorf("error migrating models: %v", err)
 	}
 
+	if err := backfillWorkspaceMembers(db); err != nil {
+		return fmt.Errorf("failed to backfill workspace members: %w", err)
+	}
+
 	//if err := fillDefaultOwnerIDs(db); err != nil {
 	//	return fmt.Errorf("failed to fill task owner_ids: %v", err)
 	//}
 
 	logger.Log.Infow("Models migrated successfully")
+	return nil
+}
+
+func backfillWorkspaceMembers(db *DB) error {
+	if err := db.Exec(`
+		INSERT INTO workspace_members (workspace_id, user_id, role, joined_at)
+		SELECT w.id, w.owner_id, 'owner', NOW()
+		FROM workspace_models w
+		JOIN user_models u ON u.id = w.owner_id
+		WHERE w.owner_id <> ''
+		ON CONFLICT (workspace_id, user_id) DO NOTHING
+	`).Error; err != nil {
+		return fmt.Errorf("failed to insert workspace owners: %w", err)
+	}
+
+	if err := db.Exec(`
+		UPDATE workspace_members wm
+		SET role = 'owner'
+		FROM workspace_models w
+		WHERE wm.workspace_id = w.id
+			AND wm.user_id = w.owner_id
+			AND wm.role <> 'owner'
+	`).Error; err != nil {
+		return fmt.Errorf("failed to normalize workspace owner roles: %w", err)
+	}
+
+	if err := db.Exec(`
+		DO $$
+		BEGIN
+			IF to_regclass('public.users_workspaces') IS NOT NULL
+				AND EXISTS (
+					SELECT 1
+					FROM information_schema.columns
+					WHERE table_schema = 'public'
+						AND table_name = 'users_workspaces'
+						AND column_name = 'user_model_id'
+				)
+				AND EXISTS (
+					SELECT 1
+					FROM information_schema.columns
+					WHERE table_schema = 'public'
+						AND table_name = 'users_workspaces'
+						AND column_name = 'workspace_model_id'
+				)
+			THEN
+				INSERT INTO workspace_members (workspace_id, user_id, role, joined_at)
+				SELECT uw.workspace_model_id,
+					uw.user_model_id,
+					CASE WHEN w.owner_id = uw.user_model_id THEN 'owner' ELSE 'member' END,
+					NOW()
+				FROM users_workspaces uw
+				JOIN workspace_models w ON w.id = uw.workspace_model_id
+				JOIN user_models u ON u.id = uw.user_model_id
+				ON CONFLICT (workspace_id, user_id) DO NOTHING;
+			END IF;
+		END $$;
+	`).Error; err != nil {
+		return fmt.Errorf("failed to import legacy workspace memberships: %w", err)
+	}
+
 	return nil
 }
 

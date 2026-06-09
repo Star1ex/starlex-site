@@ -1,5 +1,5 @@
 import React from 'react';
-import { Plus, FolderKanban } from 'lucide-react';
+import { Plus, Kanban as ProjectsIcon } from 'lucide-react';
 
 interface WorkspaceWelcomeProps {
   firstName: string;
@@ -38,7 +38,7 @@ export const WorkspaceWelcome: React.FC<WorkspaceWelcomeProps> = ({
           className="liquid-button gap-2 !bg-[--accent] !border-transparent !text-white"
           style={{ boxShadow: '0 4px 20px rgba(99,102,241,0.25)' }}
         >
-          <FolderKanban size={15} />
+          <ProjectsIcon size={15} />
           Create Project
         </button>
       </div>

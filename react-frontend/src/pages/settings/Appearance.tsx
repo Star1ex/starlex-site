@@ -1,4 +1,5 @@
 import React from 'react';
+import { Check } from 'lucide-react';
 import { useTheme } from '@/shared/contexts/ThemeContext.js';
 
 const themeOptions = [
@@ -119,9 +120,7 @@ export const Appearance: React.FC = () => {
                     className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
                     style={{ background: 'var(--accent-blue)' }}
                   >
-                    <svg className="w-3 h-3" fill="none" stroke="white" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                    </svg>
+                    <Check className="w-3 h-3 text-white" strokeWidth={1.8} />
                   </div>
                 )}
               </div>

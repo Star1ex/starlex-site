@@ -4,6 +4,7 @@ import { X } from 'lucide-react';
 import { projectService } from '@/services/api/index.js';
 import type { ProjectDTO, CreateProjectRequest } from '@/types/dto.js';
 import { modalBackdropVariants, modalContentVariants } from '@/shared/lib/animations.js';
+import { DarkSelect } from '@/shared/ui/DarkSelect.js';
 
 const STATUS_META: Record<string, string> = {
   backlog: 'Backlog', planned: 'Planned', in_progress: 'In Progress',
@@ -114,16 +115,22 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
               </Field>
               <div className="grid grid-cols-2 gap-3">
                 <Field label="Status">
-                  <select value={status} onChange={e => setStatus(e.target.value as CreateProjectRequest['status'])}
-                    disabled={loading} className={`${inputCls} cursor-pointer`}>
-                    {STATUS_OPTIONS.map(s => <option key={s} value={s}>{STATUS_META[s] ?? s}</option>)}
-                  </select>
+                  <DarkSelect
+                    value={status ?? 'backlog'}
+                    onChange={(value) => setStatus(value as CreateProjectRequest['status'])}
+                    options={STATUS_OPTIONS.map(s => ({ value: s, label: STATUS_META[s] ?? s }))}
+                    disabled={loading}
+                    className={`${inputCls} h-11 cursor-pointer`}
+                  />
                 </Field>
                 <Field label="Priority">
-                  <select value={priority} onChange={e => setPriority(e.target.value as CreateProjectRequest['priority'])}
-                    disabled={loading} className={`${inputCls} cursor-pointer`}>
-                    {PRIORITY_OPTIONS.map(p => <option key={p} value={p}>{PRIORITY_META[p] ?? p}</option>)}
-                  </select>
+                  <DarkSelect
+                    value={priority ?? 'none'}
+                    onChange={(value) => setPriority(value as CreateProjectRequest['priority'])}
+                    options={PRIORITY_OPTIONS.map(p => ({ value: p, label: PRIORITY_META[p] ?? p }))}
+                    disabled={loading}
+                    className={`${inputCls} h-11 cursor-pointer`}
+                  />
                 </Field>
               </div>
               {error && <p className="text-label-sm text-[#fca5a5]">{error}</p>}

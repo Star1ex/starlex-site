@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
+import { X } from 'lucide-react';
 import MarkdownPreview from '@/features/markdown/MarkdownPreview.js';
 import type { Task, User } from '@/entities/types.js';
 import { taskService } from '@/services/api/index.js';
@@ -17,7 +18,6 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
   onClose,
   task,
   onSuccess,
-  teamId,
 }) => {
   const [formData, setFormData] = useState({
     task: '',
@@ -84,7 +84,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
 
         onSuccess();
         onClose();
-      } catch (error) {
+      } catch {
         // error handled
       } finally {
         setIsLoading(false);
@@ -109,9 +109,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
               onClick={onClose}
               className="flex-shrink-0 p-2 text-gray-400 dark:text-dark-text-muted hover:text-gray-600 dark:hover:text-dark-text hover:bg-gray-100 dark:hover:bg-dark-border rounded-lg transition-all duration-200"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
+              <X className="w-5 h-5" strokeWidth={1.55} />
             </button>
           </div>
         </div>

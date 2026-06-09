@@ -1,10 +1,54 @@
 import { httpClient } from './client.js';
 import { UserDTO, UserProfileDTO, UpdateUserRequest, WorkspaceDTO, NotificationPreferences } from '../../types/dto.js';
 
+function normalizeWorkspace(raw: unknown): WorkspaceDTO {
+  const data = raw as Partial<WorkspaceDTO> & { workspace_id?: string };
+  return {
+    id: data.id ?? data.workspace_id ?? '',
+    name: data.name ?? '',
+    description: data.description ?? '',
+    icon: data.icon ?? '',
+    color: data.color ?? '',
+    key_prefix: data.key_prefix,
+    default_task_status: data.default_task_status,
+    member_default_role: data.member_default_role,
+    role: data.role,
+    member_count: data.member_count ?? 0,
+    project_count: data.project_count ?? 0,
+    created_at: data.created_at,
+  };
+}
+
+type UserResponseShape = Partial<UserDTO> & {
+  first_name?: string;
+  last_name?: string;
+};
+
+function normalizeUser(raw: unknown): UserDTO {
+  const data = raw as UserResponseShape;
+  return {
+    id: data.id ?? '',
+    email: data.email ?? '',
+    firstName: data.firstName ?? data.first_name ?? '',
+    lastName: data.lastName ?? data.last_name ?? '',
+    role: data.role ?? '',
+    photo_url: data.photo_url ?? null,
+    avatar_url: data.avatar_url ?? null,
+    auth_providers: data.auth_providers ?? [],
+    google_id: data.google_id ?? null,
+    github_id: data.github_id ?? null,
+    email_verified: data.email_verified ?? false,
+  };
+}
+
 export const userService = {
   async getProfile(): Promise<UserProfileDTO> {
     const response = await httpClient.get<UserProfileDTO>('/api/users/profile');
-    const d = response.data as any;
+    const d = response.data as UserProfileDTO & {
+      first_name?: string;
+      last_name?: string;
+      is_verified?: boolean;
+    };
     // Normalize fields from snake_case if backend returns them
     return {
       email: d.email,
@@ -24,10 +68,10 @@ export const userService = {
 
   async updateProfile(data: UpdateUserRequest): Promise<{ Status: string }> {
     // Convert camelCase -> snake_case for backend
-    const payload: any = {
+    const payload = {
       email: data.email,
-      first_name: (data as any).firstName ?? (data as any).first_name,
-      last_name: (data as any).lastName ?? (data as any).last_name,
+      first_name: data.firstName,
+      last_name: data.lastName,
       role: data.role,
       photo_url: data.photo_url ?? null,
     };
@@ -52,42 +96,18 @@ export const userService = {
 
   async getWorkspaces(): Promise<WorkspaceDTO[]> {
     const response = await httpClient.get<WorkspaceDTO[]>('/api/users/workspaces');
-    const d = response.data as any[];
-    return (Array.isArray(d) ? d : []).map((w) => ({
-      id: w.id ?? w.workspace_id,
-      name: w.name,
-      description: w.description,
-      icon: w.icon ?? '',
-    }));
+    return (Array.isArray(response.data) ? response.data : []).map(normalizeWorkspace).filter((w) => w.id);
   },
 
   // Public user endpoints
-  async getUserProfileById(userId: string): Promise<any> {
-    const response = await httpClient.get<any>(`/api/users/${userId}/profile`);
-    const d = response.data as any;
-    return {
-      id: d.id,
-      email: d.email,
-      firstName: d.firstName ?? d.first_name,
-      lastName: d.lastName ?? d.last_name,
-      photo_url: d.photo_url ?? null,
-      avatar_url: d.avatar_url ?? null,
-      role: d.role,
-    };
+  async getUserProfileById(userId: string): Promise<UserDTO> {
+    const response = await httpClient.get<unknown>(`/api/users/${userId}/profile`);
+    return normalizeUser(response.data);
   },
 
-  async getUserById(userId: string): Promise<any> {
-    const response = await httpClient.get<any>(`/api/users/${userId}`);
-    const d = response.data as any;
-    return {
-      id: d.id,
-      email: d.email,
-      firstName: d.firstName ?? d.first_name,
-      lastName: d.lastName ?? d.last_name,
-      photo_url: d.photo_url ?? null,
-      avatar_url: d.avatar_url ?? null,
-      role: d.role,
-    };
+  async getUserById(userId: string): Promise<UserDTO> {
+    const response = await httpClient.get<unknown>(`/api/users/${userId}`);
+    return normalizeUser(response.data);
   },
 
   async getNotificationPreferences(): Promise<NotificationPreferences> {

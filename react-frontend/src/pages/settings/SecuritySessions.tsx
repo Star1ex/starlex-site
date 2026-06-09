@@ -56,22 +56,25 @@ export const SecuritySessions: React.FC = () => {
   };
 
   return (
-    <div className="mt-8 pt-6 border-t border-white/8">
+    <section className="settings-section settings-section--subtle">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="label-caps text-white/40">Active sessions</h3>
+        <div>
+          <h3 className="settings-section-title">Active sessions</h3>
+          <p className="settings-section-description">Devices currently signed in to your account.</p>
+        </div>
         {!loading && sessions.length > 0 && (
-          <span className="text-label-sm text-white/30">{sessions.length} device{sessions.length !== 1 ? 's' : ''}</span>
+          <span className="settings-status-pill">{sessions.length} device{sessions.length !== 1 ? 's' : ''}</span>
         )}
       </div>
 
-      {error && <p className="text-label-sm text-[#fca5a5] mb-3">{error}</p>}
+      {error && <p className="settings-message settings-message--error mb-3">{error}</p>}
 
       {loading ? (
         <div className="space-y-2 animate-pulse">
           {[0, 1, 2].map(i => <div key={i} className="h-14 rounded-xl bg-white/4" />)}
         </div>
       ) : sessions.length === 0 ? (
-        <p className="text-label-sm text-white/30 px-3 py-2">No active sessions found</p>
+        <p className="settings-hint px-3 py-2">No active sessions found</p>
       ) : (
         <div className="space-y-1.5">
           {sessions.map(s => {
@@ -81,7 +84,7 @@ export const SecuritySessions: React.FC = () => {
             return (
               <div
                 key={s.id}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl ${isCurrent ? 'bg-white/5 border border-white/10' : 'hover:bg-white/3'} transition-colors`}
+                className="settings-row"
               >
                 <span className={`flex-shrink-0 ${isCurrent ? 'text-[--accent]' : 'text-white/30'}`}>
                   {ua.icon}
@@ -90,7 +93,7 @@ export const SecuritySessions: React.FC = () => {
                   <div className="flex items-center gap-2">
                     <span className="text-body-md text-white/70 truncate text-sm">{ua.label}</span>
                     {isCurrent && (
-                      <span className="text-label-sm text-xs px-1.5 py-0.5 rounded-md bg-[--accent]/20 text-[--accent] flex-shrink-0">
+                      <span className="settings-status-pill !text-[--accent] !bg-[--accent]/15 flex-shrink-0">
                         current
                       </span>
                     )}
@@ -106,7 +109,7 @@ export const SecuritySessions: React.FC = () => {
                   <button
                     onClick={() => handleRevoke(s.id)}
                     disabled={isRevoking}
-                    className="flex-shrink-0 px-3 py-1 rounded-lg text-label-sm text-white/40 hover:text-red-400 hover:bg-red-400/10 transition-colors disabled:opacity-40 text-xs"
+                    className="settings-button !py-1 !px-3 flex-shrink-0 hover:!text-red-300 hover:!bg-red-400/10"
                   >
                     {isRevoking ? <Loader2 size={12} className="animate-spin" /> : 'Revoke'}
                   </button>
@@ -116,6 +119,6 @@ export const SecuritySessions: React.FC = () => {
           })}
         </div>
       )}
-    </div>
+    </section>
   );
 };

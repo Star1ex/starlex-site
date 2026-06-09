@@ -1,33 +1,252 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, CalendarDays, Loader2, Plus, Trash2, User, X } from 'lucide-react';
+import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import {
+  ArrowLeft,
+  CalendarDays,
+  Check,
+  ChevronDown,
+  Flag,
+  Loader2,
+  Plus,
+  Tag,
+  Trash2,
+  X,
+} from 'lucide-react';
 import { taskService, workspaceService } from '@/services/api/index.js';
-import { useWorkspace } from '@/contexts/WorkspaceContext.js';
+import { getLastWorkspaceId, useWorkspace } from '@/contexts/WorkspaceContext.js';
+import { useAuth } from '@/contexts/AuthContext.js';
 import { can } from '@/shared/lib/permissions.js';
 import { showToast } from '@/shared/lib/toast.js';
 import { StatusMenu } from '@/features/taskStatus/StatusMenu.js';
 import RichEditor from '@/features/markdown/RichEditor.js';
-import { LabelPicker } from '@/shared/ui/LabelPicker.js';
+import { InlineLabelChips, LabelPicker } from '@/shared/ui/LabelPicker.js';
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import type { TaskDTO, TaskStatus, TaskPriority, WorkspaceMemberDTO, TaskLabelDTO } from '@/types/dto.js';
+
+type AvatarUser = {
+  firstName: string;
+  lastName: string;
+  photo_url?: string | null;
+  avatar_url?: string | null;
+};
 
 const PRIORITY_OPTS: { value: TaskPriority; label: string; color: string }[] = [
   { value: 'urgent', label: 'Urgent',  color: '#f87171' },
   { value: 'high',   label: 'High',    color: '#fb923c' },
   { value: 'medium', label: 'Medium',  color: '#a78bfa' },
   { value: 'low',    label: 'Low',     color: '#60a5fa' },
-  { value: 'none',   label: 'None',    color: '#475569' },
+  { value: 'none',   label: 'None',    color: '#94a3b8' },
 ];
+
+function emptyTask(workspaceId: string | null): TaskDTO {
+  return {
+    id: '',
+    task: '',
+    description: '',
+    status: 'backlog',
+    priority: 'medium',
+    progress: 'not_started',
+    user_ids: [],
+    workspace_id: workspaceId,
+    project_id: null,
+    owner_id: '',
+    subtasks: [],
+    created_at: '',
+    updated_at: '',
+    assignees: [],
+    labels: [],
+  };
+}
 
 function initials(firstName: string, lastName: string) {
   return [firstName?.[0], lastName?.[0]].filter(Boolean).join('').toUpperCase() || '?';
 }
 
+function dueDateValue(value?: string | null) {
+  return value ? value.slice(0, 10) : '';
+}
+
+function dueDateLabel(value?: string | null) {
+  if (!value) return 'No due date';
+  return new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function priorityConfig(priority: TaskPriority) {
+  return PRIORITY_OPTS.find((p) => p.value === priority) ?? PRIORITY_OPTS[4];
+}
+
+function AssigneeAvatar({ member }: { member: AvatarUser }) {
+  const src = member.photo_url ?? member.avatar_url ?? undefined;
+  const ini = initials(member.firstName, member.lastName);
+  return (
+    <div className="w-6 h-6 rounded-full bg-white/10 flex items-center justify-center text-[10px] font-semibold text-white overflow-hidden flex-shrink-0">
+      {src ? <img src={src} alt={ini} className="w-full h-full object-cover" /> : ini}
+    </div>
+  );
+}
+
+function PropertyBlock({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="py-3 border-b border-white/8 last:border-b-0">
+      <p className="label-caps text-white/30 mb-2">{label}</p>
+      {children}
+    </div>
+  );
+}
+
+interface PriorityMenuProps {
+  priority: TaskPriority;
+  canEdit: boolean;
+  onChange: (priority: TaskPriority) => void;
+}
+
+function PriorityMenu({ priority, canEdit, onChange }: PriorityMenuProps) {
+  const selected = priorityConfig(priority);
+
+  if (!canEdit) {
+    return (
+      <span className="inline-flex items-center gap-2 text-label-sm font-medium" style={{ color: selected.color }}>
+        <Flag size={13} />
+        {selected.label}
+      </span>
+    );
+  }
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="w-full h-9 flex items-center justify-between rounded-lg bg-white/5 hover:bg-white/8 border border-white/8 px-3 text-label-sm transition-colors"
+        >
+          <span className="flex items-center gap-2 font-medium" style={{ color: selected.color }}>
+            <Flag size={13} />
+            {selected.label}
+          </span>
+          <ChevronDown size={14} className="text-white/35" />
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="start"
+        className="glass-menu min-w-[180px] rounded-xl p-1"
+      >
+        {PRIORITY_OPTS.map((p) => (
+          <DropdownMenuItem
+            key={p.value}
+            onSelect={() => onChange(p.value)}
+            className="glass-menu-item flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer hover:bg-white/7 focus:bg-white/7"
+            style={{ color: p.color }}
+          >
+            <Flag size={13} />
+            <span className="text-label-sm">{p.label}</span>
+            {p.value === priority && <Check size={13} className="ml-auto text-white/50" />}
+          </DropdownMenuItem>
+        ))}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
+
+interface AssigneeControlProps {
+  members: WorkspaceMemberDTO[];
+  assignees: NonNullable<TaskDTO['assignees']>;
+  canEdit: boolean;
+  onToggle: (userId: string) => void;
+}
+
+function AssigneeControl({ members, assignees, canEdit, onToggle }: AssigneeControlProps) {
+  const selectedIds = assignees.map((a) => a.id);
+
+  return (
+    <div className="space-y-2">
+      {assignees.length > 0 ? (
+        <div className="flex flex-col gap-1.5">
+          {assignees.map((assignee) => (
+            <div key={assignee.id} className="flex items-center gap-2 rounded-lg bg-white/5 px-2.5 py-2">
+              <AssigneeAvatar member={assignee} />
+              <span className="min-w-0 flex-1 truncate text-label-sm text-white/70">
+                {assignee.firstName} {assignee.lastName}
+              </span>
+              {canEdit && (
+                <button
+                  type="button"
+                  onClick={() => onToggle(assignee.id)}
+                  className="w-6 h-6 rounded-md flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/8 transition-colors"
+                  aria-label="Remove assignee"
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-label-sm text-white/35">No assignees</p>
+      )}
+
+      {canEdit && (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              className="w-full h-9 flex items-center justify-between rounded-lg bg-white/5 hover:bg-white/8 border border-white/8 px-3 text-label-sm text-white/60 transition-colors"
+            >
+              <span className="flex items-center gap-2">
+                <Plus size={13} />
+                Assign people
+              </span>
+              <ChevronDown size={14} className="text-white/35" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="start"
+            className="glass-menu min-w-[240px] max-h-72 rounded-xl p-1"
+          >
+            {members.length === 0 ? (
+              <p className="px-3 py-2 text-xs text-white/30">No workspace members loaded.</p>
+            ) : (
+              members.map((member) => {
+                const active = selectedIds.includes(member.user.id);
+                return (
+                  <DropdownMenuCheckboxItem
+                    key={member.user.id}
+                    checked={active}
+                    onSelect={(event) => {
+                      event.preventDefault();
+                      onToggle(member.user.id);
+                    }}
+                    className="glass-menu-item flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-pointer hover:bg-white/7 focus:bg-white/7"
+                  >
+                    <AssigneeAvatar member={member.user} />
+                    <span className={`min-w-0 flex-1 truncate text-label-sm ${active ? 'text-white' : 'text-white/65'}`}>
+                      {member.user.firstName} {member.user.lastName}
+                    </span>
+                    {active && <Check size={13} className="text-white/50" />}
+                  </DropdownMenuCheckboxItem>
+                );
+              })
+            )}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      )}
+    </div>
+  );
+}
+
 export const TaskDetailPage: React.FC = () => {
   const { taskId } = useParams<{ taskId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { activeWorkspace } = useWorkspace();
+  const { userId } = useAuth();
   const role = activeWorkspace?.role;
-  const workspaceId = activeWorkspace?.id ?? null;
+  const workspaceId = searchParams.get('workspaceId') ?? activeWorkspace?.id ?? getLastWorkspaceId();
 
   const [task, setTask] = useState<TaskDTO | null>(null);
   const [loading, setLoading] = useState(true);
@@ -39,7 +258,13 @@ export const TaskDetailPage: React.FC = () => {
 
   const isNew = taskId === 'new' || !taskId;
   const canEdit = can.editTask(role);
-  const canDelete = task ? can.deleteTask(role, task.owner_id === activeWorkspace?.id) : false;
+  const editable = canEdit || isNew;
+  const canDelete = task ? can.deleteTask(role, task.owner_id === userId) : false;
+  const draft = isNew ? (task ?? emptyTask(workspaceId)) : task;
+
+  const updateDraft = useCallback((updates: Partial<TaskDTO>) => {
+    setTask((prev) => ({ ...emptyTask(workspaceId), ...prev, ...updates }));
+  }, [workspaceId]);
 
   useEffect(() => {
     if (!workspaceId) return;
@@ -62,68 +287,104 @@ export const TaskDetailPage: React.FC = () => {
     return () => ac.abort();
   }, [taskId, isNew]);
 
+  useEffect(() => {
+    const el = titleRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    el.style.height = `${Math.max(el.scrollHeight, 76)}px`;
+  }, [draft?.task]);
+
   const handleTitleChange = useCallback((e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    if (!task) return;
     const title = e.target.value;
+    if (isNew) {
+      updateDraft({ task: title });
+      return;
+    }
+    if (!task) return;
     setTask((prev) => prev ? { ...prev, task: title } : prev);
     if (titleSaveTimer.current) clearTimeout(titleSaveTimer.current);
     titleSaveTimer.current = setTimeout(async () => {
       try { await taskService.updateTaskTitle(task.id, title); } catch { showToast('Failed to save title'); }
     }, 600);
-  }, [task]);
+  }, [isNew, task, updateDraft]);
 
   const handleDescriptionChange = useCallback(async (value: string) => {
-    if (!task) return;
+    if (isNew || !task?.id) {
+      updateDraft({ description: value });
+      return;
+    }
     setTask((prev) => prev ? { ...prev, description: value } : prev);
     try { await taskService.updateTaskDescription(task.id, value); } catch { /* auto-save, silent */ }
-  }, [task]);
+  }, [isNew, task, updateDraft]);
 
   const handleStatusChange = useCallback((next: TaskStatus) => {
+    if (isNew || !task?.id) {
+      updateDraft({ status: next });
+      return;
+    }
     setTask((prev) => prev ? { ...prev, status: next } : prev);
-  }, []);
+  }, [isNew, task, updateDraft]);
 
   const handlePriorityChange = useCallback(async (priority: TaskPriority) => {
-    if (!task) return;
+    if (isNew || !task?.id) {
+      updateDraft({ priority });
+      return;
+    }
     const prev = task.priority;
     setTask((t) => t ? { ...t, priority } : t);
     try { await taskService.updateTaskPriority(task.id, priority); }
     catch { setTask((t) => t ? { ...t, priority: prev } : t); showToast('Failed to update priority'); }
-  }, [task]);
+  }, [isNew, task, updateDraft]);
 
-  const handleAssigneeToggle = useCallback(async (userId: string) => {
-    if (!task) return;
-    const current = (task.assignees ?? []).map((a) => a.id);
-    const next = current.includes(userId) ? current.filter((id) => id !== userId) : [...current, userId];
-    const prevAssignees = task.assignees;
+  const handleAssigneeToggle = useCallback(async (targetUserId: string) => {
+    const current = (task?.assignees ?? []).map((a) => a.id);
+    const next = current.includes(targetUserId)
+      ? current.filter((id) => id !== targetUserId)
+      : [...current, targetUserId];
     const nextAssignees = members.filter((m) => next.includes(m.user.id)).map((m) => ({
       id: m.user.id,
       firstName: m.user.firstName,
       lastName: m.user.lastName,
       photo_url: m.user.photo_url,
+      avatar_url: m.user.avatar_url,
     }));
+
+    if (isNew || !task?.id) {
+      updateDraft({ assignees: nextAssignees, user_ids: next });
+      return;
+    }
+
+    const prevAssignees = task.assignees;
     setTask((t) => t ? { ...t, assignees: nextAssignees } : t);
     try { await taskService.setTaskAssignees(task.id, next); }
     catch { setTask((t) => t ? { ...t, assignees: prevAssignees } : t); showToast('Failed to update assignees'); }
-  }, [task, members]);
+  }, [isNew, task, members, updateDraft]);
 
   const handleLabelsChange = useCallback(async (nextLabels: TaskLabelDTO[]) => {
-    if (!task) return;
+    if (isNew || !task?.id) {
+      updateDraft({ labels: nextLabels });
+      return;
+    }
     const prevLabels = task.labels;
     setTask((t) => t ? { ...t, labels: nextLabels } : t);
     try { await taskService.setTaskLabels(task.id, nextLabels.map((l) => l.id)); }
     catch { setTask((t) => t ? { ...t, labels: prevLabels } : t); showToast('Failed to update labels'); }
-  }, [task]);
+  }, [isNew, task, updateDraft]);
 
   const handleDueDateChange = useCallback(async (date: string | null) => {
-    if (!task) return;
+    if (isNew || !task?.id) {
+      updateDraft({ due_date: date });
+      return;
+    }
     const prev = task.due_date;
     setTask((t) => t ? { ...t, due_date: date } : t);
     try { await taskService.setTaskDueDate(task.id, date); }
     catch { setTask((t) => t ? { ...t, due_date: prev } : t); showToast('Failed to update due date'); }
-  }, [task]);
+  }, [isNew, task, updateDraft]);
 
   const handleCreate = useCallback(async () => {
-    if (!workspaceId || !task?.task.trim()) { showToast('Task title is required'); return; }
+    if (!workspaceId) { showToast('Select a workspace before creating a task'); return; }
+    if (!task?.task.trim()) { showToast('Task title is required'); return; }
     setSaving(true);
     try {
       const created = await taskService.createWorkspaceTask(workspaceId, {
@@ -131,6 +392,7 @@ export const TaskDetailPage: React.FC = () => {
         description: task.description,
         status: task.status,
         priority: task.priority,
+        user_ids: (task.assignees ?? []).map((a) => a.id),
         workspace_id: workspaceId,
       });
       navigate(`/task/${created.id}`, { replace: true });
@@ -154,24 +416,6 @@ export const TaskDetailPage: React.FC = () => {
     );
   }
 
-  const draft = isNew ? (task ?? {
-    id: '',
-    task: '',
-    description: '',
-    status: 'backlog' as TaskStatus,
-    priority: 'medium' as TaskPriority,
-    progress: 'not_started' as const,
-    user_ids: [],
-    workspace_id: workspaceId,
-    project_id: null,
-    owner_id: '',
-    subtasks: [],
-    created_at: '',
-    updated_at: '',
-    assignees: [],
-    labels: [],
-  } satisfies TaskDTO) : task;
-
   if (!draft) return (
     <div className="flex flex-col items-center justify-center h-64 gap-3">
       <p className="text-white/40">Task not found</p>
@@ -179,231 +423,196 @@ export const TaskDetailPage: React.FC = () => {
     </div>
   );
 
-  const assigneeIds = (draft.assignees ?? []).map((a) => a.id);
+  const selectedLabels = (draft.labels ?? []) as TaskLabelDTO[];
+  const selectedAssignees = draft.assignees ?? [];
 
   return (
-    <div className="max-w-3xl mx-auto px-4 py-6">
-      {/* Back */}
-      <button
-        onClick={() => navigate(-1)}
-        className="flex items-center gap-1.5 mb-6 text-label-sm text-white/40 hover:text-white/70 transition-colors"
-      >
-        <ArrowLeft size={13} /> Back
-      </button>
+    <div className="mx-auto w-full max-w-[1180px] px-4 py-6">
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <button
+          onClick={() => navigate(-1)}
+          className="flex items-center gap-1.5 text-label-sm text-white/40 hover:text-white/75 transition-colors"
+        >
+          <ArrowLeft size={14} /> Back
+        </button>
 
-      {/* Header: title + key */}
-      <div className="glass-card p-6 rounded-2xl mb-4">
-        <div className="flex items-start gap-3 mb-4">
-          {draft.key && (
-            <span className="font-mono text-[11px] text-white/30 tabular-nums mt-1 flex-shrink-0">{draft.key}</span>
-          )}
-          <textarea
-            ref={titleRef}
-            value={draft.task}
-            onChange={isNew ? (e) => setTask((t) => t ? { ...t, task: e.target.value } : { ...draft, task: e.target.value }) : handleTitleChange}
-            disabled={!canEdit && !isNew}
-            rows={2}
-            placeholder="Task title"
-            className="flex-1 bg-transparent resize-none text-headline-md font-hanken font-semibold text-white placeholder-white/20 focus:outline-none leading-snug"
-          />
-          {canDelete && !isNew && (
-            <button onClick={handleDelete} className="flex-shrink-0 p-1.5 rounded-lg text-white/30 hover:text-red-400 hover:bg-white/5 transition-colors">
-              <Trash2 size={14} />
-            </button>
-          )}
-        </div>
-
-        {/* Meta row */}
-        <div className="flex flex-wrap items-center gap-3">
-          <StatusMenu
-            taskId={draft.id}
-            status={draft.status}
-            canEdit={canEdit || isNew}
-            onStatusChange={isNew ? (s) => setTask((t) => t ? { ...t, status: s } : { ...draft, status: s }) : handleStatusChange}
-          />
-
-          {/* Priority */}
-          <div className="relative group">
-            <button className={`flex items-center gap-1.5 text-label-sm px-2.5 py-1 rounded-full font-medium transition-colors ${canEdit || isNew ? 'hover:bg-white/8 cursor-pointer' : 'cursor-default'}`}>
-              {(() => {
-                const pc = PRIORITY_OPTS.find((p) => p.value === draft.priority) ?? PRIORITY_OPTS[4];
-                return <span style={{ color: pc.color }}>{pc.label}</span>;
-              })()}
-            </button>
-            {(canEdit || isNew) && (
-              <div className="absolute left-0 top-full mt-1 glass-card border-white/10 bg-black/80 backdrop-blur-2xl rounded-xl p-1 min-w-[130px] z-50 hidden group-hover:block">
-                {PRIORITY_OPTS.map((p) => (
-                  <button
-                    key={p.value}
-                    onClick={() => isNew
-                      ? setTask((t) => t ? { ...t, priority: p.value } : { ...draft, priority: p.value })
-                      : handlePriorityChange(p.value)
-                    }
-                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-label-sm hover:bg-white/8 transition-colors text-left"
-                    style={{ color: p.color }}
-                  >
-                    {p.label}
-                    {p.value === draft.priority && (
-                      <svg className="ml-auto w-3 h-3 opacity-50" viewBox="0 0 12 12" fill="none">
-                        <path d="M2 6l3 3 5-5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                    )}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Due date */}
-          <label className={`flex items-center gap-1.5 text-label-sm text-white/50 rounded-full px-2.5 py-1 ${canEdit || isNew ? 'hover:bg-white/8 cursor-pointer' : 'cursor-default'}`}>
-            <CalendarDays size={12} />
-            {draft.due_date
-              ? new Date(draft.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-              : 'No due date'
-            }
-            {(canEdit || isNew) && (
-              <input
-                type="date"
-                className="sr-only"
-                value={draft.due_date ? draft.due_date.slice(0, 10) : ''}
-                onChange={(e) => {
-                  const val = e.target.value ? `${e.target.value}T00:00:00Z` : null;
-                  if (isNew) setTask((t) => t ? { ...t, due_date: val } : { ...draft, due_date: val });
-                  else handleDueDateChange(val);
-                }}
-              />
-            )}
-          </label>
-        </div>
-      </div>
-
-      {/* Sidebar-style meta: assignees + labels */}
-      <div className="grid grid-cols-[1fr_1fr] gap-4 mb-4">
-        {/* Assignees */}
-        <div className="glass-card p-4 rounded-2xl">
-          <p className="label-caps text-white/30 mb-2 flex items-center gap-1"><User size={10} /> Assignees</p>
-          <div className="flex flex-wrap gap-2">
-            {(draft.assignees ?? []).map((a) => {
-              const src = a.photo_url ?? a.avatar_url ?? undefined;
-              const ini = initials(a.firstName, a.lastName);
-              return (
-                <div key={a.id} className="flex items-center gap-1.5 bg-white/5 rounded-full px-2 py-1">
-                  <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-[8px] font-bold text-white overflow-hidden">
-                    {src ? <img src={src} alt={ini} className="w-full h-full object-cover" /> : ini}
-                  </div>
-                  <span className="text-[10px] text-white/60">{a.firstName}</span>
-                  {(canEdit || isNew) && (
-                    <button onClick={() => handleAssigneeToggle(a.id)} className="text-white/30 hover:text-white/60">
-                      <X size={10} />
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-            {(canEdit || isNew) && members.filter((m) => !assigneeIds.includes(m.user.id)).length > 0 && (
-              <div className="relative group">
-                <button className="flex items-center gap-1 text-[10px] text-white/30 hover:text-white/60 bg-white/5 hover:bg-white/8 rounded-full px-2 py-1 transition-colors">
-                  <Plus size={10} /> Add
-                </button>
-                <div className="absolute left-0 top-full mt-1 glass-card border-white/10 bg-black/80 backdrop-blur-2xl rounded-xl p-1 min-w-[180px] z-50 hidden group-hover:block max-h-48 overflow-y-auto">
-                  {members.filter((m) => !assigneeIds.includes(m.user.id)).map((m) => {
-                    const src = m.user.photo_url ?? m.user.avatar_url ?? undefined;
-                    const ini = initials(m.user.firstName, m.user.lastName);
-                    return (
-                      <button
-                        key={m.user.id}
-                        onClick={() => handleAssigneeToggle(m.user.id)}
-                        className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-white/8 transition-colors text-left"
-                      >
-                        <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-[8px] font-bold text-white overflow-hidden flex-shrink-0">
-                          {src ? <img src={src} alt={ini} className="w-full h-full object-cover" /> : ini}
-                        </div>
-                        <span className="text-label-sm text-white/70">{m.user.firstName} {m.user.lastName}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-            {assigneeIds.length === 0 && !canEdit && !isNew && (
-              <span className="text-label-sm text-white/30">No assignees</span>
-            )}
-          </div>
-        </div>
-
-        {/* Labels */}
-        <div className="glass-card p-4 rounded-2xl">
-          <p className="label-caps text-white/30 mb-2">Labels</p>
-          {(canEdit || isNew) ? (
-            <LabelPicker
-              workspaceId={workspaceId ?? ''}
-              selected={(draft.labels ?? []) as TaskLabelDTO[]}
-              onChange={(nextLabels) => {
-                if (isNew) setTask((t) => t ? { ...t, labels: nextLabels } : { ...draft, labels: nextLabels });
-                else handleLabelsChange(nextLabels);
-              }}
-            />
-          ) : (
-            <div className="flex flex-wrap gap-1.5">
-              {(draft.labels ?? []).map((l) => (
-                <span key={l.id} className="text-[10px] px-1.5 py-0.5 rounded-full font-medium" style={{ background: `${l.color}22`, color: l.color, border: `1px solid ${l.color}44` }}>
-                  {l.name}
-                </span>
-              ))}
-              {(draft.labels ?? []).length === 0 && <span className="text-label-sm text-white/30">No labels</span>}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Description */}
-      <div className="glass-card p-6 rounded-2xl mb-4">
-        <p className="label-caps text-white/30 mb-3">Description</p>
-        {(canEdit || isNew) ? (
-          <RichEditor
-            value={draft.description}
-            onChange={isNew ? (v: string) => setTask((t) => t ? { ...t, description: v } : { ...draft, description: v }) : handleDescriptionChange}
-            placeholder="Add a description..."
-          />
-        ) : (
-          <div className="text-body-md text-white/70 leading-relaxed whitespace-pre-wrap">
-            {draft.description || <span className="text-white/30">No description</span>}
-          </div>
+        {canDelete && !isNew && (
+          <button
+            type="button"
+            onClick={handleDelete}
+            className="h-8 px-2.5 rounded-lg inline-flex items-center gap-1.5 text-label-sm text-white/35 hover:text-red-300 hover:bg-red-500/10 transition-colors"
+          >
+            <Trash2 size={14} />
+            Delete
+          </button>
         )}
       </div>
 
-      {/* Subtasks */}
-      {!isNew && (draft.subtasks ?? []).length > 0 && (
-        <div className="glass-card p-6 rounded-2xl mb-4">
-          <p className="label-caps text-white/30 mb-3">Subtasks</p>
-          <div className="flex flex-col gap-2">
-            {draft.subtasks.map((sub) => (
-              <div key={sub.id} className="flex items-center gap-2">
-                <div className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${sub.is_done ? 'bg-emerald-500/30 border-emerald-500/50' : 'border-white/20'}`}>
-                  {sub.is_done && <svg className="w-2.5 h-2.5 text-emerald-400" viewBox="0 0 10 10" fill="none"><path d="M2 5l2.5 2.5 3.5-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
-                </div>
-                <span className={`text-body-sm ${sub.is_done ? 'line-through text-white/30' : 'text-white/70'}`}>{sub.title}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+      <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_330px] gap-6 items-start">
+        <main className="min-w-0 space-y-4">
+          <section className="glass-card rounded-2xl p-6">
+            <div className="mb-4 flex items-center gap-2 text-[11px] font-mono uppercase tracking-[0.14em] text-white/30">
+              <span>{draft.key || 'New task'}</span>
+              <span className="h-1 w-1 rounded-full bg-white/20" />
+              <span>{activeWorkspace?.name || 'Workspace'}</span>
+            </div>
 
-      {/* Create button */}
-      {isNew && (
-        <div className="flex justify-end gap-3">
-          <button onClick={() => navigate(-1)} className="px-4 py-2 text-label-sm text-white/50 hover:text-white/80 transition-colors">
-            Cancel
-          </button>
-          <button
-            onClick={handleCreate}
-            disabled={saving || !draft.task.trim()}
-            className="liquid-button px-5 py-2 text-label-sm disabled:opacity-50"
-          >
-            {saving ? 'Creating…' : 'Create task'}
-          </button>
-        </div>
-      )}
+            <textarea
+              ref={titleRef}
+              value={draft.task}
+              onChange={handleTitleChange}
+              disabled={!editable}
+              rows={2}
+              placeholder="Task title"
+              className="block w-full min-h-[76px] resize-none overflow-hidden bg-transparent text-[28px] leading-tight font-hanken font-semibold text-white placeholder-white/20 focus:outline-none disabled:opacity-70"
+            />
+          </section>
+
+          <section className="glass-card rounded-2xl overflow-hidden">
+            <div className="flex items-center justify-between gap-3 px-6 py-4 border-b border-white/8">
+              <div>
+                <h2 className="text-body-md font-medium text-white/75">Description</h2>
+                <p className="text-label-sm text-white/30 mt-0.5">Write the task context, checklist, notes, or links.</p>
+              </div>
+            </div>
+            <div className="min-h-[340px] px-6 py-5">
+              {editable ? (
+                <RichEditor
+                  value={draft.description}
+                  onChange={handleDescriptionChange}
+                  placeholder="Add a description..."
+                  containerClassName="min-h-[300px]"
+                />
+              ) : (
+                <div className="text-body-md text-white/70 leading-relaxed whitespace-pre-wrap">
+                  {draft.description || <span className="text-white/30">No description</span>}
+                </div>
+              )}
+            </div>
+          </section>
+
+          {!isNew && (draft.subtasks ?? []).length > 0 && (
+            <section className="glass-card rounded-2xl p-6">
+              <h2 className="text-body-md font-medium text-white/75 mb-3">Subtasks</h2>
+              <div className="flex flex-col gap-2">
+                {draft.subtasks.map((sub) => (
+                  <div key={sub.id} className="flex items-center gap-2">
+                    <div className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${sub.is_done ? 'bg-emerald-500/30 border-emerald-500/50' : 'border-white/20'}`}>
+                      {sub.is_done && <Check size={10} className="text-emerald-300" />}
+                    </div>
+                    <span className={`text-body-sm ${sub.is_done ? 'line-through text-white/30' : 'text-white/70'}`}>{sub.title}</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
+          {isNew && (
+            <div className="flex justify-end gap-3">
+              <button onClick={() => navigate(-1)} className="px-4 py-2 text-label-sm text-white/50 hover:text-white/80 transition-colors">
+                Cancel
+              </button>
+              <button
+                onClick={handleCreate}
+                disabled={saving || !draft.task.trim() || !workspaceId}
+                className="liquid-button px-5 py-2 text-label-sm disabled:opacity-50"
+              >
+                {saving ? 'Creating...' : 'Create task'}
+              </button>
+            </div>
+          )}
+        </main>
+
+        <aside className="glass-card rounded-2xl p-4 xl:sticky xl:top-28">
+          <div className="flex items-center gap-2 pb-3 border-b border-white/8">
+            <div className="w-8 h-8 rounded-lg bg-white/6 flex items-center justify-center text-white/45">
+              <Tag size={15} />
+            </div>
+            <div>
+              <h2 className="text-body-md font-medium text-white/80">Properties</h2>
+              <p className="text-label-sm text-white/30">Status, people, labels, date</p>
+            </div>
+          </div>
+
+          <PropertyBlock label="Status">
+            <StatusMenu
+              taskId={draft.id}
+              status={draft.status}
+              canEdit={editable}
+              onStatusChange={handleStatusChange}
+            />
+          </PropertyBlock>
+
+          <PropertyBlock label="Priority">
+            <PriorityMenu priority={draft.priority} canEdit={editable} onChange={handlePriorityChange} />
+          </PropertyBlock>
+
+          <PropertyBlock label="Due date">
+            {editable ? (
+              <div className="flex items-center gap-2">
+                <label className="relative flex-1">
+                  <CalendarDays size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-white/35 pointer-events-none" />
+                  <input
+                    type="date"
+                    value={dueDateValue(draft.due_date)}
+                    onChange={(e) => handleDueDateChange(e.target.value ? `${e.target.value}T00:00:00Z` : null)}
+                    className="w-full h-9 rounded-lg bg-white/5 border border-white/8 pl-9 pr-3 text-label-sm text-white/70 outline-none hover:bg-white/8 focus:border-white/20 [color-scheme:dark]"
+                  />
+                </label>
+                {draft.due_date && (
+                  <button
+                    type="button"
+                    onClick={() => handleDueDateChange(null)}
+                    className="w-9 h-9 rounded-lg flex items-center justify-center text-white/30 hover:text-white/70 hover:bg-white/8 transition-colors"
+                    aria-label="Clear due date"
+                  >
+                    <X size={13} />
+                  </button>
+                )}
+              </div>
+            ) : (
+              <span className="inline-flex items-center gap-2 text-label-sm text-white/60">
+                <CalendarDays size={13} />
+                {dueDateLabel(draft.due_date)}
+              </span>
+            )}
+          </PropertyBlock>
+
+          <PropertyBlock label="Assignees">
+            <AssigneeControl
+              members={members}
+              assignees={selectedAssignees}
+              canEdit={editable}
+              onToggle={handleAssigneeToggle}
+            />
+          </PropertyBlock>
+
+          <PropertyBlock label="Labels">
+            <div className="space-y-2">
+              {selectedLabels.length > 0 ? (
+                <InlineLabelChips labels={selectedLabels} maxVisible={8} />
+              ) : (
+                <p className="text-label-sm text-white/35">No labels</p>
+              )}
+              {editable && (
+                <LabelPicker
+                  workspaceId={workspaceId ?? ''}
+                  selected={selectedLabels}
+                  onChange={handleLabelsChange}
+                  label="Edit labels"
+                  triggerClassName="w-full h-9 flex items-center justify-between rounded-lg bg-white/5 hover:bg-white/8 border border-white/8 px-3 text-label-sm text-white/60 transition-colors disabled:opacity-40"
+                />
+              )}
+            </div>
+          </PropertyBlock>
+
+          {!isNew && (
+            <div className="pt-3 text-[11px] text-white/25 leading-relaxed">
+              Updated {draft.updated_at ? new Date(draft.updated_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'recently'}
+            </div>
+          )}
+        </aside>
+      </div>
     </div>
   );
 };

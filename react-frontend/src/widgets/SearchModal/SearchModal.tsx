@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Search, Users, Layers, FileText, ArrowRight, Loader, Plus, CircleCheck, Home, FolderKanban } from 'lucide-react';
+import { Search, Users, Layers, FileText, ArrowRight, Loader, Plus, CircleCheck, Home, Kanban as ProjectsIcon } from 'lucide-react';
 import { searchService, type GlobalSearchResponse } from '@/services/api/search.service.js';
 import { useDebounce } from '@/shared/hooks/useDebounce.js';
 import { useWorkspace } from '@/contexts/WorkspaceContext.js';
@@ -42,9 +42,9 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
   const quickActions = useCallback((): QuickAction[] => {
     const wsId = activeWorkspaceId ?? '';
     const actions: QuickAction[] = [
-      { id: 'new-task',  label: 'New task',      icon: <Plus size={14} />,         url: wsId ? `/task/new?workspaceId=${wsId}` : '/task/new',  hint: 'C' },
+      { id: 'new-task',  label: 'New task',      icon: <Plus size={14} />,         url: wsId ? `/task/new?workspaceId=${wsId}` : '/dashboard',  hint: 'C' },
       { id: 'home',      label: 'Home',           icon: <Home size={14} />,         url: wsId ? `/workspace/${wsId}` : '/dashboard' },
-      { id: 'projects',  label: 'Projects',       icon: <FolderKanban size={14} />, url: wsId ? `/workspace/${wsId}?view=projects` : '/dashboard' },
+      { id: 'projects',  label: 'Projects',       icon: <ProjectsIcon size={14} />, url: wsId ? `/workspace/${wsId}?view=projects` : '/dashboard' },
       { id: 'my-issues', label: 'My Issues',      icon: <CircleCheck size={14} />,  url: '/my-issues' },
     ];
     const views = getAllViews();
@@ -61,12 +61,14 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
 
   // Focus input when opens
   useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 50);
+    if (!isOpen) return;
+    const timer = window.setTimeout(() => {
+      inputRef.current?.focus();
       setQuery('');
       setResults([]);
       setSelected(0);
-    }
+    }, 50);
+    return () => window.clearTimeout(timer);
   }, [isOpen]);
 
   // Escape to close
@@ -83,14 +85,18 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
     abortRef.current?.abort();
 
     if (!debouncedQuery.trim()) {
-      setResults([]);
-      setLoading(false);
-      return;
+      const timer = window.setTimeout(() => {
+        setResults([]);
+        setLoading(false);
+      }, 0);
+      return () => window.clearTimeout(timer);
     }
 
     const ctrl = new AbortController();
     abortRef.current = ctrl;
-    setLoading(true);
+    const loadingTimer = window.setTimeout(() => {
+      if (!ctrl.signal.aborted) setLoading(true);
+    }, 0);
 
     searchService.globalSearch(debouncedQuery, ctrl.signal)
       .then((data: GlobalSearchResponse) => {
@@ -113,7 +119,10 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
         setLoading(false);
       });
 
-    return () => ctrl.abort();
+    return () => {
+      window.clearTimeout(loadingTimer);
+      ctrl.abort();
+    };
   }, [debouncedQuery, isOpen]);
 
   const open = useCallback((item: ResultItem) => {

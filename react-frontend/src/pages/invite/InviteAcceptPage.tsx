@@ -49,11 +49,18 @@ export const InviteAcceptPage: React.FC = () => {
     }
     setJoining(true);
     try {
-      await workspaceService.acceptInvite(token);
+      const acceptedWorkspace = await workspaceService.acceptInvite(token);
       setJoined(true);
-      const ws = preview?.workspace;
+      const ws = acceptedWorkspace.id ? acceptedWorkspace : preview?.workspace;
       if (ws) {
-        setActiveWorkspace({ id: ws.id, name: ws.name, description: '', color: ws.color, icon: ws.icon });
+        setActiveWorkspace({
+          ...acceptedWorkspace,
+          id: ws.id,
+          name: ws.name,
+          description: acceptedWorkspace.description ?? '',
+          color: ws.color,
+          icon: ws.icon,
+        });
         setTimeout(() => navigate(`/workspace/${ws.id}`), 1200);
       } else {
         setTimeout(() => navigate('/dashboard'), 1200);
