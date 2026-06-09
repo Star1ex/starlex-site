@@ -2,6 +2,8 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Users, LayoutList, Kanban } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext.js';
+import { useWorkspace } from '@/contexts/WorkspaceContext.js';
 import { projectService, taskService } from '@/services/api/index.js';
 import type { ProjectDTO, TaskDTO, UserDTO } from '@/types/dto.js';
 import { pageVariants } from '@/shared/lib/animations.js';
@@ -68,6 +70,8 @@ function ProjectMembersPreview({ members }: { members: UserDTO[] }) {
 export const ProjectPage: React.FC = () => {
   const { workspaceId, projectId } = useParams<{ workspaceId: string; projectId: string }>();
   const navigate = useNavigate();
+  const { userId } = useAuth();
+  const { activeWorkspace } = useWorkspace();
 
   const [project, setProject] = useState<ProjectDTO | null>(null);
   const [tasks, setTasks] = useState<TaskDTO[]>([]);
@@ -181,6 +185,8 @@ export const ProjectPage: React.FC = () => {
           onTaskCreated={handleTaskCreated}
           onTaskDeleted={handleDeleteTask}
           onTaskNavigate={id => navigate(`/task/${id}`)}
+          role={activeWorkspace?.role}
+          currentUserId={userId ?? undefined}
         />
       ) : (
         <ProjectBoard tasks={tasks} onTasksChange={setTasks} />

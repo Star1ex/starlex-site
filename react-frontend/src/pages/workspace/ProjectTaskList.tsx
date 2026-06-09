@@ -2,8 +2,9 @@ import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, CheckCircle2, Circle, Clock, MoreHorizontal, Trash2, ChevronRight, X } from 'lucide-react';
 import { projectService } from '@/services/api/index.js';
-import type { TaskDTO, TaskPriority, CreateTaskRequest } from '@/types/dto.js';
+import type { TaskDTO, TaskPriority, CreateTaskRequest, WorkspaceRole } from '@/types/dto.js';
 import { listVariants, listItemVariants, modalBackdropVariants, modalContentVariants } from '@/shared/lib/animations.js';
+import { can } from '@/shared/lib/permissions.js';
 
 const PRIORITY_META: Record<string, { label: string; cls: string }> = {
   high:   { label: 'High',   cls: 'text-orange-400' },
@@ -123,7 +124,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
 interface TaskRowProps {
   task: TaskDTO;
   onNavigate: (id: string) => void;
-  onDelete: (id: string) => void;
+  onDelete?: (id: string) => void;
 }
 
 function TaskRow({ task, onNavigate, onDelete }: TaskRowProps) {
@@ -189,10 +190,12 @@ function TaskRow({ task, onNavigate, onDelete }: TaskRowProps) {
                 className="w-full flex items-center gap-2 px-3 py-2 text-label-sm text-white/70 hover:bg-white/5 transition-colors rounded-lg">
                 <ChevronRight size={13} /> Open
               </button>
-              <button onClick={() => { onDelete(task.id); setMenuOpen(false); }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-label-sm text-red-400 hover:bg-red-900/20 transition-colors rounded-lg">
-                <Trash2 size={13} /> Delete
-              </button>
+              {onDelete && (
+                <button onClick={() => { onDelete(task.id); setMenuOpen(false); }}
+                  className="w-full flex items-center gap-2 px-3 py-2 text-label-sm text-red-400 hover:bg-red-900/20 transition-colors rounded-lg">
+                  <Trash2 size={13} /> Delete
+                </button>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
@@ -213,6 +216,8 @@ interface ProjectTaskListProps {
   onTaskCreated: (t: TaskDTO) => void;
   onTaskDeleted: (id: string) => void;
   onTaskNavigate: (id: string) => void;
+  role?: WorkspaceRole;
+  currentUserId?: string;
 }
 
 export const ProjectTaskList: React.FC<ProjectTaskListProps> = ({
@@ -225,14 +230,20 @@ export const ProjectTaskList: React.FC<ProjectTaskListProps> = ({
   onTaskCreated,
   onTaskDeleted,
   onTaskNavigate,
-}) => (
+  role,
+  currentUserId,
+}) => {
+  const canCreate = can.createTask(role);
+  return (
   <section>
     <div className="flex items-center justify-between mb-4">
       <h2 className="label-caps text-white/40">Tasks</h2>
-      <button onClick={onCreateOpen} className="liquid-button gap-1.5 !py-1.5 !px-3 !text-label-sm">
-        <Plus size={13} />
-        New Task
-      </button>
+      {canCreate && (
+        <button onClick={onCreateOpen} className="liquid-button gap-1.5 !py-1.5 !px-3 !text-label-sm">
+          <Plus size={13} />
+          New Task
+        </button>
+      )}
     </div>
 
     {tasks.length === 0 ? (
@@ -247,9 +258,11 @@ export const ProjectTaskList: React.FC<ProjectTaskListProps> = ({
         </div>
         <p className="text-body-md font-medium text-white/50 mb-1">No tasks yet</p>
         <p className="text-label-sm text-white/30 mb-5">Add the first task to get started</p>
-        <button onClick={onCreateOpen} className="liquid-button gap-1.5 !bg-[--accent] !border-transparent !text-white">
-          <Plus size={14} /> Add Task
-        </button>
+        {canCreate && (
+          <button onClick={onCreateOpen} className="liquid-button gap-1.5 !bg-[--accent] !border-transparent !text-white">
+            <Plus size={14} /> Add Task
+          </button>
+        )}
       </motion.div>
     ) : (
       <motion.div variants={listVariants} initial="initial" animate="animate" className="space-y-0.5">
@@ -258,7 +271,7 @@ export const ProjectTaskList: React.FC<ProjectTaskListProps> = ({
             key={t.id}
             task={t}
             onNavigate={onTaskNavigate}
-            onDelete={onTaskDeleted}
+            onDelete={can.deleteTask(role, t.owner_id === currentUserId) ? onTaskDeleted : undefined}
           />
         ))}
       </motion.div>
@@ -272,4 +285,5 @@ export const ProjectTaskList: React.FC<ProjectTaskListProps> = ({
       workspaceId={workspaceId}
     />
   </section>
-);
+  );
+};
