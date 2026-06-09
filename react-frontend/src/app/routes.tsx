@@ -18,7 +18,6 @@ const OnboardingPage  = React.lazy(() => import('@/pages/onboarding/OnboardingPa
 const VerifyEmailPage = React.lazy(() => import('@/pages/verify/VerifyEmailPage.js').then(m => ({ default: m.VerifyEmailPage })));
 const WorkspacePage   = React.lazy(() => import('@/pages/workspace/WorkspacePage.js').then(m => ({ default: m.WorkspacePage })));
 const ProjectPage     = React.lazy(() => import('@/pages/workspace/ProjectPage.js').then(m => ({ default: m.ProjectPage })));
-const GeneralSettings = React.lazy(() => import('@/pages/settings/GeneralSettings.js').then(m => ({ default: m.GeneralSettings })));
 const AboutUs         = React.lazy(() => import('@/pages/about-us/AboutUs.js').then(m => ({ default: m.default })));
 const ProfilePage     = React.lazy(() => import('@/pages/profile/UserProfile.js').then(m => ({ default: m.default })));
 const UserProfilePage = React.lazy(() => import('@/pages/profile/UserProfilePage.js').then(m => ({ default: m.UserProfilePage })));
@@ -29,7 +28,6 @@ const MyIssuesPage      = React.lazy(() => import('@/pages/tasks/MyIssuesPage.js
 
 function preloadRoutes() {
   import('@/pages/workspace/WorkspacePage.js');
-  import('@/pages/settings/GeneralSettings.js');
   import('@/pages/profile/UserProfile.js');
   import('@/pages/profile/UserProfilePage.js');
 }

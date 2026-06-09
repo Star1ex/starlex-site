@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useEffect } from 'react';
-import MarkdownPreview from '@/components/TaskView/MarkdownPreview.js';
+import MarkdownPreview from '@/features/markdown/MarkdownPreview.js';
 import type { Task, User } from '@/entities/types.js';
 import { taskService } from '@/services/api/index.js';
 

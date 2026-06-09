@@ -8,8 +8,6 @@ import { useTheme } from '@/shared/contexts/ThemeContext.js';
 import { useAuth } from '@/contexts/AuthContext.js';
 import type { User } from '@/entities/types.js';
 import { useSidebarResize } from '@/hooks/useSidebarResize.js';
-import SidebarHeader from '@/components/Sidebar/SidebarHeader.js';
-import ResizeHandle from '@/components/Sidebar/ResizeHandle.js';
 
 interface SettingsSidebarProps {
   isOpen: boolean;
@@ -119,7 +117,11 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
     >
       {!isCollapsed && (
         <div className="h-full flex flex-col">
-          <SidebarHeader onToggleCollapse={collapse} />
+          <div className="flex items-center justify-between px-3 py-2 border-b border-gray-100 dark:border-dark-border">
+            <button onClick={collapse} className="p-1 rounded hover:bg-gray-100 dark:hover:bg-dark-border text-gray-500" aria-label="Collapse sidebar">
+              <ChevronLeft className="w-4 h-4" />
+            </button>
+          </div>
 
           <div className="flex-1 overflow-y-auto overflow-x-hidden px-2 py-2 space-y-1">
             <button
@@ -252,7 +254,10 @@ export const SettingsSidebar: React.FC<SettingsSidebarProps> = ({
         </div>
       )}
 
-      <ResizeHandle onMouseDown={handleMouseDown} isResizing={isResizing} />
+      <div
+        onMouseDown={handleMouseDown}
+        className={`absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-blue-400/40 ${isResizing ? 'bg-blue-400/60' : ''} transition-colors`}
+      />
 
       {isCollapsed && (
         <button
