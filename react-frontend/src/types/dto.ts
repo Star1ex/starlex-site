@@ -1,36 +1,7 @@
-// ==================== FOLDER DTOs ====================
-export interface FolderDTO {
-  id: string;
-  name: string;
-  color: string;
-  icon: string;
-  parent_id: string | null;
-  workspace_id: string | null;
-  owner_id: string;
-  position: number;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface CreateFolderRequest {
-  name: string;
-  color?: string;
-  icon?: string;
-  parent_id?: string | null;
-  workspace_id?: string | null;
-  owner_id: string;
-  position?: number;
-}
-
-export interface FolderMoveRequest {
-  folder_id: string;
-  parent_id: string;
-}
-
 // ==================== TASK DTOs ====================
 export type TaskProgress = 'not_started' | 'in_progress' | 'done';
-export type TaskPriority = 'low' | 'medium' | 'high';
-export type TaskStatus = 'backlog' | 'todo' | 'in_progress' | 'in_review' | 'done';
+export type TaskPriority = 'none' | 'low' | 'medium' | 'high' | 'urgent';
+export type TaskStatus = 'backlog' | 'todo' | 'in_progress' | 'in_review' | 'done' | 'canceled';
 
 export interface TaskLabelDTO {
   id: string;
@@ -55,14 +26,14 @@ export interface TaskDTO {
   user_ids: string[];
   assignees?: TaskAssigneeDTO[];
   workspace_id: string | null;
-  folder_id: string | null;
   project_id: string | null;
   owner_id: string;
   priority: TaskPriority;
   progress: TaskProgress;
-  status?: TaskStatus;
+  status: TaskStatus;
   labels?: TaskLabelDTO[];
   due_date?: string | null;
+  position?: number;
   subtasks: SubtaskDTO[];
   created_at: string;
   updated_at: string;
@@ -75,7 +46,6 @@ export interface CreateTaskRequest {
   progress?: TaskProgress;
   status?: TaskStatus;
   priority?: TaskPriority;
-  folder_id?: string | null;
   workspace_id?: string | null;
   project_id?: string | null;
   owner_id?: string;
@@ -86,7 +56,6 @@ export interface UpdateTaskRequest {
   description?: string;
   user_ids?: string[];
   priority?: TaskPriority;
-  folder_id?: string | null;
   owner_id?: string;
   updated_at?: string;
 }

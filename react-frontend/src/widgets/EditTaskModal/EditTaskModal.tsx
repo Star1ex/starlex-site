@@ -68,10 +68,6 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
         if ((formData.priority || 'low') !== (task.priority || 'low')) {
           updates.push(taskService.updateTaskPriority(task.id, formData.priority));
         }
-        if ((formData.progress || 'not_started') !== (task.progress || 'not_started')) {
-          updates.push(taskService.updateTaskStatus(task.id, formData.progress as any));
-        }
-
         const originalUserIds =
           task.user_ids?.map((u) => (typeof u === 'string' ? u : u.id)).filter(Boolean) || [];
         const nextUserIds = formData.user_ids || [];
@@ -94,7 +90,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
         setIsLoading(false);
       }
     },
-    [task, formData, teamId, onSuccess, onClose]
+    [task, formData, onSuccess, onClose]
   );
 
   if (!isOpen || !task) return null;
