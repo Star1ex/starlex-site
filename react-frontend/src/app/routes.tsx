@@ -21,10 +21,12 @@ const ProjectPage     = React.lazy(() => import('@/pages/workspace/ProjectPage.j
 const AboutUs         = React.lazy(() => import('@/pages/about-us/AboutUs.js').then(m => ({ default: m.default })));
 const ProfilePage     = React.lazy(() => import('@/pages/profile/UserProfile.js').then(m => ({ default: m.default })));
 const UserProfilePage = React.lazy(() => import('@/pages/profile/UserProfilePage.js').then(m => ({ default: m.UserProfilePage })));
-const TaskView        = React.lazy(() => import('@/components/Tasks/TaskView.js').then(m => ({ default: m.default })));
 const SettingsModal     = React.lazy(() => import('@/widgets/SettingsModal/SettingsModal.js').then(m => ({ default: m.SettingsModal })));
 const InviteAcceptPage  = React.lazy(() => import('@/pages/invite/InviteAcceptPage.js').then(m => ({ default: m.InviteAcceptPage })));
 const MyIssuesPage      = React.lazy(() => import('@/pages/tasks/MyIssuesPage.js').then(m => ({ default: m.MyIssuesPage })));
+const TaskDetailPage    = React.lazy(() => import('@/pages/tasks/TaskDetailPage.js').then(m => ({ default: m.TaskDetailPage })));
+const TaskExplorerPage  = React.lazy(() => import('@/pages/tasks/TaskExplorerPage.js').then(m => ({ default: m.TaskExplorerPage })));
+const MembersPage       = React.lazy(() => import('@/features/members/MembersPage.js').then(m => ({ default: m.MembersPage })));
 
 function preloadRoutes() {
   import('@/pages/workspace/WorkspacePage.js');
@@ -102,11 +104,17 @@ const AnimatedRoutes = () => {
           <Route path="/workspace/:workspaceId/projects/:projectId"
             element={withEB(<RequireAuth><Layout><ProjectPage /></Layout></RequireAuth>)}
           />
+          <Route path="/workspace/:workspaceId/tasks"
+            element={withEB(<RequireAuth><Layout><TaskExplorerPage /></Layout></RequireAuth>)}
+          />
+          <Route path="/workspace/:workspaceId/members"
+            element={withEB(<RequireAuth><Layout><MembersPage /></Layout></RequireAuth>)}
+          />
           <Route path="/task/new"
-            element={withEB(<RequireAuth><Layout><TaskView /></Layout></RequireAuth>)}
+            element={withEB(<RequireAuth><Layout><TaskDetailPage /></Layout></RequireAuth>)}
           />
           <Route path="/task/:taskId"
-            element={withEB(<RequireAuth><Layout><TaskView /></Layout></RequireAuth>)}
+            element={withEB(<RequireAuth><Layout><TaskDetailPage /></Layout></RequireAuth>)}
           />
         </Routes>
       </AnimatePresence>

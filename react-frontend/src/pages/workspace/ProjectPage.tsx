@@ -152,7 +152,10 @@ export const ProjectPage: React.FC = () => {
           project={project}
           members={members}
           tasks={tasks}
+          workspaceRole={activeWorkspace?.role}
           onBack={() => navigate(`/workspace/${workspaceId}`)}
+          onProjectChange={setProject}
+          onProjectDeleted={() => navigate(`/workspace/${workspaceId}`)}
         />
       )}
 

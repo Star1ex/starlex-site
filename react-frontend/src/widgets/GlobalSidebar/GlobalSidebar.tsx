@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, FolderKanban, CircleCheck, Bell, Settings, ChevronDown, Plus, LogOut, User as UserIcon } from 'lucide-react';
+import { Home, FolderKanban, CircleCheck, Bell, Settings, ChevronDown, Plus, LogOut, User as UserIcon, ListChecks, Users } from 'lucide-react';
 import Avatar from '@/shared/ui/Avatar.js';
 import { getAuthUser } from '@/shared/lib/authManager.js';
 import { WorkspaceGlyph } from '@/shared/lib/workspaceIcon.js';
@@ -27,6 +27,8 @@ interface GlobalSidebarProps {
 const NAV_ITEMS = [
   { label: 'Home',       icon: Home,         path: (wsId: string) => `/workspace/${wsId}` },
   { label: 'Projects',   icon: FolderKanban, path: (wsId: string) => `/workspace/${wsId}?view=projects` },
+  { label: 'Tasks',      icon: ListChecks,   path: (wsId: string) => `/workspace/${wsId}/tasks` },
+  { label: 'Members',    icon: Users,        path: (wsId: string) => `/workspace/${wsId}/members` },
   { label: 'My Issues',  icon: CircleCheck,  path: (_wsId: string) => `/my-issues` },
   { label: 'Inbox',      icon: Bell,         path: (wsId: string) => `/workspace/${wsId}?view=inbox` },
 ] as const;
