@@ -11,8 +11,8 @@ export function TaskDragOverlay({ task, canEdit }: TaskDragOverlayProps) {
   return (
     <DragOverlay>
       {task ? (
-        <div className="w-[200px] opacity-95 rotate-1">
-          <TaskBoardCard task={task} canEdit={canEdit} />
+        <div className="w-[200px] opacity-95 rotate-[1.5deg]">
+          <TaskBoardCard task={task} canEdit={canEdit} depth="floating" />
         </div>
       ) : null}
     </DragOverlay>

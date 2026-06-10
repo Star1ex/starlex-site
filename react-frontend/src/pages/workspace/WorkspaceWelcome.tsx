@@ -31,7 +31,7 @@ export const WorkspaceWelcome: React.FC<WorkspaceWelcomeProps> = ({
         </button>
         <button
           onClick={onCreateProject}
-          className="liquid-button gap-2 !bg-[color:var(--starlex-accent)] !border-transparent !text-[color:var(--starlex-accent-contrast)]"
+          className="liquid-button gap-2 !bg-[color:var(--sx-accent)] !border-transparent !text-[color:var(--sx-accent-contrast)]"
         >
           <ProjectsIcon size={15} />
           Create Project

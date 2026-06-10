@@ -43,6 +43,9 @@
     --sx-accent: #d63852;
     --sx-accent-rgb: 214 56 82;
 
+    /* Danger */
+    --sx-danger: #c2473f;
+
     /* Shadows — cool slate, low alpha */
     --sx-shadow-soft: 0 16px 48px rgb(20 24 33 / 0.10);
     --sx-shadow-elevated: 0 32px 80px rgb(20 24 33 / 0.16);

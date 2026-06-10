@@ -7,6 +7,7 @@ import { useWorkspace } from '@/contexts/useWorkspace.js';
 import { Helmet } from 'react-helmet-async';
 import { WorkspaceIdentityForm } from '@/shared/ui/WorkspaceIdentityForm.js';
 import { WORKSPACE_ACCENT_PRESETS } from '@/shared/lib/workspaceIdentity.js';
+import { Glass } from '@/shared/ui/glass/index.js';
 
 export const OnboardingPage: React.FC = () => {
   const navigate = useNavigate();
@@ -40,7 +41,7 @@ export const OnboardingPage: React.FC = () => {
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center p-6"
-      style={{ background: 'var(--sx-body-bg)' }}
+      style={{ background: 'var(--sx-canvas)' }}
     >
       <Helmet>
         <title>Create workspace — Starlex</title>
@@ -65,7 +66,7 @@ export const OnboardingPage: React.FC = () => {
         </div>
 
         {/* Glass card */}
-        <div className="glass-card rounded-2xl p-8 space-y-7">
+        <Glass variant="modal" depth="floating" className="rounded-2xl p-8 space-y-7">
           <form onSubmit={handleSubmit} className="space-y-6">
             <WorkspaceIdentityForm
               name={name}
@@ -86,8 +87,7 @@ export const OnboardingPage: React.FC = () => {
               style={{
                 background: color,
                 borderColor: 'transparent',
-                color: '#fff',
-                boxShadow: `0 8px 32px ${color}40`,
+                color: 'var(--sx-accent-contrast)',
               }}
             >
               <span className="font-semibold">
@@ -96,7 +96,7 @@ export const OnboardingPage: React.FC = () => {
               {!loading && <ArrowRight size={18} />}
             </button>
           </form>
-        </div>
+        </Glass>
 
         <p className="text-center text-[color:var(--sx-text-subtle)] text-label-sm mt-6">
           You can change the name and color in workspace settings later.

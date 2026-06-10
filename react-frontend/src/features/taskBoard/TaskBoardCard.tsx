@@ -4,6 +4,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { CalendarDays, Flag, GripVertical } from 'lucide-react';
 import { normalizeTaskPriority, TASK_PRIORITY_META } from '@/entities/task/model/taskMeta.js';
 import { cn } from '@/shared/lib/cn.js';
+import { Glass, type GlassDepth } from '@/shared/ui/glass/index.js';
 import type { TaskDTO } from '@/types/dto.js';
 
 function fmtDue(iso: string): string {
@@ -19,17 +20,22 @@ interface TaskBoardCardProps {
   task: TaskDTO;
   isDragging?: boolean;
   canEdit: boolean;
+  /** Drag overlay renders the card at a higher elevation. */
+  depth?: GlassDepth;
 }
 
-export function TaskBoardCard({ task, isDragging = false, canEdit }: TaskBoardCardProps) {
+export function TaskBoardCard({ task, isDragging = false, canEdit, depth = 'rest' }: TaskBoardCardProps) {
   const priorityColor = TASK_PRIORITY_META[normalizeTaskPriority(task.priority)].color;
   const isOverdue = task.due_date && new Date(task.due_date) < new Date();
 
   return (
-    <div
+    <Glass
+      variant="card"
+      depth={depth}
+      interactive={canEdit}
       className={cn(
-        'glass-card p-3 rounded-xl select-none transition-all',
-        canEdit ? 'cursor-grab hover:border-[color:var(--sx-border-strong)]' : 'cursor-default',
+        'p-3 select-none',
+        canEdit ? 'cursor-grab' : 'cursor-default',
         isDragging && 'opacity-50 scale-95',
       )}
     >
@@ -52,7 +58,7 @@ export function TaskBoardCard({ task, isDragging = false, canEdit }: TaskBoardCa
           <span
             key={label.id}
             className="text-[9px] px-1.5 py-0.5 rounded-full font-medium"
-            style={{ background: `${label.color}22`, color: label.color, border: `1px solid ${label.color}44` }}
+            style={{ background: `${label.color}22`, color: label.color }}
           >
             {label.name}
           </span>
@@ -65,7 +71,7 @@ export function TaskBoardCard({ task, isDragging = false, canEdit }: TaskBoardCa
               return (
                 <div
                   key={assignee.id}
-                  className="w-5 h-5 rounded-full border border-[color:var(--sx-canvas)] bg-[color:var(--sx-panel-strong)] flex items-center justify-center text-[8px] font-bold text-[color:var(--sx-text)] overflow-hidden"
+                  className="w-5 h-5 rounded-full border border-[color:var(--sx-canvas)] bg-[color:var(--sx-surface-active)] flex items-center justify-center text-[8px] font-bold text-[color:var(--sx-text)] overflow-hidden"
                   style={{ zIndex: 10 - index, marginLeft: index > 0 ? -4 : 0 }}
                 >
                   {src ? <img src={src} alt={initials} className="w-full h-full object-cover" /> : initials}
@@ -75,7 +81,7 @@ export function TaskBoardCard({ task, isDragging = false, canEdit }: TaskBoardCa
           </div>
         )}
       </div>
-    </div>
+    </Glass>
   );
 }
 

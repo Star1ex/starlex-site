@@ -282,7 +282,7 @@ export function ProjectRow({ project, members, lead, onProjectUpdated, onDelete,
       <div className="project-progress-cell">
         <span>{status.progress}%</span>
         <div className="project-row-progress">
-          <div style={{ width: `${status.progress}%`, background: status.dot }} />
+          <div style={{ width: `${status.progress}%` }} />
         </div>
       </div>
 
@@ -314,7 +314,7 @@ export function ProjectRow({ project, members, lead, onProjectUpdated, onDelete,
                   onDelete(project.id);
                   setMenuOpen(null);
                 }}
-                className="dropdown-menu-item !text-[#fca5a5] hover:!bg-[rgba(239,68,68,0.12)]"
+                className="dropdown-menu-item dropdown-menu-item--danger"
               >
                 <Trash2 size={14} strokeWidth={PROJECT_LIST_ICON_STROKE} />
                 Delete

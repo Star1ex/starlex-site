@@ -351,7 +351,7 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
                   <button
                     type="button"
                     onClick={() => { logout(); setShowProfileMenu(false); }}
-                    className="dropdown-menu-item !text-[#fca5a5] hover:!bg-[rgba(239,68,68,0.12)]"
+                    className="dropdown-menu-item dropdown-menu-item--danger"
                   >
                     <LogOut size={14} strokeWidth={ICON_STROKE} />
                     Logout

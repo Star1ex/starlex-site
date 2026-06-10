@@ -34,13 +34,13 @@ export function TaskBoardColumn({ col, tasks, overStatus, canEdit }: TaskBoardCo
         <div
           ref={setNodeRef}
           className={cn(
-            'flex flex-col gap-2 min-h-[96px] rounded-2xl border border-transparent p-1 transition-all',
-            highlighted && 'border-[color:var(--starlex-accent-border)] bg-[color:var(--starlex-accent-soft)]',
+            'flex flex-col gap-2 min-h-[96px] rounded-2xl p-1 transition-colors',
+            highlighted && 'bg-[color:var(--sx-surface-hover)]',
           )}
         >
           {tasks.map((task) => <SortableTaskBoardCard key={task.id} task={task} canEdit={canEdit} />)}
           {tasks.length === 0 && (
-            <div className="h-16 rounded-xl border border-dashed border-[color:var(--sx-border)] flex items-center justify-center">
+            <div className="h-16 rounded-xl bg-[color:var(--sx-surface)] flex items-center justify-center">
               <span className="text-label-sm text-[color:var(--sx-text-disabled)]">{canEdit ? 'Drop here' : 'No tasks'}</span>
             </div>
           )}

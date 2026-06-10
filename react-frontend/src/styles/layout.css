@@ -314,6 +314,17 @@
   .dropdown-menu-item:hover svg {
     color: var(--sx-text-muted);
   }
+  .dropdown-menu-item--danger,
+  .dropdown-menu-item--danger svg {
+    color: var(--sx-danger);
+  }
+  .dropdown-menu-item--danger:hover {
+    background: color-mix(in srgb, var(--sx-danger) 12%, transparent);
+    color: var(--sx-danger);
+  }
+  .dropdown-menu-item--danger:hover svg {
+    color: var(--sx-danger);
+  }
   .dropdown-divider {
     height: 1px;
     background: var(--sx-line);

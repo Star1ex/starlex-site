@@ -1,4 +1,5 @@
 import React, { Suspense } from 'react';
+import { Glass } from '@/shared/ui/glass/index.js';
 import TaskBoard from '@/features/taskBoard/LazyTaskBoard.js';
 import { TaskExplorerFilters } from './TaskExplorerFilters.js';
 import { TaskRow } from './TaskExplorerList.js';
@@ -132,7 +133,7 @@ export function TaskExplorerContent({
         <TaskExplorerFilters categories={categories} params={params} onChange={onFilterChange} />
       )}
 
-      <div className="tasks-table-shell">
+      <Glass variant="panel" depth="raised" className="tasks-table-shell">
         {loading ? (
           <TaskExplorerLoading />
         ) : tasks.length === 0 ? (
@@ -173,7 +174,7 @@ export function TaskExplorerContent({
             )}
           </>
         )}
-      </div>
+      </Glass>
     </div>
   );
 }

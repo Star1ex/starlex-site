@@ -5,12 +5,13 @@ import { workspaceService } from '@/services/api/index.js';
 import type { WorkspaceMemberDTO, WorkspaceRole } from '@/types/dto.js';
 import { showToast } from '@/shared/lib/toast.js';
 import { useAuth } from '@/contexts/useAuth.js';
+import { Glass } from '@/shared/ui/glass/index.js';
 
 const ROLE_META: Record<WorkspaceRole, { label: string; icon: React.ReactNode; cls: string }> = {
   owner:  { label: 'Owner',  icon: <Crown size={11} />,  cls: 'text-[color:var(--priority-high-text)] bg-[color:var(--priority-high-bg)]' },
   admin:  { label: 'Admin',  icon: <Shield size={11} />, cls: 'text-[color:var(--priority-medium-text)] bg-[color:var(--priority-medium-bg)]' },
   member: { label: 'Member', icon: <User size={11} />,   cls: 'text-[color:var(--priority-low-text)] bg-[color:var(--priority-low-bg)]' },
-  guest:  { label: 'Guest',  icon: <Eye size={11} />,    cls: 'text-[color:var(--sx-text-subtle)] bg-[color:var(--sx-panel)]' },
+  guest:  { label: 'Guest',  icon: <Eye size={11} />,    cls: 'text-[color:var(--sx-text-subtle)] bg-[color:var(--sx-surface)]' },
 };
 
 const ROLE_ORDER: WorkspaceRole[] = ['owner', 'admin', 'member', 'guest'];
@@ -20,6 +21,10 @@ function canManage(currentRole: WorkspaceRole | undefined): boolean {
 }
 
 function RoleBadge({ role }: { role: WorkspaceRole }) {
+  // Owner reads as a quiet label-caps mark in the done hue — no crown, no pill.
+  if (role === 'owner') {
+    return <span className="label-caps text-[color:var(--status-done-text)]">Owner</span>;
+  }
   const m = ROLE_META[role] ?? ROLE_META.member;
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-label-sm font-medium ${m.cls}`}>
@@ -53,7 +58,7 @@ function RolePicker({ value, onChange, disabled }: RolePickerProps) {
       <button
         onClick={() => !disabled && setOpen(p => !p)}
         disabled={disabled}
-        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-label-sm text-[color:var(--sx-text-muted)] bg-[color:var(--sx-panel)] hover:bg-[color:var(--sx-control)] transition-colors disabled:opacity-40 disabled:cursor-default"
+        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-sm text-[color:var(--sx-text-muted)] bg-[color:var(--sx-surface)] hover:bg-[color:var(--sx-surface-hover)] transition-colors disabled:opacity-40 disabled:cursor-default"
       >
         {ROLE_META[value]?.label ?? value}
         {!disabled && <ChevronDown size={11} className="text-[color:var(--sx-text-subtle)]" />}
@@ -70,10 +75,10 @@ function RolePicker({ value, onChange, disabled }: RolePickerProps) {
               <button
                 key={r}
                 onClick={() => { onChange(r); setOpen(false); }}
-                className="w-full flex items-center justify-between gap-2 px-3 py-2 text-label-sm text-[color:var(--sx-text-muted)] hover:bg-[color:var(--sx-control)] transition-colors rounded-lg"
+                className="dropdown-menu-item justify-between"
               >
                 {ROLE_META[r].label}
-                {r === value && <Check size={12} className="text-[color:var(--starlex-accent)]" />}
+                {r === value && <Check size={12} className="text-[color:var(--sx-accent)]" />}
               </button>
             ))}
           </motion.div>
@@ -102,11 +107,11 @@ function MemberRow({
   const canEdit = canManage(currentRole) && !isOwner;
 
   return (
-    <div className="flex items-center gap-3 py-3 border-b border-[color:var(--sx-border)] last:border-0">
+    <div className="flex items-center gap-3 px-2 py-2.5 rounded-lg hover:bg-[color:var(--sx-surface-hover)] transition-colors">
       {u.photo_url || u.avatar_url ? (
         <img src={(u.photo_url || u.avatar_url)!} className="w-8 h-8 rounded-full object-cover flex-shrink-0" alt="" />
       ) : (
-        <div className="w-8 h-8 rounded-full bg-[color:var(--sx-panel-strong)] flex items-center justify-center text-sm font-semibold text-[color:var(--sx-text-muted)] flex-shrink-0">
+        <div className="w-8 h-8 rounded-full bg-[color:var(--sx-surface-active)] flex items-center justify-center text-sm font-semibold text-[color:var(--sx-text-muted)] flex-shrink-0">
           {u.firstName.charAt(0)}
         </div>
       )}
@@ -126,7 +131,7 @@ function MemberRow({
         {canEdit && !isCurrentUser && (
           <button
             onClick={() => onRemove(u.id)}
-            className="w-7 h-7 flex items-center justify-center rounded-lg text-[color:var(--sx-text-disabled)] hover:text-red-400 hover:bg-red-900/15 transition-all"
+            className="w-7 h-7 flex items-center justify-center rounded-lg text-[color:var(--sx-text-disabled)] hover:text-[color:var(--sx-danger)] hover:bg-[color:color-mix(in_srgb,var(--sx-danger)_12%,transparent)] transition-colors"
           >
             <Trash2 size={13} />
           </button>
@@ -166,7 +171,7 @@ function InviteSection({ workspaceId, canManageMembers }: { workspaceId: string;
   if (!canManageMembers) return null;
 
   return (
-    <div className="glass-card rounded-xl p-4 space-y-3">
+    <div className="rounded-xl p-4 space-y-3 bg-[color:var(--sx-canvas-elevated)]">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-body-md text-[color:var(--sx-text)] font-medium">Invite link</p>
@@ -181,11 +186,11 @@ function InviteSection({ workspaceId, canManageMembers }: { workspaceId: string;
       </div>
       {inviteUrl && (
         <div className="flex items-center gap-2">
-          <code className="flex-1 text-label-sm text-[color:var(--sx-text-muted)] bg-[color:var(--sx-panel)] border border-[color:var(--sx-border)] rounded-lg px-3 py-2 truncate font-mono">
+          <code className="flex-1 text-label-sm text-[color:var(--sx-text-muted)] bg-[color:var(--sx-surface)] rounded-lg px-3 py-2 truncate font-mono">
             {inviteUrl}
           </code>
           <button onClick={copy} className="liquid-button gap-1.5 !py-1.5 !px-3 !text-label-sm flex-shrink-0">
-            {copied ? <Check size={12} className="text-green-400" /> : <Link2 size={12} />}
+            {copied ? <Check size={12} className="text-[color:var(--status-done-text)]" /> : <Link2 size={12} />}
             {copied ? 'Copied!' : 'Copy'}
           </button>
           <button onClick={() => setInviteUrl(null)} className="w-7 h-7 flex items-center justify-center rounded-lg text-[color:var(--sx-text-disabled)] hover:text-[color:var(--sx-text-muted)] transition-colors">
@@ -235,12 +240,12 @@ function AddMemberForm({ workspaceId, onAdded }: { workspaceId: string; onAdded:
       <button
         type="submit"
         disabled={loading || !email.trim()}
-        className="liquid-button gap-1.5 !bg-[color:var(--starlex-accent)] !border-transparent !text-[color:var(--starlex-accent-contrast)] disabled:opacity-40 flex-shrink-0"
+        className="liquid-button gap-1.5 !bg-[color:var(--sx-accent)] !border-transparent !text-[color:var(--sx-accent-contrast)] disabled:opacity-40 flex-shrink-0"
       >
         <Plus size={14} />
         {loading ? 'Adding…' : 'Add'}
       </button>
-      {error && <p className="text-label-sm text-[#fca5a5] mt-1 absolute">{error}</p>}
+      {error && <p className="text-label-sm text-[color:var(--sx-danger)] mt-1 absolute">{error}</p>}
     </form>
   );
 }
@@ -316,14 +321,14 @@ export const MembersPanel: React.FC<MembersPanelProps> = ({ workspaceId, current
 
       {loading ? (
         <div className="space-y-3">
-          {[0,1,2].map(i => <div key={i} className="h-14 rounded-xl bg-[color:var(--sx-control)] animate-pulse" />)}
+          {[0,1,2].map(i => <div key={i} className="h-14 rounded-xl bg-[color:var(--sx-surface)] animate-pulse" />)}
         </div>
       ) : error ? (
-        <p className="text-body-md text-[#fca5a5] text-center py-8">{error}</p>
+        <p className="text-body-md text-[color:var(--sx-danger)] text-center py-8">{error}</p>
       ) : members.length === 0 ? (
         <p className="text-body-md text-[color:var(--sx-text-subtle)] text-center py-8">No members yet</p>
       ) : (
-        <div className="glass-card rounded-xl px-4 divide-y divide-[color:var(--sx-border)]">
+        <Glass variant="panel" depth="raised" className="rounded-xl p-2">
           {members.map(m => (
             <MemberRow
               key={m.user.id}
@@ -334,7 +339,7 @@ export const MembersPanel: React.FC<MembersPanelProps> = ({ workspaceId, current
               onRemove={handleRemove}
             />
           ))}
-        </div>
+        </Glass>
       )}
     </div>
   );

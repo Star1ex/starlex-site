@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Layers, Plus } from 'lucide-react';
 import type { ProjectDTO, UserDTO } from '@/types/dto.js';
 import { listVariants } from '@/shared/lib/animations.js';
+import { Glass } from '@/shared/ui/glass/index.js';
 import { CreateProjectModal } from './CreateProjectModal.js';
 import { ProjectRow } from './projects/ProjectRow.js';
 import { PROJECT_LIST_ICON_STROKE } from './projects/projectListUtils.js';
@@ -65,13 +66,16 @@ export const WorkspaceProjects: React.FC<WorkspaceProjectsProps> = ({
           </div>
           <p className="text-body-md font-medium text-[color:var(--sx-text-muted)] mb-1">No projects yet</p>
           <p className="text-label-sm text-[color:var(--sx-text-subtle)] mb-5">Create your first project to get started</p>
-          <button onClick={onCreateOpen} className="liquid-button gap-1.5 !bg-[color:var(--starlex-accent)] !border-transparent !text-[color:var(--starlex-accent-contrast)]">
+          <button onClick={onCreateOpen} className="liquid-button gap-1.5 !bg-[color:var(--sx-accent)] !border-transparent !text-[color:var(--sx-accent-contrast)]">
             <Plus size={14} strokeWidth={PROJECT_LIST_ICON_STROKE} />
             Create Project
           </button>
         </motion.div>
       ) : (
-        <motion.div
+        <Glass
+          as={motion.div}
+          variant="panel"
+          depth="raised"
           className="projects-list-shell"
           variants={listVariants}
           initial="initial"
@@ -99,7 +103,7 @@ export const WorkspaceProjects: React.FC<WorkspaceProjectsProps> = ({
               onClick={() => onProjectClick(project.id)}
             />
           ))}
-        </motion.div>
+        </Glass>
       )}
 
       <CreateProjectModal

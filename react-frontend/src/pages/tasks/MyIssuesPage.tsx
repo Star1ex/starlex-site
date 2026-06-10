@@ -46,7 +46,7 @@ function TaskRow({
   return (
     <motion.div
       variants={listItemVariants}
-      className="group flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer hover:bg-[color:var(--sx-control)] transition-all"
+      className="group flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer hover:bg-[color:var(--sx-surface-hover)] transition-colors"
       onClick={() => onNavigate(task.id)}
     >
       <div className="flex-shrink-0" onClick={e => e.stopPropagation()}>
@@ -88,11 +88,11 @@ function TaskRow({
         {menuOpen && (
           <div className="dropdown-menu absolute right-0 top-7 z-20 min-w-[130px]">
             <button onClick={() => { onNavigate(task.id); setMenuOpen(false); }}
-              className="w-full flex items-center gap-2 px-3 py-2 text-label-sm text-[color:var(--sx-text-muted)] hover:bg-[color:var(--sx-control)] transition-colors rounded-lg">
+              className="dropdown-menu-item">
               <ChevronRight size={13} /> Open
             </button>
             <button onClick={() => { onDelete(task.id); setMenuOpen(false); }}
-              className="w-full flex items-center gap-2 px-3 py-2 text-label-sm text-red-400 hover:bg-red-900/20 transition-colors rounded-lg">
+              className="dropdown-menu-item dropdown-menu-item--danger">
               <Trash2 size={13} /> Delete
             </button>
           </div>
@@ -106,15 +106,15 @@ function TaskRow({
 
 function ViewTabs({ views, activeId, onChange }: { views: SavedView[]; activeId: string; onChange: (id: string) => void }) {
   return (
-    <div className="flex items-center gap-1 overflow-x-auto pb-1 hide-scrollbar">
+    <div className="flex items-center gap-1 overflow-x-auto border-b border-[color:var(--sx-line)] hide-scrollbar">
       {views.map(v => (
         <button
           key={v.id}
           onClick={() => onChange(v.id)}
-          className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-label-sm font-medium transition-all ${
+          className={`relative flex-shrink-0 px-3 pb-2.5 pt-1 text-label-sm font-medium transition-colors after:absolute after:inset-x-3 after:-bottom-px after:h-0.5 after:rounded-full after:transition-colors ${
             activeId === v.id
-              ? 'bg-[color:var(--sx-control)] text-[color:var(--sx-text)]'
-              : 'text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] hover:bg-[color:var(--sx-control)]'
+              ? 'text-[color:var(--sx-text)] after:bg-[color:var(--sx-accent)]'
+              : 'text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] after:bg-transparent'
           }`}
         >
           {v.name}
@@ -209,7 +209,7 @@ export const MyIssuesPage: React.FC = () => {
       <div className="mt-4">
         {loading && tasks.length === 0 ? (
           <div className="space-y-2">
-            {[0,1,2,3,4].map(i => <div key={i} className="h-12 rounded-xl bg-[color:var(--sx-control)] animate-pulse" />)}
+            {[0,1,2,3,4].map(i => <div key={i} className="h-12 rounded-xl bg-[color:var(--sx-surface)] animate-pulse" />)}
           </div>
         ) : tasks.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">

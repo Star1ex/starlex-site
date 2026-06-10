@@ -16,17 +16,22 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select.js';
 import type { WorkspaceMemberDTO, WorkspaceRole } from '@/types/dto.js';
+import { Glass } from '@/shared/ui/glass/index.js';
 
 const ROLE_META: Record<WorkspaceRole, { label: string; icon: React.ReactNode; cls: string }> = {
   owner:  { label: 'Owner',  icon: <Crown size={11} />,  cls: 'text-[color:var(--priority-high-text)] bg-[color:var(--priority-high-bg)]' },
   admin:  { label: 'Admin',  icon: <Shield size={11} />, cls: 'text-[color:var(--priority-medium-text)] bg-[color:var(--priority-medium-bg)]' },
   member: { label: 'Member', icon: <User size={11} />,   cls: 'text-[color:var(--priority-low-text)] bg-[color:var(--priority-low-bg)]' },
-  guest:  { label: 'Guest',  icon: <Eye size={11} />,    cls: 'text-[color:var(--sx-text-subtle)] bg-[color:var(--sx-panel)]' },
+  guest:  { label: 'Guest',  icon: <Eye size={11} />,    cls: 'text-[color:var(--sx-text-subtle)] bg-[color:var(--sx-surface)]' },
 };
 
 const ROLES: WorkspaceRole[] = ['admin', 'member', 'guest'];
 
 function RoleBadge({ role }: { role: WorkspaceRole }) {
+  // Owner reads as a quiet label-caps mark in the done hue — no crown, no pill.
+  if (role === 'owner') {
+    return <span className="label-caps text-[color:var(--status-done-text)]">Owner</span>;
+  }
   const m = ROLE_META[role] ?? ROLE_META.member;
   return (
     <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-label-sm font-medium ${m.cls}`}>
@@ -165,7 +170,7 @@ export const MembersPage: React.FC = () => {
       </div>
 
       {/* Members list */}
-      <div className="glass-card rounded-2xl overflow-hidden mb-6">
+      <Glass variant="panel" depth="raised" className="rounded-2xl overflow-hidden mb-6 p-2">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-5 h-5 text-[color:var(--sx-text-subtle)] animate-spin" />
@@ -175,7 +180,7 @@ export const MembersPage: React.FC = () => {
             <p className="text-body-md text-[color:var(--sx-text-subtle)]">No members yet</p>
           </div>
         ) : (
-          members.map((m, i) => {
+          members.map((m) => {
             const src = m.user.photo_url ?? m.user.avatar_url ?? undefined;
             const ini = [m.user.firstName?.[0], m.user.lastName?.[0]].filter(Boolean).join('').toUpperCase() || '?';
             const isOwner = m.role === 'owner';
@@ -184,10 +189,10 @@ export const MembersPage: React.FC = () => {
             return (
               <div
                 key={m.user.id}
-                className={`flex items-center gap-3 px-5 py-3.5 ${i < members.length - 1 ? 'border-b border-[color:var(--sx-border)]' : ''} ${isRemoving ? 'opacity-40' : ''} transition-opacity`}
+                className={`flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-[color:var(--sx-surface-hover)] ${isRemoving ? 'opacity-40' : ''} transition-colors`}
               >
                 {/* Avatar */}
-                <div className="w-8 h-8 rounded-full bg-[color:var(--sx-panel-strong)] flex items-center justify-center text-[11px] font-bold text-[color:var(--sx-text)] overflow-hidden flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-[color:var(--sx-surface-active)] flex items-center justify-center text-[11px] font-bold text-[color:var(--sx-text)] overflow-hidden flex-shrink-0">
                   {src ? <img src={src} alt={ini} className="w-full h-full object-cover" /> : ini}
                 </div>
 
@@ -210,7 +215,7 @@ export const MembersPage: React.FC = () => {
                     value={m.role}
                     onValueChange={(v) => handleRoleChange(m.user.id, v as WorkspaceRole)}
                   >
-                    <SelectTrigger className="w-[100px] h-7 glass-input border-[color:var(--sx-border)] text-label-sm px-2">
+                    <SelectTrigger className="w-[100px] h-7 glass-input text-label-sm px-2">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="glass-menu rounded-xl p-1">
@@ -230,7 +235,7 @@ export const MembersPage: React.FC = () => {
                   <button
                     onClick={() => setRemoveTarget(m)}
                     disabled={isRemoving}
-                    className="p-1.5 text-[color:var(--sx-text-disabled)] hover:text-red-400 hover:bg-[color:var(--sx-control)] rounded-lg transition-colors"
+                    className="p-1.5 text-[color:var(--sx-text-disabled)] hover:text-[color:var(--sx-danger)] hover:bg-[color:color-mix(in_srgb,var(--sx-danger)_12%,transparent)] rounded-lg transition-colors"
                   >
                     <Trash2 size={13} />
                   </button>
@@ -239,11 +244,11 @@ export const MembersPage: React.FC = () => {
             );
           })
         )}
-      </div>
+      </Glass>
 
       {/* Invite link section */}
       {canManage && (
-        <div className="glass-card rounded-2xl p-5">
+        <Glass variant="panel" depth="raised" className="rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-4">
             <Link2 size={14} className="text-[color:var(--sx-text-muted)]" />
             <h2 className="text-body-md font-medium text-[color:var(--sx-text)]">Invite link</h2>
@@ -253,7 +258,7 @@ export const MembersPage: React.FC = () => {
           </p>
           <div className="flex items-center gap-3 mb-3">
             <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as WorkspaceRole)}>
-              <SelectTrigger className="w-[120px] h-8 glass-input border-[color:var(--sx-border)] text-label-sm">
+              <SelectTrigger className="w-[120px] h-8 glass-input text-label-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="glass-menu rounded-xl p-1">
@@ -274,7 +279,7 @@ export const MembersPage: React.FC = () => {
             </button>
           </div>
           {inviteUrl && (
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-[color:var(--sx-panel)] border border-[color:var(--sx-border)]">
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-[color:var(--sx-canvas-elevated)]">
               <span className="flex-1 text-[11px] text-[color:var(--sx-text-muted)] font-mono truncate">{inviteUrl}</span>
               <button
                 onClick={handleCopy}
@@ -285,12 +290,12 @@ export const MembersPage: React.FC = () => {
               </button>
             </div>
           )}
-        </div>
+        </Glass>
       )}
 
       {/* Add member dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="glass-card border-[color:var(--sx-border)] bg-[color:var(--sx-panel)] backdrop-blur-2xl text-[color:var(--sx-text)] sm:max-w-md">
+        <DialogContent className="glass-card border-[color:var(--sx-line)] bg-[color:var(--sx-surface)] backdrop-blur-2xl text-[color:var(--sx-text)] sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-[color:var(--sx-text)] font-hanken">Add member</DialogTitle>
             <DialogDescription className="text-[color:var(--sx-text-muted)]">
@@ -308,7 +313,7 @@ export const MembersPage: React.FC = () => {
               autoFocus
             />
             <Select value={addRole} onValueChange={(v) => setAddRole(v as WorkspaceRole)}>
-              <SelectTrigger className="glass-input border-[color:var(--sx-border)] text-body-sm h-9">
+              <SelectTrigger className="glass-input text-body-sm h-9">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="glass-menu rounded-xl p-1">
@@ -337,7 +342,7 @@ export const MembersPage: React.FC = () => {
 
       {/* Remove confirmation */}
       <AlertDialog open={!!removeTarget} onOpenChange={(o) => !o && setRemoveTarget(null)}>
-        <AlertDialogContent className="glass-card border-[color:var(--sx-border)] bg-[color:var(--sx-panel)] backdrop-blur-2xl text-[color:var(--sx-text)] sm:max-w-sm">
+        <AlertDialogContent className="glass-card border-[color:var(--sx-line)] bg-[color:var(--sx-surface)] backdrop-blur-2xl text-[color:var(--sx-text)] sm:max-w-sm">
           <AlertDialogHeader>
             <AlertDialogTitle className="text-[color:var(--sx-text)] font-hanken">Remove member</AlertDialogTitle>
             <AlertDialogDescription className="text-[color:var(--sx-text-muted)]">
@@ -345,12 +350,12 @@ export const MembersPage: React.FC = () => {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-[color:var(--sx-border)] text-[color:var(--sx-text-muted)] hover:bg-[color:var(--sx-control)]">
+            <AlertDialogCancel className="border-[color:var(--sx-line)] text-[color:var(--sx-text-muted)] hover:bg-[color:var(--sx-surface-hover)]">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRemove}
-              className="bg-red-600/80 hover:bg-red-600 text-[color:var(--sx-accent-contrast)] border-0"
+              className="bg-[color:var(--sx-danger)] hover:brightness-110 text-[color:var(--sx-accent-contrast)] border-0"
             >
               Remove
             </AlertDialogAction>

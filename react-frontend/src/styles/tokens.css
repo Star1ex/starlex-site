@@ -47,6 +47,9 @@
     --sx-accent-contrast: #ffffff;
     --sx-focus-ring: 0 0 0 3px rgb(var(--sx-accent-rgb) / 0.28);
 
+    /* Danger — destructive actions only (delete, irreversible) */
+    --sx-danger: #e0726f;
+
     /* Shadows — NEUTRAL, never tinted */
     --sx-shadow-soft: 0 16px 48px rgb(0 0 0 / 0.42);
     --sx-shadow-elevated: 0 32px 80px rgb(0 0 0 / 0.55);

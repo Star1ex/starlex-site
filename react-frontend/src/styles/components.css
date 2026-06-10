@@ -2,6 +2,59 @@
    PRODUCT COMPONENTS
    ===================================================== */
 @layer components {
+  /* =====================================================
+     SHARED CHIP DOCTRINE (Phase 3) — one source for every
+     status/priority/label pill across Projects, Tasks,
+     My Issues, Board. The hue is supplied by inline
+     `color` (the status/priority text token); the chip
+     derives its fill + ring from `currentColor`. No border;
+     a faint ring only on hover/open. Dot = 6px, same hue.
+     ===================================================== */
+  .sx-dot {
+    width: 6px;
+    height: 6px;
+    flex: 0 0 auto;
+    border-radius: 9999px;
+    background: currentColor;
+  }
+  .sx-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-height: 1.55rem;
+    max-width: 100%;
+    min-width: 0;
+    border-radius: 9999px;
+    padding: 0.22rem 0.52rem;
+    background: color-mix(in srgb, currentColor 14%, transparent);
+    font-size: 0.75rem;
+    font-weight: 560;
+    line-height: 1;
+    white-space: nowrap;
+    transition: background 150ms var(--ease-out-expo), box-shadow 150ms var(--ease-out-expo);
+  }
+  .sx-chip > span:last-child {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .sx-chip--interactive { cursor: pointer; }
+  .sx-chip--interactive:hover,
+  .sx-chip[data-state="open"] {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 22%, transparent);
+  }
+  /* Neutral chip (assignee, labels, more) — solid surface, no hue */
+  .sx-chip--neutral {
+    color: var(--sx-text-muted);
+    background: var(--sx-surface);
+  }
+  .sx-chip--neutral:hover,
+  .sx-chip--neutral[data-state="open"] {
+    background: var(--sx-surface-hover);
+    color: var(--sx-text);
+    box-shadow: inset 0 0 0 1px var(--sx-line);
+  }
+
   /* Workspace identity form */
   .workspace-create-modal {
     background:
@@ -198,16 +251,16 @@
   }
   .workspace-home-header h1 {
     margin-top: 0.35rem;
-    color: rgba(255,255,255,0.94);
+    color: var(--sx-text);
     font-family: 'Hanken Grotesk', sans-serif;
     font-size: clamp(1.85rem, 2.8vw, 2.55rem);
     font-weight: 720;
-    letter-spacing: 0;
+    letter-spacing: -0.02em;
     line-height: 1.05;
   }
   .workspace-home-header p:not(.label-caps) {
     margin-top: 0.45rem;
-    color: rgba(255,255,255,0.42);
+    color: var(--sx-text-subtle);
     font-size: 0.9375rem;
   }
   .workspace-home-actions {
@@ -216,19 +269,10 @@
     align-items: center;
     gap: 0.75rem;
   }
+  /* panel material comes from <Glass variant="panel">; geometry only */
   .workspace-recent-panel {
     width: min(100%, 50rem);
-    border-radius: 1.25rem;
-    border: 1px solid rgba(255,255,255,0.060);
-    background:
-      linear-gradient(145deg, rgba(255,255,255,0.032), rgba(255,255,255,0.010)),
-      rgba(7,7,9,0.58);
     padding: 1rem;
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.055),
-      0 18px 48px rgba(0,0,0,0.18);
-    backdrop-filter: blur(22px) saturate(124%);
-    -webkit-backdrop-filter: blur(22px) saturate(124%);
   }
   .workspace-recent-head {
     display: flex;
@@ -237,24 +281,25 @@
     gap: 1rem;
     margin-bottom: 0.75rem;
     padding: 0.15rem 0.2rem 0.8rem;
-    border-bottom: 1px solid rgba(255,255,255,0.045);
+    border-bottom: 1px solid var(--sx-line);
   }
   .workspace-recent-head h2 {
     margin-top: 0.2rem;
-    color: rgba(255,255,255,0.86);
+    color: var(--sx-text);
     font-size: 1rem;
-    font-weight: 650;
+    font-weight: 600;
+    letter-spacing: -0.01em;
   }
   .workspace-recent-head button {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
-    color: rgba(255,255,255,0.42);
+    color: var(--sx-text-subtle);
     font-size: 0.8125rem;
     transition: color 150ms ease, transform 150ms ease;
   }
   .workspace-recent-head button:hover {
-    color: rgba(255,255,255,0.82);
+    color: var(--sx-text);
     transform: translateX(1px);
   }
   .workspace-recent-list {
@@ -270,13 +315,13 @@
     gap: 0.8rem;
     border-radius: 0.9rem;
     padding: 0.7rem;
-    color: rgba(255,255,255,0.64);
+    color: var(--sx-text-muted);
     text-align: left;
     transition: background 150ms ease, transform 150ms ease, color 150ms ease;
   }
   .workspace-recent-project:hover {
-    background: rgba(255,255,255,0.045);
-    color: rgba(255,255,255,0.88);
+    background: var(--sx-surface-hover);
+    color: var(--sx-text);
     transform: translateY(-1px);
   }
   .workspace-recent-glyph {
@@ -285,11 +330,10 @@
     height: 2rem;
     place-items: center;
     border-radius: 0.7rem;
-    background: rgba(255,255,255,0.055);
-    color: rgba(255,255,255,0.72);
+    background: var(--sx-surface-active);
+    color: var(--sx-text-muted);
     font-size: 0.8rem;
-    font-weight: 720;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.055);
+    font-weight: 600;
   }
   .workspace-recent-main {
     min-width: 0;
@@ -297,9 +341,9 @@
   .workspace-recent-main strong {
     display: block;
     overflow: hidden;
-    color: rgba(255,255,255,0.84);
+    color: var(--sx-text);
     font-size: 0.9rem;
-    font-weight: 620;
+    font-weight: 560;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
@@ -308,7 +352,7 @@
     align-items: center;
     gap: 0.35rem;
     margin-top: 0.18rem;
-    color: rgba(255,255,255,0.34);
+    color: var(--sx-text-subtle);
     font-size: 0.75rem;
     font-style: normal;
   }
@@ -317,15 +361,15 @@
     align-items: center;
     gap: 0.42rem;
     border-radius: 9999px;
-    background: rgba(255,255,255,0.040);
+    background: var(--sx-surface);
     padding: 0.32rem 0.58rem;
-    color: rgba(255,255,255,0.50);
+    color: var(--sx-text-muted);
     font-size: 0.75rem;
     white-space: nowrap;
   }
   .workspace-recent-status i {
-    width: 0.4rem;
-    height: 0.4rem;
+    width: 6px;
+    height: 6px;
     border-radius: 9999px;
   }
   .workspace-recent-empty {
@@ -333,7 +377,7 @@
     place-items: center;
     min-height: 10rem;
     border-radius: 1rem;
-    color: rgba(255,255,255,0.38);
+    color: var(--sx-text-subtle);
     text-align: center;
   }
   .workspace-recent-empty div {
@@ -341,36 +385,36 @@
     width: 2.4rem;
     height: 2.4rem;
     place-items: center;
-    border-radius: 0.85rem;
-    background: rgba(255,255,255,0.045);
-    color: rgba(255,255,255,0.36);
+    border-radius: var(--radius-lg);
+    background: var(--sx-surface);
+    color: var(--sx-text-subtle);
   }
   .workspace-recent-empty p {
     margin-top: 0.8rem;
-    color: rgba(255,255,255,0.62);
-    font-weight: 610;
+    color: var(--sx-text-muted);
+    font-weight: 560;
   }
   .workspace-recent-empty span {
     margin-top: 0.25rem;
-    color: rgba(255,255,255,0.34);
+    color: var(--sx-text-subtle);
     font-size: 0.8125rem;
   }
+  /* ghost button — no dashed border, surface-hover behavior */
   .workspace-recent-create {
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
     margin-top: 0.8rem;
     border-radius: 9999px;
-    border: 1px solid rgba(255,255,255,0.070);
-    background: rgba(255,255,255,0.035);
+    background: transparent;
     padding: 0.48rem 0.72rem;
-    color: rgba(255,255,255,0.58);
+    color: var(--sx-text-subtle);
     font-size: 0.8125rem;
     transition: background 150ms ease, color 150ms ease, transform 150ms ease;
   }
   .workspace-recent-create:hover {
-    background: rgba(255,255,255,0.060);
-    color: rgba(255,255,255,0.84);
+    background: var(--sx-surface-hover);
+    color: var(--sx-text);
     transform: translateY(-1px);
   }
 
@@ -624,23 +668,22 @@
     gap: 1rem;
   }
   .tasks-page-header h1 {
-    color: rgba(255,255,255,0.92);
+    color: var(--sx-text);
     font-family: 'Hanken Grotesk', sans-serif;
     font-size: 1.35rem;
     font-weight: 700;
-    letter-spacing: 0;
+    letter-spacing: -0.015em;
   }
   .tasks-page-header p {
     margin-top: 0.25rem;
-    color: rgba(255,255,255,0.34);
+    color: var(--sx-text-subtle);
     font-size: 0.8125rem;
   }
   .tasks-toolbar {
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    border-top: 1px solid rgba(255,255,255,0.045);
-    border-bottom: 1px solid rgba(255,255,255,0.045);
+    border-bottom: 1px solid var(--sx-line);
     padding: 0.8rem 0;
   }
   .tasks-search {
@@ -653,21 +696,22 @@
     min-height: 2rem;
     align-items: center;
     border-radius: 9999px;
-    border: 1px solid rgba(255,255,255,0.055);
-    background: rgba(255,255,255,0.030);
-    color: rgba(255,255,255,0.52);
+    background: transparent;
+    color: var(--sx-text-subtle);
     font-size: 0.8125rem;
-    transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+    transition: background 150ms ease, color 150ms ease;
   }
   .tasks-toolbar-button {
     gap: 0.42rem;
     padding: 0 0.72rem;
   }
-  .tasks-toolbar-button:hover,
+  .tasks-toolbar-button:hover {
+    background: var(--sx-surface-hover);
+    color: var(--sx-text);
+  }
   .tasks-toolbar-button[data-active="true"] {
-    border-color: rgba(255,255,255,0.090);
-    background: rgba(255,255,255,0.055);
-    color: rgba(255,255,255,0.82);
+    background: var(--sx-surface-active);
+    color: var(--sx-text);
   }
   .tasks-toolbar-button span {
     display: inline-flex;
@@ -676,13 +720,14 @@
     align-items: center;
     justify-content: center;
     border-radius: 9999px;
-    background: rgba(255,255,255,0.10);
-    color: rgba(255,255,255,0.84);
+    background: var(--sx-surface-active);
+    color: var(--sx-text);
     font-size: 0.625rem;
   }
   .tasks-view-toggle {
     gap: 0.1rem;
     padding: 0.18rem;
+    background: var(--sx-surface);
   }
   .tasks-view-toggle button {
     display: grid;
@@ -690,21 +735,21 @@
     height: 1.62rem;
     place-items: center;
     border-radius: 9999px;
-    color: rgba(255,255,255,0.36);
+    color: var(--sx-text-subtle);
     transition: background 150ms ease, color 150ms ease;
   }
   .tasks-view-toggle button:hover,
   .tasks-view-toggle button[data-active="true"] {
-    background: rgba(255,255,255,0.080);
-    color: rgba(255,255,255,0.84);
+    background: var(--sx-surface-active);
+    color: var(--sx-text);
   }
   .tasks-clear-button {
-    color: rgba(255,255,255,0.38);
+    color: var(--sx-text-subtle);
     font-size: 0.8125rem;
     transition: color 150ms ease;
   }
   .tasks-clear-button:hover {
-    color: rgba(255,255,255,0.76);
+    color: var(--sx-text);
   }
   .tasks-layout {
     display: grid;
@@ -716,35 +761,25 @@
   .tasks-layout--full {
     grid-template-columns: minmax(0, 1fr);
   }
-  .tasks-filter-rail,
-  .tasks-table-shell {
-    border: 1px solid rgba(255,255,255,0.060);
-    background:
-      linear-gradient(145deg, rgba(255,255,255,0.030), rgba(255,255,255,0.010)),
-      rgba(7,7,9,0.58);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.055),
-      0 18px 48px rgba(0,0,0,0.18);
-    backdrop-filter: blur(22px) saturate(124%);
-    -webkit-backdrop-filter: blur(22px) saturate(124%);
-  }
+  /* Docked filter rail — solid elevated canvas, separation by luminance (no border, no blur) */
   .tasks-filter-rail {
     position: sticky;
     top: 6rem;
     overflow: hidden;
-    border-radius: 1.05rem;
+    border-radius: var(--radius-lg);
+    background: var(--sx-canvas-elevated);
     padding: 0.75rem;
   }
   .tasks-filter-section + .tasks-filter-section {
     margin-top: 0.75rem;
-    border-top: 1px solid rgba(255,255,255,0.045);
+    border-top: 1px solid var(--sx-line);
     padding-top: 0.75rem;
   }
   .tasks-filter-section > p {
     margin: 0 0 0.42rem 0.35rem;
-    color: rgba(255,255,255,0.36);
+    color: var(--sx-text-subtle);
     font-size: 0.8125rem;
-    font-weight: 620;
+    font-weight: 600;
   }
   .tasks-filter-section > div {
     display: flex;
@@ -752,7 +787,7 @@
     gap: 0.15rem;
   }
   .tasks-filter-item {
-    --filter-color: rgba(255,255,255,0.65);
+    --filter-color: var(--sx-text-muted);
     display: flex;
     min-height: 2rem;
     align-items: center;
@@ -760,15 +795,15 @@
     gap: 0.75rem;
     border-radius: 0.72rem;
     padding: 0 0.55rem;
-    color: rgba(255,255,255,0.48);
+    color: var(--sx-text-subtle);
     font-size: 0.8125rem;
     text-align: left;
     transition: background 150ms ease, color 150ms ease;
   }
   .tasks-filter-item:hover,
   .tasks-filter-item[data-active="true"] {
-    background: rgba(255,255,255,0.055);
-    color: rgba(255,255,255,0.82);
+    background: var(--sx-surface-hover);
+    color: var(--sx-text);
   }
   .tasks-filter-item[data-active="true"] span:first-child {
     color: var(--filter-color);
@@ -781,14 +816,14 @@
   }
   .tasks-filter-item b {
     flex: 0 0 auto;
-    color: rgba(255,255,255,0.34);
+    color: var(--sx-text-subtle);
     font-size: 0.6875rem;
-    font-weight: 620;
+    font-weight: 600;
     tab-size: 4;
   }
+  /* shell material comes from <Glass variant="panel">; geometry only */
   .tasks-table-shell {
     overflow: hidden;
-    border-radius: 1.05rem;
   }
   .tasks-table-head,
   .tasks-table-row {
@@ -799,23 +834,25 @@
   }
   .tasks-table-head {
     min-height: 2.75rem;
-    border-bottom: 1px solid rgba(255,255,255,0.045);
+    border-bottom: 1px solid var(--sx-line);
     padding: 0 1rem;
-    color: rgba(255,255,255,0.30);
+    color: var(--sx-text-subtle);
+    font-family: 'JetBrains Mono', monospace;
     font-size: 0.6875rem;
-    font-weight: 680;
+    font-weight: 500;
     letter-spacing: 0.09em;
     text-transform: uppercase;
   }
   .tasks-table-row {
     min-height: 3.55rem;
-    border-bottom: 1px solid rgba(255,255,255,0.035);
-    padding: 0.55rem 1rem;
+    margin: 0 0.4rem;
+    border-radius: var(--radius-sm);
+    padding: 0.55rem 0.6rem;
     cursor: pointer;
     transition: background 150ms ease, color 150ms ease;
   }
   .tasks-table-row:hover {
-    background: rgba(255,255,255,0.035);
+    background: var(--sx-surface-hover);
   }
   .tasks-table-status,
   .tasks-table-priority,
@@ -827,7 +864,7 @@
   }
   .tasks-table-key {
     overflow: hidden;
-    color: rgba(255,255,255,0.30);
+    color: var(--sx-text-subtle);
     font-family: 'JetBrains Mono', monospace;
     font-size: 0.6875rem;
     text-overflow: ellipsis;
@@ -835,33 +872,35 @@
   }
   .tasks-table-title {
     overflow: hidden;
-    color: rgba(255,255,255,0.76);
+    color: var(--sx-text-muted);
     font-size: 0.9375rem;
     text-overflow: ellipsis;
     white-space: nowrap;
     transition: color 150ms ease;
   }
   .tasks-table-row:hover .tasks-table-title {
-    color: rgba(255,255,255,0.94);
+    color: var(--sx-text);
   }
   .tasks-title-input {
     min-width: 0;
     width: 100%;
     border-radius: 0.55rem;
     background: transparent;
-    color: rgba(255,255,255,0.78);
+    color: var(--sx-text-muted);
     font-size: 0.9375rem;
     outline: none;
     transition: background 150ms ease, color 150ms ease, box-shadow 150ms ease;
   }
   .tasks-title-input:hover {
-    color: rgba(255,255,255,0.94);
+    color: var(--sx-text);
   }
   .tasks-title-input:focus {
-    background: rgba(255,255,255,0.050);
-    box-shadow: 0 0 0 1px rgba(255,255,255,0.075);
+    background: var(--sx-surface-active);
+    box-shadow: var(--sx-focus-ring);
+    color: var(--sx-text);
     padding: 0.28rem 0.45rem;
   }
+  /* inline cell triggers = neutral chip doctrine (solid surface, ring on hover) */
   .tasks-inline-trigger,
   .tasks-label-trigger,
   .tasks-assignee-trigger {
@@ -870,12 +909,11 @@
     max-width: 100%;
     align-items: center;
     border-radius: 9999px;
-    border: 1px solid rgba(255,255,255,0.055);
-    background: rgba(255,255,255,0.025);
-    color: rgba(255,255,255,0.54);
+    background: var(--sx-surface);
+    color: var(--sx-text-muted);
     font-size: 0.75rem;
     line-height: 1;
-    transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+    transition: background 150ms ease, box-shadow 150ms ease, color 150ms ease;
   }
   .tasks-inline-trigger:hover,
   .tasks-label-trigger:hover,
@@ -883,15 +921,22 @@
   .tasks-inline-trigger[data-state="open"],
   .tasks-label-trigger[data-state="open"],
   .tasks-assignee-trigger[data-state="open"] {
-    border-color: rgba(255,255,255,0.105);
-    background: rgba(255,255,255,0.055);
-    color: rgba(255,255,255,0.82);
+    background: var(--sx-surface-hover);
+    box-shadow: inset 0 0 0 1px var(--sx-line);
+    color: var(--sx-text);
   }
+  /* priority trigger carries its hue via inline color → tint from currentColor */
   .tasks-inline-trigger {
     gap: 0.34rem;
     min-height: 1.65rem;
     padding: 0 0.55rem;
-    font-weight: 620;
+    font-weight: 560;
+    background: color-mix(in srgb, currentColor 14%, transparent);
+  }
+  .tasks-inline-trigger:hover,
+  .tasks-inline-trigger[data-state="open"] {
+    background: color-mix(in srgb, currentColor 18%, transparent);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, currentColor 22%, transparent);
   }
   .tasks-label-trigger {
     gap: 0.38rem;
@@ -910,14 +955,13 @@
     padding: 0 0.45rem;
   }
   .tasks-inline-dot {
-    width: 0.38rem;
-    height: 0.38rem;
+    width: 6px;
+    height: 6px;
     flex: 0 0 auto;
     border-radius: 9999px;
-    box-shadow: 0 0 10px currentColor;
   }
   .tasks-inline-chevron {
-    color: rgba(255,255,255,0.35);
+    color: var(--sx-text-subtle);
   }
   .tasks-inline-menu {
     min-width: 9.5rem;
@@ -943,7 +987,7 @@
     white-space: nowrap;
   }
   .tasks-priority-chip {
-    background: rgba(255,255,255,0.040);
+    background: color-mix(in srgb, currentColor 14%, transparent);
     padding: 0.32rem 0.48rem;
   }
   .tasks-label-chip {
@@ -956,7 +1000,7 @@
     gap: 0.3rem;
   }
   .tasks-more-chip {
-    color: rgba(255,255,255,0.34);
+    color: var(--sx-text-subtle);
   }
   .tasks-table-assignees {
     min-height: 1.4rem;
@@ -970,12 +1014,12 @@
     height: 1.25rem;
     place-items: center;
     overflow: hidden;
-    border: 1px solid rgba(0,0,0,0.60);
+    border: 1px solid var(--sx-canvas);
     border-radius: 9999px;
-    background: rgba(255,255,255,0.070);
-    color: rgba(255,255,255,0.74);
+    background: var(--sx-surface-active);
+    color: var(--sx-text-muted);
     font-size: 0.5rem;
-    font-weight: 720;
+    font-weight: 700;
   }
   .tasks-assignee-avatar img {
     width: 100%;
@@ -984,11 +1028,11 @@
   }
   .tasks-table-due,
   .tasks-empty-cell {
-    color: rgba(255,255,255,0.32);
+    color: var(--sx-text-subtle);
     font-size: 0.75rem;
   }
   .tasks-table-due.is-overdue {
-    color: rgba(248,113,113,0.82);
+    color: var(--sx-danger);
   }
   .tasks-date-trigger {
     display: inline-flex;
@@ -997,38 +1041,28 @@
     align-items: center;
     gap: 0.34rem;
     border-radius: 9999px;
-    border: 1px solid rgba(255,255,255,0.055);
-    background: rgba(255,255,255,0.025);
+    background: var(--sx-surface);
     padding: 0 0.5rem;
-    color: rgba(255,255,255,0.46);
+    color: var(--sx-text-subtle);
     font-size: 0.72rem;
     line-height: 1;
-    transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+    transition: background 150ms ease, box-shadow 150ms ease, color 150ms ease;
   }
   .tasks-date-trigger:hover,
   .tasks-date-trigger[data-state="open"] {
-    border-color: rgba(255,255,255,0.105);
-    background: rgba(255,255,255,0.055);
-    color: rgba(255,255,255,0.78);
+    background: var(--sx-surface-hover);
+    box-shadow: inset 0 0 0 1px var(--sx-line);
+    color: var(--sx-text);
   }
   .tasks-date-trigger span {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
+  /* material comes from .glass-menu (Glass menu); geometry only */
   .tasks-calendar-menu {
     width: 16rem !important;
-    border-radius: 1rem;
     padding: 0.75rem;
-    background:
-      linear-gradient(145deg, rgba(255,255,255,0.095), rgba(255,255,255,0.026)),
-      rgba(8,8,10,0.56);
-    border: 1px solid rgba(255,255,255,0.092);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.11),
-      0 24px 80px rgba(0,0,0,0.36);
-    backdrop-filter: blur(34px) saturate(155%);
-    -webkit-backdrop-filter: blur(34px) saturate(155%);
   }
   .tasks-calendar-head {
     display: flex;
@@ -1038,9 +1072,9 @@
     margin-bottom: 0.7rem;
   }
   .tasks-calendar-head span {
-    color: rgba(255,255,255,0.82);
+    color: var(--sx-text);
     font-size: 0.8125rem;
-    font-weight: 650;
+    font-weight: 600;
   }
   .tasks-calendar-head button {
     display: grid;
@@ -1048,12 +1082,12 @@
     height: 1.75rem;
     place-items: center;
     border-radius: 9999px;
-    color: rgba(255,255,255,0.45);
+    color: var(--sx-text-subtle);
     transition: background 150ms ease, color 150ms ease;
   }
   .tasks-calendar-head button:hover {
-    background: rgba(255,255,255,0.075);
-    color: rgba(255,255,255,0.86);
+    background: var(--sx-surface-hover);
+    color: var(--sx-text);
   }
   .tasks-calendar-grid {
     display: grid;
@@ -1067,55 +1101,52 @@
     display: grid;
     height: 1.35rem;
     place-items: center;
-    color: rgba(255,255,255,0.30);
+    color: var(--sx-text-subtle);
     font-size: 0.66rem;
-    font-weight: 650;
+    font-weight: 600;
   }
   .tasks-calendar-day {
     display: grid;
     height: 1.9rem;
     place-items: center;
     border-radius: 0.62rem;
-    color: rgba(255,255,255,0.66);
+    color: var(--sx-text-muted);
     font-size: 0.75rem;
     transition: background 140ms ease, color 140ms ease, box-shadow 140ms ease;
   }
   .tasks-calendar-day:hover {
-    background: rgba(255,255,255,0.075);
-    color: rgba(255,255,255,0.96);
+    background: var(--sx-surface-hover);
+    color: var(--sx-text);
   }
   .tasks-calendar-day[data-muted="true"] {
-    color: rgba(255,255,255,0.22);
+    color: var(--sx-text-disabled);
   }
   .tasks-calendar-day[data-today="true"] {
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.16);
-    color: rgba(255,255,255,0.86);
+    box-shadow: inset 0 0 0 1px var(--sx-line-strong);
+    color: var(--sx-text);
   }
   .tasks-calendar-day[data-selected="true"] {
-    background: rgba(255,255,255,0.16);
-    color: white;
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.16),
-      0 8px 24px rgba(255,255,255,0.055);
+    background: var(--sx-accent);
+    color: var(--sx-accent-contrast);
   }
   .tasks-calendar-footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    border-top: 1px solid rgba(255,255,255,0.065);
+    border-top: 1px solid var(--sx-line);
     margin-top: 0.7rem;
     padding-top: 0.62rem;
   }
   .tasks-calendar-footer button {
     border-radius: 9999px;
     padding: 0.36rem 0.62rem;
-    color: rgba(255,255,255,0.46);
+    color: var(--sx-text-subtle);
     font-size: 0.75rem;
     transition: background 150ms ease, color 150ms ease;
   }
   .tasks-calendar-footer button:hover {
-    background: rgba(255,255,255,0.075);
-    color: rgba(255,255,255,0.84);
+    background: var(--sx-surface-hover);
+    color: var(--sx-text);
   }
   .tasks-date-control {
     display: inline-flex;
@@ -1124,25 +1155,23 @@
     align-items: center;
     gap: 0.25rem;
     border-radius: 9999px;
-    border: 1px solid rgba(255,255,255,0.055);
-    background: rgba(255,255,255,0.025);
+    background: var(--sx-surface);
     padding: 0 0.42rem;
-    transition: background 150ms ease, border-color 150ms ease;
+    transition: background 150ms ease, box-shadow 150ms ease;
   }
   .tasks-date-control:hover,
   .tasks-date-control:focus-within {
-    border-color: rgba(255,255,255,0.105);
-    background: rgba(255,255,255,0.055);
+    background: var(--sx-surface-hover);
+    box-shadow: inset 0 0 0 1px var(--sx-line);
   }
   .tasks-date-input {
     width: 5.25rem;
     min-width: 0;
     border: 0;
     background: transparent;
-    color: rgba(255,255,255,0.52);
+    color: var(--sx-text-muted);
     font-size: 0.72rem;
     outline: none;
-    color-scheme: dark;
   }
   .tasks-date-input::-webkit-calendar-picker-indicator {
     opacity: 0.36;
@@ -1154,26 +1183,25 @@
     height: 1rem;
     place-items: center;
     border-radius: 9999px;
-    color: rgba(255,255,255,0.32);
+    color: var(--sx-text-subtle);
     transition: background 150ms ease, color 150ms ease;
   }
   .tasks-date-control button:hover {
-    background: rgba(255,255,255,0.08);
-    color: rgba(255,255,255,0.75);
+    background: var(--sx-surface-hover);
+    color: var(--sx-text);
   }
   .tasks-loading-row {
     display: flex;
     min-height: 3.55rem;
     align-items: center;
     gap: 0.8rem;
-    border-bottom: 1px solid rgba(255,255,255,0.035);
     padding: 0 1rem;
   }
   .tasks-virtual-list {
     height: min(68vh, 52rem);
     min-height: 28rem;
     scrollbar-width: thin;
-    scrollbar-color: rgba(255,255,255,0.12) transparent;
+    scrollbar-color: var(--sx-line-strong) transparent;
   }
   .tasks-virtual-list::-webkit-scrollbar {
     width: 6px;
@@ -1183,7 +1211,7 @@
   }
   .tasks-virtual-list::-webkit-scrollbar-thumb {
     border-radius: 9999px;
-    background: rgba(255,255,255,0.10);
+    background: var(--sx-line-strong);
   }
   .task-board-skeleton {
     display: grid;
@@ -1197,8 +1225,7 @@
   .task-board-skeleton__column {
     min-height: 23rem;
     border-radius: 1rem;
-    border: 1px solid rgba(255,255,255,0.055);
-    background: rgba(255,255,255,0.024);
+    background: var(--sx-surface);
     padding: 0.85rem;
   }
   .task-board-skeleton__header,
@@ -1206,7 +1233,7 @@
   .task-board-skeleton__card span {
     display: block;
     border-radius: 9999px;
-    background: rgba(255,255,255,0.055);
+    background: var(--sx-surface-active);
     animation: pulse 1.8s ease-in-out infinite;
   }
   .task-board-skeleton__header {
@@ -1220,8 +1247,7 @@
     flex-direction: column;
     gap: 0.7rem;
     border-radius: 0.85rem;
-    border: 1px solid rgba(255,255,255,0.04);
-    background: rgba(0,0,0,0.14);
+    background: var(--sx-canvas-elevated);
     padding: 0.85rem;
   }
   .task-board-skeleton__card + .task-board-skeleton__card {
@@ -1242,21 +1268,21 @@
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
-    color: rgba(255,255,255,0.34);
+    color: var(--sx-text-subtle);
   }
   .tasks-empty-state p {
-    color: rgba(255,255,255,0.48);
+    color: var(--sx-text-muted);
     font-size: 0.9375rem;
   }
   .tasks-empty-state button,
   .tasks-load-more button {
-    color: rgba(255,255,255,0.42);
+    color: var(--sx-text-subtle);
     font-size: 0.8125rem;
     transition: color 150ms ease;
   }
   .tasks-empty-state button:hover,
   .tasks-load-more button:hover {
-    color: rgba(255,255,255,0.78);
+    color: var(--sx-text);
   }
   .tasks-load-more {
     display: flex;
@@ -1347,14 +1373,14 @@
     margin-bottom: 1rem;
   }
   .projects-list-heading {
-    color: rgba(255,255,255,0.92);
+    color: var(--sx-text);
     font-size: 1rem;
-    font-weight: 660;
-    letter-spacing: 0;
+    font-weight: 600;
+    letter-spacing: -0.01em;
   }
   .projects-list-subtitle {
     margin-top: 0.25rem;
-    color: rgba(255,255,255,0.34);
+    color: var(--sx-text-subtle);
     font-size: 0.8125rem;
   }
   .projects-view-pill {
@@ -1363,25 +1389,15 @@
     gap: 0.45rem;
     min-height: 2rem;
     border-radius: 9999px;
-    border: 1px solid rgba(255,255,255,0.055);
-    background: rgba(255,255,255,0.035);
+    background: var(--sx-surface);
     padding: 0 0.75rem;
-    color: rgba(255,255,255,0.66);
+    color: var(--sx-text-muted);
     font-size: 0.8125rem;
     white-space: nowrap;
   }
+  /* shell material comes from <Glass variant="panel">; this only adds geometry */
   .projects-list-shell {
     overflow: visible;
-    border-radius: 1.125rem;
-    border: 1px solid rgba(255,255,255,0.045);
-    background:
-      linear-gradient(145deg, rgba(255,255,255,0.030), transparent 34%),
-      rgba(255,255,255,0.018);
-    backdrop-filter: blur(24px) saturate(132%);
-    -webkit-backdrop-filter: blur(24px) saturate(132%);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.045),
-      0 18px 54px rgba(0,0,0,0.24);
   }
   .projects-list-header,
   .projects-list-row {
@@ -1393,25 +1409,27 @@
   .projects-list-header {
     min-height: 2.75rem;
     padding: 0 0.875rem 0 1.25rem;
-    color: rgba(255,255,255,0.34);
+    border-bottom: 1px solid var(--sx-line);
+    color: var(--sx-text-subtle);
+    font-family: 'JetBrains Mono', monospace;
     font-size: 0.6875rem;
-    font-weight: 680;
+    font-weight: 500;
     letter-spacing: 0.09em;
     text-transform: uppercase;
   }
   .projects-list-row {
     position: relative;
     min-height: 3.45rem;
-    border-top: 1px solid rgba(255,255,255,0.035);
-    padding: 0.55rem 0.875rem 0.55rem 1.25rem;
-    color: rgba(255,255,255,0.72);
+    margin: 0 0.4rem;
+    border-radius: var(--radius-sm);
+    padding: 0.55rem 0.5rem 0.55rem 0.85rem;
+    color: var(--sx-text-muted);
     cursor: pointer;
-    transition: background 160ms ease, color 160ms ease, box-shadow 160ms ease;
+    transition: background 160ms var(--ease-out-expo), color 160ms var(--ease-out-expo);
   }
   .projects-list-row:hover {
-    background: rgba(255,255,255,0.034);
-    color: rgba(255,255,255,0.92);
-    box-shadow: inset 2px 0 0 color-mix(in srgb, var(--sx-accent) 48%, transparent);
+    background: var(--sx-surface-hover);
+    color: var(--sx-text);
   }
   .projects-list-name {
     display: flex;
@@ -1427,27 +1445,25 @@
     align-items: center;
     justify-content: center;
     border-radius: 0.55rem;
-    border: 1px solid rgba(255,255,255,0.055);
-    background: rgba(255,255,255,0.040);
-    color: rgba(255,255,255,0.68);
+    background: var(--sx-surface-active);
+    color: var(--sx-text-muted);
     font-size: 0.75rem;
-    font-weight: 700;
-    box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+    font-weight: 600;
   }
   .project-row-title {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: rgba(255,255,255,0.88);
+    color: var(--sx-text);
     font-size: 0.875rem;
-    font-weight: 610;
+    font-weight: 560;
   }
   .project-row-description {
     margin-top: 0.18rem;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    color: rgba(255,255,255,0.34);
+    color: var(--sx-text-subtle);
     font-size: 0.75rem;
   }
   .project-cell {
@@ -1455,7 +1471,7 @@
     min-width: 0;
     align-items: center;
     gap: 0.45rem;
-    color: rgba(255,255,255,0.48);
+    color: var(--sx-text-subtle);
     font-size: 0.8125rem;
   }
   .project-inline-menu {
@@ -1473,28 +1489,20 @@
     transition: background 150ms ease, color 150ms ease;
   }
   .project-inline-button:hover {
-    background: rgba(255,255,255,0.055);
-    color: rgba(255,255,255,0.90);
+    background: var(--sx-surface-hover);
+    color: var(--sx-text);
   }
   .project-inline-button:disabled {
     cursor: wait;
     opacity: 0.55;
   }
+  /* material comes from .dropdown-menu (Glass menu); only positioning here */
   .project-inline-dropdown {
     position: absolute;
     top: calc(100% + 0.35rem);
     left: 0;
     z-index: 80;
     min-width: 9.25rem;
-    background:
-      linear-gradient(145deg, rgba(255,255,255,0.090), rgba(255,255,255,0.022)),
-      rgba(6,6,8,0.50);
-    border-color: rgba(255,255,255,0.090);
-    box-shadow:
-      inset 0 1px 0 rgba(255,255,255,0.11),
-      0 22px 68px rgba(0,0,0,0.38);
-    backdrop-filter: blur(32px) saturate(155%);
-    -webkit-backdrop-filter: blur(32px) saturate(155%);
   }
   .project-inline-dropdown--wide {
     min-width: 12rem;
@@ -1507,25 +1515,23 @@
   .project-lead-avatar {
     width: 1.1rem !important;
     height: 1.1rem !important;
-    border-color: rgba(255,255,255,0.08) !important;
   }
   .project-lead-button {
     width: 100%;
     justify-content: flex-start;
   }
   .project-status-cell {
-    color: rgba(255,255,255,0.64);
+    color: var(--sx-text-muted);
   }
   .project-status-button {
     width: 100%;
     justify-content: flex-start;
   }
   .project-status-dot {
-    width: 0.375rem;
-    height: 0.375rem;
+    width: 6px;
+    height: 6px;
     flex-shrink: 0;
     border-radius: 9999px;
-    box-shadow: 0 0 12px currentColor;
   }
   .project-priority {
     display: inline-flex;
@@ -1545,7 +1551,7 @@
   .project-priority__bar {
     width: 0.24rem;
     border-radius: 9999px;
-    background: rgba(255,255,255,0.16);
+    background: var(--sx-line-strong);
   }
   .project-priority__bar:nth-child(1) { height: 0.38rem; }
   .project-priority__bar:nth-child(2) { height: 0.58rem; }
@@ -1553,14 +1559,17 @@
   .project-priority__bar:nth-child(4) { height: 0.98rem; }
   .project-priority__bar[data-active="true"] {
     background: var(--priority-color);
-    box-shadow: 0 0 12px color-mix(in srgb, var(--priority-color) 52%, transparent);
   }
+  /* chip doctrine: tinted fill from currentColor, ring on hover only */
   .project-priority--with-label {
     min-height: 1.55rem;
     border-radius: 9999px;
-    border: 1px solid color-mix(in srgb, var(--priority-color) 24%, transparent);
-    background: color-mix(in srgb, var(--priority-color) 10%, transparent);
+    background: color-mix(in srgb, var(--priority-color) 14%, transparent);
     padding: 0.22rem 0.52rem;
+    transition: box-shadow 150ms var(--ease-out-expo);
+  }
+  .project-inline-button:hover .project-priority--with-label {
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--priority-color) 22%, transparent);
   }
   .project-priority__label {
     min-width: 0;
@@ -1574,7 +1583,7 @@
     min-width: 0;
     align-items: center;
     gap: 0.55rem;
-    color: rgba(255,255,255,0.58);
+    color: var(--sx-text-muted);
     font-size: 0.8125rem;
   }
   .project-date-control {
@@ -1584,8 +1593,8 @@
     transition: background 150ms ease, color 150ms ease;
   }
   .project-date-control:hover {
-    background: rgba(255,255,255,0.055);
-    color: rgba(255,255,255,0.90);
+    background: var(--sx-surface-hover);
+    color: var(--sx-text);
   }
   .project-date-control input {
     position: absolute;
@@ -1595,16 +1604,17 @@
   }
   .project-row-progress {
     position: relative;
-    height: 0.25rem;
+    height: 3px;
     min-width: 4rem;
     flex: 1;
     overflow: hidden;
     border-radius: 9999px;
-    background: rgba(255,255,255,0.065);
+    background: var(--sx-line);
   }
   .project-row-progress > div {
     height: 100%;
     border-radius: inherit;
+    background: linear-gradient(90deg, var(--sx-text-subtle), var(--sx-text-muted));
     transition: width 420ms var(--ease-out-expo);
   }
   .project-row-menu {
@@ -1619,7 +1629,7 @@
     align-items: center;
     justify-content: center;
     border-radius: 0.55rem;
-    color: rgba(255,255,255,0.32);
+    color: var(--sx-text-subtle);
     opacity: 0;
     transition: opacity 140ms ease, background 140ms ease, color 140ms ease;
   }
@@ -1628,8 +1638,8 @@
     opacity: 1;
   }
   .project-row-menu-button:hover {
-    background: rgba(255,255,255,0.065);
-    color: rgba(255,255,255,0.82);
+    background: var(--sx-surface-hover);
+    color: var(--sx-text);
   }
 
   /* Project detail page */
@@ -2101,11 +2111,8 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    border-radius: 1.125rem;
-    border: 1.5px dashed rgba(255,255,255,0.08);
     padding: 4rem 1.5rem;
     text-align: center;
-    background: rgba(255,255,255,0.014);
   }
   .projects-empty-icon {
     display: flex;
@@ -2113,9 +2120,9 @@
     height: 3rem;
     align-items: center;
     justify-content: center;
-    border-radius: 9999px;
-    background: rgba(255,255,255,0.045);
-    color: rgba(255,255,255,0.24);
+    border-radius: var(--radius-lg);
+    background: var(--sx-surface);
+    color: var(--sx-text-subtle);
     margin-bottom: 0.75rem;
   }
   @media (max-width: 760px) {
@@ -2851,30 +2858,8 @@
     to { opacity: 1; transform: translateY(0) scale(1); }
   }
 
-  /* Auth input styles */
-  .auth-page { background-color: var(--bg-primary); color: var(--text-primary); }
-  .auth-shell { background-color: transparent; }
-  .auth-panel { --auth-input-bg: var(--bg-primary); }
-  .auth-panel--surface {
-    --auth-input-bg: var(--bg-secondary);
-    background-color: var(--auth-input-bg);
-  }
-  .auth-input {
-    background-color: var(--auth-input-bg, var(--bg-primary));
-    color: var(--text-primary);
-    caret-color: var(--text-primary);
-  }
-  .auth-input:-webkit-autofill,
-  .auth-input:-webkit-autofill:hover,
-  .auth-input:-webkit-autofill:focus,
-  .auth-input:-webkit-autofill:active {
-    -webkit-text-fill-color: var(--text-primary);
-    caret-color: var(--text-primary);
-    background-color: var(--auth-input-bg, var(--bg-primary)) !important;
-    box-shadow: 0 0 0px 1000px var(--auth-input-bg, var(--bg-primary)) inset !important;
-    -webkit-box-shadow: 0 0 0px 1000px var(--auth-input-bg, var(--bg-primary)) inset !important;
-    transition: background-color 9999s ease-in-out 0s;
-  }
+  /* Auth pages — centered Glass modal over the canvas (Phase 3) */
+  .auth-page { background-color: var(--sx-canvas); color: var(--sx-text); }
 
   /* Dropdown animation (task panels) */
   .dropdown-overlay {

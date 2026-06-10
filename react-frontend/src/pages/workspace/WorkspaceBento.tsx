@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { ArrowRight, Clock3, Layers, Plus } from 'lucide-react';
 import type { ProjectDTO } from '@/types/dto.js';
 import { listItemVariants, listVariants } from '@/shared/lib/animations.js';
+import { Glass } from '@/shared/ui/glass/index.js';
 import { PROJECT_STATUS_META } from '@/entities/project/model/projectMeta.js';
 
 interface WorkspaceBentoProps {
@@ -36,7 +37,10 @@ export const WorkspaceBento: React.FC<WorkspaceBentoProps> = ({
   ), [projects]);
 
   return (
-    <motion.section
+    <Glass
+      as={motion.section}
+      variant="panel"
+      depth="raised"
       className="workspace-recent-panel"
       variants={listVariants}
       initial="initial"
@@ -103,6 +107,6 @@ export const WorkspaceBento: React.FC<WorkspaceBentoProps> = ({
         <Plus size={14} />
         New project
       </motion.button>
-    </motion.section>
+    </Glass>
   );
 };
