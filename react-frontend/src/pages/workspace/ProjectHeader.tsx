@@ -480,7 +480,7 @@ export const ProjectPropertiesPanel: React.FC<ProjectPropertiesPanelProps> = ({
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleting}
-              className="bg-red-600/80 hover:bg-red-600 text-white border-0"
+              className="bg-red-600/80 hover:bg-red-600 text-[color:var(--sx-accent-contrast)] border-0"
             >
               {deleting ? 'Deleting...' : 'Delete'}
             </AlertDialogAction>

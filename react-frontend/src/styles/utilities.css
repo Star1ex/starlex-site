@@ -72,8 +72,8 @@
   .app-loading-spinner {
     width: 24px;
     height: 24px;
-    border: 2px solid var(--sx-border);
-    border-top-color: var(--starlex-accent, #6366f1);
+    border: 2px solid var(--sx-line);
+    border-top-color: var(--sx-accent);
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
   }
@@ -87,7 +87,6 @@
     height: 2px;
     border-radius: 9999px;
     background: var(--star-color);
-    box-shadow: 0 0 8px var(--star-glow);
     opacity: 0.7;
     animation: starTwinkle 6s ease-in-out infinite;
     will-change: opacity, transform;
@@ -131,15 +130,15 @@
     transform: translateY(0) scale(0.99);
   }
   .tt-button-primary {
-    background: var(--starlex-accent, #6366f1);
-    color: var(--starlex-accent-contrast);
-    box-shadow: 0 12px 30px var(--starlex-accent-glow);
+    background: var(--sx-accent);
+    color: var(--sx-accent-contrast);
+    box-shadow: var(--sx-shadow-soft);
     border-color: transparent;
   }
   .tt-button-primary:hover { filter: brightness(1.10); }
 
-  .tt-link { color: var(--text-primary); transition: color 180ms ease, opacity 180ms ease; }
-  .tt-link:hover { color: var(--starlex-accent, #6366f1); }
+  .tt-link { color: var(--sx-text); transition: color 180ms ease, opacity 180ms ease; }
+  .tt-link:hover { color: var(--sx-accent); }
 
   /* Interactions */
   a, button {

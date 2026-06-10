@@ -1,7 +1,7 @@
 export function hashWorkspaceColor(name: string): string {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (Math.imul(31, h) + name.charCodeAt(i)) | 0;
-  const palette = ['#6366f1', '#8b5cf6', '#0ea5e9', '#10b981', '#f59e0b', '#f43f5e', '#ec4899', '#14b8a6'];
+  const palette = ['#e6455a', '#8b5cf6', '#0ea5e9', '#10b981', '#f59e0b', '#f43f5e', '#ec4899', '#14b8a6'];
   return palette[Math.abs(h) % palette.length];
 }
 

@@ -241,7 +241,7 @@ export const HomePage = () => {
       ],
       mediaType: "image",
       mediaPosition: "right",
-      videoSrc: theme === "dark" ? markdownDark : markdownLight,
+      videoSrc: theme !== "light" ? markdownDark : markdownLight,
     },
     {
       title: "Your team, always in sync",
@@ -253,7 +253,7 @@ export const HomePage = () => {
       ],
       mediaType: "video",
       mediaPosition: "left",
-      videoSrc: theme === "dark" ? collabDark : collabLight,
+      videoSrc: theme !== "light" ? collabDark : collabLight,
     },
   ];
 
@@ -268,7 +268,7 @@ export const HomePage = () => {
   return (
     <div
       className="relative min-h-screen font-sans bg-[color:var(--bg-primary)] text-[color:var(--text-primary)] transition-colors duration-300"
-      style={theme === "dark" ? {
+      style={theme !== "light" ? {
         "--bg-primary": "#0b090a",
         "--bg-secondary": "#121011",
         "--bg-tertiary": "#191617",

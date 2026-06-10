@@ -70,7 +70,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   }, [location.pathname, location.search]);
 
   return (
-    <div className="starlex-app-shell min-h-screen" style={{ background: 'var(--sx-body-bg, var(--bg-primary))' }}>
+    <div className="starlex-app-shell min-h-screen">
+      {/* Depth field — the only thing behind the shell */}
+      <div className="sx-depth" aria-hidden="true" />
+
       {/* Desktop sidebar */}
       {!isMobile && <GlobalSidebar />}
 

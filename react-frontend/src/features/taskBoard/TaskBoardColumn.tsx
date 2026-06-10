@@ -35,7 +35,7 @@ export function TaskBoardColumn({ col, tasks, overStatus, canEdit }: TaskBoardCo
           ref={setNodeRef}
           className={cn(
             'flex flex-col gap-2 min-h-[96px] rounded-2xl border border-transparent p-1 transition-all',
-            highlighted && 'border-[color:var(--starlex-accent-border)] bg-[color:var(--starlex-accent-soft)] shadow-[0_0_24px_var(--starlex-accent-glow)]',
+            highlighted && 'border-[color:var(--starlex-accent-border)] bg-[color:var(--starlex-accent-soft)]',
           )}
         >
           {tasks.map((task) => <SortableTaskBoardCard key={task.id} task={task} canEdit={canEdit} />)}

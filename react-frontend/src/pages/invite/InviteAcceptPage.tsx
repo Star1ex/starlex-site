@@ -8,11 +8,11 @@ import { useAuth } from '@/contexts/useAuth.js';
 import { useWorkspace } from '@/contexts/useWorkspace.js';
 
 function WorkspaceGlyph({ name, color }: { name: string; color?: string }) {
-  const bg = color || '#6366f1';
+  const bg = color || '#e6455a';
   const letter = name.charAt(0).toUpperCase();
   return (
     <div
-      className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold font-hanken text-white shadow-lg"
+      className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold font-hanken text-[color:var(--sx-accent-contrast)] shadow-lg"
       style={{ background: bg, boxShadow: `0 8px 32px ${bg}55` }}
     >
       {letter}

@@ -350,7 +350,7 @@ export const MembersPage: React.FC = () => {
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRemove}
-              className="bg-red-600/80 hover:bg-red-600 text-white border-0"
+              className="bg-red-600/80 hover:bg-red-600 text-[color:var(--sx-accent-contrast)] border-0"
             >
               Remove
             </AlertDialogAction>

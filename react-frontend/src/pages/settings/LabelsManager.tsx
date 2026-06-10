@@ -6,7 +6,7 @@ import { showToast } from '@/shared/lib/toast.js';
 import type { WorkspaceLabelDTO } from '@/types/dto.js';
 
 const PRESET_COLORS = [
-  '#6366f1', '#8b5cf6', '#ec4899', '#ef4444',
+  '#e6455a', '#8b5cf6', '#ec4899', '#ef4444',
   '#f97316', '#f59e0b', '#10b981', '#14b8a6',
   '#0ea5e9', '#64748b', '#a3a3a3', '#e2e8f0',
 ];

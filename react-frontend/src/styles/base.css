@@ -1,9 +1,32 @@
 @layer base {
+  html {
+    /* Ultimate canvas fallback for routes that don't render the depth field */
+    background: var(--sx-canvas);
+    font-family: 'Geist Variable', system-ui, sans-serif;
+  }
   body {
-    background: var(--sx-body-bg, var(--bg-primary));
-    color: var(--text-primary);
-    font-family: 'Inter', sans-serif;
+    /* Transparent so the .sx-depth field reads through on app routes */
+    background: transparent;
+    color: var(--sx-text);
+    font-family: 'Geist Variable', system-ui, sans-serif;
+    font-size: 13px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
     @apply transition-colors duration-200;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.015em;
+  }
+
+  /* Mono caps for keys / metadata */
+  .label-caps {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--sx-text-subtle);
   }
 
   /* Priority pills */
@@ -16,11 +39,9 @@
     background-color: var(--priority-pill-bg-active);
     color: var(--priority-pill-text-active);
   }
+
   * {
-    border-color: var(--border-color);
-    outline-color: rgb(var(--starlex-accent-rgb) / 0.50);
-  }
-  html {
-    font-family: 'Inter', sans-serif;
+    border-color: var(--sx-line);
+    outline-color: rgb(var(--sx-accent-rgb) / 0.50);
   }
 }

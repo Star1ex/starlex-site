@@ -117,7 +117,7 @@ export default function AboutUs({ variant = "page" }: AboutUsProps) {
     );
   }
 
-  const darkVars = theme === "dark" ? ({
+  const darkVars = theme !== "light" ? ({
     "--bg-primary":        "#0b090a",
     "--bg-secondary":      "#121011",
     "--bg-tertiary":       "#191617",

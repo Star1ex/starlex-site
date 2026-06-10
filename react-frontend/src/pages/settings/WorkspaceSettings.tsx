@@ -8,7 +8,7 @@ import { TASK_STATUS_META } from '@/entities/task/model/taskMeta.js';
 import type { TaskStatus, WorkspaceDTO } from '@/types/dto.js';
 
 const ACCENT_PRESETS = [
-  { label: 'Indigo',   value: '#6366f1' },
+  { label: 'Crimson',  value: '#e6455a' },
   { label: 'Violet',   value: '#8b5cf6' },
   { label: 'Sky',      value: '#0ea5e9' },
   { label: 'Emerald',  value: '#10b981' },
@@ -58,7 +58,7 @@ export const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = () => {
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
-  const [color, setColor] = useState('#6366f1');
+  const [color, setColor] = useState('#e6455a');
   const [keyPrefix, setKeyPrefix] = useState('');
   const [defaultStatus, setDefaultStatus] = useState('');
   const [memberRole, setMemberRole] = useState('member');
@@ -73,7 +73,7 @@ export const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = () => {
       if (ws) {
         setName(ws.name ?? '');
         setDescription(ws.description ?? '');
-        setColor(ws.color ?? '#6366f1');
+        setColor(ws.color ?? '#e6455a');
         setKeyPrefix(ws.key_prefix ?? '');
         setDefaultStatus(ws.default_task_status ?? '');
         setMemberRole(ws.member_default_role ?? 'member');

@@ -1,5 +1,5 @@
 export const WORKSPACE_ACCENT_PRESETS = [
-  { label: 'Indigo',  value: '#6366f1' },
+  { label: 'Crimson', value: '#e6455a' },
   { label: 'Violet',  value: '#8b5cf6' },
   { label: 'Sky',     value: '#0ea5e9' },
   { label: 'Emerald', value: '#10b981' },

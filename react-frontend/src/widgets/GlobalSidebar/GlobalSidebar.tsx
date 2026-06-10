@@ -53,8 +53,8 @@ function WsGlyph({ workspace }: { workspace: WorkspaceDTO }) {
   if (workspace.icon && workspace.icon.length <= 2 && !workspace.icon.startsWith('/')) {
     return (
       <div
-        className="sidebar-workspace-glyph size-6 rounded-lg flex items-center justify-center text-xs font-bold text-white flex-shrink-0"
-        style={{ backgroundColor: workspace.color || '#6366f1' }}
+        className="sidebar-workspace-glyph size-6 rounded-lg flex items-center justify-center text-xs font-bold text-[color:var(--sx-accent-contrast)] flex-shrink-0"
+        style={{ backgroundColor: workspace.color || '#e6455a' }}
       >
         <span className="text-xs leading-none">{workspace.icon}</span>
       </div>
@@ -150,7 +150,7 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
   }, [navigate]);
 
   const sidebarStyle = useMemo(() => ({
-    ['--workspace-accent' as string]: activeWorkspace?.color || '#6366f1',
+    ['--workspace-accent' as string]: activeWorkspace?.color || '#e6455a',
   }) as React.CSSProperties, [activeWorkspace?.color]);
 
   return (

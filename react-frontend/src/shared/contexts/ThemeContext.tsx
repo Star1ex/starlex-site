@@ -3,6 +3,7 @@ import { getCookie, setCookie } from '@/shared/lib/cookies.js';
 import { ThemeContext } from './themeContext.js';
 import {
   DEFAULT_ACCENT,
+  migrateTheme,
   THEME_COOKIE_KEY,
   THEME_COOKIE_MAX_AGE,
   THEME_STORAGE_KEY,
@@ -11,15 +12,15 @@ import {
 
 function applyThemeClasses(theme: Theme) {
   const root = document.documentElement;
-  root.classList.remove('dark', 'light', 'theme-ultra-dark', 'theme-solarized');
-  if (theme === 'dark')       root.classList.add('dark');
-  if (theme === 'ultra-dark') root.classList.add('dark', 'theme-ultra-dark');
-  if (theme === 'solarized')  root.classList.add('theme-solarized');
-  if (theme === 'light')      root.classList.add('light');
+  // The contract switches on data-theme; the `dark` class is kept only so
+  // Tailwind `dark:` variants and class-sniffing consumers (e.g. BlockNote)
+  // keep working under ultra-dark.
+  root.dataset.theme = theme;
+  root.classList.toggle('dark', theme === 'ultra-dark');
 }
 
 function applyFavicon(theme: Theme) {
-  const isDark = theme === 'dark' || theme === 'ultra-dark';
+  const isDark = theme === 'ultra-dark';
   const href = isDark ? '/favicon-white.png' : '/favicon.png';
   const link =
     document.querySelector<HTMLLinkElement>('#app-favicon') ||
@@ -68,7 +69,6 @@ function applyStarlexAccent(color: string) {
   root.style.setProperty('--starlex-accent-rgb', channels);
   root.style.setProperty('--starlex-accent-soft', `rgb(${channels} / 0.14)`);
   root.style.setProperty('--starlex-accent-border', `rgb(${channels} / 0.32)`);
-  root.style.setProperty('--starlex-accent-glow', `rgb(${channels} / 0.22)`);
   root.style.setProperty('--workspace-accent', color);
 }
 
@@ -77,12 +77,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     const saved =
       getCookie(THEME_COOKIE_KEY) ||
       localStorage.getItem(THEME_STORAGE_KEY);
-    if (saved === 'dark' || saved === 'light' || saved === 'ultra-dark' || saved === 'solarized') {
-      return saved;
-    }
-    // Default to dark (Liquid Glass) unless system prefers light
-    if (window.matchMedia?.('(prefers-color-scheme: light)').matches) return 'light';
-    return 'dark';
+    return migrateTheme(saved);
   });
 
   const [accent, setAccentState] = useState<string>(DEFAULT_ACCENT);
@@ -97,14 +92,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   const setTheme = (newTheme: Theme) => setThemeState(newTheme);
 
   const toggleTheme = () => {
-    setThemeState((prev) => {
-      switch (prev) {
-        case 'dark':       return 'light';
-        case 'light':      return 'ultra-dark';
-        case 'ultra-dark': return 'solarized';
-        default:           return 'dark';
-      }
-    });
+    setThemeState((prev) => (prev === 'light' ? 'ultra-dark' : 'light'));
   };
 
   const setAccent = (color: string) => {

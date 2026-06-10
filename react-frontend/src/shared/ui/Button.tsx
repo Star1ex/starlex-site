@@ -8,7 +8,7 @@ const buttonStyles = cva(
     variants: {
       variant: {
         primary:
-          "!bg-[color:var(--starlex-accent)] !border-transparent !text-[color:var(--starlex-accent-contrast)] hover:brightness-110 shadow-[0_8px_24px_var(--starlex-accent-glow)]",
+          "!bg-[color:var(--sx-accent)] !border-transparent !text-[color:var(--sx-accent-contrast)] hover:brightness-110",
         secondary: "liquid-button",
         outline:
           "!bg-transparent border border-[color:var(--sx-control-border)] text-[color:var(--sx-text-muted)] hover:!bg-[color:var(--sx-control)] hover:!border-[color:var(--sx-control-border-strong)] hover:text-[color:var(--sx-text)]",
