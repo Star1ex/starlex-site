@@ -18,9 +18,9 @@ import {
 import type { WorkspaceMemberDTO, WorkspaceRole } from '@/types/dto.js';
 
 const ROLE_META: Record<WorkspaceRole, { label: string; icon: React.ReactNode; cls: string }> = {
-  owner:  { label: 'Owner',  icon: <Crown size={11} />,  cls: 'text-amber-400 bg-amber-900/25' },
-  admin:  { label: 'Admin',  icon: <Shield size={11} />, cls: 'text-violet-400 bg-violet-900/25' },
-  member: { label: 'Member', icon: <User size={11} />,   cls: 'text-blue-400 bg-blue-900/25' },
+  owner:  { label: 'Owner',  icon: <Crown size={11} />,  cls: 'text-[color:var(--priority-high-text)] bg-[color:var(--priority-high-bg)]' },
+  admin:  { label: 'Admin',  icon: <Shield size={11} />, cls: 'text-[color:var(--priority-medium-text)] bg-[color:var(--priority-medium-bg)]' },
+  member: { label: 'Member', icon: <User size={11} />,   cls: 'text-[color:var(--priority-low-text)] bg-[color:var(--priority-low-bg)]' },
   guest:  { label: 'Guest',  icon: <Eye size={11} />,    cls: 'text-[color:var(--sx-text-subtle)] bg-[color:var(--sx-panel)]' },
 };
 
@@ -280,7 +280,7 @@ export const MembersPage: React.FC = () => {
                 onClick={handleCopy}
                 className="flex items-center gap-1 text-label-sm text-[color:var(--sx-text-muted)] hover:text-[color:var(--sx-text)] transition-colors flex-shrink-0"
               >
-                {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
+                {copied ? <Check size={13} className="text-[color:var(--status-done-text)]" /> : <Copy size={13} />}
                 {copied ? 'Copied!' : 'Copy'}
               </button>
             </div>

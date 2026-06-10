@@ -11,8 +11,8 @@ export const IconPicker: React.FC<{ value?: string; onChange: (value: string) =>
           type="button"
           onClick={() => onChange(icon)}
           className={`w-7 h-7 flex items-center justify-center rounded border ${
-            value === icon ? 'border-blue-500' : 'border-transparent'
-          } hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors`}
+            value === icon ? 'border-[color:var(--sx-accent)]' : 'border-transparent'
+          } hover:bg-[color:var(--sx-control)] transition-colors`}
         >
           <span className="text-sm">{icon}</span>
         </button>

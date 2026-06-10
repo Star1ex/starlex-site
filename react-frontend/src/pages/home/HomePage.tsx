@@ -446,7 +446,7 @@ export const HomePage = () => {
                 →
               </motion.span>
               <motion.span
-                className="absolute inset-0 bg-white/10"
+                className="absolute inset-0 bg-[color:var(--sx-rim-faint)]"
                 variants={{ rest: { opacity: 0 }, hover: { opacity: 1 } }}
                 transition={{ duration: 0.2 }}
               />
@@ -555,7 +555,7 @@ export const HomePage = () => {
                 →
               </motion.span>
               <motion.span
-                className="absolute inset-0 bg-white/10"
+                className="absolute inset-0 bg-[color:var(--sx-rim-faint)]"
                 variants={{ rest: { opacity: 0 }, hover: { opacity: 1 } }}
                 transition={{ duration: 0.2 }}
               />

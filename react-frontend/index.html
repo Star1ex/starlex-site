@@ -14,20 +14,16 @@
         try {
           var cookieMatch = document.cookie.match(/(?:^|;\s*)starlex-theme=([^;]+)/);
           var storedTheme = localStorage.getItem('starlex-theme');
-          var theme = cookieMatch ? decodeURIComponent(cookieMatch[1]) : storedTheme;
-          if (!/^(dark|light|ultra-dark|solarized)$/.test(theme || '')) {
-            theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
-              ? 'light'
-              : 'dark';
-          }
+          var rawTheme = cookieMatch ? decodeURIComponent(cookieMatch[1]) : storedTheme;
+          var theme = rawTheme === 'light' || rawTheme === 'solarized'
+            ? 'light'
+            : 'ultra-dark';
 
           var root = document.documentElement;
-          root.classList.remove('dark', 'light', 'theme-ultra-dark', 'theme-solarized');
-          if (theme === 'dark') root.classList.add('dark');
-          if (theme === 'light') root.classList.add('light');
-          if (theme === 'ultra-dark') root.classList.add('dark', 'theme-ultra-dark');
-          if (theme === 'solarized') root.classList.add('theme-solarized');
+          root.dataset.theme = theme;
+          root.classList.toggle('dark', theme === 'ultra-dark');
         } catch (error) {
+          document.documentElement.dataset.theme = 'ultra-dark';
           document.documentElement.classList.add('dark');
         }
       })();

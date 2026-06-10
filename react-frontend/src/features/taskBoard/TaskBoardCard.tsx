@@ -43,7 +43,7 @@ export function TaskBoardCard({ task, isDragging = false, canEdit }: TaskBoardCa
       <div className="flex items-center gap-2 flex-wrap">
         {task.key && <span className="font-mono text-[10px] text-[color:var(--sx-text-subtle)] tabular-nums">{task.key}</span>}
         {task.due_date && (
-          <span className={cn('flex items-center gap-1 text-[10px]', isOverdue ? 'text-[#f87171]' : 'text-[color:var(--sx-text-subtle)]')}>
+          <span className={cn('flex items-center gap-1 text-[10px]', isOverdue ? 'text-[color:var(--priority-urgent-text)]' : 'text-[color:var(--sx-text-subtle)]')}>
             <CalendarDays size={9} />
             {fmtDue(task.due_date)}
           </span>

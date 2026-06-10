@@ -259,7 +259,7 @@ export const SignInPage = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 mt-6 sm:mt-8 bg-black dark:bg-white text-white dark:text-black font-semibold rounded-md shadow-md hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              className="w-full py-3 mt-6 sm:mt-8 bg-[color:var(--sx-text)] text-[color:var(--sx-canvas)] font-semibold rounded-md shadow-md hover:opacity-90 transition-colors duration-200 disabled:opacity-45 disabled:cursor-not-allowed"
             >
               {isSubmitting ? "Signing In..." : "Sign In"}
             </button>
@@ -278,7 +278,7 @@ export const SignInPage = () => {
                 className="w-full py-3 border border-black dark:border-dark-border text-black dark:text-dark-text font-semibold rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-dark-border transition-colors duration-200 disabled:opacity-60"
               >
                 <span className="inline-flex items-center justify-center gap-2">
-                  <FaGoogle className="w-4 h-4 text-gray-900 dark:text-white" />
+                  <FaGoogle className="w-4 h-4 text-[color:var(--sx-text)]" />
                   {oauthLoading === 'google' ? 'Connecting to Google...' : 'Continue with Google'}
                 </span>
               </button>
@@ -289,7 +289,7 @@ export const SignInPage = () => {
                 className="w-full py-3 border border-black dark:border-dark-border text-black dark:text-dark-text font-semibold rounded-md shadow-sm hover:bg-gray-50 dark:hover:bg-dark-border transition-colors duration-200 disabled:opacity-60"
               >
                 <span className="inline-flex items-center justify-center gap-2">
-                  <FaGithub className="w-4 h-4 text-gray-900 dark:text-white" />
+                  <FaGithub className="w-4 h-4 text-[color:var(--sx-text)]" />
                   {oauthLoading === 'github' ? 'Connecting to GitHub...' : 'Continue with GitHub'}
                 </span>
               </button>

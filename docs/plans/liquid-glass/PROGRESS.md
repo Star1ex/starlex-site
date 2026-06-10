@@ -29,3 +29,18 @@ Each phase session appends one entry: date, phase, what shipped, deviations from
 - This phase is **structural, not finished-looking**: surfaces still use the legacy panel/blur recipes via aliases (the "soap-glass" look persists). The `<Glass>` material that makes them premium lands in Phase 2. Light theme in particular looks transitional because the alias `--sx-panel-rgb: 255 255 255` recipes render near-invisible white-on-white tints until Phase 2/3 move surfaces onto `--sx-surface`.
 - Visual dual-theme QA (depth-field appearance, no-purple confirmation in the running app) was **not** done live — the gate run was lint+build per the plan; full visual QA is the Phase 5 deliverable. Recommend a quick manual look in both themes before Phase 2.
 - Workspace accent customization (`setAccent`) is still wired and can override the crimson product accent per-workspace; left intact (out of Phase 1 scope).
+
+---
+
+## 2026-06-10 — Phase 1 second iteration hardening
+
+**What changed**
+- Pre-hydration theme boot in `index.html` now uses the same two-theme migration as React: `light|solarized → light`, everything else → `ultra-dark`, sets `data-theme`, and only keeps `.dark` for ultra-dark compatibility. Removed stale `light`, `theme-ultra-dark`, and `theme-solarized` class paths from first paint.
+- Status/priority metadata now consumes the semantic palette (`--status-*`, `--priority-*`) instead of stock Tailwind hexes/classes. This covers task status dots/pills, task priority flags, project status dots, project priority bars, role badges, copied-invite success icon, subtask completion, icon picker selection, and the old dark editor link fallback.
+- Removed the previously deferred TSX `text-white` / `bg-white/*` literals from auth buttons/icons and marketing hover sheens; those now use contract tokens (`--sx-text`, `--sx-canvas`, `--sx-rim-faint`).
+- Accent parser fallback now returns the crimson channels `230 69 90` instead of the old indigo fallback.
+
+**Verification**
+- `npm run lint` → green.
+- `npm run build` → green. Vite emitted only existing advisory warnings: stale Browserslist data and chunks over 500 kB.
+- DoD greps: `glow|6366f1|ambient` in `react-frontend/src` → 0; `!important` in `src/styles/themes` → 0; `text-white|bg-white/` in TS/TSX → 0; stale `theme-ultra-dark|theme-solarized|data-theme="dark"|data-theme="solarized"` in `index.html`/`src` → 0.

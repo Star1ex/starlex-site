@@ -58,7 +58,7 @@ function getAccentChannels(color: string): string {
     return `${rgb[1]} ${rgb[2]} ${rgb[3]}`;
   }
 
-  return '99 102 241';
+  return '230 69 90';
 }
 
 function applyStarlexAccent(color: string) {

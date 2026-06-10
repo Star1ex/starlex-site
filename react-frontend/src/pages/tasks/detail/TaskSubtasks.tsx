@@ -14,8 +14,8 @@ export function TaskSubtasks({ subtasks }: TaskSubtasksProps) {
       <div className="flex flex-col gap-2">
         {subtasks.map((subtask) => (
           <div key={subtask.id} className="flex items-center gap-2">
-            <div className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${subtask.is_done ? 'bg-emerald-500/30 border-emerald-500/50' : 'border-[color:var(--sx-border)]'}`}>
-              {subtask.is_done && <Check size={10} className="text-emerald-300" />}
+            <div className={`w-4 h-4 rounded border flex items-center justify-center flex-shrink-0 ${subtask.is_done ? 'bg-[color:var(--status-done-bg)] border-[color:var(--status-done-text)]' : 'border-[color:var(--sx-border)]'}`}>
+              {subtask.is_done && <Check size={10} className="text-[color:var(--status-done-text)]" />}
             </div>
             <span className={`text-body-sm ${subtask.is_done ? 'line-through text-[color:var(--sx-text-subtle)]' : 'text-[color:var(--sx-text)]'}`}>
               {subtask.title}

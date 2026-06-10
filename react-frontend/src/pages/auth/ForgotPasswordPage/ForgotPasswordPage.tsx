@@ -84,7 +84,7 @@ export const ForgotPasswordPage: React.FC = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3 mt-6 sm:mt-8 bg-black dark:bg-white text-white dark:text-black font-semibold rounded-md shadow-md hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              className="w-full py-3 mt-6 sm:mt-8 bg-[color:var(--sx-text)] text-[color:var(--sx-canvas)] font-semibold rounded-md shadow-md hover:opacity-90 transition-colors duration-200 disabled:opacity-45 disabled:cursor-not-allowed"
             >
               {isSubmitting ? 'Sending...' : 'Send Reset Code'}
             </button>

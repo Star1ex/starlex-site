@@ -174,7 +174,7 @@ export default function AboutUs({ variant = "page" }: AboutUsProps) {
         {/* ── Hero ── */}
         <SectionWrapper className={isSettings ? "settings-section flex flex-col gap-4" : "flex flex-col items-center text-center gap-8 pb-20 sm:pb-28"}>
           <motion.p variants={fadeUp} className={isSettings ? "settings-label" : "text-xs uppercase tracking-[0.4em] text-[color:var(--text-secondary)]"}>About Us</motion.p>
-          <motion.h1 variants={fadeUp} className={`tt-font-display leading-[1.08] max-w-4xl ${isSettings ? "text-2xl sm:text-3xl text-white/95" : "text-5xl sm:text-6xl lg:text-7xl"}`}>
+          <motion.h1 variants={fadeUp} className={`tt-font-display leading-[1.08] max-w-4xl ${isSettings ? "text-2xl sm:text-3xl text-[color:var(--sx-text)]" : "text-5xl sm:text-6xl lg:text-7xl"}`}>
             A small team building calm, open collaboration.
           </motion.h1>
           <motion.p variants={fadeUp} className={isSettings ? "settings-section-description !mt-0 max-w-2xl" : "text-[color:var(--text-secondary)] text-lg sm:text-xl leading-relaxed max-w-2xl"}>
@@ -278,7 +278,7 @@ export default function AboutUs({ variant = "page" }: AboutUsProps) {
               >
                 <motion.span variants={{ rest: { x: 0 }, hover: { x: -3 } }} transition={{ duration: 0.2, ease: "easeOut" }}>Get started free</motion.span>
                 <motion.span variants={{ rest: { x: 0, opacity: 0.6 }, hover: { x: 4, opacity: 1 } }} transition={{ duration: 0.2, ease: "easeOut" }}>→</motion.span>
-                <motion.span className="absolute inset-0 bg-white/10" variants={{ rest: { opacity: 0 }, hover: { opacity: 1 } }} transition={{ duration: 0.2 }} />
+                <motion.span className="absolute inset-0 bg-[color:var(--sx-rim-faint)]" variants={{ rest: { opacity: 0 }, hover: { opacity: 1 } }} transition={{ duration: 0.2 }} />
               </motion.button>
               <motion.button
                 onClick={() => navigate("/")} whileTap={{ scale: 0.97 }}

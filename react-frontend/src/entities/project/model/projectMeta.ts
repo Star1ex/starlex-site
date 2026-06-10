@@ -30,20 +30,20 @@ export type ProjectPriorityMeta = {
 };
 
 export const PROJECT_STATUS_META: Record<ProjectStatus, ProjectStatusMeta> = {
-  backlog: { label: 'Backlog', dot: '#64748b', progress: 0 },
-  planned: { label: 'Planned', dot: '#a78bfa', progress: 20 },
-  in_progress: { label: 'In Progress', dot: '#38bdf8', progress: 55 },
-  paused: { label: 'Paused', dot: '#f59e0b', progress: 35 },
-  completed: { label: 'Completed', dot: '#34d399', progress: 100 },
-  cancelled: { label: 'Cancelled', dot: '#f87171', progress: 0 },
+  backlog: { label: 'Backlog', dot: 'var(--status-backlog-text)', progress: 0 },
+  planned: { label: 'Planned', dot: 'var(--status-progress-text)', progress: 20 },
+  in_progress: { label: 'In Progress', dot: 'var(--status-todo-text)', progress: 55 },
+  paused: { label: 'Paused', dot: 'var(--status-review-text)', progress: 35 },
+  completed: { label: 'Completed', dot: 'var(--status-done-text)', progress: 100 },
+  cancelled: { label: 'Cancelled', dot: 'var(--priority-urgent-text)', progress: 0 },
 };
 
 export const PROJECT_PRIORITY_META: Record<ProjectPriority, ProjectPriorityMeta> = {
   none: { label: 'No priority', color: 'var(--priority-none-text)', bars: 0 },
-  urgent: { label: 'Urgent', color: '#f87171', bars: 4 },
-  high: { label: 'High', color: '#fb923c', bars: 3 },
-  medium: { label: 'Medium', color: '#a78bfa', bars: 2 },
-  low: { label: 'Low', color: '#60a5fa', bars: 1 },
+  urgent: { label: 'Urgent', color: 'var(--priority-urgent-text)', bars: 4 },
+  high: { label: 'High', color: 'var(--priority-high-text)', bars: 3 },
+  medium: { label: 'Medium', color: 'var(--priority-medium-text)', bars: 2 },
+  low: { label: 'Low', color: 'var(--priority-low-text)', bars: 1 },
 };
 
 export function isProjectStatus(value: string): value is ProjectStatus {

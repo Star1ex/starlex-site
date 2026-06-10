@@ -266,7 +266,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
           color: #cbd5e1;
         }
         .dark .task-edit-preview .prose a {
-          color: #60a5fa;
+          color: var(--priority-low-text);
         }
       `}</style>
     </div>
