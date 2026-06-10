@@ -8,14 +8,11 @@ import { can } from '@/shared/lib/permissions.js';
 import { InlineLabelChips } from '@/shared/ui/LabelPicker.js';
 import { StatusMenu } from '@/features/taskStatus/StatusMenu.js';
 import { DarkSelect } from '@/shared/ui/DarkSelect.js';
+import { TASK_PRIORITIES, TASK_PRIORITY_META } from '@/entities/task/model/taskMeta.js';
 
-const PRIORITY_META: Record<string, { label: string; cls: string }> = {
-  high:   { label: 'High',   cls: 'text-orange-400' },
-  medium: { label: 'Medium', cls: 'text-amber-400' },
-  low:    { label: 'Low',    cls: 'text-blue-400' },
-};
-
-const PRIORITY_OPTIONS: TaskPriority[] = ['high', 'medium', 'low'];
+const CREATE_PRIORITY_OPTIONS: TaskPriority[] = TASK_PRIORITIES.filter(
+  (priority) => priority !== 'urgent' && priority !== 'none',
+);
 
 // ─── create task modal ─────────────────────────────────────────────────────────
 
@@ -72,7 +69,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
     }
   };
 
-  const inputCls = 'w-full px-3 py-2.5 rounded-xl text-body-md text-white bg-white/5 border border-white/10 outline-none focus:border-white/25 focus:ring-1 focus:ring-white/15 transition-all disabled:opacity-40 placeholder:text-white/30';
+  const inputCls = 'w-full px-3 py-2.5 rounded-xl text-body-md text-[color:var(--sx-text)] bg-[color:var(--sx-panel)] border border-[color:var(--sx-border)] outline-none focus:border-[color:var(--sx-border-strong)] focus:ring-1 focus:ring-[color:var(--sx-border-strong)] transition-all disabled:opacity-40 placeholder:text-[color:var(--sx-text-disabled)]';
 
   return (
     <AnimatePresence>
@@ -80,33 +77,33 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
         <motion.div
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
           variants={modalBackdropVariants} initial="initial" animate="animate" exit="exit"
-          style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)' }}
+          style={{ background: 'var(--sx-overlay)', backdropFilter: 'blur(8px)' }}
           onClick={e => { if (e.target === e.currentTarget) onClose(); }}
         >
           <motion.div className="glass-card w-full max-w-lg rounded-2xl overflow-hidden" variants={modalContentVariants}>
             <div className="flex items-center justify-between px-6 pt-6 pb-4">
-              <h2 className="text-headline-sm font-hanken font-semibold text-white">New Task</h2>
-              <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-white/40 hover:text-white/80 transition-colors">
+              <h2 className="text-headline-sm font-hanken font-semibold text-[color:var(--sx-text)]">New Task</h2>
+              <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] transition-colors">
                 <X size={16} />
               </button>
             </div>
             <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4">
               <div>
-                <label className="label-caps text-white/40 block mb-1.5">Title</label>
+                <label className="label-caps text-[color:var(--sx-text-subtle)] block mb-1.5">Title</label>
                 <input ref={titleRef} value={title} onChange={e => { setTitle(e.target.value); setError(''); }} placeholder="Task title" disabled={loading} className={inputCls} />
               </div>
               <div>
-                <label className="label-caps text-white/40 block mb-1.5">
+                <label className="label-caps text-[color:var(--sx-text-subtle)] block mb-1.5">
                   Description <span className="normal-case font-normal tracking-normal opacity-60">— optional</span>
                 </label>
                 <textarea value={description} onChange={e => setDescription(e.target.value)} placeholder="Describe this task…" rows={3} disabled={loading} className={`${inputCls} resize-none`} />
               </div>
               <div>
-                <label className="label-caps text-white/40 block mb-1.5">Priority</label>
+                <label className="label-caps text-[color:var(--sx-text-subtle)] block mb-1.5">Priority</label>
                 <DarkSelect
                   value={priority}
                   onChange={(value) => setPriority(value as TaskPriority)}
-                  options={PRIORITY_OPTIONS.map(p => ({ value: p, label: PRIORITY_META[p].label }))}
+                  options={CREATE_PRIORITY_OPTIONS.map(p => ({ value: p, label: TASK_PRIORITY_META[p].label }))}
                   disabled={loading}
                   className={`${inputCls} h-11 cursor-pointer`}
                 />
@@ -114,7 +111,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
               {error && <p className="text-label-sm text-[#fca5a5]">{error}</p>}
               <div className="flex gap-2 pt-1">
                 <button type="button" onClick={onClose} disabled={loading} className="flex-1 liquid-button !justify-center">Cancel</button>
-                <button type="submit" disabled={loading || !title.trim()} className="flex-1 liquid-button !justify-center !bg-[--accent] !border-transparent !text-white font-semibold disabled:opacity-40">
+                <button type="submit" disabled={loading || !title.trim()} className="flex-1 liquid-button !justify-center !bg-[color:var(--starlex-accent)] !border-transparent !text-[color:var(--starlex-accent-contrast)] font-semibold disabled:opacity-40">
                   {loading ? 'Creating…' : 'Create'}
                 </button>
               </div>
@@ -139,7 +136,7 @@ interface TaskRowProps {
 function TaskRow({ task, onNavigate, onDelete, canEditStatus, onStatusChange }: TaskRowProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const pm = PRIORITY_META[task.priority];
+  const priorityMeta = task.priority !== 'none' ? TASK_PRIORITY_META[task.priority] : null;
   const isDone = task.status === 'done';
 
   useEffect(() => {
@@ -154,7 +151,7 @@ function TaskRow({ task, onNavigate, onDelete, canEditStatus, onStatusChange }: 
   return (
     <motion.div
       variants={listItemVariants}
-      className="group flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer hover:bg-white/4 transition-all"
+      className="group flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer hover:bg-[color:var(--sx-control)] transition-all"
       onClick={() => onNavigate(task.id)}
     >
       <div className="flex-shrink-0" onClick={e => e.stopPropagation()}>
@@ -166,7 +163,7 @@ function TaskRow({ task, onNavigate, onDelete, canEditStatus, onStatusChange }: 
         />
       </div>
 
-      <span className={`flex-1 text-body-md min-w-0 truncate ${isDone ? 'line-through text-white/30' : 'text-white/80'}`}>
+      <span className={`flex-1 text-body-md min-w-0 truncate ${isDone ? 'line-through text-[color:var(--sx-text-subtle)]' : 'text-[color:var(--sx-text)]'}`}>
         {task.task}
       </span>
 
@@ -176,10 +173,14 @@ function TaskRow({ task, onNavigate, onDelete, canEditStatus, onStatusChange }: 
         </div>
       )}
 
-      {pm && <span className={`text-label-sm font-medium flex-shrink-0 ${pm.cls}`}>{pm.label}</span>}
+      {priorityMeta && (
+        <span className="text-label-sm font-medium flex-shrink-0" style={{ color: priorityMeta.color }}>
+          {priorityMeta.label}
+        </span>
+      )}
 
       {task.subtasks && task.subtasks.length > 0 && (
-        <span className="text-label-sm text-white/30 flex-shrink-0">
+        <span className="text-label-sm text-[color:var(--sx-text-subtle)] flex-shrink-0">
           {task.subtasks.filter(s => s.is_done).length}/{task.subtasks.length}
         </span>
       )}
@@ -187,7 +188,7 @@ function TaskRow({ task, onNavigate, onDelete, canEditStatus, onStatusChange }: 
       <div ref={menuRef} className="relative flex-shrink-0" onClick={e => e.stopPropagation()}>
         <button
           onClick={() => setMenuOpen(p => !p)}
-          className="w-6 h-6 flex items-center justify-center rounded text-white/25 opacity-0 group-hover:opacity-100 hover:text-white/70 transition-all"
+          className="w-6 h-6 flex items-center justify-center rounded text-[color:var(--sx-text-disabled)] opacity-0 group-hover:opacity-100 hover:text-[color:var(--sx-text)] transition-all"
         >
           <MoreHorizontal size={14} />
         </button>
@@ -200,7 +201,7 @@ function TaskRow({ task, onNavigate, onDelete, canEditStatus, onStatusChange }: 
               exit={{ opacity: 0, scale: 0.95, y: -4, transition: { duration: 0.07 } }}
             >
               <button onClick={() => { onNavigate(task.id); setMenuOpen(false); }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-label-sm text-white/70 hover:bg-white/5 transition-colors rounded-lg">
+                className="w-full flex items-center gap-2 px-3 py-2 text-label-sm text-[color:var(--sx-text-muted)] hover:bg-[color:var(--sx-control)] transition-colors rounded-lg">
                 <ChevronRight size={13} /> Open
               </button>
               {onDelete && (
@@ -253,7 +254,7 @@ export const ProjectTaskList: React.FC<ProjectTaskListProps> = ({
   return (
   <section>
     <div className="flex items-center justify-between mb-4">
-      <h2 className="label-caps text-white/40">Tasks</h2>
+      <h2 className="label-caps text-[color:var(--sx-text-subtle)]">Tasks</h2>
       {canCreate && (
         <button onClick={onCreateOpen} className="liquid-button gap-1.5 !py-1.5 !px-3 !text-label-sm">
           <Plus size={13} />
@@ -267,15 +268,15 @@ export const ProjectTaskList: React.FC<ProjectTaskListProps> = ({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0, transition: { delay: 0.1 } }}
         className="flex flex-col items-center justify-center py-12 text-center rounded-2xl"
-        style={{ border: '1.5px dashed rgba(255,255,255,0.08)' }}
+        style={{ border: '1.5px dashed var(--sx-border)' }}
       >
-        <div className="w-10 h-10 rounded-full bg-white/5 flex items-center justify-center mb-3">
-          <CheckCircle2 size={18} className="text-white/20" />
+        <div className="w-10 h-10 rounded-full bg-[color:var(--sx-control)] flex items-center justify-center mb-3">
+          <CheckCircle2 size={18} className="text-[color:var(--sx-text-disabled)]" />
         </div>
-        <p className="text-body-md font-medium text-white/50 mb-1">No tasks yet</p>
-        <p className="text-label-sm text-white/30 mb-5">Add the first task to get started</p>
+        <p className="text-body-md font-medium text-[color:var(--sx-text-muted)] mb-1">No tasks yet</p>
+        <p className="text-label-sm text-[color:var(--sx-text-subtle)] mb-5">Add the first task to get started</p>
         {canCreate && (
-          <button onClick={onCreateOpen} className="liquid-button gap-1.5 !bg-[--accent] !border-transparent !text-white">
+          <button onClick={onCreateOpen} className="liquid-button gap-1.5 !bg-[color:var(--starlex-accent)] !border-transparent !text-[color:var(--starlex-accent-contrast)]">
             <Plus size={14} /> Add Task
           </button>
         )}

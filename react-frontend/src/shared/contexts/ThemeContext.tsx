@@ -1,23 +1,13 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { useEffect, useState, ReactNode } from 'react';
 import { getCookie, setCookie } from '@/shared/lib/cookies.js';
-
-export type Theme = 'dark' | 'light' | 'ultra-dark' | 'solarized';
-
-interface ThemeContextType {
-  theme: Theme;
-  toggleTheme: () => void;
-  setTheme: (theme: Theme) => void;
-  accent: string;
-  setAccent: (color: string) => void;
-  clearAccent: () => void;
-}
-
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-
-const THEME_STORAGE_KEY = 'starlex-theme';
-const THEME_COOKIE_KEY = 'starlex-theme';
-const THEME_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
-const DEFAULT_ACCENT = '#6366f1';
+import { ThemeContext } from './themeContext.js';
+import {
+  DEFAULT_ACCENT,
+  THEME_COOKIE_KEY,
+  THEME_COOKIE_MAX_AGE,
+  THEME_STORAGE_KEY,
+  type Theme,
+} from './themeConfig.js';
 
 function applyThemeClasses(theme: Theme) {
   const root = document.documentElement;
@@ -45,6 +35,41 @@ function applyFavicon(theme: Theme) {
     el.href = href;
     document.head.appendChild(el);
   }
+}
+
+function getAccentChannels(color: string): string {
+  const value = color.trim();
+  const hex = value.match(/^#?([0-9a-f]{3}|[0-9a-f]{6})$/i)?.[1];
+
+  if (hex) {
+    const normalized = hex.length === 3
+      ? hex.split('').map((char) => `${char}${char}`).join('')
+      : hex;
+    const intValue = Number.parseInt(normalized, 16);
+    const red = (intValue >> 16) & 255;
+    const green = (intValue >> 8) & 255;
+    const blue = intValue & 255;
+    return `${red} ${green} ${blue}`;
+  }
+
+  const rgb = value.match(/^rgba?\(\s*(\d{1,3})[\s,]+(\d{1,3})[\s,]+(\d{1,3})/i);
+  if (rgb) {
+    return `${rgb[1]} ${rgb[2]} ${rgb[3]}`;
+  }
+
+  return '99 102 241';
+}
+
+function applyStarlexAccent(color: string) {
+  const root = document.documentElement;
+  const channels = getAccentChannels(color);
+
+  root.style.setProperty('--starlex-accent', color);
+  root.style.setProperty('--starlex-accent-rgb', channels);
+  root.style.setProperty('--starlex-accent-soft', `rgb(${channels} / 0.14)`);
+  root.style.setProperty('--starlex-accent-border', `rgb(${channels} / 0.32)`);
+  root.style.setProperty('--starlex-accent-glow', `rgb(${channels} / 0.22)`);
+  root.style.setProperty('--workspace-accent', color);
 }
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
@@ -84,14 +109,12 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
 
   const setAccent = (color: string) => {
     setAccentState(color);
-    document.documentElement.style.setProperty('--accent', color);
-    document.documentElement.style.setProperty('--accent-blue', color);
+    applyStarlexAccent(color);
   };
 
   const clearAccent = () => {
     setAccentState(DEFAULT_ACCENT);
-    document.documentElement.style.setProperty('--accent', DEFAULT_ACCENT);
-    document.documentElement.style.setProperty('--accent-blue', DEFAULT_ACCENT);
+    applyStarlexAccent(DEFAULT_ACCENT);
   };
 
   return (
@@ -100,20 +123,3 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     </ThemeContext.Provider>
   );
 };
-
-export const useTheme = (): ThemeContextType => {
-  const ctx = useContext(ThemeContext);
-  if (!ctx) throw new Error('useTheme must be used within a ThemeProvider');
-  return ctx;
-};
-
-export function useSystemThemeOnly(): void {
-  const { setTheme } = useTheme();
-  useEffect(() => {
-    const saved = (localStorage.getItem(THEME_STORAGE_KEY) as Theme | null) ?? 'dark';
-    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    setTheme(systemDark ? 'dark' : 'light');
-    return () => { setTheme(saved); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-}

@@ -97,7 +97,8 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 bg-black bg-opacity-50 animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-fadeIn"
+      style={{ background: 'var(--sx-overlay)' }}
       role="dialog"
       aria-modal="true"
     >
@@ -165,7 +166,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
             <button
               type="submit"
               disabled={isLoading || !formData.task.trim()}
-              className="px-6 py-2 bg-black dark:bg-white text-white dark:text-black rounded-full font-semibold hover:bg-gray-900 dark:hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 min-h-[40px] text-sm"
+              className="px-6 py-2 bg-[color:var(--starlex-accent)] text-[color:var(--starlex-accent-contrast)] rounded-full font-semibold hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 min-h-[40px] text-sm"
             >
               {isLoading ? 'Saving...' : 'Save'}
             </button>

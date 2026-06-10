@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { workspaceService, userService } from '@/services/api/index.js';
-import { useWorkspace } from '@/contexts/WorkspaceContext.js';
+import { useWorkspace } from '@/contexts/useWorkspace.js';
 import { showToast } from '@/shared/lib/toast.js';
 import { LabelsManager } from './LabelsManager.js';
 import { DarkSelect } from '@/shared/ui/DarkSelect.js';
-import type { WorkspaceDTO } from '@/types/dto.js';
+import { TASK_STATUS_META } from '@/entities/task/model/taskMeta.js';
+import type { TaskStatus, WorkspaceDTO } from '@/types/dto.js';
 
 const ACCENT_PRESETS = [
   { label: 'Indigo',   value: '#6366f1' },
@@ -17,11 +18,14 @@ const ACCENT_PRESETS = [
   { label: 'White',    value: '#e2e8f0' },
 ];
 
+const DEFAULT_TASK_STATUS_VALUES = ['backlog', 'todo', 'in_progress'] as const satisfies readonly TaskStatus[];
+
 const TASK_STATUS_OPTIONS = [
-  { value: '', label: 'Default (backlog)' },
-  { value: 'backlog', label: 'Backlog' },
-  { value: 'todo', label: 'To Do' },
-  { value: 'in_progress', label: 'In Progress' },
+  { value: '', label: `Default (${TASK_STATUS_META.backlog.label.toLowerCase()})` },
+  ...DEFAULT_TASK_STATUS_VALUES.map((status) => ({
+    value: status,
+    label: TASK_STATUS_META[status].label,
+  })),
 ];
 
 const ROLE_OPTIONS = [
@@ -103,13 +107,13 @@ export const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = () => {
   };
 
   if (!activeWorkspaceId) {
-    return <p className="settings-section text-body-md text-white/40 py-8 text-center">No active workspace selected</p>;
+    return <p className="settings-section text-body-md text-[color:var(--sx-text-subtle)] py-8 text-center">No active workspace selected</p>;
   }
 
   if (loading) {
     return (
       <div className="settings-page animate-pulse">
-        {[0,1,2].map(i => <div key={i} className="h-12 rounded-xl bg-white/5" />)}
+        {[0,1,2].map(i => <div key={i} className="h-12 rounded-xl bg-[color:var(--sx-control)]" />)}
       </div>
     );
   }
@@ -167,7 +171,7 @@ export const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = () => {
                 type="color"
                 value={color}
                 onChange={e => setColor(e.target.value)}
-                className="size-7 rounded-lg cursor-pointer border border-white/10 bg-transparent p-0.5"
+                className="size-7 rounded-lg cursor-pointer border border-[color:var(--sx-border)] bg-transparent p-0.5"
                 title="Custom color"
               />
             </div>

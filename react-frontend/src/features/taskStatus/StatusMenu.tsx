@@ -6,20 +6,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { TASK_STATUSES, TASK_STATUS_META } from '@/entities/task/model/taskMeta.js';
 import { taskService } from '@/services/api/index.js';
 import { showToast } from '@/shared/lib/toast.js';
 import type { TaskStatus } from '@/types/dto.js';
-
-const STATUS_CONFIG: Record<TaskStatus, { label: string; pillClass: string; dot: string }> = {
-  backlog:     { label: 'Backlog',      dot: '#475569', pillClass: 'bg-white/8 text-white/50' },
-  todo:        { label: 'To Do',        dot: '#60a5fa', pillClass: 'bg-blue-500/15 text-blue-300' },
-  in_progress: { label: 'In Progress',  dot: '#a78bfa', pillClass: 'bg-violet-500/15 text-violet-300' },
-  in_review:   { label: 'In Review',    dot: '#fb923c', pillClass: 'bg-orange-500/15 text-orange-300' },
-  done:        { label: 'Done',         dot: '#34d399', pillClass: 'bg-emerald-500/15 text-emerald-300' },
-  canceled:    { label: 'Canceled',     dot: '#64748b', pillClass: 'bg-white/5 text-white/30' },
-};
-
-const ALL_STATUSES = Object.keys(STATUS_CONFIG) as TaskStatus[];
 
 interface StatusPillProps {
   status: TaskStatus;
@@ -27,7 +17,7 @@ interface StatusPillProps {
 }
 
 export function StatusPill({ status, small }: StatusPillProps) {
-  const cfg = STATUS_CONFIG[status] ?? STATUS_CONFIG.backlog;
+  const cfg = TASK_STATUS_META[status] ?? TASK_STATUS_META.backlog;
   return (
     <span className={`inline-flex items-center gap-1 font-medium rounded-full ${cfg.pillClass} ${small ? 'text-[10px] px-1.5 py-0.5' : 'text-label-sm px-2.5 py-1'}`}>
       <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: cfg.dot }} />
@@ -80,18 +70,18 @@ export const StatusMenu: React.FC<StatusMenuProps> = ({ taskId, status, canEdit,
         className="glass-menu min-w-[160px] rounded-xl p-1"
         align="start"
       >
-        {ALL_STATUSES.map((s) => {
-          const cfg = STATUS_CONFIG[s];
+        {TASK_STATUSES.map((s) => {
+          const cfg = TASK_STATUS_META[s];
           return (
             <DropdownMenuItem
               key={s}
               onSelect={() => handleSelect(s)}
-              className="glass-menu-item flex items-center gap-2 px-2.5 py-1.5 rounded-lg cursor-pointer hover:bg-white/7 focus:bg-white/7"
+              className="glass-menu-item flex items-center gap-2 px-2.5 py-1.5 rounded-lg cursor-pointer hover:bg-[color:var(--sx-control)] focus:bg-[color:var(--sx-control)]"
             >
               <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: cfg.dot }} />
               <span className="text-label-sm">{cfg.label}</span>
               {s === optimistic && (
-                <Check className="ml-auto w-3 h-3 text-white/50" strokeWidth={1.65} />
+                <Check className="ml-auto w-3 h-3 text-[color:var(--sx-text-muted)]" strokeWidth={1.65} />
               )}
             </DropdownMenuItem>
           );

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, useInView, AnimatePresence, type Variants } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { isAuthenticated } from "@/shared/lib/authManager.js";
-import { useSystemThemeOnly, useTheme } from "@/shared/contexts/ThemeContext.js";
+import { useSystemThemeOnly, useTheme } from "@/shared/contexts/useTheme.js";
 import iconStarlex from "@/assets/icon-starlex.png";
 import { Helmet } from "react-helmet-async";
 import markdownDark from "@/public/MarkdownSupportBlackTheme.mp4";
@@ -133,7 +133,7 @@ function FeatureSection({
       <ul className="space-y-3">
         {bullets.map((bullet) => (
           <li key={bullet} className="flex items-start gap-3 text-sm text-[color:var(--text-secondary)]">
-            <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[color:var(--accent-blue)] shrink-0" />
+            <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[color:var(--starlex-accent)] shrink-0" />
             {bullet}
           </li>
         ))}
@@ -278,7 +278,8 @@ export const HomePage = () => {
         "--text-secondary": "#c2bbb6",
         "--text-tertiary": "#9b928c",
         "--border-color": "#241f21",
-        "--accent-blue": "#7c3aed",
+        "--starlex-accent": "#7c3aed",
+        "--starlex-accent-rgb": "124 58 237",
         "--button-bg": "rgba(255,255,255,0.08)",
         "--button-bg-hover": "rgba(255,255,255,0.13)",
         "--button-bg-active": "rgba(255,255,255,0.18)",

@@ -20,6 +20,35 @@ type Handler<T = unknown> = (envelope: RealtimeEnvelope<T>) => void;
 const BACKOFF_BASE = 1_000;
 const BACKOFF_MAX = 30_000;
 
+type RealtimeAuthMode = 'cookie' | 'query';
+
+const getRealtimeAuthMode = (): RealtimeAuthMode => {
+  return import.meta.env.VITE_WS_AUTH_MODE === 'cookie' ? 'cookie' : 'query';
+};
+
+const getWebSocketBase = () => {
+  const configuredBase = ((import.meta.env.VITE_API_URL as string | undefined) ?? '').trim();
+  const httpBase = configuredBase || window.location.origin;
+  return httpBase.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:');
+};
+
+const buildRealtimeUrl = (workspaceId: string): string | null => {
+  const mode = getRealtimeAuthMode();
+  const url = new URL('/api/ws', getWebSocketBase());
+  url.searchParams.set('workspace_id', workspaceId);
+
+  if (mode === 'cookie') {
+    return url.toString();
+  }
+
+  const token = apiClient.getAccessToken();
+  if (!token) return null;
+
+  // TODO: remove query-token auth after the backend supports cookie auth or short-lived WS tickets everywhere.
+  url.searchParams.set('token', token);
+  return url.toString();
+};
+
 class RealtimeClient {
   private ws: WebSocket | null = null;
   private workspaceId: string | null = null;
@@ -54,12 +83,8 @@ class RealtimeClient {
 
   private _open() {
     if (this.closed || !this.workspaceId) return;
-    const token = apiClient.getAccessToken();
-    if (!token) return;
-
-    const base = (import.meta.env.VITE_API_URL as string | undefined) ?? '';
-    const wsBase = base.replace(/^http/, 'ws').replace(/^https/, 'wss');
-    const url = `${wsBase}/api/ws?workspace_id=${this.workspaceId}&token=${encodeURIComponent(token)}`;
+    const url = buildRealtimeUrl(this.workspaceId);
+    if (!url) return;
 
     const ws = new WebSocket(url);
     this.ws = ws;

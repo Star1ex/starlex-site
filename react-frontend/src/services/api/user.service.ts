@@ -1,6 +1,14 @@
 import { httpClient } from './client.js';
 import { UserDTO, UserProfileDTO, UpdateUserRequest, WorkspaceDTO, NotificationPreferences } from '../../types/dto.js';
 
+const PROFILE_CACHE_TTL_MS = 5_000;
+const WORKSPACES_CACHE_TTL_MS = 750;
+
+let profileCache: { value: UserProfileDTO; expiresAt: number } | null = null;
+let profileRequest: Promise<UserProfileDTO> | null = null;
+let workspacesCache: { value: WorkspaceDTO[]; expiresAt: number } | null = null;
+let workspacesRequest: Promise<WorkspaceDTO[]> | null = null;
+
 function normalizeWorkspace(raw: unknown): WorkspaceDTO {
   const data = raw as Partial<WorkspaceDTO> & { workspace_id?: string };
   return {
@@ -41,29 +49,57 @@ function normalizeUser(raw: unknown): UserDTO {
   };
 }
 
+function now() {
+  return Date.now();
+}
+
+function cacheProfile(value: UserProfileDTO) {
+  profileCache = { value, expiresAt: now() + PROFILE_CACHE_TTL_MS };
+  return value;
+}
+
+function cacheWorkspaces(value: WorkspaceDTO[]) {
+  workspacesCache = { value, expiresAt: now() + WORKSPACES_CACHE_TTL_MS };
+  return value;
+}
+
 export const userService = {
   async getProfile(): Promise<UserProfileDTO> {
-    const response = await httpClient.get<UserProfileDTO>('/api/users/profile');
-    const d = response.data as UserProfileDTO & {
-      first_name?: string;
-      last_name?: string;
-      is_verified?: boolean;
-    };
-    // Normalize fields from snake_case if backend returns them
-    return {
-      email: d.email,
-      firstName: d.firstName ?? d.first_name,
-      lastName: d.lastName ?? d.last_name,
-      role: d.role,
-      photo_url: d.photo_url ?? null,
-      avatar_url: d.avatar_url ?? null,
-      auth_providers: d.auth_providers ?? [],
-      google_id: d.google_id ?? null,
-      github_id: d.github_id ?? null,
-      email_verified: d.email_verified ?? d.is_verified ?? false,
-      created_at: d.created_at ?? undefined,
-      last_login_at: d.last_login_at ?? null,
-    } as UserProfileDTO;
+    if (profileCache && profileCache.expiresAt > now()) {
+      return profileCache.value;
+    }
+    if (profileRequest) {
+      return profileRequest;
+    }
+
+    profileRequest = httpClient.get<UserProfileDTO>('/api/users/profile')
+      .then((response) => {
+        const d = response.data as UserProfileDTO & {
+          first_name?: string;
+          last_name?: string;
+          is_verified?: boolean;
+        };
+        // Normalize fields from snake_case if backend returns them
+        return cacheProfile({
+          email: d.email,
+          firstName: d.firstName ?? d.first_name,
+          lastName: d.lastName ?? d.last_name,
+          role: d.role,
+          photo_url: d.photo_url ?? null,
+          avatar_url: d.avatar_url ?? null,
+          auth_providers: d.auth_providers ?? [],
+          google_id: d.google_id ?? null,
+          github_id: d.github_id ?? null,
+          email_verified: d.email_verified ?? d.is_verified ?? false,
+          created_at: d.created_at ?? undefined,
+          last_login_at: d.last_login_at ?? null,
+        } as UserProfileDTO);
+      })
+      .finally(() => {
+        profileRequest = null;
+      });
+
+    return profileRequest;
   },
 
   async updateProfile(data: UpdateUserRequest): Promise<{ Status: string }> {
@@ -77,6 +113,7 @@ export const userService = {
     };
 
     const response = await httpClient.put<{ Status: string }>('/api/users/update', payload);
+    profileCache = null;
     return response.data;
   },
 
@@ -86,6 +123,7 @@ export const userService = {
     const response = await httpClient.post<{ url: string }>('/api/users/photo', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
+    profileCache = null;
     return response.data;
   },
 
@@ -95,8 +133,22 @@ export const userService = {
   },
 
   async getWorkspaces(): Promise<WorkspaceDTO[]> {
-    const response = await httpClient.get<WorkspaceDTO[]>('/api/users/workspaces');
-    return (Array.isArray(response.data) ? response.data : []).map(normalizeWorkspace).filter((w) => w.id);
+    if (workspacesCache && workspacesCache.expiresAt > now()) {
+      return workspacesCache.value;
+    }
+    if (workspacesRequest) {
+      return workspacesRequest;
+    }
+
+    workspacesRequest = httpClient.get<WorkspaceDTO[]>('/api/users/workspaces')
+      .then((response) => cacheWorkspaces(
+        (Array.isArray(response.data) ? response.data : []).map(normalizeWorkspace).filter((w) => w.id),
+      ))
+      .finally(() => {
+        workspacesRequest = null;
+      });
+
+    return workspacesRequest;
   },
 
   // Public user endpoints

@@ -1,1 +1,1 @@
-export { TaskBoard as ProjectBoard } from '@/features/taskBoard/TaskBoard.js';
+export { default as ProjectBoard } from '@/features/taskBoard/LazyTaskBoard.js';

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Check } from 'lucide-react';
-import { useTheme } from '@/shared/contexts/ThemeContext.js';
+import { useTheme } from '@/shared/contexts/useTheme.js';
 
 const themeOptions = [
   {
@@ -101,7 +101,7 @@ export const Appearance: React.FC = () => {
               className="text-left rounded-xl p-3 transition-all duration-150"
               style={{
                 background: isActive ? 'var(--bg-active)' : 'var(--bg-secondary)',
-                border: `2px solid ${isActive ? 'var(--accent-blue)' : 'var(--border-color)'}`,
+                border: `2px solid ${isActive ? 'var(--starlex-accent)' : 'var(--border-color)'}`,
                 outline: 'none',
               }}
             >
@@ -118,7 +118,7 @@ export const Appearance: React.FC = () => {
                 {isActive && (
                   <div
                     className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0"
-                    style={{ background: 'var(--accent-blue)' }}
+                    style={{ background: 'var(--starlex-accent)', color: 'var(--starlex-accent-contrast)' }}
                   >
                     <Check className="w-3 h-3 text-white" strokeWidth={1.8} />
                   </div>

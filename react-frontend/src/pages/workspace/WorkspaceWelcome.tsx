@@ -2,30 +2,26 @@ import React from 'react';
 import { Plus, Kanban as ProjectsIcon } from 'lucide-react';
 
 interface WorkspaceWelcomeProps {
+  workspaceName: string;
   firstName: string;
   onCreateTask: () => void;
   onCreateProject: () => void;
 }
 
 export const WorkspaceWelcome: React.FC<WorkspaceWelcomeProps> = ({
+  workspaceName,
   firstName,
   onCreateTask,
   onCreateProject,
 }) => {
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-
   return (
-    <div className="flex items-start justify-between gap-6 flex-wrap">
+    <div className="workspace-home-header">
       <div>
-        <h1 className="text-headline-xl font-hanken font-bold text-white leading-none mb-2">
-          {greeting}{firstName ? `, ${firstName}` : ''}
-        </h1>
-        <p className="text-body-lg text-white/50">
-          Here's what's happening in your workspace.
-        </p>
+        <p className="label-caps text-[color:var(--sx-text-subtle)]">Workspace</p>
+        <h1>{workspaceName}</h1>
+        <p>{firstName ? `${firstName}, here is the current execution snapshot.` : 'Current execution snapshot.'}</p>
       </div>
-      <div className="flex items-center gap-3 flex-shrink-0">
+      <div className="workspace-home-actions">
         <button
           onClick={onCreateTask}
           className="liquid-button gap-2"
@@ -35,8 +31,7 @@ export const WorkspaceWelcome: React.FC<WorkspaceWelcomeProps> = ({
         </button>
         <button
           onClick={onCreateProject}
-          className="liquid-button gap-2 !bg-[--accent] !border-transparent !text-white"
-          style={{ boxShadow: '0 4px 20px rgba(99,102,241,0.25)' }}
+          className="liquid-button gap-2 !bg-[color:var(--starlex-accent)] !border-transparent !text-[color:var(--starlex-accent-contrast)]"
         >
           <ProjectsIcon size={15} />
           Create Project

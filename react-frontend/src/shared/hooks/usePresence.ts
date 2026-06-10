@@ -1,6 +1,6 @@
 import { useCallback, useState } from 'react';
 import { useRealtimeEvent } from '@/shared/hooks/useRealtime.js';
-import { useAuth } from '@/contexts/AuthContext.js';
+import { useAuth } from '@/contexts/useAuth.js';
 import type { RealtimeEnvelope } from '@/shared/lib/realtime.js';
 
 export interface PresenceUser {
@@ -30,7 +30,7 @@ export function usePresence() {
 }
 
 export function useTaskRealtimeInvalidator(onInvalidate: () => void) {
-  const cb = useCallback((_ev: RealtimeEnvelope) => onInvalidate(), [onInvalidate]);
+  const cb = useCallback(() => onInvalidate(), [onInvalidate]);
   useRealtimeEvent('task.created', cb);
   useRealtimeEvent('task.updated', cb);
   useRealtimeEvent('task.deleted', cb);

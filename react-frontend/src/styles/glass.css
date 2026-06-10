@@ -1,0 +1,153 @@
+/* =====================================================
+   GLASS COMPONENT RECIPES
+   ===================================================== */
+@layer components {
+  /* Workhorse surface — cards, panels, list containers */
+  .glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(var(--sx-glass-blur)) saturate(var(--sx-glass-saturate));
+    -webkit-backdrop-filter: blur(var(--sx-glass-blur)) saturate(var(--sx-glass-saturate));
+    border: 1px solid var(--glass-border);
+    box-shadow: inset 0 1px 0 var(--glass-highlight);
+    transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease, opacity 180ms ease;
+  }
+  .glass-card:hover {
+    background: var(--glass-bg-hover);
+    border-color: var(--glass-border-hover);
+  }
+
+  /* Popovers/select menus need a stable glass surface. They should not inherit
+     the hover-brightening behavior from cards. */
+  .glass-menu {
+    --tw-ring-color: transparent !important;
+    --tw-ring-shadow: 0 0 #0000 !important;
+    outline: none !important;
+    background:
+      linear-gradient(145deg, rgb(var(--sx-panel-rgb) / 0.095), rgb(var(--sx-panel-rgb) / 0.024)),
+      rgb(var(--sx-panel-rgb) / var(--sx-panel-strong-alpha)) !important;
+    backdrop-filter: blur(34px) saturate(160%);
+    -webkit-backdrop-filter: blur(34px) saturate(160%);
+    border: 1px solid var(--sx-border);
+    box-shadow:
+      var(--sx-shadow-elevated),
+      inset 0 1px 0 rgb(var(--sx-panel-rgb) / 0.115),
+      inset 0 -1px 0 rgb(var(--sx-panel-rgb) / 0.026) !important;
+  }
+
+  .glass-menu-item {
+    outline: none !important;
+    color: var(--sx-text-muted);
+    transition: background 140ms ease, color 140ms ease, transform 140ms ease;
+  }
+
+  .glass-menu-item[data-highlighted],
+  .glass-menu-item:focus {
+    background: rgb(var(--sx-panel-rgb) / 0.078) !important;
+    color: var(--sx-text) !important;
+  }
+
+  .glass-menu-item[data-state="checked"] {
+    background: var(--sx-panel-strong);
+    color: var(--sx-text);
+  }
+
+  /* Primary/secondary actions */
+  .liquid-button {
+    background: var(--button-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    box-shadow: inset 0 1px 0 rgb(var(--sx-panel-rgb) / 0.15);
+    transition: background 160ms ease, border-color 160ms ease, box-shadow 160ms ease, color 160ms ease, transform 160ms ease, opacity 160ms ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.625rem 1.125rem;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    cursor: pointer;
+    user-select: none;
+  }
+  .liquid-button:hover {
+    background: var(--button-bg-hover);
+    border-color: var(--sx-border-strong);
+  }
+  .liquid-button:active {
+    transform: scale(0.90);
+  }
+  .liquid-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  /* Glass form inputs */
+  .glass-input {
+    background: var(--sx-panel);
+    border: 1px solid var(--glass-border);
+    border-radius: 9999px;
+    padding: 0.5rem 1rem;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+    box-shadow: inset 0 1px 1px rgb(var(--sx-panel-rgb) / 0.10);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    outline: none;
+    width: 100%;
+  }
+  .glass-input::placeholder {
+    color: var(--sx-text-disabled);
+  }
+  .glass-input:focus {
+    border-color: var(--sx-border-strong);
+    box-shadow: inset 0 1px 1px rgb(var(--sx-panel-rgb) / 0.10), 0 0 0 1px var(--sx-border-strong);
+  }
+
+  /* Pill / tag (label-caps) */
+  .glass-pill {
+    background: var(--sx-panel);
+    border: 1px solid var(--glass-border);
+    border-radius: 0.25rem;
+    padding: 0.25rem 0.5rem;
+    font-size: 0.75rem;
+    font-family: 'JetBrains Mono', monospace;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--sx-text-muted);
+    font-weight: 500;
+  }
+
+  /* Status pills */
+  .status-pill {
+    @apply glass-pill;
+    font-family: 'JetBrains Mono', monospace;
+  }
+  .status-pill--backlog  { background: var(--status-backlog-bg); border-color: color-mix(in srgb, var(--status-backlog-text) 24%, transparent); color: var(--status-backlog-text); }
+  .status-pill--todo     { background: var(--status-todo-bg); border-color: color-mix(in srgb, var(--status-todo-text) 26%, transparent); color: var(--status-todo-text); }
+  .status-pill--progress { background: var(--status-progress-bg); border-color: color-mix(in srgb, var(--status-progress-text) 30%, transparent); color: var(--status-progress-text); }
+  .status-pill--review   { background: var(--status-review-bg); border-color: color-mix(in srgb, var(--status-review-text) 30%, transparent); color: var(--status-review-text); }
+  .status-pill--done     { background: var(--status-done-bg); border-color: color-mix(in srgb, var(--status-done-text) 30%, transparent); color: var(--status-done-text); }
+  .status-pill--canceled { background: var(--status-canceled-bg); border-color: var(--sx-border); color: var(--status-canceled-text); }
+
+  /* Priority chips */
+  .priority-chip--urgent  { color: var(--priority-urgent-text); }
+  .priority-chip--high    { color: var(--priority-high-text); }
+  .priority-chip--medium  { color: var(--priority-medium-text); }
+  .priority-chip--low     { color: var(--priority-low-text); }
+
+  /* Progress bar */
+  .progress-bar {
+    height: 0.25rem;
+    border-radius: 9999px;
+    background: var(--sx-panel);
+    overflow: hidden;
+  }
+  .progress-bar__fill {
+    height: 100%;
+    border-radius: 9999px;
+    background: rgb(var(--starlex-accent-rgb) / 0.80);
+    transition: width 0.4s ease;
+  }
+
+}

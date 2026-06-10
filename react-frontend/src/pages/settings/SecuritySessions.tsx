@@ -71,7 +71,7 @@ export const SecuritySessions: React.FC = () => {
 
       {loading ? (
         <div className="space-y-2 animate-pulse">
-          {[0, 1, 2].map(i => <div key={i} className="h-14 rounded-xl bg-white/4" />)}
+          {[0, 1, 2].map(i => <div key={i} className="h-14 rounded-xl bg-[color:var(--sx-control)]" />)}
         </div>
       ) : sessions.length === 0 ? (
         <p className="settings-hint px-3 py-2">No active sessions found</p>
@@ -86,21 +86,24 @@ export const SecuritySessions: React.FC = () => {
                 key={s.id}
                 className="settings-row"
               >
-                <span className={`flex-shrink-0 ${isCurrent ? 'text-[--accent]' : 'text-white/30'}`}>
+                <span className={`flex-shrink-0 ${isCurrent ? 'text-[color:var(--starlex-accent)]' : 'text-[color:var(--sx-text-subtle)]'}`}>
                   {ua.icon}
                 </span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
-                    <span className="text-body-md text-white/70 truncate text-sm">{ua.label}</span>
+                    <span className="text-body-md text-[color:var(--sx-text)] truncate text-sm">{ua.label}</span>
                     {isCurrent && (
-                      <span className="settings-status-pill !text-[--accent] !bg-[--accent]/15 flex-shrink-0">
+                      <span
+                        className="settings-status-pill !text-[color:var(--starlex-accent)] flex-shrink-0"
+                        style={{ background: 'rgb(var(--starlex-accent-rgb) / 0.15)' }}
+                      >
                         current
                       </span>
                     )}
                   </div>
                   <div className="flex items-center gap-2 mt-0.5">
-                    {s.ip && <span className="text-label-sm text-white/30 text-xs">{s.ip}</span>}
-                    <span className="text-label-sm text-white/25 text-xs">
+                    {s.ip && <span className="text-label-sm text-[color:var(--sx-text-subtle)] text-xs">{s.ip}</span>}
+                    <span className="text-label-sm text-[color:var(--sx-text-disabled)] text-xs">
                       {s.last_seen_at ? `Last seen ${formatDate(s.last_seen_at)}` : `Created ${formatDate(s.created_at)}`}
                     </span>
                   </div>

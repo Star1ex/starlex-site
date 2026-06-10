@@ -1,9 +1,9 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Users, LayoutList, Kanban } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext.js';
-import { useWorkspace } from '@/contexts/WorkspaceContext.js';
+import { LayoutList, Kanban } from 'lucide-react';
+import { useAuth } from '@/contexts/useAuth.js';
+import { useWorkspace } from '@/contexts/useWorkspace.js';
 import { projectService, taskService } from '@/services/api/index.js';
 import type { ProjectDTO, TaskDTO, TaskStatus, UserDTO } from '@/types/dto.js';
 import { pageVariants } from '@/shared/lib/animations.js';
@@ -11,58 +11,27 @@ import { trackItem } from '@/shared/lib/recentItems.js';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle.js';
 import { showToast } from '@/shared/lib/toast.js';
 import { can } from '@/shared/lib/permissions.js';
-import { ProjectHeader } from './ProjectHeader.js';
+import { ProjectHeader, ProjectPropertiesPanel } from './ProjectHeader.js';
 import { ProjectTaskList } from './ProjectTaskList.js';
-import { ProjectBoard } from './ProjectBoard.js';
+import ProjectBoard from '@/features/taskBoard/LazyTaskBoard.js';
+import { preloadTaskBoard } from '@/app/routePreload.js';
 
 // ─── page skeleton ─────────────────────────────────────────────────────────────
 
 function PageSkeleton() {
   return (
     <div className="space-y-6 animate-pulse">
-      <div className="h-6 w-32 rounded-lg bg-white/5" />
-      <div className="h-9 w-64 rounded-xl bg-white/5" />
+      <div className="h-6 w-32 rounded-lg bg-[color:var(--sx-control)]" />
+      <div className="h-9 w-64 rounded-xl bg-[color:var(--sx-control)]" />
       <div className="flex gap-2">
-        {[0,1,2].map(i => <div key={i} className="h-6 w-20 rounded-full bg-white/5" />)}
+        {[0,1,2].map(i => <div key={i} className="h-6 w-20 rounded-full bg-[color:var(--sx-control)]" />)}
       </div>
-      <div className="h-2 w-full rounded-full bg-white/5" />
-      <div className="h-px bg-white/5" />
+      <div className="h-2 w-full rounded-full bg-[color:var(--sx-control)]" />
+      <div className="h-px bg-[color:var(--sx-border)]" />
       <div className="space-y-2">
-        {[0,1,2,3].map(i => <div key={i} className="h-12 rounded-xl bg-white/5" />)}
+        {[0,1,2,3].map(i => <div key={i} className="h-12 rounded-xl bg-[color:var(--sx-control)]" />)}
       </div>
     </div>
-  );
-}
-
-// ─── project members preview ───────────────────────────────────────────────────
-
-function ProjectMembersPreview({ members }: { members: UserDTO[] }) {
-  if (members.length === 0) return null;
-  return (
-    <section className="mt-10">
-      <div className="h-px bg-white/5 mb-6" />
-      <div className="flex items-center gap-2 mb-4">
-        <Users size={13} className="text-white/30" />
-        <h2 className="label-caps text-white/40">Project Members</h2>
-      </div>
-      <div className="flex flex-wrap gap-2">
-        {members.map(m => (
-          <div
-            key={m.id}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-label-sm text-white/70 bg-white/5"
-          >
-            {m.photo_url || m.avatar_url ? (
-              <img src={(m.photo_url || m.avatar_url)!} className="w-5 h-5 rounded-full object-cover" alt="" />
-            ) : (
-              <span className="w-5 h-5 rounded-full text-[10px] font-bold flex items-center justify-center bg-white/10 text-white/50">
-                {m.firstName.charAt(0)}
-              </span>
-            )}
-            {m.firstName} {m.lastName}
-          </div>
-        ))}
-      </div>
-    </section>
   );
 }
 
@@ -146,63 +115,75 @@ export const ProjectPage: React.FC = () => {
 
   return (
     <motion.div
-      className="pb-16 max-w-3xl"
+      className="project-detail-page pb-16"
       variants={pageVariants}
       initial="initial"
       animate="animate"
       exit="exit"
     >
       {project && (
-        <ProjectHeader
-          project={project}
-          members={members}
-          tasks={tasks}
-          workspaceRole={activeWorkspace?.role}
-          currentUserId={userId ?? undefined}
-          onBack={() => navigate(`/workspace/${workspaceId}`)}
-          onProjectChange={setProject}
-          onProjectDeleted={() => navigate(`/workspace/${workspaceId}`)}
-        />
+        <div className="project-detail-grid">
+          <main className="project-detail-main">
+            <ProjectHeader
+              key={project.id}
+              project={project}
+              tasks={tasks}
+              workspaceRole={activeWorkspace?.role}
+              currentUserId={userId ?? undefined}
+              onBack={() => navigate(`/workspace/${workspaceId}`)}
+              onProjectChange={setProject}
+            />
+
+            <div className="project-task-toolbar">
+              <div className="project-view-toggle">
+                <button
+                  onClick={() => setView('list')}
+                  className={view === 'list' ? 'is-active' : ''}
+                >
+                  <LayoutList size={13} /> List
+                </button>
+                <button
+                  onMouseEnter={preloadTaskBoard}
+                  onFocus={preloadTaskBoard}
+                  onClick={() => setView('board')}
+                  className={view === 'board' ? 'is-active' : ''}
+                >
+                  <Kanban size={13} /> Board
+                </button>
+              </div>
+            </div>
+
+            {view === 'list' ? (
+              <ProjectTaskList
+                tasks={tasks}
+                projectId={projectId!}
+                workspaceId={workspaceId!}
+                showCreate={showCreate}
+                onCreateOpen={() => setShowCreate(true)}
+                onCreateClose={() => setShowCreate(false)}
+                onTaskCreated={handleTaskCreated}
+                onTaskDeleted={handleDeleteTask}
+                onTaskStatusChange={handleTaskStatusChange}
+                onTaskNavigate={id => navigate(`/task/${id}`)}
+                role={activeWorkspace?.role}
+                currentUserId={userId ?? undefined}
+              />
+            ) : (
+              <ProjectBoard tasks={tasks} onTasksChange={setTasks} canEdit={can.editTask(activeWorkspace?.role)} />
+            )}
+          </main>
+
+          <ProjectPropertiesPanel
+            project={project}
+            members={members}
+            tasks={tasks}
+            workspaceRole={activeWorkspace?.role}
+            currentUserId={userId ?? undefined}
+            onProjectChange={setProject}
+            onProjectDeleted={() => navigate(`/workspace/${workspaceId}`)}
+          />
+        </div>
       )}
-
-      <div className="h-px bg-white/5 mb-4" />
-
-      {/* View toggle */}
-      <div className="flex items-center gap-1 mb-5">
-        <button
-          onClick={() => setView('list')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-label-sm transition-all ${view === 'list' ? 'bg-white/8 text-white' : 'text-white/40 hover:text-white/70'}`}
-        >
-          <LayoutList size={13} /> List
-        </button>
-        <button
-          onClick={() => setView('board')}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-label-sm transition-all ${view === 'board' ? 'bg-white/8 text-white' : 'text-white/40 hover:text-white/70'}`}
-        >
-          <Kanban size={13} /> Board
-        </button>
-      </div>
-
-      {view === 'list' ? (
-        <ProjectTaskList
-          tasks={tasks}
-          projectId={projectId!}
-          workspaceId={workspaceId!}
-          showCreate={showCreate}
-          onCreateOpen={() => setShowCreate(true)}
-          onCreateClose={() => setShowCreate(false)}
-          onTaskCreated={handleTaskCreated}
-          onTaskDeleted={handleDeleteTask}
-          onTaskStatusChange={handleTaskStatusChange}
-          onTaskNavigate={id => navigate(`/task/${id}`)}
-          role={activeWorkspace?.role}
-          currentUserId={userId ?? undefined}
-        />
-      ) : (
-        <ProjectBoard tasks={tasks} onTasksChange={setTasks} canEdit={can.editTask(activeWorkspace?.role)} />
-      )}
-
-      <ProjectMembersPreview members={members} />
     </motion.div>
   );
 };

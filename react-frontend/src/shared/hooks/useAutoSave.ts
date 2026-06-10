@@ -7,24 +7,25 @@ export interface UseAutoSaveOptions<T> {
   initialValue?: T;
 }
 
-export function useAutoSave<T = any>(
+export function useAutoSave<T = unknown>(
   taskId: string | undefined | null,
   value: T,
-  updateFn: (val: T, signal?: AbortSignal) => Promise<any>,
+  updateFn: (val: T, signal?: AbortSignal) => Promise<unknown>,
   options: UseAutoSaveOptions<T> = {}
 ) {
   const { debounceMs = 500, immediate = false, initialValue } = options;
-  const debouncedValue = debounceMs && !immediate ? useDebounce(value, debounceMs) : value;
+  const debouncedCandidate = useDebounce(value, debounceMs);
+  const debouncedValue = immediate ? value : debouncedCandidate;
   const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<any>(null);
+  const [error, setError] = useState<unknown>(null);
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
-  const lastSavedRef = useRef<T | undefined>(initialValue as any);
+  const lastSavedRef = useRef<T | undefined>(initialValue);
   const controllerRef = useRef<AbortController | null>(null);
 
   // Update lastSavedRef when initialValue changes (e.g., after load)
   useEffect(() => {
     if (initialValue !== undefined) {
-      lastSavedRef.current = initialValue as any;
+      lastSavedRef.current = initialValue;
     }
   }, [initialValue]);
 
@@ -42,14 +43,11 @@ export function useAutoSave<T = any>(
       return;
     }
 
-    // If updateFn is not a function, skip
-    if (typeof updateFn !== 'function') return;
-
     // Abort previous request if any
     if (controllerRef.current) {
       try {
         controllerRef.current.abort();
-      } catch (e) {
+      } catch {
         // ignore
       }
     }
@@ -68,7 +66,7 @@ export function useAutoSave<T = any>(
         lastSavedRef.current = toSave;
         setLastSavedAt(new Date());
       } catch (err) {
-        if ((err as any)?.name === 'AbortError') {
+        if (err instanceof DOMException && err.name === 'AbortError') {
           // aborted, ignore
           cancelled = true;
           return;
@@ -86,7 +84,6 @@ export function useAutoSave<T = any>(
       controller.abort();
       controllerRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId, debouncedValue, immediate, updateFn]);
 
   return { isSaving, error, lastSavedAt };

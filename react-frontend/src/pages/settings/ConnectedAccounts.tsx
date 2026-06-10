@@ -87,7 +87,7 @@ export const ConnectedAccounts: React.FC = () => {
   if (loading) {
     return (
       <div className="settings-page">
-        <div className="settings-section text-center text-white/40">Loading connected accounts...</div>
+        <div className="settings-section text-center text-[color:var(--sx-text-subtle)]">Loading connected accounts...</div>
       </div>
     );
   }

@@ -3,11 +3,9 @@ import { Route, Routes, useLocation, Navigate, Outlet } from 'react-router-dom';
 import { AnimatePresence } from 'framer-motion';
 import { Layout } from '@/widgets/Layout/Layout.js';
 import { ErrorBoundary } from '@/components/ErrorBoundary.js';
-import { authService } from '@/services/api/index.js';
-import { apiClient } from '@/services/api/client.js';
-import { getLastWorkspaceId } from '@/contexts/WorkspaceContext.js';
-import { SettingsModal } from '@/widgets/SettingsModal/SettingsModal.js';
-import AboutUs from '@/pages/about-us/AboutUs.js';
+import { getLastWorkspaceId } from '@/contexts/useWorkspace.js';
+import { preloadCoreWorkspaceRoutes } from './routePreload.js';
+import { useAuth } from '@/contexts/useAuth.js';
 
 // Lazy-loaded pages
 const HomePage        = React.lazy(() => import('@/pages/home/HomePage.js').then(m => ({ default: m.HomePage })));
@@ -27,17 +25,8 @@ const MyIssuesPage      = React.lazy(() => import('@/pages/tasks/MyIssuesPage.js
 const TaskDetailPage    = React.lazy(() => import('@/pages/tasks/TaskDetailPage.js').then(m => ({ default: m.TaskDetailPage })));
 const TaskExplorerPage  = React.lazy(() => import('@/pages/tasks/TaskExplorerPage.js').then(m => ({ default: m.TaskExplorerPage })));
 const MembersPage       = React.lazy(() => import('@/features/members/MembersPage.js').then(m => ({ default: m.MembersPage })));
-
-function preloadRoutes() {
-  import('@/pages/workspace/WorkspacePage.js');
-  import('@/pages/workspace/ProjectPage.js');
-  import('@/pages/tasks/MyIssuesPage.js');
-  import('@/pages/tasks/TaskExplorerPage.js');
-  import('@/pages/tasks/TaskDetailPage.js');
-  import('@/features/members/MembersPage.js');
-  import('@/pages/profile/UserProfile.js');
-  import('@/pages/profile/UserProfilePage.js');
-}
+const AboutUs           = React.lazy(() => import('@/pages/about-us/AboutUs.js'));
+const SettingsModal     = React.lazy(() => import('@/widgets/SettingsModal/SettingsModal.js').then(m => ({ default: m.SettingsModal })));
 
 const Fallback = () => (
   <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }} />
@@ -45,6 +34,44 @@ const Fallback = () => (
 
 const RouteContentFallback = () => (
   <div className="route-content-fallback" aria-hidden="true" />
+);
+
+const SettingsModalFallback = () => (
+  <div className="settings-overlay" aria-hidden="true">
+    <div className="settings-backdrop" />
+    <div className="settings-modal-shell">
+      <aside className="settings-modal-sidebar">
+        <div className="settings-profile-wrap">
+          <div className="settings-profile-card">
+            <div className="settings-profile-avatar" />
+            <div className="settings-profile-copy">
+              <div className="settings-panel-skeleton__line settings-panel-skeleton__line--short" />
+              <div className="settings-panel-skeleton__line" />
+            </div>
+          </div>
+        </div>
+      </aside>
+      <div className="settings-main-panel">
+        <div className="settings-modal-header">
+          <div>
+            <div className="settings-header-kicker">Settings</div>
+            <h2 className="settings-header-title">Loading</h2>
+          </div>
+        </div>
+        <div className="settings-content-scroll">
+          <div className="settings-content-inner">
+            <div className="settings-page">
+              <section className="settings-section settings-panel-skeleton">
+                <div className="settings-panel-skeleton__title" />
+                <div className="settings-panel-skeleton__line" />
+                <div className="settings-panel-skeleton__line settings-panel-skeleton__line--short" />
+              </section>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 );
 
 const withEB = (el: React.ReactNode) => <ErrorBoundary>{el}</ErrorBoundary>;
@@ -62,11 +89,11 @@ export const AppRoutes = () => {
     };
 
     if (idleWindow.requestIdleCallback) {
-      const id = idleWindow.requestIdleCallback(preloadRoutes, { timeout: 900 });
+      const id = idleWindow.requestIdleCallback(preloadCoreWorkspaceRoutes, { timeout: 1200 });
       return () => idleWindow.cancelIdleCallback?.(id);
     }
 
-    const id = window.setTimeout(preloadRoutes, 250);
+    const id = window.setTimeout(preloadCoreWorkspaceRoutes, 600);
     return () => window.clearTimeout(id);
   }, []);
 
@@ -119,7 +146,9 @@ const AnimatedRoutes = () => {
       {/* Settings modal overlay */}
       <AnimatePresence>
         {location.pathname === '/settings' && (
-          <SettingsModal key="settings-modal" />
+          <Suspense fallback={<SettingsModalFallback />}>
+            <SettingsModal key="settings-modal" />
+          </Suspense>
         )}
       </AnimatePresence>
     </>
@@ -143,30 +172,14 @@ const DashboardRedirect: React.FC = () => {
 };
 
 const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [ready, setReady] = React.useState(false);
-  const [authed, setAuthed] = React.useState(authService.isAuthenticated());
+  const { isAuthenticated, isInitialized } = useAuth();
   const location = useLocation();
 
-  React.useEffect(() => {
-    let mounted = true;
-    if (authService.isAuthenticated()) {
-      if (mounted) { setAuthed(true); setReady(true); }
-      return;
-    }
-    apiClient.initialize().then((ok) => {
-      if (mounted) { setAuthed(ok); setReady(true); }
-    }).catch(() => {
-      if (mounted) { setAuthed(false); setReady(true); }
-    });
-    return () => { mounted = false; };
-  }, []);
-
-  if (!ready) {
-    if (authed) return <>{children}</>;
+  if (!isInitialized) {
     return <Fallback />;
   }
 
-  if (!authed) {
+  if (!isAuthenticated) {
     localStorage.setItem('redirectPath', location.pathname + location.search);
     return <Navigate to="/sign-in" replace />;
   }

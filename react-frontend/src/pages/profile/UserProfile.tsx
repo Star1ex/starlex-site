@@ -92,29 +92,29 @@ const ProfilePage: React.FC = () => {
   if (loading) {
     return (
       <div className="profile-page animate-pulse">
-        <div className="mb-4 h-5 w-28 rounded-full bg-white/6" />
+        <div className="mb-4 h-5 w-28 rounded-full bg-[color:var(--sx-control)]" />
         <section className="profile-shell">
           <div className="profile-header">
             <div>
-              <div className="h-7 w-28 rounded-full bg-white/7" />
-              <div className="mt-3 h-4 w-52 rounded-full bg-white/5" />
+              <div className="h-7 w-28 rounded-full bg-[color:var(--sx-control)]" />
+              <div className="mt-3 h-4 w-52 rounded-full bg-[color:var(--sx-control)]" />
             </div>
             <div className="hidden sm:flex gap-3">
-              <div className="h-10 w-36 rounded-full bg-white/5" />
-              <div className="h-10 w-28 rounded-full bg-white/7" />
+              <div className="h-10 w-36 rounded-full bg-[color:var(--sx-control)]" />
+              <div className="h-10 w-28 rounded-full bg-[color:var(--sx-control)]" />
             </div>
           </div>
           <div className="profile-content">
             <div className="profile-identity-card">
               <div className="profile-avatar-skeleton" />
-              <div className="h-4 w-36 rounded-full bg-white/7" />
-              <div className="h-3 w-44 rounded-full bg-white/5" />
+              <div className="h-4 w-36 rounded-full bg-[color:var(--sx-control)]" />
+              <div className="h-3 w-44 rounded-full bg-[color:var(--sx-control)]" />
             </div>
             <div className="profile-details-card">
               {Array.from({ length: 3 }).map((_, idx) => (
                 <div key={idx} className="profile-field-skeleton">
-                  <div className="h-3 w-20 rounded-full bg-white/5" />
-                  <div className="h-10 rounded-full bg-white/6" />
+                  <div className="h-3 w-20 rounded-full bg-[color:var(--sx-control)]" />
+                  <div className="h-10 rounded-full bg-[color:var(--sx-control)]" />
                 </div>
               ))}
             </div>

@@ -1,17 +1,5 @@
 import React from 'react';
-
-function hashColor(name: string): string {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = (Math.imul(31, h) + name.charCodeAt(i)) | 0;
-  const palette = ['#6366f1','#8b5cf6','#0ea5e9','#10b981','#f59e0b','#f43f5e','#ec4899','#14b8a6'];
-  return palette[Math.abs(h) % palette.length];
-}
-
-function initials(name: string): string {
-  const parts = name.trim().split(/\s+/);
-  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-  return name.slice(0, 2).toUpperCase();
-}
+import { hashWorkspaceColor, workspaceInitials } from './workspaceIconUtils.js';
 
 interface WorkspaceGlyphProps {
   name: string;
@@ -28,8 +16,8 @@ export const WorkspaceGlyph: React.FC<WorkspaceGlyphProps> = ({
   className = '',
   style = {},
 }) => {
-  const bg = color || hashColor(name);
-  const text = initials(name || '?');
+  const bg = color || hashWorkspaceColor(name);
+  const text = workspaceInitials(name || '?');
   const fontSize = size * 0.38;
 
   return (
@@ -60,7 +48,3 @@ export const WorkspaceGlyph: React.FC<WorkspaceGlyphProps> = ({
     </svg>
   );
 };
-
-export function getWorkspaceColor(name: string): string {
-  return hashColor(name);
-}

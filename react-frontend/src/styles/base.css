@@ -1,0 +1,26 @@
+@layer base {
+  body {
+    background: var(--sx-body-bg, var(--bg-primary));
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
+    @apply transition-colors duration-200;
+  }
+
+  /* Priority pills */
+  .priority-pill {
+    background-color: var(--priority-pill-bg);
+    color: var(--priority-pill-text);
+  }
+  .priority-pill:hover { background-color: var(--priority-pill-bg-hover); }
+  .priority-pill--active {
+    background-color: var(--priority-pill-bg-active);
+    color: var(--priority-pill-text-active);
+  }
+  * {
+    border-color: var(--border-color);
+    outline-color: rgb(var(--starlex-accent-rgb) / 0.50);
+  }
+  html {
+    font-family: 'Inter', sans-serif;
+  }
+}

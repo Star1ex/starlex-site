@@ -64,7 +64,7 @@ export const LabelPicker: React.FC<LabelPickerProps> = ({
         <button
           type="button"
           disabled={disabled}
-          className={triggerClassName ?? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-white/40 hover:text-white/70 hover:bg-white/5 transition-colors text-sm disabled:opacity-40'}
+          className={triggerClassName ?? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] hover:bg-[color:var(--sx-control)] transition-colors text-sm disabled:opacity-40'}
           title="Labels"
         >
           <Tag size={13} />
@@ -88,10 +88,10 @@ export const LabelPicker: React.FC<LabelPickerProps> = ({
       >
         {loading ? (
           <div className="flex items-center justify-center py-4">
-            <Loader2 size={14} className="animate-spin text-white/30" />
+            <Loader2 size={14} className="animate-spin text-[color:var(--sx-text-subtle)]" />
           </div>
         ) : labels.length === 0 ? (
-          <p className="px-3 py-2 text-xs text-white/30">No labels. Create them in Workspace Settings.</p>
+          <p className="px-3 py-2 text-xs text-[color:var(--sx-text-subtle)]">No labels. Create them in Workspace Settings.</p>
         ) : (
           labels.map(workspaceLabel => {
             const active = isSelected(workspaceLabel.id);
@@ -103,11 +103,11 @@ export const LabelPicker: React.FC<LabelPickerProps> = ({
                   event.preventDefault();
                   toggle(workspaceLabel);
                 }}
-                className="glass-menu-item flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-pointer hover:bg-white/7 focus:bg-white/7"
+                className="glass-menu-item flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-pointer hover:bg-[color:var(--sx-control)] focus:bg-[color:var(--sx-control)]"
               >
                 <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: workspaceLabel.color }} />
-                <span className={`flex-1 truncate ${active ? 'text-white' : 'text-white/60'}`}>{workspaceLabel.name}</span>
-                {active && <Check size={12} className="text-white/60 flex-shrink-0" />}
+                <span className={`flex-1 truncate ${active ? 'text-[color:var(--sx-text)]' : 'text-[color:var(--sx-text-muted)]'}`}>{workspaceLabel.name}</span>
+                {active && <Check size={12} className="text-[color:var(--sx-text-muted)] flex-shrink-0" />}
               </DropdownMenuCheckboxItem>
             );
           })
@@ -143,7 +143,7 @@ export const InlineLabelChips: React.FC<InlineLabelChipsProps> = ({ labels, maxV
         </span>
       ))}
       {rest > 0 && (
-        <span className="text-xs text-white/30">+{rest}</span>
+        <span className="text-xs text-[color:var(--sx-text-subtle)]">+{rest}</span>
       )}
     </div>
   );

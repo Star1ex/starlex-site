@@ -5,25 +5,19 @@ import { projectService } from '@/services/api/index.js';
 import type { ProjectDTO, CreateProjectRequest } from '@/types/dto.js';
 import { modalBackdropVariants, modalContentVariants } from '@/shared/lib/animations.js';
 import { DarkSelect } from '@/shared/ui/DarkSelect.js';
+import {
+  PROJECT_PRIORITIES,
+  PROJECT_PRIORITY_META,
+  PROJECT_STATUSES,
+  PROJECT_STATUS_META,
+} from '@/entities/project/model/projectMeta.js';
 
-const STATUS_META: Record<string, string> = {
-  backlog: 'Backlog', planned: 'Planned', in_progress: 'In Progress',
-  paused: 'Paused', completed: 'Completed', cancelled: 'Cancelled',
-};
-
-const PRIORITY_META: Record<string, string> = {
-  none: 'None', urgent: 'Urgent', high: 'High', medium: 'Medium', low: 'Low',
-};
-
-const STATUS_OPTIONS = ['backlog','planned','in_progress','paused','completed','cancelled'] as const;
-const PRIORITY_OPTIONS = ['none','urgent','high','medium','low'] as const;
-
-const inputCls = 'w-full px-3 py-2.5 rounded-xl text-body-md text-white bg-white/5 border border-white/10 outline-none focus:border-white/25 transition-all disabled:opacity-40 placeholder:text-white/30';
+const inputCls = 'w-full px-3 py-2.5 rounded-xl text-body-md text-[color:var(--sx-text)] bg-[color:var(--sx-panel)] border border-[color:var(--sx-border)] outline-none focus:border-[color:var(--sx-border-strong)] transition-all disabled:opacity-40 placeholder:text-[color:var(--sx-text-disabled)]';
 
 function Field({ label, optional, children }: { label: string; optional?: boolean; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block label-caps text-white/40 mb-1.5">
+      <label className="block label-caps text-[color:var(--sx-text-subtle)] mb-1.5">
         {label}{optional && <span className="normal-case font-normal ml-1 tracking-normal opacity-60"> — optional</span>}
       </label>
       {children}
@@ -90,13 +84,13 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
         <motion.div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           variants={modalBackdropVariants} initial="initial" animate="animate" exit="exit"
-          style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)' }}
+          style={{ background: 'var(--sx-overlay)', backdropFilter: 'blur(8px)' }}
           onClick={e => { if (e.target === e.currentTarget) onClose(); }}
         >
           <motion.div className="glass-card w-full max-w-lg rounded-2xl overflow-hidden" variants={modalContentVariants}>
             <div className="flex items-center justify-between px-6 pt-6 pb-4">
-              <h2 className="text-headline-sm font-hanken font-semibold text-white">New Project</h2>
-              <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-white/40 hover:text-white/80 transition-colors">
+              <h2 className="text-headline-sm font-hanken font-semibold text-[color:var(--sx-text)]">New Project</h2>
+              <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] transition-colors">
                 <X size={16} />
               </button>
             </div>
@@ -118,7 +112,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
                   <DarkSelect
                     value={status ?? 'backlog'}
                     onChange={(value) => setStatus(value as CreateProjectRequest['status'])}
-                    options={STATUS_OPTIONS.map(s => ({ value: s, label: STATUS_META[s] ?? s }))}
+                    options={PROJECT_STATUSES.map(s => ({ value: s, label: PROJECT_STATUS_META[s].label }))}
                     disabled={loading}
                     className={`${inputCls} h-11 cursor-pointer`}
                   />
@@ -127,7 +121,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
                   <DarkSelect
                     value={priority ?? 'none'}
                     onChange={(value) => setPriority(value as CreateProjectRequest['priority'])}
-                    options={PRIORITY_OPTIONS.map(p => ({ value: p, label: PRIORITY_META[p] ?? p }))}
+                    options={PROJECT_PRIORITIES.map(p => ({ value: p, label: PROJECT_PRIORITY_META[p].label }))}
                     disabled={loading}
                     className={`${inputCls} h-11 cursor-pointer`}
                   />
@@ -137,7 +131,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
               <div className="flex gap-2 pt-1">
                 <button type="button" onClick={onClose} disabled={loading} className="flex-1 liquid-button !justify-center">Cancel</button>
                 <button type="submit" disabled={loading || !name.trim()}
-                  className="flex-1 liquid-button !justify-center !bg-[--accent] !border-transparent !text-white font-semibold disabled:opacity-40">
+                  className="flex-1 liquid-button !justify-center !bg-[color:var(--starlex-accent)] !border-transparent !text-[color:var(--starlex-accent-contrast)] font-semibold disabled:opacity-40">
                   {loading ? 'Creating…' : 'Create'}
                 </button>
               </div>

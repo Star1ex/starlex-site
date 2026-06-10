@@ -4,12 +4,13 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { authService, userService } from '@/services/api/index.js';
 import { setAuthUser } from '@/shared/lib/authManager.js';
-import { useAuth } from '@/contexts/AuthContext.js';
-import { useTheme, useSystemThemeOnly } from '@/shared/contexts/ThemeContext.js';
-import { getLastWorkspaceId } from '@/contexts/WorkspaceContext.js';
+import { useAuth } from '@/contexts/useAuth.js';
+import { useTheme, useSystemThemeOnly } from '@/shared/contexts/useTheme.js';
+import { getLastWorkspaceId } from '@/contexts/useWorkspace.js';
 import { FaGoogle, FaGithub } from 'react-icons/fa';
 import { Helmet } from 'react-helmet-async';
 import { listVariants, listItemVariants, pageVariants } from '@/shared/lib/animations.js';
+import { getApiErrorInfo } from '@/shared/lib/apiError.js';
 
 export const SignInPage = () => {
   useSystemThemeOnly();
@@ -119,28 +120,27 @@ export const SignInPage = () => {
         setErrorMessage('Internal server error');
         return;
       }
-    } catch (err: any) {
-      const response = err?.response;
-      const status = response?.status;
+    } catch (err: unknown) {
+      const { status, data } = getApiErrorInfo(err);
 
       if (status === 400 || status === 401) {
-        const data = err?.response?.data;
         if (data?.auth_providers) {
           setErrorMessage(data?.message || 'This email is linked to an OAuth provider. Please continue with Google or GitHub.');
         } else {
           setErrorMessage(data?.error || 'Invalid email or password');
         }
       } else if (status === 403) {
-        setErrorMessage(err?.response?.data?.message || 'Please verify your email first');
-        if (err?.response?.data?.user_id) {
+        setErrorMessage(data?.message || 'Please verify your email first');
+        if (data?.user_id) {
+          const userId = data.user_id;
           setTimeout(() => {
-            navigate('/verify-email', { state: { userId: err.response.data.user_id, email: formEmail } });
+            navigate('/verify-email', { state: { userId, email: formEmail } });
           }, 2000);
         }
       } else if (status === 409) {
         setErrorMessage('User already authenticated');
       } else {
-        setErrorMessage(err?.response?.data?.error || 'Server authentication error');
+        setErrorMessage(data?.error || 'Server authentication error');
       }
 
       // error handled

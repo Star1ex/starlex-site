@@ -5,10 +5,10 @@ import { useNavigate } from 'react-router-dom';
 import { Search, Users, Layers, FileText, ArrowRight, Loader, Plus, CircleCheck, Home, Kanban as ProjectsIcon } from 'lucide-react';
 import { searchService, type GlobalSearchResponse } from '@/services/api/search.service.js';
 import { useDebounce } from '@/shared/hooks/useDebounce.js';
-import { useWorkspace } from '@/contexts/WorkspaceContext.js';
+import { useWorkspace } from '@/contexts/useWorkspace.js';
 import { getAllViews } from '@/shared/lib/savedViews.js';
 
-interface SearchModalProps {
+export interface SearchModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
@@ -154,19 +154,19 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
           {/* Backdrop */}
           <div
             className="absolute inset-0"
-            style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}
+            style={{ background: 'var(--sx-overlay)', backdropFilter: 'blur(4px)' }}
             onClick={onClose}
           />
 
           {/* Modal */}
           <motion.div
-            className="relative w-full overflow-hidden"
+            className="relative w-full overflow-hidden search-modal-surface"
             style={{
               maxWidth: '560px',
-              background: 'var(--bg-primary)',
-              border: '1px solid var(--border-color)',
+              background: 'var(--glass-bg)',
+              border: '1px solid var(--glass-border)',
               borderRadius: '14px',
-              boxShadow: '0 24px 60px rgba(0,0,0,0.25)',
+              boxShadow: 'var(--sx-shadow-elevated)',
               margin: '0 16px',
             }}
             initial={{ opacity: 0, scale: 0.97, y: -8 }}
@@ -241,7 +241,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
             {!query.trim() && (
               <div>
                 <div className="px-4 pt-3 pb-1">
-                  <span className="label-caps text-white/30">Quick actions</span>
+                  <span className="label-caps text-[color:var(--sx-text-subtle)]">Quick actions</span>
                 </div>
                 {quickActions().map((action, i) => (
                   <button

@@ -24,7 +24,9 @@ function load(): RecentItem[] {
 function save(items: RecentItem[]): void {
   try {
     localStorage.setItem(KEY, JSON.stringify(items));
-  } catch {}
+  } catch (err) {
+    console.warn('Failed to save recent items:', err);
+  }
 }
 
 export function trackItem(item: Omit<RecentItem, 'openedAt'>): void {

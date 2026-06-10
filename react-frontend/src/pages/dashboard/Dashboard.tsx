@@ -7,8 +7,9 @@ import { pageVariants } from '@/shared/lib/animations.js';
 import { getAllRecent, type RecentItem } from '@/shared/lib/recentItems.js';
 import { Clock, Users, Layers, FileText, Plus, Search } from 'lucide-react';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle.js';
-import { SearchModal } from '@/widgets/SearchModal/SearchModal.js';
-import { useWorkspace } from '@/contexts/WorkspaceContext.js';
+import SearchModal from '@/widgets/SearchModal/LazySearchModal.js';
+import { preloadSearchModal } from '@/app/routePreload.js';
+import { useWorkspace } from '@/contexts/useWorkspace.js';
 import type { UserProfileDTO } from '@/types/dto.js';
 
 function fmtDate(ts: number): string {
@@ -29,8 +30,8 @@ const TYPE_ICON: Record<RecentItem['type'], React.ReactNode> = {
 
 function storedFirstName(): string {
   const storedUser = getAuthUser();
-  if (!storedUser?.firstName && !storedUser?.first_name) return '';
-  return (storedUser.firstName || storedUser.first_name || '').split(' ')[0];
+  if (!storedUser?.firstName) return '';
+  return storedUser.firstName.split(' ')[0];
 }
 
 const RecentCard: React.FC<{ item: RecentItem; index: number }> = ({ item, index }) => {
@@ -151,7 +152,10 @@ export const Dashboard: React.FC = () => {
         <motion.button
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0, transition: { delay: 0.08, duration: 0.22, ease: 'easeOut' } }}
-          onClick={() => setSearchOpen(true)}
+          onClick={() => {
+            preloadSearchModal();
+            setSearchOpen(true);
+          }}
           className="w-full max-w-md mx-auto flex items-center gap-3 px-4 py-2.5 rounded-xl mb-10 transition-colors"
           style={{
             background: 'var(--bg-secondary)',

@@ -1,0 +1,142 @@
+.notion-md-editor .bn-container,
+.notion-md-editor .bn-editor,
+.notion-md-editor [class^="bn-"],
+.notion-md-editor [class*=" bn-"] {
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.notion-md-editor .bn-container {
+  color: var(--sx-text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif;
+  font-size: 15px;
+  line-height: 1.75;
+}
+
+.notion-md-editor h1,
+.notion-md-editor .bn-block-content[data-content-type="heading"][data-level="1"],
+.notion-md-editor .bn-block-content[data-content-type="heading"][data-heading-level="1"],
+.notion-md-editor .bn-block-content[data-content-type="heading"][data-prop-level="1"] {
+  font-size: 1.45rem !important;
+  line-height: 1.22 !important;
+  font-weight: 650 !important;
+  letter-spacing: 0 !important;
+  margin: 1.15rem 0 0.45rem !important;
+}
+
+.notion-md-editor h2,
+.notion-md-editor .bn-block-content[data-content-type="heading"][data-level="2"],
+.notion-md-editor .bn-block-content[data-content-type="heading"][data-heading-level="2"],
+.notion-md-editor .bn-block-content[data-content-type="heading"][data-prop-level="2"] {
+  font-size: 1.2rem !important;
+  line-height: 1.3 !important;
+  font-weight: 640 !important;
+  letter-spacing: 0 !important;
+  margin: 1rem 0 0.4rem !important;
+}
+
+.notion-md-editor h3,
+.notion-md-editor .bn-block-content[data-content-type="heading"][data-level="3"],
+.notion-md-editor .bn-block-content[data-content-type="heading"][data-heading-level="3"],
+.notion-md-editor .bn-block-content[data-content-type="heading"][data-prop-level="3"] {
+  font-size: 1.05rem !important;
+  line-height: 1.35 !important;
+  font-weight: 620 !important;
+  letter-spacing: 0 !important;
+  margin: 0.85rem 0 0.35rem !important;
+}
+
+.notion-md-editor .bn-block-content[data-content-type="heading"] {
+  color: var(--sx-text) !important;
+}
+
+.notion-md-editor input[type="checkbox"] {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 13px;
+  height: 13px;
+  margin: 0 8px 0 0;
+  border-radius: 3px;
+  border: 1px solid var(--sx-border-strong);
+  background: var(--sx-panel);
+  box-shadow: inset 0 1px 0 rgb(var(--sx-panel-rgb) / 0.04);
+  display: inline-grid;
+  place-content: center;
+  flex-shrink: 0;
+  vertical-align: -2px;
+}
+
+.notion-md-editor input[type="checkbox"]:checked {
+  background: var(--starlex-accent-soft);
+  border-color: var(--starlex-accent-border);
+}
+
+.notion-md-editor input[type="checkbox"]:checked::after {
+  content: "";
+  width: 7px;
+  height: 4px;
+  border-left: 1.5px solid var(--sx-text);
+  border-bottom: 1.5px solid var(--sx-text);
+  transform: translateY(-1px) rotate(-45deg);
+}
+
+.notion-md-editor .bn-block-content[data-content-type="checkListItem"],
+.notion-md-editor .bn-block-content[data-content-type="checkList"],
+.notion-md-editor .bn-block-content[data-content-type="todoListItem"] {
+  color: var(--sx-text-muted) !important;
+}
+
+.notion-md-editor .bn-block-content[data-content-type="codeBlock"] {
+  background: var(--sx-panel-strong) !important;
+  border: 1px solid var(--sx-border) !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+.notion-md-editor .bn-block-content[data-content-type="codeBlock"] > pre {
+  margin: 0;
+  padding: 14px 16px;
+  color: var(--sx-text-muted);
+  font-family: 'JetBrains Mono', 'Fira Code', Menlo, Consolas, monospace !important;
+  font-size: 0.875rem;
+  line-height: 1.65;
+  overflow-x: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--sx-border-rgb) / 0.24) transparent;
+}
+
+.notion-md-editor .bn-block-content[data-content-type="codeBlock"] > div {
+  background: var(--sx-panel) !important;
+  border-bottom-color: var(--sx-border) !important;
+  border-bottom-width: 1px !important;
+  border-bottom-style: solid !important;
+  padding: 5px 10px;
+}
+
+.notion-md-editor .bn-block-content[data-content-type="codeBlock"] > div > select {
+  background: transparent !important;
+  color: var(--sx-text-subtle);
+  font-size: 11px;
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  border: none !important;
+  outline: none;
+  cursor: pointer;
+  opacity: 0.72;
+}
+
+.notion-md-editor .bn-inline-content,
+.notion-md-editor .bn-block-content,
+.notion-md-editor .bn-editor {
+  color: var(--sx-text) !important;
+}
+
+.notion-md-editor .bn-inline-content[data-is-empty-and-focused]::before,
+.notion-md-editor [data-placeholder]::before {
+  color: var(--sx-text-disabled) !important;
+}
+
+.notion-md-editor a {
+  color: var(--starlex-accent) !important;
+  text-decoration-color: var(--starlex-accent-border);
+}

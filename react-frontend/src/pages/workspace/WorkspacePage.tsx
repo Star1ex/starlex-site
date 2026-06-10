@@ -7,7 +7,7 @@ import { pageVariants } from '@/shared/lib/animations.js';
 import { trackItem } from '@/shared/lib/recentItems.js';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle.js';
 import { showToast } from '@/shared/lib/toast.js';
-import { useWorkspace } from '@/contexts/WorkspaceContext.js';
+import { useWorkspace } from '@/contexts/useWorkspace.js';
 import { WorkspaceWelcome } from './WorkspaceWelcome.js';
 import { WorkspaceBento } from './WorkspaceBento.js';
 import { WorkspaceProjects } from './WorkspaceProjects.js';
@@ -19,14 +19,14 @@ import { MembersPanel } from '@/features/members/MembersPanel.js';
 function PageSkeleton() {
   return (
     <div className="space-y-8 animate-pulse">
-      <div className="h-12 w-72 rounded-xl bg-white/5" />
+      <div className="h-12 w-72 rounded-xl bg-[color:var(--sx-control)]" />
       <div className="grid grid-cols-12 gap-4">
-        <div className="col-span-8 h-44 rounded-2xl bg-white/5" />
-        <div className="col-span-4 h-44 rounded-2xl bg-white/5" />
+        <div className="col-span-8 h-44 rounded-2xl bg-[color:var(--sx-control)]" />
+        <div className="col-span-4 h-44 rounded-2xl bg-[color:var(--sx-control)]" />
       </div>
-      <div className="h-px bg-white/5" />
+      <div className="h-px bg-[color:var(--sx-border)]" />
       <div className="grid grid-cols-3 gap-3">
-        {[0,1,2].map(i => <div key={i} className="h-28 rounded-xl bg-white/5" />)}
+        {[0,1,2].map(i => <div key={i} className="h-28 rounded-xl bg-[color:var(--sx-control)]" />)}
       </div>
     </div>
   );
@@ -80,10 +80,6 @@ export const WorkspacePage: React.FC = () => {
     if (!workspaceId || !workspace) return;
     trackItem({ id: workspaceId, name: workspace.name, url: `/workspace/${workspaceId}`, type: 'workspace' });
   }, [workspaceId, workspace]);
-
-  const handleNewWorkspace = useCallback(() => {
-    navigate('/onboarding');
-  }, [navigate]);
 
   const handleProjectCreated = useCallback((p: ProjectDTO) => {
     setProjects(prev => [p, ...prev]);
@@ -151,6 +147,7 @@ export const WorkspacePage: React.FC = () => {
       exit="exit"
     >
       <WorkspaceWelcome
+        workspaceName={workspace?.name ?? 'Workspace'}
         firstName={currentUser?.firstName ?? ''}
         onCreateTask={() => navigate(`/task/new?workspaceId=${workspaceId}`)}
         onCreateProject={() => setShowCreate(true)}
@@ -159,8 +156,7 @@ export const WorkspacePage: React.FC = () => {
       <WorkspaceBento
         workspaceId={workspaceId!}
         projects={projects}
-        members={members}
-        onNewWorkspace={handleNewWorkspace}
+        onCreateProject={() => setShowCreate(true)}
       />
 
       <CreateProjectModal

@@ -84,7 +84,7 @@ export const taskService = {
     return response.data;
   },
 
-  async createWorkspaceTask(workspaceId: string, data: CreateTaskRequest): Promise<TaskDTO> {
+  async createTask(workspaceId: string, data: CreateTaskRequest): Promise<TaskDTO> {
     const response = await httpClient.post<TaskDTO>(`/api/workspaces/${workspaceId}/tasks`, data);
     return response.data;
   },

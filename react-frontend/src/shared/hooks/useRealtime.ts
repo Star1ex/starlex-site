@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 import { realtimeClient, type RealtimeEventType, type RealtimeEnvelope } from '@/shared/lib/realtime.js';
-import { useWorkspace } from '@/contexts/WorkspaceContext.js';
+import { useWorkspace } from '@/contexts/useWorkspace.js';
 
 export function useRealtimeEvent<T = unknown>(
   type: RealtimeEventType,

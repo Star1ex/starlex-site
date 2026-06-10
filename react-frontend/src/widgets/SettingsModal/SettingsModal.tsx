@@ -4,13 +4,6 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { createPortal } from 'react-dom';
 import { Palette, Shield, User, LifeBuoy, Info, X, Building2, Bell } from 'lucide-react';
 import { userService } from '@/services/api/index.js';
-import { Appearance } from '@/pages/settings/Appearance.js';
-import { ChangePassword } from '@/pages/settings/ChangePassword.js';
-import { ConnectedAccounts } from '@/pages/settings/ConnectedAccounts.js';
-import { Support } from '@/pages/settings/Support.js';
-import { WorkspaceSettings } from '@/pages/settings/WorkspaceSettings.js';
-import { NotificationsSettings } from '@/pages/settings/NotificationsSettings.js';
-import AboutUs from '@/pages/about-us/AboutUs.js';
 import Avatar from '@/shared/ui/Avatar.js';
 import type { User as UserEntity } from '@/entities/types.js';
 
@@ -33,6 +26,30 @@ const TABS: { id: TabId; label: string; icon: React.ElementType }[] = [
   { id: 'support',        label: 'Support',        icon: LifeBuoy },
   { id: 'about',          label: 'About',          icon: Info },
 ];
+
+const Appearance = React.lazy(() => import('@/pages/settings/Appearance.js').then((module) => ({ default: module.Appearance })));
+const ChangePassword = React.lazy(() => import('@/pages/settings/ChangePassword.js').then((module) => ({ default: module.ChangePassword })));
+const ConnectedAccounts = React.lazy(() => import('@/pages/settings/ConnectedAccounts.js').then((module) => ({ default: module.ConnectedAccounts })));
+const Support = React.lazy(() => import('@/pages/settings/Support.js').then((module) => ({ default: module.Support })));
+const WorkspaceSettings = React.lazy(() => import('@/pages/settings/WorkspaceSettings.js').then((module) => ({ default: module.WorkspaceSettings })));
+const NotificationsSettings = React.lazy(() => import('@/pages/settings/NotificationsSettings.js').then((module) => ({ default: module.NotificationsSettings })));
+const AboutUs = React.lazy(() => import('@/pages/about-us/AboutUs.js'));
+
+function SettingsPanelSkeleton() {
+  return (
+    <div className="settings-page" aria-hidden="true">
+      <section className="settings-section settings-panel-skeleton">
+        <div className="settings-panel-skeleton__title" />
+        <div className="settings-panel-skeleton__line" />
+        <div className="settings-panel-skeleton__line settings-panel-skeleton__line--short" />
+      </section>
+      <section className="settings-section settings-panel-skeleton">
+        <div className="settings-panel-skeleton__row" />
+        <div className="settings-panel-skeleton__row" />
+      </section>
+    </div>
+  );
+}
 
 export const SettingsModal: React.FC = () => {
   const navigate = useNavigate();
@@ -225,7 +242,9 @@ export const SettingsModal: React.FC = () => {
                 exit={{ opacity: 0, transition: { duration: 0.08 } }}
                 className="settings-content-inner"
               >
-                {renderContent()}
+                <React.Suspense fallback={<SettingsPanelSkeleton />}>
+                  {renderContent()}
+                </React.Suspense>
               </motion.div>
             </AnimatePresence>
           </div>

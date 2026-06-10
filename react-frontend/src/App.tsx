@@ -5,7 +5,8 @@ import { ErrorBoundary } from "@/components/ErrorBoundary.js";
 import { HelmetProvider } from "react-helmet-async";
 import { ThemeProvider } from "@/shared/contexts/ThemeContext.js";
 import { LastVisitedManager } from "@/app/LastVisitedManager.js";
-import { AuthProvider, useAuth } from '@/contexts/AuthContext.js';
+import { AuthProvider } from '@/contexts/AuthContext.js';
+import { useAuth } from '@/contexts/useAuth.js';
 import { WorkspaceProvider } from '@/contexts/WorkspaceContext.js';
 
 export const App = () => {

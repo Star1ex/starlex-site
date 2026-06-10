@@ -1,0 +1,640 @@
+@layer base {
+  /* Light theme — cool Liquid Glass, same product language as dark */
+  :root.light,
+  :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized) {
+    color-scheme: light;
+
+    --sx-canvas: #f7f9fc;
+    --sx-canvas-elevated: #ffffff;
+    --sx-body-bg:
+      radial-gradient(circle at 18% 0%, rgb(var(--starlex-accent-rgb) / 0.08), transparent 34rem),
+      linear-gradient(180deg, #fbfdff 0%, #f4f7fb 46%, #eef3f8 100%);
+    --sx-panel-rgb: 255 255 255;
+    --sx-panel-alpha: 0.72;
+    --sx-panel-strong-alpha: 0.88;
+    --sx-panel-muted-alpha: 0.52;
+    --sx-border-rgb: 100 116 139;
+    --sx-border-alpha: 0.18;
+    --sx-border-strong-alpha: 0.28;
+    --sx-text-rgb: 15 23 42;
+    --sx-text: #0f172a;
+    --sx-text-muted: #475569;
+    --sx-text-subtle: #64748b;
+    --sx-text-disabled: #94a3b8;
+    --sx-shadow-soft: 0 18px 55px rgb(15 23 42 / 0.08);
+    --sx-shadow-elevated: 0 26px 90px rgb(15 23 42 / 0.12);
+    --sx-overlay: rgb(15 23 42 / 0.32);
+    --sx-control: rgb(255 255 255 / 0.62);
+    --sx-control-hover: rgb(255 255 255 / 0.86);
+    --sx-control-active: rgb(226 232 240 / 0.78);
+    --sx-control-border: rgb(var(--sx-border-rgb) / 0.18);
+    --sx-control-border-strong: rgb(var(--sx-border-rgb) / 0.30);
+
+    --bg-primary: var(--sx-canvas);
+    --bg-secondary: rgb(255 255 255 / 0.64);
+    --bg-tertiary: rgb(241 245 249 / 0.82);
+    --bg-hover: rgb(226 232 240 / 0.72);
+    --bg-active: rgb(203 213 225 / 0.72);
+    --text-primary: var(--sx-text);
+    --text-secondary: var(--sx-text-muted);
+    --text-tertiary: var(--sx-text-subtle);
+    --border-color: var(--sx-border);
+    --border-sidebar: rgb(var(--sx-border-rgb) / 0.14);
+    --glass-bg: rgb(var(--sx-panel-rgb) / var(--sx-panel-alpha));
+    --glass-border: rgb(var(--sx-border-rgb) / 0.18);
+    --glass-highlight: rgb(255 255 255 / 0.78);
+    --glass-bg-hover: rgb(255 255 255 / 0.84);
+    --glass-border-hover: rgb(var(--sx-border-rgb) / 0.28);
+    --ambient-glow: rgb(var(--starlex-accent-rgb) / 0.08);
+    --bg-sidebar: rgb(255 255 255 / 0.72);
+    --topbar-bg: rgb(255 255 255 / 0.62);
+    --button-bg: rgb(255 255 255 / 0.70);
+    --button-bg-hover: rgb(255 255 255 / 0.90);
+    --button-bg-active: rgb(226 232 240 / 0.80);
+    --priority-pill-bg: rgb(255 255 255 / 0.70);
+    --priority-pill-text: #475569;
+    --priority-pill-bg-hover: rgb(226 232 240 / 0.80);
+    --priority-pill-bg-active: #0f172a;
+    --priority-pill-text-active: #ffffff;
+
+    --status-backlog-bg: rgb(100 116 139 / 0.10);
+    --status-backlog-text: #475569;
+    --status-todo-bg: rgb(37 99 235 / 0.10);
+    --status-todo-text: #1d4ed8;
+    --status-progress-bg: rgb(99 102 241 / 0.12);
+    --status-progress-text: #4f46e5;
+    --status-review-bg: rgb(234 88 12 / 0.11);
+    --status-review-text: #c2410c;
+    --status-done-bg: rgb(5 150 105 / 0.11);
+    --status-done-text: #047857;
+    --status-canceled-bg: rgb(100 116 139 / 0.08);
+    --status-canceled-text: #64748b;
+    --priority-urgent-bg: rgb(220 38 38 / 0.10);
+    --priority-urgent-text: #dc2626;
+    --priority-high-bg: rgb(217 119 6 / 0.12);
+    --priority-high-text: #b45309;
+    --priority-medium-bg: rgb(109 40 217 / 0.10);
+    --priority-medium-text: #6d28d9;
+    --priority-low-bg: rgb(37 99 235 / 0.10);
+    --priority-low-text: #2563eb;
+    --priority-none-bg: rgb(100 116 139 / 0.08);
+    --priority-none-text: #64748b;
+
+    --star-color: #64748b;
+    --star-glow: rgb(100 116 139 / 0.18);
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) body,
+  :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized) body {
+    background: var(--sx-body-bg);
+  }
+}
+
+@layer utilities {
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized))
+  :where(
+    .starlex-app-shell,
+    .settings-modal-shell,
+    .workspace-create-modal,
+    .glass-card,
+    .glass-menu,
+    .dropdown-menu,
+    [data-slot="dialog-content"],
+    [data-slot="alert-dialog-content"],
+    [data-slot="select-content"],
+    [data-slot="dropdown-menu-content"],
+    [data-slot="dropdown-menu-sub-content"],
+    .profile-identity-card,
+    .profile-details-card
+  ):where(.text-white, .text-white\/95, .text-white\/90, .text-white\/80, .text-white\/75, .text-white\/70),
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized))
+  :where(
+    .settings-modal-shell,
+    .workspace-create-modal,
+    .glass-card,
+    .glass-menu,
+    .dropdown-menu,
+    [data-slot="dialog-content"],
+    [data-slot="alert-dialog-content"],
+    [data-slot="select-content"],
+    [data-slot="dropdown-menu-content"],
+    [data-slot="dropdown-menu-sub-content"],
+    .profile-identity-card,
+    .profile-details-card
+  ) :where(.text-white, .text-white\/95, .text-white\/90, .text-white\/80, .text-white\/75, .text-white\/70) {
+    color: var(--sx-text) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized))
+  :where(
+    .starlex-app-shell,
+    .settings-modal-shell,
+    .workspace-create-modal,
+    .glass-card,
+    .glass-menu,
+    .dropdown-menu,
+    [data-slot="dialog-content"],
+    [data-slot="alert-dialog-content"],
+    [data-slot="select-content"],
+    [data-slot="dropdown-menu-content"],
+    [data-slot="dropdown-menu-sub-content"],
+    .profile-identity-card,
+    .profile-details-card
+  ):where(.text-white\/68, .text-white\/65, .text-white\/60, .text-white\/50),
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized))
+  :where(
+    .settings-modal-shell,
+    .workspace-create-modal,
+    .glass-card,
+    .glass-menu,
+    .dropdown-menu,
+    [data-slot="dialog-content"],
+    [data-slot="alert-dialog-content"],
+    [data-slot="select-content"],
+    [data-slot="dropdown-menu-content"],
+    [data-slot="dropdown-menu-sub-content"],
+    .profile-identity-card,
+    .profile-details-card
+  ) :where(.text-white\/68, .text-white\/65, .text-white\/60, .text-white\/50) {
+    color: var(--sx-text-muted) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized))
+  :where(
+    .starlex-app-shell,
+    .settings-modal-shell,
+    .workspace-create-modal,
+    .glass-card,
+    .glass-menu,
+    .dropdown-menu,
+    [data-slot="dialog-content"],
+    [data-slot="alert-dialog-content"],
+    [data-slot="select-content"],
+    [data-slot="dropdown-menu-content"],
+    [data-slot="dropdown-menu-sub-content"],
+    .profile-identity-card,
+    .profile-details-card
+  ):where(.text-white\/45, .text-white\/40, .text-white\/35, .text-white\/32, .text-white\/30),
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized))
+  :where(
+    .settings-modal-shell,
+    .workspace-create-modal,
+    .glass-card,
+    .glass-menu,
+    .dropdown-menu,
+    [data-slot="dialog-content"],
+    [data-slot="alert-dialog-content"],
+    [data-slot="select-content"],
+    [data-slot="dropdown-menu-content"],
+    [data-slot="dropdown-menu-sub-content"],
+    .profile-identity-card,
+    .profile-details-card
+  ) :where(.text-white\/45, .text-white\/40, .text-white\/35, .text-white\/32, .text-white\/30) {
+    color: var(--sx-text-subtle) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized))
+  :where(
+    .starlex-app-shell,
+    .settings-modal-shell,
+    .workspace-create-modal,
+    .glass-card,
+    .glass-menu,
+    .dropdown-menu,
+    [data-slot="dialog-content"],
+    [data-slot="alert-dialog-content"],
+    [data-slot="select-content"],
+    [data-slot="dropdown-menu-content"],
+    [data-slot="dropdown-menu-sub-content"],
+    .profile-identity-card,
+    .profile-details-card
+  ):where(.text-white\/25, .text-white\/20, .text-white\/15),
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized))
+  :where(
+    .settings-modal-shell,
+    .workspace-create-modal,
+    .glass-card,
+    .glass-menu,
+    .dropdown-menu,
+    [data-slot="dialog-content"],
+    [data-slot="alert-dialog-content"],
+    [data-slot="select-content"],
+    [data-slot="dropdown-menu-content"],
+    [data-slot="dropdown-menu-sub-content"],
+    .profile-identity-card,
+    .profile-details-card
+  ) :where(.text-white\/25, .text-white\/20, .text-white\/15) {
+    color: var(--sx-text-disabled) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized))
+  :where(.sidebar-workspace-glyph, .workspace-identity-glyph, .workspace-color-presets button, .workspace-recent-glyph[style], .project-row-glyph[style], .bg-red-600\/80, .bg-red-600):where(.text-white),
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized))
+  :where(.sidebar-workspace-glyph, .workspace-identity-glyph, .workspace-color-presets button, .workspace-recent-glyph[style], .project-row-glyph[style], .bg-red-600\/80, .bg-red-600) :where(.text-white) {
+    color: #ffffff !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized))
+  :where(.glass-card, .glass-menu, .dropdown-menu, [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [data-slot="select-content"], [data-slot="dropdown-menu-content"], [data-slot="dropdown-menu-sub-content"])
+  :where(.bg-white\/3, .bg-white\/4, .bg-white\/5, .bg-white\/6, .bg-white\/7, .bg-white\/8, .bg-white\/10, .bg-white\/12, .bg-white\/15) {
+    background-color: var(--sx-control) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized))
+  :where(.glass-card, .glass-menu, .dropdown-menu, [data-slot="dialog-content"], [data-slot="alert-dialog-content"], [data-slot="select-content"], [data-slot="dropdown-menu-content"], [data-slot="dropdown-menu-sub-content"])
+  :where(.border-white\/5, .border-white\/8, .border-white\/10, .border-white\/15, .border-white\/20, .border-white\/25, .border-white\/30, .border-black) {
+    border-color: var(--sx-control-border) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized))
+  :where(.glass-card, [data-slot="dialog-content"], [data-slot="alert-dialog-content"]):where(.bg-black\/80),
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized))
+  :where(.glass-card, [data-slot="dialog-content"], [data-slot="alert-dialog-content"]):where(.bg-black) {
+    background:
+      linear-gradient(145deg, rgb(255 255 255 / 0.88), rgb(255 255 255 / 0.62)),
+      rgb(255 255 255 / 0.82) !important;
+    border-color: var(--sx-control-border) !important;
+    color: var(--sx-text) !important;
+    box-shadow: var(--sx-shadow-elevated), inset 0 1px 0 rgb(255 255 255 / 0.82) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .glass-menu-item:hover,
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .glass-menu-item:focus,
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .glass-menu-item[data-highlighted],
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .glass-menu-item[data-state="checked"],
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .dropdown-menu-item:hover,
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .dropdown-menu-item:focus {
+    background: var(--sx-control-hover) !important;
+    color: var(--sx-text) !important;
+  }
+}
+
+@layer utilities {
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .starlex-app-shell :where(.text-white, .text-white\/95, .text-white\/90, .text-white\/80, .text-white\/75, .text-white\/70) {
+    color: var(--sx-text) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .starlex-app-shell :where(.text-white\/68, .text-white\/65, .text-white\/60, .text-white\/50) {
+    color: var(--sx-text-muted) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .starlex-app-shell :where(.text-white\/45, .text-white\/40, .text-white\/35, .text-white\/32, .text-white\/30) {
+    color: var(--sx-text-subtle) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .starlex-app-shell :where(.text-white\/25, .text-white\/20, .text-white\/15) {
+    color: var(--sx-text-disabled) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .starlex-app-shell :where(.bg-white\/3, .bg-white\/4, .bg-white\/5, .bg-white\/6, .bg-white\/7, .bg-white\/8, .bg-white\/10, .bg-white\/12, .bg-white\/15) {
+    background-color: rgb(255 255 255 / 0.64) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .starlex-app-shell :where(.border-white\/5, .border-white\/8, .border-white\/10, .border-white\/15, .border-white\/20, .border-white\/25, .border-white\/30) {
+    border-color: var(--sx-border) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .starlex-app-shell :where(.hover\:bg-white\/5:hover, .hover\:bg-white\/7:hover, .hover\:bg-white\/8:hover) {
+    background-color: rgb(255 255 255 / 0.86) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .starlex-app-shell :where(.hover\:text-white:hover, .hover\:text-white\/60:hover, .hover\:text-white\/70:hover, .hover\:text-white\/80:hover) {
+    color: var(--sx-text) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .starlex-app-shell :where(.sidebar-workspace-glyph, .workspace-identity-glyph, [style*="background-color:"]) .text-white,
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .starlex-app-shell :where(.sidebar-workspace-glyph.text-white, .workspace-identity-glyph.text-white) {
+    color: #ffffff !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .glass-card:is(.bg-black\/80),
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .glass-card:is(.text-white),
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .settings-modal-shell,
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .dropdown-menu,
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .glass-menu {
+    color: var(--sx-text);
+  }
+}
+
+@layer components {
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) :where(.workspace-recent-panel, .task-properties-panel, .tasks-filter-rail, .tasks-table-shell, .projects-list-shell, .project-properties-panel, .settings-section, .profile-shell) {
+    border-color: var(--sx-border) !important;
+    background:
+      linear-gradient(145deg, rgb(255 255 255 / 0.70), rgb(255 255 255 / 0.42)),
+      rgb(var(--sx-panel-rgb) / var(--sx-panel-alpha)) !important;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.72),
+      var(--sx-shadow-soft) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) :where(.workspace-home-header h1, .workspace-recent-head h2, .workspace-recent-main strong, .task-title-input, .tasks-page-header h1, .tasks-table-row:hover .tasks-table-title, .projects-list-heading, .project-row-title, .settings-header-title, .settings-section-title, .settings-profile-name, .settings-row-title, .profile-title, .profile-name) {
+    color: var(--sx-text) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) :where(.workspace-home-header p:not(.label-caps), .workspace-recent-head button, .workspace-recent-main em, .workspace-recent-status, .workspace-recent-empty, .workspace-recent-empty span, .task-back-button, .task-detail-meta, .task-description-head p, .task-property-block > p, .tasks-page-header p, .tasks-clear-button, .tasks-filter-section > p, .tasks-filter-item, .tasks-filter-item b, .tasks-table-key, .tasks-table-head, .tasks-table-due, .tasks-empty-cell, .tasks-more-chip, .projects-list-subtitle, .projects-list-header, .project-cell, .project-row-description, .settings-header-kicker, .settings-section-description, .settings-label, .settings-hint, .settings-profile-email, .settings-row-description, .settings-status-pill, .profile-subtitle, .profile-email) {
+    color: var(--sx-text-subtle) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) :where(.workspace-recent-project, .task-description-head h2, .task-description-readonly, .task-subtasks-panel h2, .task-properties-head h2, .tasks-table-title, .tasks-title-input, .tasks-inline-trigger, .tasks-label-trigger, .tasks-assignee-trigger, .tasks-date-trigger, .projects-list-row, .projects-view-pill, .project-status-cell, .project-progress-cell, .settings-nav-item, .settings-mobile-tab, .settings-button, .settings-input, .settings-row-icon, .profile-readonly-value) {
+    color: var(--sx-text-muted) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) :where(.workspace-recent-project:hover, .workspace-recent-head button:hover, .workspace-recent-create:hover, .task-back-button:hover, .tasks-toolbar-button:hover, .tasks-toolbar-button[data-active="true"], .tasks-view-toggle button:hover, .tasks-view-toggle button[data-active="true"], .tasks-clear-button:hover, .tasks-filter-item:hover, .tasks-filter-item[data-active="true"], .tasks-inline-trigger:hover, .tasks-label-trigger:hover, .tasks-assignee-trigger:hover, .tasks-inline-trigger[data-state="open"], .tasks-label-trigger[data-state="open"], .tasks-assignee-trigger[data-state="open"], .tasks-date-trigger:hover, .tasks-date-trigger[data-state="open"], .projects-list-row:hover, .project-inline-button:hover, .project-date-control:hover, .project-row-menu-button:hover, .settings-nav-item:hover, .settings-nav-item[data-active="true"], .settings-mobile-tab[data-active="true"], .settings-button:hover, .settings-close-button:hover) {
+    color: var(--sx-text) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) :where(.workspace-recent-head, .task-detail-hero, .task-description-panel, .task-subtasks-panel, .task-properties-head, .task-property-block, .task-updated-at, .tasks-toolbar, .tasks-filter-section + .tasks-filter-section, .tasks-table-head, .tasks-table-row, .tasks-loading-row, .projects-list-row, .settings-modal-sidebar, .settings-modal-header, .settings-sidebar-divider) {
+    border-color: var(--sx-border) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) :where(.workspace-recent-project:hover, .workspace-recent-create:hover, .tasks-table-row:hover, .tasks-title-input:focus, .tasks-filter-item:hover, .tasks-filter-item[data-active="true"], .tasks-toolbar-button:hover, .tasks-toolbar-button[data-active="true"], .tasks-view-toggle button:hover, .tasks-view-toggle button[data-active="true"], .tasks-inline-trigger:hover, .tasks-label-trigger:hover, .tasks-assignee-trigger:hover, .tasks-date-trigger:hover, .tasks-date-trigger[data-state="open"], .project-inline-button:hover, .project-date-control:hover, .project-row-menu-button:hover, .settings-nav-item:hover, .settings-nav-active-pill, .settings-mobile-tab[data-active="true"], .settings-row:hover, .settings-button:hover, .settings-close-button:hover) {
+    background: rgb(255 255 255 / 0.72) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) :where(.workspace-recent-glyph, .workspace-recent-status, .workspace-recent-empty div, .workspace-recent-create, .task-subtasks-panel, .task-properties-head > div:first-child, .tasks-toolbar-button, .tasks-view-toggle, .tasks-toolbar-button span, .tasks-inline-trigger, .tasks-label-trigger, .tasks-assignee-trigger, .tasks-date-trigger, .tasks-date-control, .tasks-priority-chip, .task-board-skeleton__column, .project-row-glyph, .projects-view-pill, .project-row-progress, .settings-profile-card, .settings-close-button, .settings-mobile-tab, .settings-section--subtle, .settings-input, .settings-row, .settings-row-icon, .settings-status-pill, .settings-button, .settings-toggle) {
+    border-color: var(--sx-border) !important;
+    background: rgb(255 255 255 / 0.58) !important;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.60) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) :where(.rich-editor-skeleton__line, .settings-panel-skeleton__title, .settings-panel-skeleton__line, .settings-panel-skeleton__row, .task-board-skeleton__header, .task-board-skeleton__card div, .task-board-skeleton__card span) {
+    background: rgb(148 163 184 / 0.16) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .task-title-input::placeholder,
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .settings-input::placeholder {
+    color: var(--sx-text-disabled) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .tasks-date-input {
+    color: var(--sx-text-muted) !important;
+    color-scheme: light;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .tasks-calendar-menu,
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .project-inline-dropdown {
+    border-color: var(--sx-border) !important;
+    background:
+      linear-gradient(145deg, rgb(255 255 255 / 0.86), rgb(255 255 255 / 0.62)),
+      rgb(255 255 255 / 0.84) !important;
+    box-shadow: var(--sx-shadow-elevated) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) :where(.tasks-calendar-head span, .tasks-calendar-day[data-today="true"]) {
+    color: var(--sx-text) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) :where(.tasks-calendar-head button, .tasks-calendar-weekdays span, .tasks-calendar-day, .tasks-calendar-footer button) {
+    color: var(--sx-text-subtle) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) :where(.tasks-calendar-head button:hover, .tasks-calendar-day:hover, .tasks-calendar-footer button:hover) {
+    background: rgb(226 232 240 / 0.74) !important;
+    color: var(--sx-text) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .tasks-calendar-day[data-selected="true"] {
+    background: var(--starlex-accent) !important;
+    color: var(--starlex-accent-contrast) !important;
+    box-shadow: 0 8px 24px var(--starlex-accent-glow) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .settings-backdrop {
+    background:
+      radial-gradient(circle at 22% 0%, rgb(var(--starlex-accent-rgb) / 0.10), transparent 34%),
+      rgb(15 23 42 / 0.28) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .settings-modal-shell {
+    border-color: var(--sx-border) !important;
+    background:
+      linear-gradient(145deg, rgb(255 255 255 / 0.84), rgb(255 255 255 / 0.58) 42%),
+      rgb(255 255 255 / 0.80) !important;
+    box-shadow: var(--sx-shadow-elevated), inset 0 1px 0 rgb(255 255 255 / 0.82) !important;
+    color: var(--sx-text) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .settings-modal-sidebar {
+    background:
+      linear-gradient(180deg, rgb(255 255 255 / 0.62), transparent 45%),
+      rgb(255 255 255 / 0.40) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .settings-modal-header {
+    background: rgb(255 255 255 / 0.42) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .settings-message--error {
+    border-color: rgb(220 38 38 / 0.20) !important;
+    background: rgb(254 226 226 / 0.86) !important;
+    color: #b91c1c !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .settings-message--success {
+    border-color: rgb(5 150 105 / 0.20) !important;
+    background: rgb(209 250 229 / 0.86) !important;
+    color: #047857 !important;
+  }
+}
+
+@layer components {
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .workspace-create-modal {
+    border-color: var(--sx-border) !important;
+    background:
+      linear-gradient(145deg, rgb(255 255 255 / 0.86), rgb(255 255 255 / 0.58)),
+      rgb(var(--sx-panel-rgb) / 0.84) !important;
+    box-shadow: var(--sx-shadow-elevated), inset 0 1px 0 rgb(255 255 255 / 0.82) !important;
+    color: var(--sx-text) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .workspace-identity-preview {
+    border-color: var(--sx-border) !important;
+    background:
+      linear-gradient(145deg, rgb(255 255 255 / 0.74), rgb(255 255 255 / 0.46)),
+      rgb(255 255 255 / 0.58) !important;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.70) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .workspace-identity-copy strong {
+    color: var(--sx-text) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) :where(.workspace-identity-copy span, .workspace-identity-field label, .workspace-identity-field label span) {
+    color: var(--sx-text-subtle) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) :where(.workspace-identity-input, .workspace-icon-input, .workspace-icon-presets button) {
+    border-color: var(--sx-control-border) !important;
+    background: var(--sx-control) !important;
+    color: var(--sx-text-muted) !important;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.58) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .workspace-identity-input::placeholder,
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .workspace-icon-input::placeholder {
+    color: var(--sx-text-disabled) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) :where(.workspace-identity-input:hover, .workspace-icon-input:hover, .workspace-icon-presets button:hover, .workspace-icon-presets button[data-active="true"]) {
+    border-color: rgb(var(--starlex-accent-rgb) / 0.20) !important;
+    background: var(--sx-control-hover) !important;
+    color: var(--sx-text) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) :where(.workspace-identity-input:focus, .workspace-icon-input:focus) {
+    border-color: rgb(var(--starlex-accent-rgb) / 0.34) !important;
+    background: var(--sx-control-hover) !important;
+    box-shadow: 0 0 0 3px rgb(var(--starlex-accent-rgb) / 0.12) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .workspace-identity-error {
+    color: #dc2626 !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) :where(.project-detail-page, .project-detail-main, .project-overview-main) {
+    color: var(--sx-text) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) :where(.project-title-input, .project-title-text, .project-properties-header h2, .project-progress-panel-top strong) {
+    color: var(--sx-text) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) :where(.project-back-link, .project-overview-meta-item, .project-overview-meta-item svg, .project-section-label, .project-property-label, .project-properties-header p, .project-properties-header svg, .project-progress-panel-top, .project-progress-panel p, .project-readonly-description span, .project-header-menu [data-slot="select-item"], .project-header-menu [data-slot="select-item"] svg) {
+    color: var(--sx-text-subtle) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) :where(.project-markdown-editor, .project-readonly-description, .project-property-select, .project-property-static, .project-date-field, .project-members-inline, .project-view-toggle button, .project-header-pill--muted) {
+    color: var(--sx-text-muted) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) :where(.project-back-link:hover, .project-view-toggle button:hover, .project-view-toggle button.is-active, .project-property-select:hover, .project-date-field:hover, .project-header-menu [data-slot="select-item"][data-highlighted], .project-header-menu [data-slot="select-item"]:focus, .project-header-menu [data-slot="select-item"][data-state="checked"]) {
+    color: var(--sx-text) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .project-title-input::placeholder,
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .project-icon-editor input::placeholder {
+    color: var(--sx-text-disabled) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .project-icon-editor {
+    background: var(--sx-control) !important;
+    color: var(--sx-text-muted) !important;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.62),
+      var(--sx-shadow-soft) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .project-icon-editor input {
+    color: var(--sx-text) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .project-properties-panel {
+    border-color: var(--sx-border) !important;
+    background:
+      linear-gradient(145deg, rgb(255 255 255 / 0.78), rgb(255 255 255 / 0.50)),
+      rgb(var(--sx-panel-rgb) / var(--sx-panel-alpha)) !important;
+    color: var(--sx-text-muted) !important;
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.74),
+      var(--sx-shadow-soft) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) :where(.project-properties-header, .project-progress-panel, .project-task-toolbar) {
+    border-color: var(--sx-border) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) :where(.project-property-select, .project-property-static, .project-date-field, .project-members-inline, .project-header-pill, .project-header-pill[data-slot="select-trigger"], .project-header-pill--muted, .project-view-toggle button.is-active) {
+    border-color: var(--sx-control-border) !important;
+    background: var(--sx-control) !important;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.60) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) :where(.project-property-select:hover, .project-date-field:hover, .project-header-pill--interactive:hover, .project-view-toggle button:hover) {
+    border-color: rgb(var(--starlex-accent-rgb) / 0.18) !important;
+    background: var(--sx-control-hover) !important;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.64), 0 10px 26px rgb(15 23 42 / 0.06) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .project-property-select[data-slot="select-trigger"] > svg {
+    color: var(--sx-text-subtle) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .project-property-avatar,
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .project-member-avatar {
+    border-color: rgb(255 255 255 / 0.78) !important;
+    box-shadow: 0 0 0 1px rgb(15 23 42 / 0.08) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .project-progress-track {
+    background: rgb(var(--sx-border-rgb) / 0.58) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .project-header-pill-dot,
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .project-priority-select-item::before,
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .project-status-select-item::before {
+    box-shadow: 0 0 0 2px rgb(255 255 255 / 0.92) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .project-header-menu {
+    border-color: var(--sx-border) !important;
+    background:
+      linear-gradient(145deg, rgb(255 255 255 / 0.88), rgb(255 255 255 / 0.66)),
+      rgb(255 255 255 / 0.86) !important;
+    box-shadow: var(--sx-shadow-elevated), inset 0 1px 0 rgb(255 255 255 / 0.82) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) :where(.project-header-menu [data-slot="select-item"][data-highlighted], .project-header-menu [data-slot="select-item"]:focus, .project-header-menu [data-slot="select-item"][data-state="checked"]) {
+    border-color: var(--sx-border) !important;
+    background: var(--sx-control-hover) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .project-delete-action {
+    color: #dc2626 !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .project-delete-action:hover {
+    color: #991b1b !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .project-priority--with-label {
+    border-color: color-mix(in srgb, var(--priority-color) 28%, rgb(var(--sx-border-rgb) / 0.18)) !important;
+    background: color-mix(in srgb, var(--priority-color) 12%, rgb(255 255 255 / 0.72)) !important;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.64) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .project-priority__bar {
+    background: rgb(var(--sx-border-rgb) / 0.30) !important;
+    box-shadow: none !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .project-priority__bar[data-active="true"] {
+    background: var(--priority-color) !important;
+    box-shadow: 0 0 12px color-mix(in srgb, var(--priority-color) 46%, transparent) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .project-priority__label {
+    color: var(--priority-color) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .projects-empty-state {
+    border-color: rgb(var(--sx-border-rgb) / 0.20) !important;
+    background: rgb(255 255 255 / 0.46) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .projects-empty-icon {
+    background: var(--sx-control) !important;
+    color: var(--sx-text-disabled) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) .tasks-empty-state {
+    color: var(--sx-text-subtle) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) :where(.tasks-empty-state p, .tasks-empty-state button, .tasks-load-more button) {
+    color: var(--sx-text-muted) !important;
+  }
+
+  :where(:root.light, :root:not(.dark):not(.theme-ultra-dark):not(.theme-solarized)) :where(.tasks-empty-state button:hover, .tasks-load-more button:hover) {
+    color: var(--sx-text) !important;
+  }
+}

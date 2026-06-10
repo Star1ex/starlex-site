@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { authService } from '@/services/api/index.js';
+import { getApiErrorMessage } from '@/shared/lib/apiError.js';
 import { PasswordStrengthMeter } from '@/shared/ui/PasswordStrengthMeter.js';
 
 export const ResetPasswordPage: React.FC = () => {
@@ -77,8 +78,8 @@ export const ResetPasswordPage: React.FC = () => {
       setTimeout(() => {
         navigate('/sign-in', { state: { message: 'Password reset successful. Please sign in.' } });
       }, 1500);
-    } catch (err: any) {
-      setErrorMessage(err?.response?.data?.error || 'Invalid or expired reset code');
+    } catch (err: unknown) {
+      setErrorMessage(getApiErrorMessage(err, 'Invalid or expired reset code'));
     } finally {
       setIsSubmitting(false);
     }

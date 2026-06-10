@@ -4,20 +4,15 @@ import { motion } from 'framer-motion';
 import { CheckCircle2, ChevronRight, MoreHorizontal, Trash2 } from 'lucide-react';
 import { taskService } from '@/services/api/index.js';
 import type { TaskDTO, TaskQueryParams, TaskStatus } from '@/types/dto.js';
-import { useWorkspace } from '@/contexts/WorkspaceContext.js';
-import { useAuth } from '@/contexts/AuthContext.js';
+import { useWorkspace } from '@/contexts/useWorkspace.js';
+import { useAuth } from '@/contexts/useAuth.js';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle.js';
 import { showToast } from '@/shared/lib/toast.js';
 import { getAllViews, type SavedView } from '@/shared/lib/savedViews.js';
 import { pageVariants, listItemVariants, listVariants } from '@/shared/lib/animations.js';
 import { StatusMenu } from '@/features/taskStatus/StatusMenu.js';
 import { can } from '@/shared/lib/permissions.js';
-
-const PRIORITY_CLS: Record<string, string> = {
-  high:   'text-orange-400',
-  medium: 'text-amber-400',
-  low:    'text-blue-400',
-};
+import { TASK_PRIORITY_META } from '@/entities/task/model/taskMeta.js';
 
 // ─── task row ──────────────────────────────────────────────────────────────────
 
@@ -37,6 +32,7 @@ function TaskRow({
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const isDone = task.progress === 'done' || task.status === 'done';
+  const priorityMeta = task.priority !== 'none' ? TASK_PRIORITY_META[task.priority] : null;
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -50,7 +46,7 @@ function TaskRow({
   return (
     <motion.div
       variants={listItemVariants}
-      className="group flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer hover:bg-white/4 transition-all"
+      className="group flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer hover:bg-[color:var(--sx-control)] transition-all"
       onClick={() => onNavigate(task.id)}
     >
       <div className="flex-shrink-0" onClick={e => e.stopPropagation()}>
@@ -63,21 +59,21 @@ function TaskRow({
       </div>
 
       {task.key && (
-        <span className="label-caps text-white/30 font-mono flex-shrink-0 w-16 truncate">{task.key}</span>
+        <span className="label-caps text-[color:var(--sx-text-subtle)] font-mono flex-shrink-0 w-16 truncate">{task.key}</span>
       )}
 
-      <span className={`flex-1 text-body-md min-w-0 truncate ${isDone ? 'line-through text-white/30' : 'text-white/80'}`}>
+      <span className={`flex-1 text-body-md min-w-0 truncate ${isDone ? 'line-through text-[color:var(--sx-text-subtle)]' : 'text-[color:var(--sx-text)]'}`}>
         {task.task}
       </span>
 
-      {task.priority && PRIORITY_CLS[task.priority] && (
-        <span className={`text-label-sm font-medium flex-shrink-0 ${PRIORITY_CLS[task.priority]}`}>
-          {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+      {priorityMeta && (
+        <span className="text-label-sm font-medium flex-shrink-0" style={{ color: priorityMeta.color }}>
+          {priorityMeta.label}
         </span>
       )}
 
       {task.due_date && (
-        <span className="text-label-sm text-white/30 flex-shrink-0 font-mono">
+        <span className="text-label-sm text-[color:var(--sx-text-subtle)] flex-shrink-0 font-mono">
           {new Date(task.due_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
         </span>
       )}
@@ -85,14 +81,14 @@ function TaskRow({
       <div ref={menuRef} className="relative flex-shrink-0" onClick={e => e.stopPropagation()}>
         <button
           onClick={() => setMenuOpen(p => !p)}
-          className="w-6 h-6 flex items-center justify-center rounded text-white/25 opacity-0 group-hover:opacity-100 hover:text-white/70 transition-all"
+          className="w-6 h-6 flex items-center justify-center rounded text-[color:var(--sx-text-disabled)] opacity-0 group-hover:opacity-100 hover:text-[color:var(--sx-text)] transition-all"
         >
           <MoreHorizontal size={13} />
         </button>
         {menuOpen && (
           <div className="dropdown-menu absolute right-0 top-7 z-20 min-w-[130px]">
             <button onClick={() => { onNavigate(task.id); setMenuOpen(false); }}
-              className="w-full flex items-center gap-2 px-3 py-2 text-label-sm text-white/70 hover:bg-white/5 transition-colors rounded-lg">
+              className="w-full flex items-center gap-2 px-3 py-2 text-label-sm text-[color:var(--sx-text-muted)] hover:bg-[color:var(--sx-control)] transition-colors rounded-lg">
               <ChevronRight size={13} /> Open
             </button>
             <button onClick={() => { onDelete(task.id); setMenuOpen(false); }}
@@ -117,8 +113,8 @@ function ViewTabs({ views, activeId, onChange }: { views: SavedView[]; activeId:
           onClick={() => onChange(v.id)}
           className={`flex-shrink-0 px-3 py-1.5 rounded-lg text-label-sm font-medium transition-all ${
             activeId === v.id
-              ? 'bg-white/8 text-white/90'
-              : 'text-white/40 hover:text-white/70 hover:bg-white/4'
+              ? 'bg-[color:var(--sx-control)] text-[color:var(--sx-text)]'
+              : 'text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] hover:bg-[color:var(--sx-control)]'
           }`}
         >
           {v.name}
@@ -192,7 +188,7 @@ export const MyIssuesPage: React.FC = () => {
   if (!activeWorkspaceId) {
     return (
       <div className="flex items-center justify-center py-20">
-        <p className="text-body-md text-white/30">Select a workspace to view issues</p>
+        <p className="text-body-md text-[color:var(--sx-text-subtle)]">Select a workspace to view issues</p>
       </div>
     );
   }
@@ -200,8 +196,8 @@ export const MyIssuesPage: React.FC = () => {
   return (
     <motion.div className="pb-16" variants={pageVariants} initial="initial" animate="animate" exit="exit">
       <div className="mb-6">
-        <h1 className="text-headline-lg font-hanken font-bold text-white mb-1">My Issues</h1>
-        <p className="text-body-md text-white/40">Tasks assigned to you in this workspace</p>
+        <h1 className="text-headline-lg font-hanken font-bold text-[color:var(--sx-text)] mb-1">My Issues</h1>
+        <p className="text-body-md text-[color:var(--sx-text-subtle)]">Tasks assigned to you in this workspace</p>
       </div>
 
       <ViewTabs
@@ -213,13 +209,13 @@ export const MyIssuesPage: React.FC = () => {
       <div className="mt-4">
         {loading && tasks.length === 0 ? (
           <div className="space-y-2">
-            {[0,1,2,3,4].map(i => <div key={i} className="h-12 rounded-xl bg-white/4 animate-pulse" />)}
+            {[0,1,2,3,4].map(i => <div key={i} className="h-12 rounded-xl bg-[color:var(--sx-control)] animate-pulse" />)}
           </div>
         ) : tasks.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-center">
-            <CheckCircle2 size={32} className="text-white/15 mb-3" />
-            <p className="text-body-md text-white/40 font-medium">All clear!</p>
-            <p className="text-label-sm text-white/25 mt-1">No tasks match this view</p>
+            <CheckCircle2 size={32} className="text-[color:var(--sx-text-disabled)] mb-3" />
+            <p className="text-body-md text-[color:var(--sx-text-subtle)] font-medium">All clear!</p>
+            <p className="text-label-sm text-[color:var(--sx-text-disabled)] mt-1">No tasks match this view</p>
           </div>
         ) : (
           <div>
@@ -239,7 +235,7 @@ export const MyIssuesPage: React.FC = () => {
               <button
                 onClick={handleLoadMore}
                 disabled={loading}
-                className="w-full mt-4 py-3 liquid-button !justify-center text-label-sm text-white/40 disabled:opacity-40"
+                className="w-full mt-4 py-3 liquid-button !justify-center text-label-sm text-[color:var(--sx-text-muted)] disabled:opacity-40"
               >
                 {loading ? 'Loading…' : 'Load more'}
               </button>

@@ -3,10 +3,11 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import { GlobalSidebar } from '@/widgets/GlobalSidebar/GlobalSidebar.js';
 import { Topbar } from '@/widgets/Topbar/Topbar.js';
-import { SearchModal } from '@/widgets/SearchModal/SearchModal.js';
+import SearchModal from '@/widgets/SearchModal/LazySearchModal.js';
+import { preloadSearchModal } from '@/app/routePreload.js';
 import { ToastHost } from '@/shared/ui/ToastHost.js';
 import { useRealtimeConnection } from '@/shared/hooks/useRealtime.js';
-import { useWorkspace } from '@/contexts/WorkspaceContext.js';
+import { useWorkspace } from '@/contexts/useWorkspace.js';
 import { Menu, X } from 'lucide-react';
 
 interface LayoutProps {
@@ -38,7 +39,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     queueMicrotask(() => setMobileSidebarOpen(false));
   }, [location.pathname]);
 
-  const openSearch = useCallback(() => setSearchOpen(true), []);
+  const openSearch = useCallback(() => {
+    preloadSearchModal();
+    setSearchOpen(true);
+  }, []);
   const newTaskPath = activeWorkspaceId ? `/task/new?workspaceId=${activeWorkspaceId}` : '/dashboard';
 
   useEffect(() => {
@@ -47,6 +51,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       const editing = tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement).isContentEditable;
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
+        preloadSearchModal();
         setSearchOpen((s) => !s);
       }
       if (!editing && !e.metaKey && !e.ctrlKey && !e.altKey && e.key === 'c') {
@@ -65,7 +70,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
   }, [location.pathname, location.search]);
 
   return (
-    <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }}>
+    <div className="starlex-app-shell min-h-screen" style={{ background: 'var(--sx-body-bg, var(--bg-primary))' }}>
       {/* Desktop sidebar */}
       {!isMobile && <GlobalSidebar />}
 
@@ -76,16 +81,16 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {isMobile && (
         <div
           className="fixed top-0 left-0 right-0 z-50 h-12 flex items-center justify-between px-3"
-          style={{ background: 'var(--topbar-bg)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+          style={{ background: 'var(--topbar-bg)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--sx-border)' }}
         >
           <button
             onClick={() => setMobileSidebarOpen(true)}
-            className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-white/8 transition-colors text-white/60"
+            className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-[color:var(--sx-control)] transition-colors text-[color:var(--sx-text-muted)]"
             aria-label="Open menu"
           >
             <Menu size={20} />
           </button>
-          <span className="text-sm font-semibold text-white truncate">Starlex</span>
+          <span className="text-sm font-semibold text-[color:var(--sx-text)] truncate">Starlex</span>
           <div className="w-9" />
         </div>
       )}
@@ -94,9 +99,10 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {isMobile && (
         <>
           <div
-            className={`fixed inset-0 bg-black/60 z-[45] transition-opacity duration-300 ${
+            className={`fixed inset-0 z-[45] transition-opacity duration-300 ${
               mobileSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
             }`}
+            style={{ background: 'var(--sx-overlay)' }}
             onClick={() => setMobileSidebarOpen(false)}
           />
           <div
@@ -107,7 +113,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
             <GlobalSidebar className="!w-72 !rounded-r-3xl" />
             <button
               onClick={() => setMobileSidebarOpen(false)}
-              className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-lg glass-card text-white/60 hover:text-white"
+              className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-lg glass-card text-[color:var(--sx-text-muted)] hover:text-[color:var(--sx-text)]"
               aria-label="Close menu"
             >
               <X size={18} />

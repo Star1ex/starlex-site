@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
 import { authService, userService } from '@/services/api/index.js';
-import { useAuth } from '@/contexts/AuthContext.js';
+import { useAuth } from '@/contexts/useAuth.js';
 import { PasswordStrengthMeter } from '@/shared/ui/PasswordStrengthMeter.js';
 import { SecuritySessions } from './SecuritySessions.js';
 
@@ -122,7 +122,7 @@ export const ChangePassword: React.FC<ChangePasswordProps> = ({ onSubmit }) => {
           type="button"
           onClick={onToggleShow}
           disabled={loading}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-white/35 hover:text-white/75 transition-colors disabled:cursor-not-allowed"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] transition-colors disabled:cursor-not-allowed"
           aria-label={showPassword ? 'Hide password' : 'Show password'}
         >
           {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}

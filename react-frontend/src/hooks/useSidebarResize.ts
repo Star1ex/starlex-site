@@ -4,16 +4,16 @@ const SIDEBAR_WIDTH_KEY = 'sidebar-width';
 const SIDEBAR_COLLAPSED_KEY = 'sidebar-collapsed';
 
 export const useSidebarResize = (minWidth = 200, maxWidth = 600, defaultWidth = 280) => {
-  const [width, setWidth] = useState(defaultWidth);
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const [isResizing, setIsResizing] = useState(false);
-
-  useEffect(() => {
+  const [width, setWidth] = useState(() => {
     const savedWidth = localStorage.getItem(SIDEBAR_WIDTH_KEY);
-    const savedCollapsed = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
-    if (savedWidth) setWidth(Number(savedWidth));
-    if (savedCollapsed) setIsCollapsed(savedCollapsed === 'true');
-  }, []);
+    const parsed = savedWidth ? Number(savedWidth) : defaultWidth;
+    if (!Number.isFinite(parsed)) return defaultWidth;
+    return Math.min(Math.max(parsed, minWidth), maxWidth);
+  });
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === 'true';
+  });
+  const [isResizing, setIsResizing] = useState(false);
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_WIDTH_KEY, String(width));

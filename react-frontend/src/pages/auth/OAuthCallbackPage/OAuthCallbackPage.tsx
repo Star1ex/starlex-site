@@ -37,16 +37,16 @@ export const OAuthCallbackPage: React.FC = () => {
   }, [error, provider, returnTo, navigate]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-white px-6">
+    <div className="min-h-screen flex items-center justify-center px-6" style={{ background: 'var(--sx-body-bg)' }}>
       <div className="w-full max-w-md text-center">
-        <h1 className="text-2xl font-semibold text-black mb-3">
+        <h1 className="text-2xl font-semibold text-[color:var(--sx-text)] mb-3">
           {status === 'loading' ? 'Redirecting...' : 'Sign-in Error'}
         </h1>
-        <p className="text-sm text-gray-600 mb-6">{errorMessage}</p>
+        <p className="text-sm text-[color:var(--sx-text-muted)] mb-6">{errorMessage}</p>
         {status === 'error' && (
           <button
             onClick={() => navigate('/sign-in')}
-            className="inline-flex items-center justify-center px-5 py-2 rounded-full bg-black text-white text-sm font-semibold hover:bg-gray-800 transition-colors"
+            className="inline-flex items-center justify-center px-5 py-2 rounded-full bg-[color:var(--starlex-accent)] text-[color:var(--starlex-accent-contrast)] text-sm font-semibold hover:brightness-110 transition-colors"
           >
             Back to Sign In
           </button>

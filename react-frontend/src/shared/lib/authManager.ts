@@ -1,45 +1,90 @@
 import { apiClient, httpClient } from '../../services/api/client.js';
 
+type AccessTokenPayload = {
+  exp?: number;
+};
+
+export type AuthUserCache = {
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  photo_url?: string | null;
+  avatar_url?: string | null;
+};
+
+type AuthUserSource = AuthUserCache & {
+  first_name?: string;
+  last_name?: string;
+};
+
 // Token methods now delegate to ApiClient (in-memory) instead of localStorage
 export const getAuthToken = (): string | null => apiClient.getAccessToken();
 export const setAuthToken = (token: string): void => apiClient.setAccessToken(token);
 export const clearAuthToken = (): void => apiClient.clearAccessToken();
 export const isAuthenticated = (): boolean => apiClient.getAccessToken() !== null;
 
+const decodeJwtPayload = (token: string): AccessTokenPayload | null => {
+  const payload = token.split('.')[1];
+  if (!payload) return null;
+
+  try {
+    const normalized = payload.replace(/-/g, '+').replace(/_/g, '/');
+    const padded = normalized.padEnd(normalized.length + ((4 - (normalized.length % 4)) % 4), '=');
+    const decoded = JSON.parse(atob(padded)) as unknown;
+    if (!decoded || typeof decoded !== 'object') return null;
+    const { exp } = decoded as { exp?: unknown };
+    return { exp: typeof exp === 'number' ? exp : undefined };
+  } catch (err) {
+    console.error('Error decoding token payload:', err);
+    return null;
+  }
+};
+
 // Token expiry check (decodes JWT payload if present)
 export const isTokenExpired = (): boolean => {
   const token = getAuthToken();
   if (!token) return true;
 
-  try {
-    const payload = token.split('.')[1];
-    if (!payload) return true;
-    const decoded = JSON.parse(atob(payload));
-    const exp = decoded.exp;
-    if (!exp) return true;
-    // Buffer time of 60 seconds
-    return Date.now() >= (exp * 1000 - 60000);
-  } catch (err) {
-    console.error('Error checking token expiration:', err);
-    return true;
-  }
+  const decoded = decodeJwtPayload(token);
+  if (!decoded?.exp) return true;
+  // Buffer time of 60 seconds
+  return Date.now() >= (decoded.exp * 1000 - 60000);
 };
 
-// User storage functions (kept in localStorage)
+// Display cache only. Keep credentials, ids, providers, and verification state out of localStorage.
 const USER_KEY = 'user';
 
-export const setAuthUser = (user: any): void => {
+export const setAuthUser = (user: AuthUserSource): void => {
+  const displayCache: AuthUserCache = {
+    email: user.email,
+    firstName: user.firstName ?? user.first_name ?? '',
+    lastName: user.lastName ?? user.last_name ?? '',
+    photo_url: user.photo_url ?? null,
+    avatar_url: user.avatar_url ?? null,
+  };
+
   try {
-    localStorage.setItem(USER_KEY, JSON.stringify(user));
+    localStorage.setItem(USER_KEY, JSON.stringify(displayCache));
   } catch (err) {
     console.error('Failed to save user to localStorage:', err);
   }
 };
 
-export const getAuthUser = (): any | null => {
+export const getAuthUser = (): AuthUserCache | null => {
   try {
     const userStr = localStorage.getItem(USER_KEY);
-    return userStr ? JSON.parse(userStr) : null;
+    if (!userStr) return null;
+    const parsed = JSON.parse(userStr) as unknown;
+    if (!parsed || typeof parsed !== 'object') return null;
+
+    const user = parsed as AuthUserSource;
+    return {
+      email: typeof user.email === 'string' ? user.email : undefined,
+      firstName: typeof user.firstName === 'string' ? user.firstName : user.first_name,
+      lastName: typeof user.lastName === 'string' ? user.lastName : user.last_name,
+      photo_url: user.photo_url ?? null,
+      avatar_url: user.avatar_url ?? null,
+    };
   } catch (err) {
     console.error('Failed to read user from localStorage:', err);
     return null;
@@ -91,4 +136,3 @@ export const refreshAccessToken = async (): Promise<string | null> => {
     return null;
   }
 };
-

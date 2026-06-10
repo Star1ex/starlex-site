@@ -1,7 +1,7 @@
 import React, { useRef, useState, useEffect } from "react";
 import { motion, useInView, type Variants } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { useTheme } from "@/shared/contexts/ThemeContext.js";
+import { useTheme } from "@/shared/contexts/useTheme.js";
 import iconStarlex from "@/assets/icon-starlex.png";
 
 type AboutUsProps = { variant?: "page" | "settings" };
@@ -126,7 +126,8 @@ export default function AboutUs({ variant = "page" }: AboutUsProps) {
     "--text-secondary":    "#c2bbb6",
     "--text-tertiary":     "#9b928c",
     "--border-color":      "#241f21",
-    "--accent-blue":       "#7c3aed",
+    "--starlex-accent":    "#7c3aed",
+    "--starlex-accent-rgb": "124 58 237",
     "--button-bg":         "rgba(255,255,255,0.08)",
     "--button-bg-hover":   "rgba(255,255,255,0.13)",
     "--button-bg-active":  "rgba(255,255,255,0.18)",
@@ -202,7 +203,7 @@ export default function AboutUs({ variant = "page" }: AboutUsProps) {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               {values.map((v) => (
                 <motion.div key={v.title} variants={fadeUp} className="rounded-2xl bg-[color:var(--bg-secondary)]/80 p-7 flex flex-col gap-3 border border-[color:var(--border-color)]">
-                  <span className="w-2 h-2 rounded-full" style={{ background: "var(--accent-blue)" }} />
+                  <span className="w-2 h-2 rounded-full" style={{ background: "var(--starlex-accent)" }} />
                   <h3 className="tt-font-display text-xl">{v.title}</h3>
                   <p className="text-sm text-[color:var(--text-secondary)] leading-relaxed">{v.body}</p>
                 </motion.div>
@@ -252,7 +253,7 @@ export default function AboutUs({ variant = "page" }: AboutUsProps) {
               <motion.div key={entry.title} variants={fadeUp} className={isSettings ? "settings-row !items-start !grid grid-cols-1 sm:grid-cols-[140px_1fr] gap-3" : "grid grid-cols-1 sm:grid-cols-[180px_1fr] gap-3 sm:gap-10 py-7"}>
                 <div className="flex sm:flex-col gap-3 sm:gap-2">
                   <span className="text-xs text-[color:var(--text-secondary)] tracking-wide">{entry.date}</span>
-                  <span className="text-xs uppercase tracking-[0.25em] font-medium" style={{ color: "var(--accent-blue)" }}>{entry.tag}</span>
+                  <span className="text-xs uppercase tracking-[0.25em] font-medium" style={{ color: "var(--starlex-accent)" }}>{entry.tag}</span>
                 </div>
                 <div className="flex flex-col gap-2">
                   <h3 className="text-base font-medium text-[color:var(--text-primary)] leading-snug">{entry.title}</h3>

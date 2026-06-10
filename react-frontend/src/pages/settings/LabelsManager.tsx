@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Plus, Pencil, Trash2, Check, X } from 'lucide-react';
 import { workspaceService } from '@/services/api/index.js';
-import { useWorkspace } from '@/contexts/WorkspaceContext.js';
+import { useWorkspace } from '@/contexts/useWorkspace.js';
 import { showToast } from '@/shared/lib/toast.js';
 import type { WorkspaceLabelDTO } from '@/types/dto.js';
 
@@ -71,7 +71,7 @@ function LabelRow({ label, onUpdated, onDeleted, workspaceId }: RowProps) {
     return (
       <div className="settings-row !items-center !py-2">
         <div className="relative flex-shrink-0">
-          <div className="size-5 rounded-full cursor-pointer border border-white/15 overflow-hidden">
+          <div className="size-5 rounded-full cursor-pointer border border-[color:var(--sx-border)] overflow-hidden">
             <input
               type="color"
               value={color}
@@ -114,7 +114,7 @@ function LabelRow({ label, onUpdated, onDeleted, workspaceId }: RowProps) {
         <button
           onClick={cancel}
           disabled={saving}
-          className="size-7 flex items-center justify-center rounded-lg text-white/40 hover:text-white/70 transition-colors"
+          className="size-7 flex items-center justify-center rounded-lg text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] transition-colors"
         >
           <X size={14} />
         </button>
@@ -125,18 +125,18 @@ function LabelRow({ label, onUpdated, onDeleted, workspaceId }: RowProps) {
   return (
     <div className="group settings-row !py-2.5">
       <span className="size-4 rounded-full flex-shrink-0" style={{ background: label.color }} />
-      <span className="flex-1 text-body-md text-white/80 truncate">{label.name}</span>
+      <span className="flex-1 text-body-md text-[color:var(--sx-text)] truncate">{label.name}</span>
       <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
         <button
           onClick={startEdit}
-          className="size-7 flex items-center justify-center rounded-lg text-white/30 hover:text-white/70 transition-colors"
+          className="size-7 flex items-center justify-center rounded-lg text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] transition-colors"
         >
           <Pencil size={13} />
         </button>
         <button
           onClick={handleDelete}
           disabled={deleting}
-          className="size-7 flex items-center justify-center rounded-lg text-white/30 hover:text-red-400 transition-colors disabled:opacity-40"
+          className="size-7 flex items-center justify-center rounded-lg text-[color:var(--sx-text-subtle)] hover:text-red-400 transition-colors disabled:opacity-40"
         >
           <Trash2 size={13} />
         </button>
@@ -198,7 +198,7 @@ function CreateRow({ workspaceId, onCreated }: CreateRowProps) {
   return (
     <div className="settings-row !items-center !py-2">
       <div className="relative flex-shrink-0">
-        <div className="size-5 rounded-full border border-white/15 overflow-hidden cursor-pointer">
+        <div className="size-5 rounded-full border border-[color:var(--sx-border)] overflow-hidden cursor-pointer">
           <input
             type="color"
             value={color}
@@ -238,7 +238,7 @@ function CreateRow({ workspaceId, onCreated }: CreateRowProps) {
       <button
         onClick={cancel}
         disabled={saving}
-        className="size-7 flex items-center justify-center rounded-lg text-white/40 hover:text-white/70 transition-colors"
+        className="size-7 flex items-center justify-center rounded-lg text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] transition-colors"
       >
         <X size={14} />
       </button>
@@ -292,7 +292,7 @@ export const LabelsManager: React.FC<LabelsManagerProps> = ({ workspaceId, isAdm
 
       {loading ? (
         <div className="space-y-1.5 animate-pulse">
-          {[0, 1, 2].map(i => <div key={i} className="h-9 rounded-xl bg-white/4" />)}
+          {[0, 1, 2].map(i => <div key={i} className="h-9 rounded-xl bg-[color:var(--sx-control)]" />)}
         </div>
       ) : (
         <div className="space-y-1.5">

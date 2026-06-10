@@ -9,6 +9,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
     <meta name="theme-color" content="#f6f7fb" media="(prefers-color-scheme: light)" />
+    <script>
+      (function () {
+        try {
+          var cookieMatch = document.cookie.match(/(?:^|;\s*)starlex-theme=([^;]+)/);
+          var storedTheme = localStorage.getItem('starlex-theme');
+          var theme = cookieMatch ? decodeURIComponent(cookieMatch[1]) : storedTheme;
+          if (!/^(dark|light|ultra-dark|solarized)$/.test(theme || '')) {
+            theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: light)').matches
+              ? 'light'
+              : 'dark';
+          }
+
+          var root = document.documentElement;
+          root.classList.remove('dark', 'light', 'theme-ultra-dark', 'theme-solarized');
+          if (theme === 'dark') root.classList.add('dark');
+          if (theme === 'light') root.classList.add('light');
+          if (theme === 'ultra-dark') root.classList.add('dark', 'theme-ultra-dark');
+          if (theme === 'solarized') root.classList.add('theme-solarized');
+        } catch (error) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
     <title>Starlex</title>
   </head>
   <body>

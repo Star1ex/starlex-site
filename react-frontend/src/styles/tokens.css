@@ -1,0 +1,111 @@
+/* =====================================================
+   LIQUID GLASS DESIGN TOKENS
+   Starlex product accent is intentionally separate from
+   shadcn component accent tokens.
+   ===================================================== */
+@layer base {
+  :root,
+  :root.dark {
+    color-scheme: dark;
+
+    /* Workspace/product accent */
+    --starlex-accent: #6366f1;
+    --starlex-accent-rgb: 99 102 241;
+    --starlex-accent-soft: rgb(var(--starlex-accent-rgb) / 0.14);
+    --starlex-accent-border: rgb(var(--starlex-accent-rgb) / 0.32);
+    --starlex-accent-glow: rgb(var(--starlex-accent-rgb) / 0.22);
+    --starlex-accent-contrast: #ffffff;
+    --workspace-accent: var(--starlex-accent);
+
+    /* Semantic Starlex surfaces */
+    --sx-canvas: #000000;
+    --sx-canvas-elevated: #050508;
+    --sx-body-bg:
+      radial-gradient(circle at 18% 0%, rgb(var(--starlex-accent-rgb) / 0.10), transparent 34rem),
+      linear-gradient(180deg, #000000 0%, #030306 48%, #000000 100%);
+    --sx-panel-rgb: 255 255 255;
+    --sx-panel-alpha: 0.035;
+    --sx-panel-strong-alpha: 0.075;
+    --sx-panel-muted-alpha: 0.022;
+    --sx-panel: rgb(var(--sx-panel-rgb) / var(--sx-panel-alpha));
+    --sx-panel-strong: rgb(var(--sx-panel-rgb) / var(--sx-panel-strong-alpha));
+    --sx-panel-muted: rgb(var(--sx-panel-rgb) / var(--sx-panel-muted-alpha));
+    --sx-border-rgb: 255 255 255;
+    --sx-border-alpha: 0.08;
+    --sx-border-strong-alpha: 0.14;
+    --sx-border: rgb(var(--sx-border-rgb) / var(--sx-border-alpha));
+    --sx-border-strong: rgb(var(--sx-border-rgb) / var(--sx-border-strong-alpha));
+    --sx-text-rgb: 255 255 255;
+    --sx-text: #ffffff;
+    --sx-text-muted: rgb(var(--sx-text-rgb) / 0.68);
+    --sx-text-subtle: rgb(var(--sx-text-rgb) / 0.48);
+    --sx-text-disabled: rgb(var(--sx-text-rgb) / 0.32);
+    --sx-shadow-soft: 0 18px 60px rgb(0 0 0 / 0.32);
+    --sx-shadow-elevated: 0 24px 90px rgb(0 0 0 / 0.45);
+    --sx-glass-blur: 24px;
+    --sx-glass-saturate: 150%;
+    --sx-focus-ring: 0 0 0 3px rgb(var(--starlex-accent-rgb) / 0.26);
+    --sx-overlay: rgb(0 0 0 / 0.60);
+
+    /* Legacy aliases kept while components migrate */
+    --bg-primary: var(--sx-canvas);
+    --bg-secondary: #051424;
+    --bg-tertiary: #0e1c2d;
+    --bg-hover: #1d2b3c;
+    --bg-active: #283647;
+    --text-primary: var(--sx-text);
+    --text-secondary: var(--sx-text-muted);
+    --text-tertiary: var(--sx-text-subtle);
+    --border-color: var(--sx-border);
+    --border-sidebar: rgb(var(--sx-border-rgb) / 0.05);
+    --glass-bg: var(--sx-panel);
+    --glass-border: rgb(var(--sx-border-rgb) / 0.10);
+    --glass-highlight: rgb(var(--sx-panel-rgb) / 0.10);
+    --glass-bg-hover: rgb(var(--sx-panel-rgb) / 0.05);
+    --glass-border-hover: var(--sx-border-strong);
+    --ambient-glow: rgb(var(--starlex-accent-rgb) / 0.10);
+    --bg-sidebar: rgb(0 0 0 / 0.60);
+    --topbar-bg: rgb(0 0 0 / 0.40);
+    --button-bg: rgb(0 0 0 / 0.50);
+    --button-bg-hover: rgb(var(--sx-panel-rgb) / 0.05);
+    --button-bg-active: rgb(var(--sx-panel-rgb) / 0.08);
+    --priority-pill-bg: rgb(var(--sx-panel-rgb) / 0.05);
+    --priority-pill-text: rgb(var(--sx-text-rgb) / 0.60);
+    --priority-pill-bg-hover: rgb(var(--sx-panel-rgb) / 0.08);
+    --priority-pill-bg-active: rgb(var(--sx-panel-rgb) / 0.12);
+    --priority-pill-text-active: var(--sx-text);
+
+    /* Status and priority chips */
+    --status-backlog-bg: rgb(148 163 184 / 0.12);
+    --status-backlog-text: #cbd5e1;
+    --status-todo-bg: rgb(96 165 250 / 0.14);
+    --status-todo-text: #93c5fd;
+    --status-progress-bg: rgb(99 102 241 / 0.20);
+    --status-progress-text: #a5b4fc;
+    --status-review-bg: rgb(251 146 60 / 0.18);
+    --status-review-text: #fdba74;
+    --status-done-bg: rgb(52 211 153 / 0.18);
+    --status-done-text: #6ee7b7;
+    --status-canceled-bg: rgb(var(--sx-panel-rgb) / 0.05);
+    --status-canceled-text: rgb(var(--sx-text-rgb) / 0.34);
+    --priority-urgent-bg: rgb(248 113 113 / 0.16);
+    --priority-urgent-text: #fca5a5;
+    --priority-high-bg: rgb(251 146 60 / 0.16);
+    --priority-high-text: #fdba74;
+    --priority-medium-bg: rgb(167 139 250 / 0.16);
+    --priority-medium-text: #c4b5fd;
+    --priority-low-bg: rgb(96 165 250 / 0.16);
+    --priority-low-text: #93c5fd;
+    --priority-none-bg: rgb(var(--sx-panel-rgb) / 0.05);
+    --priority-none-text: rgb(var(--sx-text-rgb) / 0.42);
+
+    /* Star / decorative (kept) */
+    --star-color: #ffffff;
+    --star-glow: rgb(255 255 255 / 0.35);
+
+    /* Easing curves */
+    --spring-gentle: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --spring-snappy: cubic-bezier(0.26, 1.4, 0.48, 1);
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  }
+}

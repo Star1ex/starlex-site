@@ -14,7 +14,7 @@ export const PasswordStrengthMeter: React.FC<PasswordStrengthMeterProps> = ({
   const level = score >= 5 ? 4 : score >= 4 ? 3 : score >= 3 ? 2 : score >= 2 ? 1 : 0;
 
   const levelColors = [
-    'bg-white/12',
+    'bg-[color:var(--sx-control)]',
     'bg-red-400',
     'bg-yellow-400',
     'bg-blue-400',
@@ -23,9 +23,9 @@ export const PasswordStrengthMeter: React.FC<PasswordStrengthMeterProps> = ({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between text-xs uppercase tracking-wider text-white/36">
+      <div className="flex items-center justify-between text-xs uppercase tracking-wider text-[color:var(--sx-text-subtle)]">
         <span>Password strength</span>
-        <span className="text-white/68">{password ? label : '—'}</span>
+        <span className="text-[color:var(--sx-text-muted)]">{password ? label : '—'}</span>
       </div>
       <div className="grid grid-cols-4 gap-2">
         {Array.from({ length: 4 }).map((_, idx) => {
@@ -34,17 +34,17 @@ export const PasswordStrengthMeter: React.FC<PasswordStrengthMeterProps> = ({
             <div
               key={idx}
               className={`h-1.5 rounded-full transition-colors duration-200 ${
-                isActive ? levelColors[level] : 'bg-white/8'
+                isActive ? levelColors[level] : 'bg-[color:var(--sx-control)]'
               }`}
             />
           );
         })}
       </div>
       {showRequirements && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-white/42">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-[color:var(--sx-text-subtle)]">
           {checks.map((check) => (
             <div key={check.key} className="flex items-center gap-2">
-              <span className={`size-2 rounded-full ${check.met ? 'bg-green-500' : 'bg-white/10'}`} />
+              <span className={`size-2 rounded-full ${check.met ? 'bg-green-500' : 'bg-[color:var(--sx-control)]'}`} />
               <span>{check.label}</span>
             </div>
           ))}

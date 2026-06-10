@@ -2,9 +2,10 @@ import React, { useState, useRef, KeyboardEvent, ClipboardEvent, useEffect } fro
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { authService } from '@/services/api/index.js';
-import { useAuth } from '@/contexts/AuthContext.js';
-import { getLastWorkspaceId } from '@/contexts/WorkspaceContext.js';
+import { useAuth } from '@/contexts/useAuth.js';
+import { getLastWorkspaceId } from '@/contexts/useWorkspace.js';
 import { setAuthUser } from '@/shared/lib/authManager.js';
+import { getApiErrorMessage } from '@/shared/lib/apiError.js';
 
 export const VerifyEmailPage: React.FC = () => {
   const navigate = useNavigate();
@@ -73,9 +74,7 @@ export const VerifyEmailPage: React.FC = () => {
         });
       }
     } catch (err: unknown) {
-      setErrorMessage(
-        (err as any)?.response?.data?.error || 'Invalid verification code',
-      );
+      setErrorMessage(getApiErrorMessage(err, 'Invalid verification code'));
     } finally {
       setIsLoading(false);
     }
@@ -89,7 +88,7 @@ export const VerifyEmailPage: React.FC = () => {
       setCode(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
     } catch (err: unknown) {
-      setErrorMessage((err as any)?.response?.data?.error || 'Failed to resend code');
+      setErrorMessage(getApiErrorMessage(err, 'Failed to resend code'));
     } finally {
       setIsResending(false);
     }
@@ -98,7 +97,7 @@ export const VerifyEmailPage: React.FC = () => {
   return (
     <div
       className="min-h-screen flex items-center justify-center p-6"
-      style={{ background: 'var(--bg-primary)' }}
+      style={{ background: 'var(--sx-body-bg)' }}
     >
       <motion.div
         className="w-full max-w-md"
@@ -107,13 +106,13 @@ export const VerifyEmailPage: React.FC = () => {
         transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
       >
         <div className="text-center mb-8">
-          <p className="label-caps text-white/40 tracking-[0.25em] mb-3">STARLEX</p>
-          <h1 className="text-headline-lg font-hanken font-bold text-white mb-3">
+          <p className="label-caps text-[color:var(--sx-text-subtle)] tracking-[0.25em] mb-3">STARLEX</p>
+          <h1 className="text-headline-lg font-hanken font-bold text-[color:var(--sx-text)] mb-3">
             Check your email
           </h1>
-          <p className="text-body-md text-white/50">
+          <p className="text-body-md text-[color:var(--sx-text-muted)]">
             We sent a 6-digit code to{' '}
-            <span className="text-white/80 font-medium">{email || 'your email'}</span>
+            <span className="text-[color:var(--sx-text)] font-medium">{email || 'your email'}</span>
           </p>
         </div>
 
@@ -133,7 +132,7 @@ export const VerifyEmailPage: React.FC = () => {
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   onPaste={handlePaste}
                   disabled={isLoading}
-                  className="w-11 h-14 text-center text-xl font-bold font-mono text-white bg-white/5 border border-white/10 rounded-xl focus:border-white/30 focus:ring-1 focus:ring-white/20 outline-none transition-all disabled:opacity-40"
+                  className="w-11 h-14 text-center text-xl font-bold font-mono text-[color:var(--sx-text)] bg-[color:var(--sx-panel)] border border-[color:var(--sx-border)] rounded-xl focus:border-[color:var(--sx-border-strong)] focus:ring-1 focus:ring-[color:var(--sx-border-strong)] outline-none transition-all disabled:opacity-40"
                   aria-label={`Digit ${index + 1}`}
                 />
               ))}
@@ -146,19 +145,19 @@ export const VerifyEmailPage: React.FC = () => {
             <button
               type="submit"
               disabled={isLoading || code.join('').length !== 6}
-              className="liquid-button w-full !justify-center !py-3 !rounded-xl disabled:opacity-40 !bg-[--accent] !border-transparent !text-white font-semibold"
+              className="liquid-button w-full !justify-center !py-3 !rounded-xl disabled:opacity-40 !bg-[color:var(--starlex-accent)] !border-transparent !text-[color:var(--starlex-accent-contrast)] font-semibold"
             >
               {isLoading ? 'Verifying…' : 'Verify email'}
             </button>
           </form>
 
           <div className="text-center space-y-2 pt-1">
-            <p className="text-label-sm text-white/40">Didn't receive the code?</p>
+            <p className="text-label-sm text-[color:var(--sx-text-subtle)]">Didn't receive the code?</p>
             <button
               type="button"
               onClick={handleResendCode}
               disabled={isResending}
-              className="text-label-sm text-white/60 hover:text-white transition-colors disabled:opacity-40"
+              className="text-label-sm text-[color:var(--sx-text-muted)] hover:text-[color:var(--sx-text)] transition-colors disabled:opacity-40"
             >
               {isResending ? 'Resending…' : 'Resend code'}
             </button>
@@ -169,7 +168,7 @@ export const VerifyEmailPage: React.FC = () => {
           <button
             type="button"
             onClick={() => navigate('/sign-in')}
-            className="text-label-sm text-white/30 hover:text-white/60 transition-colors"
+            className="text-label-sm text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text-muted)] transition-colors"
           >
             ← Back to Sign In
           </button>

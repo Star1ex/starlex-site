@@ -75,7 +75,7 @@ export const EmailChange: React.FC<EmailChangeProps> = ({ currentEmail }) => {
         <div>
           <h3 className="settings-section-title">Change email</h3>
           <p className="settings-section-description">
-            Current: <span className="text-white/65">{currentEmail}</span>
+            Current: <span className="text-[color:var(--sx-text-muted)]">{currentEmail}</span>
           </p>
         </div>
       </div>
@@ -102,7 +102,7 @@ export const EmailChange: React.FC<EmailChangeProps> = ({ currentEmail }) => {
       ) : (
         <form onSubmit={handleConfirm} className="space-y-3">
           <p className="settings-hint">
-            We sent a code to <span className="text-white/70">{newEmail}</span>. Enter it below to confirm.
+            We sent a code to <span className="text-[color:var(--sx-text)]">{newEmail}</span>. Enter it below to confirm.
           </p>
           <input
             type="text"

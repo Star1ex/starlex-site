@@ -8,7 +8,7 @@ function AvatarBubble({ user, size = 28 }: AvatarBubbleProps) {
   const src = user.photo_url ?? undefined;
   return (
     <div
-      className="rounded-full border-2 border-black overflow-hidden bg-white/10 flex items-center justify-center text-white font-semibold flex-shrink-0"
+      className="rounded-full border-2 border-[color:var(--sx-canvas)] overflow-hidden bg-[color:var(--sx-panel-strong)] flex items-center justify-center text-[color:var(--sx-text)] font-semibold flex-shrink-0"
       style={{ width: size, height: size, fontSize: size * 0.38 }}
       title={`${user.firstName ?? ''} ${user.lastName ?? ''}`.trim() || 'Member'}
     >
@@ -47,7 +47,7 @@ export const PresenceAvatars: React.FC<PresenceAvatarsProps> = ({
       ))}
       {overflow > 0 && (
         <div
-          className="rounded-full border-2 border-black bg-white/15 flex items-center justify-center text-white/70 font-semibold flex-shrink-0"
+          className="rounded-full border-2 border-[color:var(--sx-canvas)] bg-[color:var(--sx-panel-strong)] flex items-center justify-center text-[color:var(--sx-text-muted)] font-semibold flex-shrink-0"
           style={{ width: size, height: size, fontSize: size * 0.34, marginLeft: -(size * 0.25) }}
         >
           +{overflow}

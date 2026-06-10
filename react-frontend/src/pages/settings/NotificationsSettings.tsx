@@ -71,7 +71,7 @@ export const NotificationsSettings: React.FC = () => {
   if (loading) {
     return (
       <div className="settings-page animate-pulse">
-        {[0, 1].map(i => <div key={i} className="h-14 rounded-xl bg-white/4" />)}
+        {[0, 1].map(i => <div key={i} className="h-14 rounded-xl bg-[color:var(--sx-control)]" />)}
       </div>
     );
   }

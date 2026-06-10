@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Check, Copy, Crown, Eye, Link2, Loader2, Plus, Shield, Trash2, User } from 'lucide-react';
 import { workspaceService } from '@/services/api/index.js';
-import { useWorkspace } from '@/contexts/WorkspaceContext.js';
+import { useWorkspace } from '@/contexts/useWorkspace.js';
 import { can } from '@/shared/lib/permissions.js';
 import { showToast } from '@/shared/lib/toast.js';
 import {
@@ -21,7 +21,7 @@ const ROLE_META: Record<WorkspaceRole, { label: string; icon: React.ReactNode; c
   owner:  { label: 'Owner',  icon: <Crown size={11} />,  cls: 'text-amber-400 bg-amber-900/25' },
   admin:  { label: 'Admin',  icon: <Shield size={11} />, cls: 'text-violet-400 bg-violet-900/25' },
   member: { label: 'Member', icon: <User size={11} />,   cls: 'text-blue-400 bg-blue-900/25' },
-  guest:  { label: 'Guest',  icon: <Eye size={11} />,    cls: 'text-white/40 bg-white/5' },
+  guest:  { label: 'Guest',  icon: <Eye size={11} />,    cls: 'text-[color:var(--sx-text-subtle)] bg-[color:var(--sx-panel)]' },
 };
 
 const ROLES: WorkspaceRole[] = ['admin', 'member', 'guest'];
@@ -151,8 +151,8 @@ export const MembersPage: React.FC = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-headline-md font-hanken font-semibold text-white">Members</h1>
-          <p className="text-body-sm text-white/40 mt-0.5">{members.length} member{members.length !== 1 ? 's' : ''}</p>
+          <h1 className="text-headline-md font-hanken font-semibold text-[color:var(--sx-text)]">Members</h1>
+          <p className="text-body-sm text-[color:var(--sx-text-subtle)] mt-0.5">{members.length} member{members.length !== 1 ? 's' : ''}</p>
         </div>
         {canManage && (
           <button
@@ -168,11 +168,11 @@ export const MembersPage: React.FC = () => {
       <div className="glass-card rounded-2xl overflow-hidden mb-6">
         {loading ? (
           <div className="flex items-center justify-center py-12">
-            <Loader2 className="w-5 h-5 text-white/30 animate-spin" />
+            <Loader2 className="w-5 h-5 text-[color:var(--sx-text-subtle)] animate-spin" />
           </div>
         ) : members.length === 0 ? (
           <div className="flex items-center justify-center py-12">
-            <p className="text-body-md text-white/30">No members yet</p>
+            <p className="text-body-md text-[color:var(--sx-text-subtle)]">No members yet</p>
           </div>
         ) : (
           members.map((m, i) => {
@@ -184,23 +184,23 @@ export const MembersPage: React.FC = () => {
             return (
               <div
                 key={m.user.id}
-                className={`flex items-center gap-3 px-5 py-3.5 ${i < members.length - 1 ? 'border-b border-white/5' : ''} ${isRemoving ? 'opacity-40' : ''} transition-opacity`}
+                className={`flex items-center gap-3 px-5 py-3.5 ${i < members.length - 1 ? 'border-b border-[color:var(--sx-border)]' : ''} ${isRemoving ? 'opacity-40' : ''} transition-opacity`}
               >
                 {/* Avatar */}
-                <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-[11px] font-bold text-white overflow-hidden flex-shrink-0">
+                <div className="w-8 h-8 rounded-full bg-[color:var(--sx-panel-strong)] flex items-center justify-center text-[11px] font-bold text-[color:var(--sx-text)] overflow-hidden flex-shrink-0">
                   {src ? <img src={src} alt={ini} className="w-full h-full object-cover" /> : ini}
                 </div>
 
                 {/* Name + email */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-body-sm text-white font-medium truncate">
+                  <p className="text-body-sm text-[color:var(--sx-text)] font-medium truncate">
                     {m.user.firstName} {m.user.lastName}
                   </p>
-                  <p className="text-[10px] text-white/40 truncate">{m.user.email}</p>
+                  <p className="text-[10px] text-[color:var(--sx-text-subtle)] truncate">{m.user.email}</p>
                 </div>
 
                 {/* Joined */}
-                <span className="hidden sm:block text-[10px] text-white/30 flex-shrink-0">
+                <span className="hidden sm:block text-[10px] text-[color:var(--sx-text-subtle)] flex-shrink-0">
                   {fmtDate(m.joined_at)}
                 </span>
 
@@ -210,12 +210,12 @@ export const MembersPage: React.FC = () => {
                     value={m.role}
                     onValueChange={(v) => handleRoleChange(m.user.id, v as WorkspaceRole)}
                   >
-                    <SelectTrigger className="w-[100px] h-7 glass-input border-white/10 text-label-sm px-2">
+                    <SelectTrigger className="w-[100px] h-7 glass-input border-[color:var(--sx-border)] text-label-sm px-2">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="glass-menu rounded-xl p-1">
                       {ROLES.map((r) => (
-                        <SelectItem key={r} value={r} className="glass-menu-item text-label-sm hover:text-white focus:text-white">
+                        <SelectItem key={r} value={r} className="glass-menu-item text-label-sm hover:text-[color:var(--sx-text)] focus:text-[color:var(--sx-text)]">
                           {ROLE_META[r].label}
                         </SelectItem>
                       ))}
@@ -230,7 +230,7 @@ export const MembersPage: React.FC = () => {
                   <button
                     onClick={() => setRemoveTarget(m)}
                     disabled={isRemoving}
-                    className="p-1.5 text-white/25 hover:text-red-400 hover:bg-white/5 rounded-lg transition-colors"
+                    className="p-1.5 text-[color:var(--sx-text-disabled)] hover:text-red-400 hover:bg-[color:var(--sx-control)] rounded-lg transition-colors"
                   >
                     <Trash2 size={13} />
                   </button>
@@ -245,15 +245,15 @@ export const MembersPage: React.FC = () => {
       {canManage && (
         <div className="glass-card rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-4">
-            <Link2 size={14} className="text-white/50" />
-            <h2 className="text-body-md font-medium text-white">Invite link</h2>
+            <Link2 size={14} className="text-[color:var(--sx-text-muted)]" />
+            <h2 className="text-body-md font-medium text-[color:var(--sx-text)]">Invite link</h2>
           </div>
-          <p className="text-body-sm text-white/40 mb-4">
+          <p className="text-body-sm text-[color:var(--sx-text-subtle)] mb-4">
             Generate a link that lets anyone with the URL join this workspace.
           </p>
           <div className="flex items-center gap-3 mb-3">
             <Select value={inviteRole} onValueChange={(v) => setInviteRole(v as WorkspaceRole)}>
-              <SelectTrigger className="w-[120px] h-8 glass-input border-white/10 text-label-sm">
+              <SelectTrigger className="w-[120px] h-8 glass-input border-[color:var(--sx-border)] text-label-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="glass-menu rounded-xl p-1">
@@ -274,11 +274,11 @@ export const MembersPage: React.FC = () => {
             </button>
           </div>
           {inviteUrl && (
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-white/5 border border-white/8">
-              <span className="flex-1 text-[11px] text-white/60 font-mono truncate">{inviteUrl}</span>
+            <div className="flex items-center gap-2 p-3 rounded-xl bg-[color:var(--sx-panel)] border border-[color:var(--sx-border)]">
+              <span className="flex-1 text-[11px] text-[color:var(--sx-text-muted)] font-mono truncate">{inviteUrl}</span>
               <button
                 onClick={handleCopy}
-                className="flex items-center gap-1 text-label-sm text-white/50 hover:text-white transition-colors flex-shrink-0"
+                className="flex items-center gap-1 text-label-sm text-[color:var(--sx-text-muted)] hover:text-[color:var(--sx-text)] transition-colors flex-shrink-0"
               >
                 {copied ? <Check size={13} className="text-emerald-400" /> : <Copy size={13} />}
                 {copied ? 'Copied!' : 'Copy'}
@@ -290,10 +290,10 @@ export const MembersPage: React.FC = () => {
 
       {/* Add member dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="glass-card border-white/10 bg-black/80 backdrop-blur-2xl text-white sm:max-w-md">
+        <DialogContent className="glass-card border-[color:var(--sx-border)] bg-[color:var(--sx-panel)] backdrop-blur-2xl text-[color:var(--sx-text)] sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-white font-hanken">Add member</DialogTitle>
-            <DialogDescription className="text-white/50">
+            <DialogTitle className="text-[color:var(--sx-text)] font-hanken">Add member</DialogTitle>
+            <DialogDescription className="text-[color:var(--sx-text-muted)]">
               Enter the email address and role for the new member.
             </DialogDescription>
           </DialogHeader>
@@ -308,7 +308,7 @@ export const MembersPage: React.FC = () => {
               autoFocus
             />
             <Select value={addRole} onValueChange={(v) => setAddRole(v as WorkspaceRole)}>
-              <SelectTrigger className="glass-input border-white/10 text-body-sm h-9">
+              <SelectTrigger className="glass-input border-[color:var(--sx-border)] text-body-sm h-9">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="glass-menu rounded-xl p-1">
@@ -321,7 +321,7 @@ export const MembersPage: React.FC = () => {
             </Select>
           </div>
           <DialogFooter>
-            <button onClick={() => setAddOpen(false)} className="px-4 py-2 text-label-sm text-white/50 hover:text-white/80 transition-colors">
+            <button onClick={() => setAddOpen(false)} className="px-4 py-2 text-label-sm text-[color:var(--sx-text-muted)] hover:text-[color:var(--sx-text)] transition-colors">
               Cancel
             </button>
             <button
@@ -337,15 +337,15 @@ export const MembersPage: React.FC = () => {
 
       {/* Remove confirmation */}
       <AlertDialog open={!!removeTarget} onOpenChange={(o) => !o && setRemoveTarget(null)}>
-        <AlertDialogContent className="glass-card border-white/10 bg-black/80 backdrop-blur-2xl text-white sm:max-w-sm">
+        <AlertDialogContent className="glass-card border-[color:var(--sx-border)] bg-[color:var(--sx-panel)] backdrop-blur-2xl text-[color:var(--sx-text)] sm:max-w-sm">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-white font-hanken">Remove member</AlertDialogTitle>
-            <AlertDialogDescription className="text-white/50">
-              Remove <strong className="text-white/80">{removeTarget?.user.firstName} {removeTarget?.user.lastName}</strong> from this workspace? They will lose access immediately.
+            <AlertDialogTitle className="text-[color:var(--sx-text)] font-hanken">Remove member</AlertDialogTitle>
+            <AlertDialogDescription className="text-[color:var(--sx-text-muted)]">
+              Remove <strong className="text-[color:var(--sx-text)]">{removeTarget?.user.firstName} {removeTarget?.user.lastName}</strong> from this workspace? They will lose access immediately.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-white/10 text-white/60 hover:bg-white/8">
+            <AlertDialogCancel className="border-[color:var(--sx-border)] text-[color:var(--sx-text-muted)] hover:bg-[color:var(--sx-control)]">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction

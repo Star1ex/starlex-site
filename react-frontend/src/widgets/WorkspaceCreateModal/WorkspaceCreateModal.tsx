@@ -1,10 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { workspaceService } from '@/services/api/index.js';
 import type { WorkspaceDTO } from '@/types/dto.js';
 import { modalBackdropVariants, modalContentVariants } from '@/shared/lib/animations.js';
+import { WorkspaceIdentityForm } from '@/shared/ui/WorkspaceIdentityForm.js';
+import { WORKSPACE_ACCENT_PRESETS } from '@/shared/lib/workspaceIdentity.js';
 
 interface WorkspaceCreateModalProps {
   isOpen: boolean;
@@ -18,17 +20,19 @@ export const WorkspaceCreateModal: React.FC<WorkspaceCreateModalProps> = ({
   onCreated,
 }) => {
   const [name, setName] = useState('');
+  const [icon, setIcon] = useState('');
+  const [color, setColor] = useState<string>(WORKSPACE_ACCENT_PRESETS[0].value);
   const [description, setDescription] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const nameRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isOpen) {
       setName('');
+      setIcon('');
+      setColor(WORKSPACE_ACCENT_PRESETS[0].value);
       setDescription('');
       setError('');
-      setTimeout(() => nameRef.current?.focus(), 60);
     }
   }, [isOpen]);
 
@@ -47,11 +51,18 @@ export const WorkspaceCreateModal: React.FC<WorkspaceCreateModalProps> = ({
     setLoading(true);
     setError('');
     try {
-      const ws = await workspaceService.createWorkspace({ name: trimmed, description: description.trim() });
+      const nextIcon = icon.trim() || trimmed.slice(0, 2).toUpperCase();
+      const ws = await workspaceService.createWorkspace({
+        name: trimmed,
+        icon: nextIcon,
+        color,
+        description: description.trim() || undefined,
+      });
       window.dispatchEvent(new CustomEvent('workspaceCreated'));
-      onCreated(ws);
-    } catch (err: any) {
-      setError(err?.response?.data?.error || 'Failed to create workspace');
+      onCreated({ ...ws, icon: nextIcon, color });
+    } catch (err: unknown) {
+      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+      setError(msg || 'Failed to create workspace');
     } finally {
       setLoading(false);
     }
@@ -66,98 +77,55 @@ export const WorkspaceCreateModal: React.FC<WorkspaceCreateModalProps> = ({
           initial="initial"
           animate="animate"
           exit="exit"
-          style={{ background: 'rgba(0,0,0,0.45)', backdropFilter: 'blur(4px)' }}
+          style={{ background: 'var(--sx-overlay)', backdropFilter: 'blur(8px)' }}
           onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
           <motion.div
-            className="w-full max-w-md rounded-2xl shadow-2xl overflow-hidden"
-            style={{ background: 'var(--bg-primary)', border: '1px solid var(--border-color)' }}
+            className="glass-card workspace-create-modal w-full max-w-lg rounded-2xl overflow-hidden"
             variants={modalContentVariants}
           >
-            {/* Header */}
             <div className="flex items-center justify-between px-6 pt-6 pb-4">
-              <h2 className="text-lg font-semibold" style={{ color: 'var(--text-primary)' }}>
+              <h2 className="text-headline-sm font-hanken font-semibold text-[color:var(--sx-text)]">
                 New Workspace
               </h2>
               <button
                 onClick={onClose}
-                className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
-                style={{ color: 'var(--text-secondary)' }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'var(--bg-secondary)')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] hover:bg-[color:var(--sx-control)] transition-colors"
               >
                 <X size={16} />
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4">
-              {/* Name */}
-              <div>
-                <label className="block text-xs font-medium uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-secondary)' }}>
-                  Name
-                </label>
-                <input
-                  ref={nameRef}
-                  value={name}
-                  onChange={e => { setName(e.target.value); setError(''); }}
-                  placeholder="My Workspace"
-                  disabled={loading}
-                  className="w-full px-3 py-2.5 rounded-lg text-sm outline-none transition-colors"
-                  style={{
-                    background: 'var(--bg-secondary)',
-                    border: '1px solid var(--border-color)',
-                    color: 'var(--text-primary)',
-                  }}
-                  onFocus={e => (e.currentTarget.style.borderColor = 'var(--text-secondary)')}
-                  onBlur={e => (e.currentTarget.style.borderColor = 'var(--border-color)')}
-                />
-              </div>
+            <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-5">
+              <WorkspaceIdentityForm
+                name={name}
+                onNameChange={(value) => { setName(value); setError(''); }}
+                icon={icon}
+                onIconChange={(value) => { setIcon(value); setError(''); }}
+                color={color}
+                onColorChange={setColor}
+                description={description}
+                onDescriptionChange={setDescription}
+                error={error}
+                disabled={loading}
+                autoFocus
+                showDescription
+              />
 
-              {/* Description */}
-              <div>
-                <label className="block text-xs font-medium uppercase tracking-wider mb-1.5" style={{ color: 'var(--text-secondary)' }}>
-                  Description
-                  <span className="normal-case font-normal ml-1 tracking-normal" style={{ color: 'var(--text-secondary)', opacity: 0.6 }}>
-                    — optional
-                  </span>
-                </label>
-                <textarea
-                  value={description}
-                  onChange={e => setDescription(e.target.value)}
-                  placeholder="What is this workspace for?"
-                  rows={3}
-                  disabled={loading}
-                  className="w-full px-3 py-2.5 rounded-lg text-sm outline-none resize-none transition-colors"
-                  style={{
-                    background: 'var(--bg-secondary)',
-                    border: '1px solid var(--border-color)',
-                    color: 'var(--text-primary)',
-                  }}
-                  onFocus={e => (e.currentTarget.style.borderColor = 'var(--text-secondary)')}
-                  onBlur={e => (e.currentTarget.style.borderColor = 'var(--border-color)')}
-                />
-              </div>
-
-              {error && (
-                <p className="text-sm text-red-500">{error}</p>
-              )}
-
-              {/* Actions */}
               <div className="flex gap-2 pt-1">
                 <button
                   type="button"
                   onClick={onClose}
                   disabled={loading}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-medium transition-colors"
-                  style={{ color: 'var(--text-secondary)', background: 'var(--bg-secondary)' }}
+                  className="flex-1 liquid-button !justify-center"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={loading || !name.trim()}
-                  className="flex-1 py-2.5 rounded-xl text-sm font-semibold transition-colors disabled:opacity-50"
-                  style={{ background: 'var(--text-primary)', color: 'var(--bg-primary)' }}
+                  className="flex-1 liquid-button !justify-center !border-transparent !text-[color:var(--starlex-accent-contrast)] font-semibold disabled:opacity-40"
+                  style={{ background: color, boxShadow: `0 12px 34px ${color}32` }}
                 >
                   {loading ? 'Creating…' : 'Create'}
                 </button>

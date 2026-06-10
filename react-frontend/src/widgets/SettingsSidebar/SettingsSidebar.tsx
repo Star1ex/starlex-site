@@ -16,8 +16,8 @@ import { useNavigate } from 'react-router-dom';
 import Avatar from '@/shared/ui/Avatar.js';
 import { getAuthUser } from '@/shared/lib/authManager.js';
 import { userService } from '@/services/api/index.js';
-import { useTheme } from '@/shared/contexts/ThemeContext.js';
-import { useAuth } from '@/contexts/AuthContext.js';
+import { useTheme } from '@/shared/contexts/useTheme.js';
+import { useAuth } from '@/contexts/useAuth.js';
 import type { User } from '@/entities/types.js';
 import { useSidebarResize } from '@/hooks/useSidebarResize.js';
 

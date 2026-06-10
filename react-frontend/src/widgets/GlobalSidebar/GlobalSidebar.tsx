@@ -18,14 +18,21 @@ import Avatar from '@/shared/ui/Avatar.js';
 import { getAuthUser } from '@/shared/lib/authManager.js';
 import { WorkspaceGlyph } from '@/shared/lib/workspaceIcon.js';
 import { userService } from '@/services/api/index.js';
-import { useAuth } from '@/contexts/AuthContext.js';
+import { useAuth } from '@/contexts/useAuth.js';
 import { WorkspaceCreateModal } from '@/widgets/WorkspaceCreateModal/WorkspaceCreateModal.js';
 import { cn } from '@/shared/lib/cn.js';
 import { dropdownVariants } from '@/shared/lib/animations.js';
 import { trackItem } from '@/shared/lib/recentItems.js';
 import type { User } from '@/entities/types.js';
 import type { WorkspaceDTO } from '@/types/dto.js';
-import { useWorkspace } from '@/contexts/WorkspaceContext.js';
+import { useWorkspace } from '@/contexts/useWorkspace.js';
+import {
+  preloadMembersShell,
+  preloadMyIssuesShell,
+  preloadSettingsModal,
+  preloadTaskExplorerShell,
+  preloadWorkspaceShell,
+} from '@/app/routePreload.js';
 
 interface GlobalSidebarProps {
   className?: string;
@@ -34,12 +41,12 @@ interface GlobalSidebarProps {
 const ICON_STROKE = 1.55;
 
 const NAV_ITEMS = [
-  { label: 'Home',       icon: House,          path: (wsId: string) => `/workspace/${wsId}` },
-  { label: 'Projects',   icon: SquareKanban,  path: (wsId: string) => `/workspace/${wsId}?view=projects` },
-  { label: 'Tasks',      icon: ListTodo,      path: (wsId: string) => `/workspace/${wsId}/tasks` },
-  { label: 'Members',    icon: UsersRound,    path: (wsId: string) => `/workspace/${wsId}/members` },
-  { label: 'My Issues',  icon: CircleCheckBig, path: () => `/my-issues` },
-  { label: 'Inbox',      icon: Inbox,         path: (wsId: string) => `/workspace/${wsId}?view=inbox` },
+  { label: 'Home',       icon: House,          path: (wsId: string) => `/workspace/${wsId}`, preload: preloadWorkspaceShell },
+  { label: 'Projects',   icon: SquareKanban,  path: (wsId: string) => `/workspace/${wsId}?view=projects`, preload: preloadWorkspaceShell },
+  { label: 'Tasks',      icon: ListTodo,      path: (wsId: string) => `/workspace/${wsId}/tasks`, preload: preloadTaskExplorerShell },
+  { label: 'Members',    icon: UsersRound,    path: (wsId: string) => `/workspace/${wsId}/members`, preload: preloadMembersShell },
+  { label: 'My Issues',  icon: CircleCheckBig, path: () => `/my-issues`, preload: preloadMyIssuesShell },
+  { label: 'Inbox',      icon: Inbox,         path: (wsId: string) => `/workspace/${wsId}?view=inbox`, preload: preloadWorkspaceShell },
 ] as const;
 
 function WsGlyph({ workspace }: { workspace: WorkspaceDTO }) {
@@ -175,8 +182,8 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
               </>
             ) : (
               <>
-                <div className="size-7 rounded-lg bg-white/5 border border-white/10 flex-shrink-0" />
-                <span className="sidebar-workspace-name text-white/45">Select workspace</span>
+                <div className="size-7 rounded-lg bg-[color:var(--sx-panel)] border border-[color:var(--sx-border)] flex-shrink-0" />
+                <span className="sidebar-workspace-name text-[color:var(--sx-text-subtle)]">Select workspace</span>
               </>
             )}
             <ChevronDown size={14} strokeWidth={ICON_STROKE} className="sidebar-workspace-chevron flex-shrink-0" />
@@ -192,7 +199,7 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
                 exit="exit"
               >
                 {loadingWorkspaces ? (
-                  <div className="px-3 py-2 text-xs text-white/40">Loading…</div>
+                  <div className="px-3 py-2 text-xs text-[color:var(--sx-text-subtle)]">Loading…</div>
                 ) : (
                   workspaces.map((ws) => (
                     <button
@@ -201,7 +208,7 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
                       onClick={() => handleWorkspaceSwitch(ws)}
                       className={cn(
                         'dropdown-menu-item',
-                        ws.id === activeWorkspaceId && '!text-white !bg-white/8',
+                        ws.id === activeWorkspaceId && '!text-[color:var(--sx-text)] !bg-[color:var(--sx-control)]',
                       )}
                     >
                       <WsGlyph workspace={ws} />
@@ -217,9 +224,11 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
                       setShowSwitcher(false);
                       navigate('/settings?tab=workspace', { state: { background: location } });
                     }}
+                    onMouseEnter={preloadSettingsModal}
+                    onFocus={preloadSettingsModal}
                     className="dropdown-menu-item"
                   >
-                    <Settings2 size={14} strokeWidth={ICON_STROKE} className="text-white/40" />
+                    <Settings2 size={14} strokeWidth={ICON_STROKE} className="text-[color:var(--sx-text-subtle)]" />
                     <span>Workspace settings</span>
                   </button>
                 )}
@@ -228,7 +237,7 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
                   onClick={() => { setShowSwitcher(false); setShowCreateWorkspace(true); }}
                   className="dropdown-menu-item"
                 >
-                  <Plus size={14} strokeWidth={ICON_STROKE} className="text-white/40" />
+                  <Plus size={14} strokeWidth={ICON_STROKE} className="text-[color:var(--sx-text-subtle)]" />
                   <span>New workspace</span>
                 </button>
               </motion.div>
@@ -238,7 +247,7 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
 
         {/* Nav */}
         <nav className="sidebar-nav flex-1">
-          {NAV_ITEMS.map(({ label, icon: Icon, path }, index) => {
+          {NAV_ITEMS.map(({ label, icon: Icon, path, preload }, index) => {
             const to = activeWorkspace ? path(activeWorkspace.id) : '/dashboard';
             const isActive = activeWorkspace
               ? location.pathname + location.search === to ||
@@ -248,6 +257,8 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
               <motion.button
                 key={label}
                 type="button"
+                onMouseEnter={preload}
+                onFocus={preload}
                 onClick={() => navigate(to)}
                 className={cn('sidebar-nav-item', isActive && 'active')}
                 initial={{ opacity: 0, x: -8 }}
@@ -275,10 +286,12 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
           <NavLink
             to="/settings"
             state={{ background: location }}
+            onMouseEnter={preloadSettingsModal}
+            onFocus={preloadSettingsModal}
             className={({ isActive }) => cn('sidebar-dock-pill', isActive && 'active')}
           >
-            <Settings2 size={15} strokeWidth={ICON_STROKE} className="text-white/40 flex-shrink-0" />
-            <span className="text-body-md text-white/60">Settings</span>
+            <Settings2 size={15} strokeWidth={ICON_STROKE} className="text-[color:var(--sx-text-subtle)] flex-shrink-0" />
+            <span className="text-body-md text-[color:var(--sx-text-muted)]">Settings</span>
           </NavLink>
 
           {/* Profile */}
@@ -293,14 +306,14 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
               {user ? (
                 <Avatar user={user} size="sm" className="sidebar-profile-avatar" />
               ) : (
-                <div className="sidebar-profile-avatar flex items-center justify-center text-sm font-medium text-white/60">
+                <div className="sidebar-profile-avatar flex items-center justify-center text-sm font-medium text-[color:var(--sx-text-muted)]">
                   {displayName.charAt(0).toUpperCase()}
                 </div>
               )}
               <div className="sidebar-profile-copy flex-1 min-w-0 text-left">
-                <p className="text-sm font-medium text-white truncate leading-none mb-0.5">{displayName}</p>
+                <p className="text-sm font-medium text-[color:var(--sx-text)] truncate leading-none mb-0.5">{displayName}</p>
                 {displayEmail && (
-                  <p className="text-xs text-white/40 truncate">{displayEmail}</p>
+                  <p className="text-xs text-[color:var(--sx-text-subtle)] truncate">{displayEmail}</p>
                 )}
               </div>
             </motion.button>
@@ -325,6 +338,8 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
                   <button
                     type="button"
                     onClick={() => { navigate('/settings', { state: { background: location } }); setShowProfileMenu(false); }}
+                    onMouseEnter={preloadSettingsModal}
+                    onFocus={preloadSettingsModal}
                     className="dropdown-menu-item"
                   >
                     <Settings2 size={14} strokeWidth={ICON_STROKE} />

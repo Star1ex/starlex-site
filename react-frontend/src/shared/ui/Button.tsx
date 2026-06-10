@@ -8,12 +8,12 @@ const buttonStyles = cva(
     variants: {
       variant: {
         primary:
-          "!bg-[--accent] !border-transparent !text-white hover:brightness-110 shadow-[0_8px_24px_rgba(0,0,0,0.30)]",
+          "!bg-[color:var(--starlex-accent)] !border-transparent !text-[color:var(--starlex-accent-contrast)] hover:brightness-110 shadow-[0_8px_24px_var(--starlex-accent-glow)]",
         secondary: "liquid-button",
         outline:
-          "!bg-transparent border border-white/20 text-white/80 hover:!bg-white/5 hover:!border-white/30",
+          "!bg-transparent border border-[color:var(--sx-control-border)] text-[color:var(--sx-text-muted)] hover:!bg-[color:var(--sx-control)] hover:!border-[color:var(--sx-control-border-strong)] hover:text-[color:var(--sx-text)]",
         ghost:
-          "!bg-transparent !border-transparent text-white/60 hover:!bg-white/5 hover:!text-white shadow-none",
+          "!bg-transparent !border-transparent text-[color:var(--sx-text-subtle)] hover:!bg-[color:var(--sx-control)] hover:!text-[color:var(--sx-text)] shadow-none",
         danger:
           "!bg-[rgba(239,68,68,0.15)] !border-[rgba(239,68,68,0.30)] !text-[#fca5a5] hover:!bg-[rgba(239,68,68,0.25)]",
       },

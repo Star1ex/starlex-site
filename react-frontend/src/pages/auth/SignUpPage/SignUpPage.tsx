@@ -3,10 +3,11 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { authService } from '@/services/api/index.js';
-import { useTheme, useSystemThemeOnly } from '@/shared/contexts/ThemeContext.js';
+import { useTheme, useSystemThemeOnly } from '@/shared/contexts/useTheme.js';
 import { FaGoogle, FaGithub } from 'react-icons/fa';
 import { Helmet } from 'react-helmet-async';
 import { pageVariants, listVariants } from '@/shared/lib/animations.js';
+import { getApiErrorInfo } from '@/shared/lib/apiError.js';
 
 export const SignUpPage = () => {
   useSystemThemeOnly();
@@ -61,13 +62,6 @@ export const SignUpPage = () => {
       return;
     }
 
-    const data = {
-      email: formEmail,
-      password: formPassword,
-      first_name: formFirstName,
-      last_name: formLastName
-    };
-
     setIsLoading(true);
 
     try {
@@ -83,20 +77,19 @@ export const SignUpPage = () => {
           email: result.email,
         },
       });
-    } catch (err: any) {
-      const status = err?.response?.status;
-      const data = err?.response?.data;
+    } catch (err: unknown) {
+      const { status, data, message } = getApiErrorInfo(err);
 
       if (status === 400) {
         setErrorMessage(data?.error || 'Registration failed');
       } else if (status === 409) {
-        const providers = Array.isArray(data?.auth_providers) ? data.auth_providers : [];
+        const providers = data?.auth_providers ?? [];
         setLinkProviders(providers);
         setErrorMessage(data?.message || 'Email already registered. Please sign in or link accounts.');
       } else if (status === 500) {
         setErrorMessage(data?.error || 'Server error. Please try again.');
       } else {
-        setErrorMessage(err?.message || 'Unknown registration error');
+        setErrorMessage(message || 'Unknown registration error');
       }
 
       // error handled

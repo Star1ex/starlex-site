@@ -42,12 +42,12 @@ export const projectService = {
     return response.data;
   },
 
-  async updateProjectStatus(projectId: string, status: ProjectDTO['status']): Promise<ProjectDTO> {
+  async setProjectStatus(projectId: string, status: ProjectDTO['status']): Promise<ProjectDTO> {
     const response = await httpClient.patch<ProjectDTO>(`/api/projects/${projectId}`, { status });
     return response.data;
   },
 
-  async updateProjectPriority(projectId: string, priority: ProjectDTO['priority']): Promise<ProjectDTO> {
+  async setProjectPriority(projectId: string, priority: ProjectDTO['priority']): Promise<ProjectDTO> {
     const response = await httpClient.patch<ProjectDTO>(`/api/projects/${projectId}`, { priority });
     return response.data;
   },

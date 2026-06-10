@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '@/services/api/index.js';
+import { getApiErrorInfo } from '@/shared/lib/apiError.js';
 
 export const ForgotPasswordPage: React.FC = () => {
   const navigate = useNavigate();
@@ -23,12 +24,12 @@ export const ForgotPasswordPage: React.FC = () => {
     try {
       const response = await authService.requestPasswordReset({ email });
       setMessage(response?.message || 'If an account exists, a reset code was sent.');
-    } catch (err: any) {
-      const status = err?.response?.status;
+    } catch (err: unknown) {
+      const { status, data } = getApiErrorInfo(err);
       if (status === 429) {
         setMessage('If an account exists, a reset code was sent. Please try again later.');
       } else {
-        setErrorMessage(err?.response?.data?.error || 'Something went wrong. Please try again.');
+        setErrorMessage(data?.error || 'Something went wrong. Please try again.');
       }
     } finally {
       setIsSubmitting(false);
