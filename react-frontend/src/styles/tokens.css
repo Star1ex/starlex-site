@@ -18,6 +18,8 @@
     /* Glass material inputs (consumed by glass recipes, Phase 2) */
     --sx-glass-fill-top: rgb(255 255 255 / 0.055);
     --sx-glass-fill-bottom: rgb(255 255 255 / 0.02);
+    --sx-glass-fill-top-raised: rgb(255 255 255 / 0.07);   /* sidebar / dock */
+    --sx-glass-fill-top-strong: rgb(255 255 255 / 0.10);   /* menu / modal — legibility over content */
     --sx-glass-blur: 28px;
     --sx-glass-saturate: 160%;
     --sx-rim-bright: rgb(255 255 255 / 0.28);  /* light-catching edge */

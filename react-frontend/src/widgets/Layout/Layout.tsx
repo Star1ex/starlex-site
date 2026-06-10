@@ -6,6 +6,7 @@ import { Topbar } from '@/widgets/Topbar/Topbar.js';
 import SearchModal from '@/widgets/SearchModal/LazySearchModal.js';
 import { preloadSearchModal } from '@/app/routePreload.js';
 import { ToastHost } from '@/shared/ui/ToastHost.js';
+import { RefractionFilter } from '@/shared/ui/glass/index.js';
 import { useRealtimeConnection } from '@/shared/hooks/useRealtime.js';
 import { useWorkspace } from '@/contexts/useWorkspace.js';
 import { Menu, X } from 'lucide-react';
@@ -74,6 +75,9 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Depth field — the only thing behind the shell */}
       <div className="sx-depth" aria-hidden="true" />
 
+      {/* Chromium-only edge-refraction filter for <Glass refract> (sidebar) */}
+      <RefractionFilter />
+
       {/* Desktop sidebar */}
       {!isMobile && <GlobalSidebar />}
 
@@ -130,7 +134,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
         className={
           isMobile
             ? 'pt-12 pb-6 px-4'
-            : 'ml-[236px] pt-[100px] px-12 pb-12 max-w-[1640px]'
+            : 'ml-[272px] pt-[92px] px-12 pb-12 max-w-[1640px]'
         }
       >
         <div className={isMobile ? '' : 'max-w-container mx-auto flex flex-col gap-10'}>

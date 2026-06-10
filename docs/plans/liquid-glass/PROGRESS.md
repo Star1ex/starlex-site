@@ -44,3 +44,27 @@ Each phase session appends one entry: date, phase, what shipped, deviations from
 - `npm run lint` → green.
 - `npm run build` → green. Vite emitted only existing advisory warnings: stale Browserslist data and chunks over 500 kB.
 - DoD greps: `glow|6366f1|ambient` in `react-frontend/src` → 0; `!important` in `src/styles/themes` → 0; `text-white|bg-white/` in TS/TSX → 0; stale `theme-ultra-dark|theme-solarized|data-theme="dark"|data-theme="solarized"` in `index.html`/`src` → 0.
+
+---
+
+## 2026-06-10 — Phase 2 (Glass material + hero sidebar) complete
+
+**What shipped**
+- New material component at `src/shared/ui/glass/`: `Glass.tsx` (CVA-based, polymorphic `as`, ref-forwarding so it wraps `motion.aside`), `glass.css` (the layered `.sx-glass` system), `RefractionFilter.tsx` + `refraction.ts` (capability constant), `index.ts`. Wired `@import "./shared/ui/glass/glass.css"` into `index.css` right after the legacy `glass.css`.
+- `<Glass>` construction = body luminance gradient → interior thickness (`inset … --sx-thickness`) → surface noise (`::after`, opacity .35, mix-blend overlay) → light-catching masked rim (`::before`, gradient ring, NOT a border). 7 variants as token-driven custom-prop deltas (`--glass-blur/-radius/-fill-top/-shadow`), no new hues: `sidebar`(36px, raised fill, elevated, radius-xl) `panel/card`(24px) `menu/modal`(40px, strong fill, elevated) `dock`(28px) `pill`(**blur 0**, solid `--sx-surface`, rim-on-hover — Design Law 8). `depth` = shadow tier (rest/raised/floating) independent of rim. `interactive` opt-in: hover fill +2% + `translateY(-1px)`, press `scale(0.985)`, `prefers-reduced-motion` honored.
+- Refraction: `feTurbulence`+`feDisplacementMap` (scale 14) SVG mounted once in `Layout`; `.sx-glass--refract` appends `url(#sx-refract)` to backdrop-filter, attached **only** when `SUPPORTS_REFRACTION` passes (Chromium UA + `CSS.supports('backdrop-filter','url(#x)')`). Firefox/Safari/SSR get the plain blur stack.
+- Sidebar rebuilt as a **floating glass slab**: `GlobalSidebar.tsx` now `<Glass as={motion.aside} variant="sidebar" depth="floating" refract>`. `layout.css` `.app-sidebar` reduced to geometry only — desktop `position:fixed; inset:12px auto 12px 12px; width:248px`, mobile `position:relative` inside the existing slide-in wrapper. Content offset `ml-[236px]→ml-[272px]` (12+248+12), topbar `left:272px`, pad-top `100→92`. Nav items stripped of all gradient/blur chrome: rest transparent, hover `--sx-surface-hover`, active `--sx-surface-active` + a single 2px crimson tick on the left edge (the only accent in the sidebar). Workspace switcher + dock pills = solid `--sx-surface`, rim-on-hover via inset highlight (no nested blur inside the glass).
+- Topbar borderless + `pointer-events:none` so content scrolls under; only the search launcher floats as `<Glass as="button" variant="pill" interactive>` with a `label-caps` ⌘K chip and accent focus ring.
+- Legacy recipes in `styles/glass.css` re-implemented on the layer system (same class names → all call-sites upgrade free): `.glass-card`/`.glass-menu` get rim+noise+thickness; `.liquid-button` + `.glass-input` made solid (dropped live blur, accent focus ring); `.glass-pill` solid borderless; `.liquid-button:active` `0.90→0.97`. `.dropdown-menu` (shared by 10 components) unified onto the menu glass material rather than stripped.
+- Added two theme-safe tokens to keep variant fills token-driven: `--sx-glass-fill-top-raised` (0.07 dark / 0.72 light) and `--sx-glass-fill-top-strong` (0.10 / 0.85) in `tokens.css` + `themes/light.css`.
+
+**Verification**
+- `npm run lint` → no issues. `npm run build` (tsc -b + vite) → green (~19s). Fixed one polymorphic-inference type error by typing `as?: T` inside `GlassProps<T>`.
+- Live `backdrop-filter` on a main viewport: sidebar (1) + optional open dropdown (1); topbar search is solid (0). Under the Design-Law-8 cap of 6.
+- DoD greps: `--bg-sidebar`/`--border-sidebar` consumers outside token files → 0; `sidebarGlassDrift` → 0.
+
+**Deviations / known rough spots**
+- **Dual-theme + refraction visual QA was not run live** (gate was lint+build per plan). Needs a manual look in Chromium (refraction bending under the slab edge) and in Firefox/light (slab must read as white frosted glass with a soft slate shadow, not a gray box) before Phase 3. Reduced from a hard blocker only because Phase 5 owns the full QA gate.
+- **Task 2.5 components.css cleanup deferred:** the 19 bespoke hand-rolled `backdrop-filter` surfaces in `components.css` (settings modal/sidebar, profile shell, toast, per-page panels/dropdowns) are NOT duplicates of `.glass-card` — they are distinct surfaces that Phase 3/4 explicitly owns migrating to `<Glass>`. Stripping their blur now would leave overlays see-through mid-redesign, so they were left intact. Flag for Phase 3: migrate these to `<Glass variant="panel|menu|modal">` and delete the inline recipes.
+- `.dropdown-menu` kept as a class (shared by 10 call-sites) rather than each becoming `<Glass variant="menu">` — same material, far lower blast radius. Phase 3 can convert structural call-sites where it wraps cleanly.
+- Mobile sidebar reuses the same `<Glass>` with `!w-72 !rounded-r-3xl` overrides; functional but the floating-gutter aesthetic is desktop-only by design.

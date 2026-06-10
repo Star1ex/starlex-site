@@ -1,5 +1,6 @@
 import React from 'react';
 import { Search } from 'lucide-react';
+import { Glass } from '@/shared/ui/glass/index.js';
 
 interface TopbarProps {
   onSearchOpen?: () => void;
@@ -7,17 +8,20 @@ interface TopbarProps {
 
 export const Topbar: React.FC<TopbarProps> = ({ onSearchOpen }) => {
   return (
-    <header className="app-topbar px-6">
+    <header className="app-topbar">
       <div className="flex-1 flex items-center justify-center">
-        <button
+        <Glass
+          as="button"
+          variant="pill"
+          interactive
           onClick={onSearchOpen}
-          className="w-full max-w-2xl flex items-center gap-3 glass-input !rounded-full !py-2.5 text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text-muted)] transition-colors cursor-pointer"
+          className="topbar-search"
           aria-label="Open command palette"
         >
-          <Search size={15} className="flex-shrink-0 ml-1" />
-          <span className="flex-1 text-left text-body-md">Search or jump to…</span>
-          <span className="glass-pill !py-0.5 !px-2 text-[color:var(--sx-text-subtle)] flex-shrink-0">⌘K</span>
-        </button>
+          <Search size={15} strokeWidth={1.55} className="flex-shrink-0" />
+          <span className="flex-1 text-left">Search or jump to…</span>
+          <span className="topbar-search-kbd label-caps">⌘K</span>
+        </Glass>
       </div>
     </header>
   );

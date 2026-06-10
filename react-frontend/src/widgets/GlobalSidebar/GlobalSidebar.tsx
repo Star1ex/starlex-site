@@ -15,6 +15,7 @@ import {
   UsersRound,
 } from 'lucide-react';
 import Avatar from '@/shared/ui/Avatar.js';
+import { Glass } from '@/shared/ui/glass/index.js';
 import { getAuthUser } from '@/shared/lib/authManager.js';
 import { WorkspaceGlyph } from '@/shared/lib/workspaceIcon.js';
 import { userService } from '@/services/api/index.js';
@@ -155,11 +156,12 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
 
   return (
     <>
-      <motion.aside
-        className={cn(
-          'app-sidebar scrollbar-none',
-          className,
-        )}
+      <Glass
+        as={motion.aside}
+        variant="sidebar"
+        depth="floating"
+        refract
+        className={cn('app-sidebar scrollbar-none', className)}
         style={sidebarStyle}
         initial={{ opacity: 0, x: -16 }}
         animate={{ opacity: 1, x: 0 }}
@@ -359,7 +361,7 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
             </AnimatePresence>
           </div>
         </div>
-      </motion.aside>
+      </Glass>
 
       <WorkspaceCreateModal
         isOpen={showCreateWorkspace}

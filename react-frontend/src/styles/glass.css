@@ -1,37 +1,87 @@
 /* =====================================================
-   GLASS COMPONENT RECIPES
+   GLASS RECIPES (legacy class names, new material)
+   These keep the old class names so existing call-sites
+   upgrade for free, but are re-implemented on the Phase-2
+   layer system: body gradient + masked rim (no uniform
+   border) + interior thickness + surface noise. Phase 3
+   migrates structural call-sites to <Glass> directly.
    ===================================================== */
 @layer components {
+  /* Shared light-catching rim — REPLACES borders (Design Law 3). */
+  .glass-card::before,
+  .glass-menu::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    border-radius: inherit;
+    padding: 1px;
+    pointer-events: none;
+    background: linear-gradient(160deg,
+      var(--sx-rim-bright),
+      var(--sx-rim-faint) 28%,
+      transparent 55%,
+      var(--sx-rim-faint) 100%);
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+            mask-composite: exclude;
+  }
+  /* Shared surface noise (below content). */
+  .glass-card::after,
+  .glass-menu::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0.35;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='gn'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.04 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23gn)'/%3E%3C/svg%3E");
+  }
+  .glass-card > *,
+  .glass-menu > * { position: relative; z-index: 1; }
+
   /* Workhorse surface — cards, panels, list containers */
   .glass-card {
-    background: var(--glass-bg);
-    backdrop-filter: blur(var(--sx-glass-blur)) saturate(var(--sx-glass-saturate));
-    -webkit-backdrop-filter: blur(var(--sx-glass-blur)) saturate(var(--sx-glass-saturate));
-    border: 1px solid var(--glass-border);
-    box-shadow: inset 0 1px 0 var(--glass-highlight);
-    transition: background 180ms ease, border-color 180ms ease, box-shadow 180ms ease, transform 180ms ease, opacity 180ms ease;
+    position: relative;
+    isolation: isolate;
+    border-radius: var(--radius-lg);
+    background: linear-gradient(180deg, var(--sx-glass-fill-top), var(--sx-glass-fill-bottom));
+    backdrop-filter: blur(24px) saturate(var(--sx-glass-saturate));
+    -webkit-backdrop-filter: blur(24px) saturate(var(--sx-glass-saturate));
+    box-shadow:
+      var(--sx-shadow-soft),
+      inset 0 -12px 24px -16px var(--sx-thickness);
+    color: var(--sx-text);
+    transition: background 180ms var(--ease-out-expo), box-shadow 180ms var(--ease-out-expo), transform 200ms var(--spring-snappy);
   }
   .glass-card:hover {
-    background: var(--glass-bg-hover);
-    border-color: var(--glass-border-hover);
+    background: linear-gradient(180deg,
+      color-mix(in srgb, #fff 2%, var(--sx-glass-fill-top)),
+      var(--sx-glass-fill-bottom));
   }
 
-  /* Popovers/select menus need a stable glass surface. They should not inherit
-     the hover-brightening behavior from cards. */
+  /* Popovers/select menus — stable, no hover-brightening. */
   .glass-menu {
     --tw-ring-color: transparent !important;
     --tw-ring-shadow: 0 0 #0000 !important;
+    position: relative;
+    isolation: isolate;
     outline: none !important;
-    background:
-      linear-gradient(145deg, rgb(var(--sx-panel-rgb) / 0.095), rgb(var(--sx-panel-rgb) / 0.024)),
-      rgb(var(--sx-panel-rgb) / var(--sx-panel-strong-alpha)) !important;
-    backdrop-filter: blur(34px) saturate(160%);
-    -webkit-backdrop-filter: blur(34px) saturate(160%);
-    border: 1px solid var(--sx-border);
+    border-radius: var(--radius-lg);
+    background: linear-gradient(180deg, var(--sx-glass-fill-top-strong), var(--sx-glass-fill-bottom)) !important;
+    backdrop-filter: blur(40px) saturate(var(--sx-glass-saturate));
+    -webkit-backdrop-filter: blur(40px) saturate(var(--sx-glass-saturate));
     box-shadow:
       var(--sx-shadow-elevated),
-      inset 0 1px 0 rgb(var(--sx-panel-rgb) / 0.115),
-      inset 0 -1px 0 rgb(var(--sx-panel-rgb) / 0.026) !important;
+      inset 0 -12px 24px -16px var(--sx-thickness) !important;
+    color: var(--sx-text);
   }
 
   .glass-menu-item {
@@ -39,60 +89,56 @@
     color: var(--sx-text-muted);
     transition: background 140ms ease, color 140ms ease, transform 140ms ease;
   }
-
   .glass-menu-item[data-highlighted],
   .glass-menu-item:focus {
-    background: rgb(var(--sx-panel-rgb) / 0.078) !important;
+    background: var(--sx-surface-hover) !important;
     color: var(--sx-text) !important;
   }
-
   .glass-menu-item[data-state="checked"] {
-    background: var(--sx-panel-strong);
+    background: var(--sx-surface-active);
     color: var(--sx-text);
   }
 
-  /* Primary/secondary actions */
+  /* Primary/secondary actions — solid surface (no live blur; Design Law 8) */
   .liquid-button {
-    background: var(--button-bg);
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--glass-border);
-    box-shadow: inset 0 1px 0 rgb(var(--sx-panel-rgb) / 0.15);
-    transition: background 160ms ease, border-color 160ms ease, box-shadow 160ms ease, color 160ms ease, transform 160ms ease, opacity 160ms ease;
+    background: var(--sx-surface);
+    border: 1px solid var(--sx-line);
+    box-shadow: inset 0 1px 0 var(--sx-rim-faint);
+    transition: background 160ms ease, border-color 160ms ease, box-shadow 160ms ease, color 160ms ease, transform 160ms var(--spring-snappy), opacity 160ms ease;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
     padding: 0.625rem 1.125rem;
-    border-radius: 0.5rem;
+    border-radius: var(--radius-sm);
     font-size: 0.875rem;
     font-weight: 500;
-    color: var(--text-primary);
+    color: var(--sx-text);
     cursor: pointer;
     user-select: none;
   }
   .liquid-button:hover {
-    background: var(--button-bg-hover);
-    border-color: var(--sx-border-strong);
+    background: var(--sx-surface-hover);
+    border-color: var(--sx-line-strong);
   }
   .liquid-button:active {
-    transform: scale(0.90);
+    transform: scale(0.97);
   }
   .liquid-button:disabled {
     opacity: 0.4;
     cursor: not-allowed;
   }
 
-  /* Glass form inputs */
+  /* Glass form inputs — solid surface, accent focus ring */
   .glass-input {
-    background: var(--sx-panel);
-    border: 1px solid var(--glass-border);
+    background: var(--sx-surface);
+    border: 1px solid var(--sx-line);
     border-radius: 9999px;
     padding: 0.5rem 1rem;
-    color: var(--text-primary);
+    color: var(--sx-text);
     font-size: 0.875rem;
-    box-shadow: inset 0 1px 1px rgb(var(--sx-panel-rgb) / 0.10);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: inset 0 1px 0 var(--sx-rim-faint);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
     outline: none;
     width: 100%;
   }
@@ -100,15 +146,15 @@
     color: var(--sx-text-disabled);
   }
   .glass-input:focus {
-    border-color: var(--sx-border-strong);
-    box-shadow: inset 0 1px 1px rgb(var(--sx-panel-rgb) / 0.10), 0 0 0 1px var(--sx-border-strong);
+    border-color: transparent;
+    box-shadow: var(--sx-focus-ring);
   }
 
-  /* Pill / tag (label-caps) */
+  /* Pill / tag (label-caps) — solid, borderless by default */
   .glass-pill {
-    background: var(--sx-panel);
-    border: 1px solid var(--glass-border);
-    border-radius: 0.25rem;
+    background: var(--sx-surface);
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
     padding: 0.25rem 0.5rem;
     font-size: 0.75rem;
     font-family: 'JetBrains Mono', monospace;
@@ -118,7 +164,7 @@
     font-weight: 500;
   }
 
-  /* Status pills */
+  /* Status pills (semantic colored border is intentional, not "border soup") */
   .status-pill {
     @apply glass-pill;
     font-family: 'JetBrains Mono', monospace;
@@ -128,7 +174,7 @@
   .status-pill--progress { background: var(--status-progress-bg); border-color: color-mix(in srgb, var(--status-progress-text) 30%, transparent); color: var(--status-progress-text); }
   .status-pill--review   { background: var(--status-review-bg); border-color: color-mix(in srgb, var(--status-review-text) 30%, transparent); color: var(--status-review-text); }
   .status-pill--done     { background: var(--status-done-bg); border-color: color-mix(in srgb, var(--status-done-text) 30%, transparent); color: var(--status-done-text); }
-  .status-pill--canceled { background: var(--status-canceled-bg); border-color: var(--sx-border); color: var(--status-canceled-text); }
+  .status-pill--canceled { background: var(--status-canceled-bg); border-color: var(--sx-line); color: var(--status-canceled-text); }
 
   /* Priority chips */
   .priority-chip--urgent  { color: var(--priority-urgent-text); }
@@ -140,14 +186,13 @@
   .progress-bar {
     height: 0.25rem;
     border-radius: 9999px;
-    background: var(--sx-panel);
+    background: var(--sx-surface);
     overflow: hidden;
   }
   .progress-bar__fill {
     height: 100%;
     border-radius: 9999px;
-    background: rgb(var(--starlex-accent-rgb) / 0.80);
+    background: rgb(var(--sx-accent-rgb) / 0.80);
     transition: width 0.4s ease;
   }
-
 }

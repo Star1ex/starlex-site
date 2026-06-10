@@ -18,6 +18,8 @@
     /* Glass material inputs */
     --sx-glass-fill-top: rgb(255 255 255 / 0.65);
     --sx-glass-fill-bottom: rgb(255 255 255 / 0.40);
+    --sx-glass-fill-top-raised: rgb(255 255 255 / 0.72);
+    --sx-glass-fill-top-strong: rgb(255 255 255 / 0.85);
     --sx-rim-bright: rgb(255 255 255 / 0.85);
     --sx-rim-faint: rgb(15 23 42 / 0.06);
     --sx-thickness: rgb(15 23 42 / 0.06);
