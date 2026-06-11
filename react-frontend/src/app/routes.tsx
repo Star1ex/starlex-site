@@ -1,11 +1,17 @@
 import React, { Suspense, useEffect } from 'react';
 import { Route, Routes, useLocation, Navigate, Outlet } from 'react-router-dom';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
+import { routeFadeVariants } from '@/shared/lib/animations.js';
 import { Layout } from '@/widgets/Layout/Layout.js';
 import { ErrorBoundary } from '@/components/ErrorBoundary.js';
 import { getLastWorkspaceId } from '@/contexts/useWorkspace.js';
 import { preloadCoreWorkspaceRoutes } from './routePreload.js';
 import { useAuth } from '@/contexts/useAuth.js';
+
+// DEV-only glass lab — tree-shaken out of prod bundle
+const GlassLabPage = import.meta.env.DEV
+  ? React.lazy(() => import('@/pages/GlassLab/GlassLabPage.js').then(m => ({ default: m.GlassLabPage })))
+  : null;
 
 // Lazy-loaded pages
 const HomePage        = React.lazy(() => import('@/pages/home/HomePage.js').then(m => ({ default: m.HomePage })));
@@ -109,6 +115,11 @@ const AnimatedRoutes = () => {
   return (
     <>
       <Routes location={background || location}>
+        {/* DEV-only */}
+        {import.meta.env.DEV && GlassLabPage && (
+          <Route path="/glass-lab" element={<Suspense fallback={<Fallback />}><GlassLabPage /></Suspense>} />
+        )}
+
         {/* Public */}
         <Route path="/"                element={publicRoute(<HomePage />)} />
         <Route path="/sign-in"         element={publicRoute(<SignInPage />)} />
@@ -155,15 +166,33 @@ const AnimatedRoutes = () => {
   );
 };
 
-const ShellRoute: React.FC = () => (
-  <RequireAuth>
-    <Layout>
-      <Suspense fallback={<RouteContentFallback />}>
-        <Outlet />
-      </Suspense>
-    </Layout>
-  </RequireAuth>
-);
+const ShellRoute: React.FC = () => {
+  const location = useLocation();
+  // When an overlay route (e.g. /settings) opens over a background, key the
+  // content crossfade on the background path so the shell content holds still.
+  const background = (location.state as { background?: typeof location } | null)?.background;
+  const contentKey = (background ?? location).pathname;
+  return (
+    <RequireAuth>
+      <Layout>
+        {/* Content-only crossfade — the sidebar/topbar never animate on nav. */}
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.div
+            key={contentKey}
+            variants={routeFadeVariants}
+            initial="initial"
+            animate="animate"
+            exit="exit"
+          >
+            <Suspense fallback={<RouteContentFallback />}>
+              <Outlet />
+            </Suspense>
+          </motion.div>
+        </AnimatePresence>
+      </Layout>
+    </RequireAuth>
+  );
+};
 
 /** Redirect to the last-visited workspace, or /onboarding if none. */
 const DashboardRedirect: React.FC = () => {
