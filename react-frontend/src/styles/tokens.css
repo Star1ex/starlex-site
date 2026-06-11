@@ -12,24 +12,29 @@
     /* Canvas & depth field */
     --sx-canvas: #08070a;
     --sx-canvas-elevated: #0e0d11;
-    --sx-depth-a: rgb(255 255 255 / 0.03);   /* depth-field blobs — monochrome ONLY */
-    --sx-depth-b: rgb(255 255 255 / 0.015);
+    --sx-depth-a: rgb(255 255 255 / 0.07);   /* depth-field blobs — monochrome ONLY */
+    --sx-depth-b: rgb(255 255 255 / 0.04);
+    --sx-depth-c: rgb(255 255 255 / 0.05);
+    --sx-depth-noise: 0.5;
 
-    /* Glass material inputs (consumed by glass recipes, Phase 2) */
-    --sx-glass-fill-top: rgb(255 255 255 / 0.055);
-    --sx-glass-fill-bottom: rgb(255 255 255 / 0.02);
-    --sx-glass-fill-top-raised: rgb(255 255 255 / 0.07);   /* sidebar / dock */
-    --sx-glass-fill-top-strong: rgb(255 255 255 / 0.10);   /* menu / modal — legibility over content */
+    /* Glass material inputs (consumed by glass recipes) */
+    --sx-glass-fill-top: rgb(255 255 255 / 0.05);
+    --sx-glass-fill-bottom: rgb(255 255 255 / 0.015);
+    --sx-glass-fill-top-raised: rgb(255 255 255 / 0.06);   /* sidebar / dock */
+    --sx-glass-fill-top-strong: rgb(255 255 255 / 0.12);   /* menu / modal — legibility over content */
     --sx-glass-blur: 28px;
-    --sx-glass-saturate: 160%;
-    --sx-rim-bright: rgb(255 255 255 / 0.28);  /* light-catching edge */
+    --sx-glass-saturate: 130%;
+    --sx-glass-brightness: 1.12;
+    --sx-rim-bright: rgb(255 255 255 / 0.38);  /* light-catching edge */
     --sx-rim-faint: rgb(255 255 255 / 0.05);
     --sx-thickness: rgb(0 0 0 / 0.35);          /* bottom inner shadow */
+    --sx-edge: transparent;                      /* dark: rim is the only edge */
 
-    /* Solid surfaces (rows, chips — NO blur, pre-mixed against canvas) */
-    --sx-surface: #100f13;
-    --sx-surface-hover: #17161b;
-    --sx-surface-active: #1d1c22;
+    /* Tier B surfaces — alpha fills over canvas (Law 11) */
+    --sx-surface: rgb(255 255 255 / 0.045);
+    --sx-surface-hover: rgb(255 255 255 / 0.08);
+    --sx-surface-active: rgb(255 255 255 / 0.115);
+    --sx-opaque: #121116;                        /* escape hatch for sticky/scroll-clip contexts */
 
     /* Hairlines (rare; see Design Law 3) */
     --sx-line: rgb(255 255 255 / 0.06);
@@ -50,10 +55,11 @@
     /* Danger — destructive actions only (delete, irreversible) */
     --sx-danger: #e0726f;
 
-    /* Shadows — NEUTRAL, never tinted */
-    --sx-shadow-soft: 0 16px 48px rgb(0 0 0 / 0.42);
-    --sx-shadow-elevated: 0 32px 80px rgb(0 0 0 / 0.55);
+    /* Shadows — NEUTRAL, never tinted; two-layer: contact + ambient */
+    --sx-shadow-soft: 0 1px 2px rgb(0 0 0 / 0.40), 0 16px 48px rgb(0 0 0 / 0.50);
+    --sx-shadow-elevated: 0 2px 6px rgb(0 0 0 / 0.45), 0 32px 80px rgb(0 0 0 / 0.60);
     --sx-overlay: rgb(0 0 0 / 0.62);
+    --sx-scrollbar-thumb: rgb(255 255 255 / 0.14);
 
     /* Radii */
     --radius-sm: 8px;
@@ -61,10 +67,7 @@
     --radius-lg: 14px;
     --radius-xl: 20px;
 
-    /* Motion easing (Phase 5 expands this) */
-    --spring-gentle: cubic-bezier(0.34, 1.56, 0.64, 1);
-    --spring-snappy: cubic-bezier(0.26, 1.4, 0.48, 1);
-    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    /* Motion easings/durations now live in styles/motion.css (Phase 5). */
 
     /* ===== Status & priority palette — custom desaturated set =====
        -bg derived as color-mix(text 14%, transparent). */
@@ -72,7 +75,7 @@
     --status-backlog-bg: color-mix(in srgb, var(--status-backlog-text) 14%, transparent);
     --status-todo-text: #7d9bd1;
     --status-todo-bg: color-mix(in srgb, var(--status-todo-text) 14%, transparent);
-    --status-progress-text: #8f8ae0;
+    --status-progress-text: #d4c06b;
     --status-progress-bg: color-mix(in srgb, var(--status-progress-text) 14%, transparent);
     --status-review-text: #d9a06b;
     --status-review-bg: color-mix(in srgb, var(--status-review-text) 14%, transparent);
@@ -85,7 +88,7 @@
     --priority-urgent-bg: color-mix(in srgb, var(--priority-urgent-text) 14%, transparent);
     --priority-high-text: #d9a06b;
     --priority-high-bg: color-mix(in srgb, var(--priority-high-text) 14%, transparent);
-    --priority-medium-text: #a190d9;
+    --priority-medium-text: #cdb964;
     --priority-medium-bg: color-mix(in srgb, var(--priority-medium-text) 14%, transparent);
     --priority-low-text: #7d9bd1;
     --priority-low-bg: color-mix(in srgb, var(--priority-low-text) 14%, transparent);

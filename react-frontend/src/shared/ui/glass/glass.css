@@ -17,10 +17,11 @@
       linear-gradient(180deg,
         var(--glass-fill-top, var(--sx-glass-fill-top)),
         var(--glass-fill-bottom, var(--sx-glass-fill-bottom)));
-    backdrop-filter: blur(var(--glass-blur, var(--sx-glass-blur))) saturate(var(--sx-glass-saturate));
-    -webkit-backdrop-filter: blur(var(--glass-blur, var(--sx-glass-blur))) saturate(var(--sx-glass-saturate));
-    /* outer drop + interior thickness (bottom inner shadow) */
+    backdrop-filter: blur(var(--glass-blur, var(--sx-glass-blur))) saturate(var(--sx-glass-saturate)) brightness(var(--sx-glass-brightness, 1));
+    -webkit-backdrop-filter: blur(var(--glass-blur, var(--sx-glass-blur))) saturate(var(--sx-glass-saturate)) brightness(var(--sx-glass-brightness, 1));
+    /* outer edge (light-theme hairline, transparent in dark) + drop + interior thickness */
     box-shadow:
+      0 0 0 1px var(--sx-edge),
       var(--glass-shadow, var(--sx-shadow-soft)),
       inset 0 -12px 24px -16px var(--sx-thickness);
     /* own compositing layer; animate transform/opacity only */
@@ -59,9 +60,9 @@
     pointer-events: none;
     background: linear-gradient(160deg,
       var(--sx-rim-bright),
-      var(--sx-rim-faint) 28%,
-      transparent 55%,
-      var(--sx-rim-faint) 100%);
+      var(--sx-rim-faint) 22%,
+      transparent 45%,
+      transparent 100%);
     -webkit-mask:
       linear-gradient(#000 0 0) content-box,
       linear-gradient(#000 0 0);
@@ -79,8 +80,14 @@
     --glass-fill-top: var(--sx-glass-fill-top-raised);
     --glass-shadow: var(--sx-shadow-elevated);
   }
+  /* @deprecated — removed in phase 3 */
   .sx-glass--panel { --glass-blur: 24px; }
-  .sx-glass--card  { --glass-blur: 24px; }
+  /* Tier B: no blur, alpha surface fill (Law 13) */
+  .sx-glass--card {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--sx-surface);
+  }
   .sx-glass--menu {
     --glass-radius: var(--radius-lg);
     --glass-blur: 40px;
@@ -122,11 +129,35 @@
     transform: translateY(-1px);
   }
   .sx-glass--interactive:active { transform: scale(0.985); }
+  /* Cards lift further and raise a shadow tier on hover (signature card feel). */
+  .sx-glass--card.sx-glass--interactive:hover {
+    --glass-shadow: var(--sx-shadow-elevated);
+    transform: translateY(-2px);
+  }
+
+  /* ---------- Specular rim highlight (cursor-tracked, opt-in) ----------
+     The light-catch follows the pointer along the RIM only — never the
+     body (a body glow = the haze Design Law 2 forbids). --mx/--my are
+     written by one rAF-throttled pointermove listener (sidebar only).
+     The radial is composited into the ::before rim, whose 1px mask
+     clamps it to the edge: a faint glint travels the slab's border. */
+  .sx-glass--specular::before {
+    background:
+      radial-gradient(180px circle at var(--mx, 50%) var(--my, 0%),
+        var(--sx-rim-bright), transparent 50%),
+      linear-gradient(160deg,
+        var(--sx-rim-bright),
+        var(--sx-rim-faint) 22%,
+        transparent 45%,
+        transparent 100%);
+  }
 
   @media (prefers-reduced-motion: reduce) {
     .sx-glass,
     .sx-glass--interactive:hover,
     .sx-glass--interactive:active { transform: none; transition: none; }
+    /* freeze the glint at the resting position */
+    .sx-glass--specular { --mx: 50%; --my: 0%; }
   }
 
   /* ---------- Edge refraction (Chromium only, opt-in) ----------
@@ -134,7 +165,7 @@
      The component only attaches this class when the runtime
      capability check passes; other engines keep the blur stack. */
   .sx-glass--refract {
-    backdrop-filter: blur(var(--glass-blur, var(--sx-glass-blur))) saturate(var(--sx-glass-saturate)) url(#sx-refract);
-    -webkit-backdrop-filter: blur(var(--glass-blur, var(--sx-glass-blur))) saturate(var(--sx-glass-saturate)) url(#sx-refract);
+    backdrop-filter: blur(var(--glass-blur, var(--sx-glass-blur))) saturate(var(--sx-glass-saturate)) brightness(var(--sx-glass-brightness, 1)) url(#sx-refract);
+    -webkit-backdrop-filter: blur(var(--glass-blur, var(--sx-glass-blur))) saturate(var(--sx-glass-saturate)) brightness(var(--sx-glass-brightness, 1)) url(#sx-refract);
   }
 }

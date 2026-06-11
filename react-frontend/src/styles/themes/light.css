@@ -9,25 +9,31 @@
   :root[data-theme="light"] {
     color-scheme: light;
 
-    /* Canvas & depth field — near-invisible cool tints */
-    --sx-canvas: #f4f5f7;
+    /* Canvas & depth field — visible cool-slate structure */
+    --sx-canvas: #f0f2f5;
     --sx-canvas-elevated: #ffffff;
-    --sx-depth-a: rgb(20 24 33 / 0.02);
-    --sx-depth-b: rgb(20 24 33 / 0.015);
+    --sx-depth-a: rgb(20 24 33 / 0.055);
+    --sx-depth-b: rgb(20 24 33 / 0.035);
+    --sx-depth-c: rgb(20 24 33 / 0.04);
+    --sx-depth-noise: 0.3;
 
     /* Glass material inputs */
-    --sx-glass-fill-top: rgb(255 255 255 / 0.65);
-    --sx-glass-fill-bottom: rgb(255 255 255 / 0.40);
-    --sx-glass-fill-top-raised: rgb(255 255 255 / 0.72);
-    --sx-glass-fill-top-strong: rgb(255 255 255 / 0.85);
-    --sx-rim-bright: rgb(255 255 255 / 0.85);
+    --sx-glass-fill-top: rgb(255 255 255 / 0.12);
+    --sx-glass-fill-bottom: rgb(255 255 255 / 0.03);
+    --sx-glass-fill-top-raised: rgb(255 255 255 / 0.16);
+    --sx-glass-fill-top-strong: rgb(255 255 255 / 0.45);
+    --sx-glass-brightness: 1.06;
+    --sx-glass-saturate: 170%;
+    --sx-rim-bright: rgb(255 255 255 / 0.95);
     --sx-rim-faint: rgb(15 23 42 / 0.06);
     --sx-thickness: rgb(15 23 42 / 0.06);
+    --sx-edge: rgb(15 23 42 / 0.12);            /* Law 14 dual edge — light theme outer hairline */
 
-    /* Solid surfaces */
-    --sx-surface: #ffffff;
-    --sx-surface-hover: #f0f1f4;
-    --sx-surface-active: #e8eaee;
+    /* Tier B surfaces — faint slate tint over white canvas */
+    --sx-surface: rgb(15 23 42 / 0.045);
+    --sx-surface-hover: rgb(15 23 42 / 0.07);
+    --sx-surface-active: rgb(15 23 42 / 0.10);
+    --sx-opaque: #ffffff;
 
     /* Hairlines */
     --sx-line: rgb(15 23 42 / 0.08);
@@ -46,20 +52,21 @@
     /* Danger */
     --sx-danger: #c2473f;
 
-    /* Shadows — cool slate, low alpha */
-    --sx-shadow-soft: 0 16px 48px rgb(20 24 33 / 0.10);
-    --sx-shadow-elevated: 0 32px 80px rgb(20 24 33 / 0.16);
-    --sx-overlay: rgb(20 24 33 / 0.32);
+    /* Shadows — cool slate, two-layer */
+    --sx-shadow-soft: 0 1px 2px rgb(20 24 33 / 0.08), 0 16px 48px rgb(20 24 33 / 0.14);
+    --sx-shadow-elevated: 0 2px 6px rgb(20 24 33 / 0.10), 0 32px 80px rgb(20 24 33 / 0.22);
+    --sx-overlay: rgb(20 24 33 / 0.22);
+    --sx-scrollbar-thumb: rgb(15 23 42 / 0.18);
 
     /* Status & priority — same hues, darkened for AA on white */
     --status-backlog-text: #6b6770;
     --status-todo-text: #3f6bb5;
-    --status-progress-text: #6257c9;
+    --status-progress-text: #8f7426;
     --status-review-text: #b5733a;
     --status-done-text: #2f9e74;
     --priority-urgent-text: #d0524e;
     --priority-high-text: #b5733a;
-    --priority-medium-text: #7a64c2;
+    --priority-medium-text: #8f7426;
     --priority-low-text: #3f6bb5;
 
     /* Legacy rgb/alpha machinery (re-valued for light) */

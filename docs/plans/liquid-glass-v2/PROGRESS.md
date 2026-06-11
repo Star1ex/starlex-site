@@ -42,3 +42,62 @@ Each phase session appends one entry: date, phase, what shipped, what the **scre
 - `color-mix()` backgrounds in contrast cells caused `getComputedStyle` to return unparseable values in Chromium (it doesn't normalize `color-mix` to `rgb()`). Fixed by using token names that resolve to hex: `--sx-canvas-elevated` as proxy for both "field bright" and "glass fill" cells. This is conservative (field/glass will look slightly darker than reality in the check) but the floor remains enforceable. Phase 2 will recalibrate when fills go alpha.
 
 **Next session (Phase 2):** Start with `Read docs/plans/liquid-glass-v2/00-MASTER.md fully, look at shots/5f00161/, then execute @docs/plans/liquid-glass-v2/02-material-retune.md`
+
+---
+
+## 2026-06-11 — Phase 2: Material Retune
+
+**What shipped:**
+
+**Tokens (§2.1):**
+- `--sx-depth-a/b` raised (0.03→0.07, 0.015→0.04); `--sx-depth-c: rgb(255 255 255 / 0.05)` added; `--sx-depth-noise: 0.5` (dark) / `0.3` (light) added
+- `--sx-glass-brightness: 1.12` (dark) / `1.06` (light) new; `--sx-glass-saturate` clamped to `130%` dark / `170%` light (per-theme now)
+- `--sx-rim-bright` raised 0.28→0.38 (dark), 0.85→0.95 (light)
+- `--sx-edge: transparent` (dark) / `rgb(15 23 42 / 0.12)` (light) new — Law 14 dual edge
+- `--sx-surface` converted to alpha: `rgb(255 255 255 / 0.045)` dark / `rgb(15 23 42 / 0.045)` light (tier B law 11)
+- `--sx-surface-hover/active` likewise alpha; `--sx-opaque` escape hatch added both themes
+- `--sx-shadow-soft/elevated` made two-layer (contact + ambient); light overlay lowered 0.32→0.22
+- `--sx-scrollbar-thumb` added both themes (0.14 dark / 0.18 light)
+- `--status-progress-text` / `--priority-medium-text` replaced with gold (#d4c06b/#cdb964 dark; #8f7426 light) — Law 17
+- Light canvas darkened #f4f5f7→#f0f2f5; light glass fills dropped from 0.65/0.72/0.85 → 0.12/0.16/0.45
+
+**Material (`glass.css` §2.2):**
+- `brightness(var(--sx-glass-brightness, 1))` appended to both filter chains (base + `--refract`)
+- `0 0 0 1px var(--sx-edge)` prepended to box-shadow (light-theme outer hairline, transparent in dark)
+- Rim re-cut: `var(--sx-rim-faint) 22%, transparent 45%, transparent 100%` — fully gone by 45%; also updated in specular variant
+- `--card`: `backdrop-filter: none; background: var(--sx-surface)` — demoted to tier B
+- `--panel` marked `@deprecated — removed in phase 3`
+
+**Depth field (`depth.css` §2.4):** Third blob at `70% 30%`; vertical luminance ramp `linear-gradient(180deg, var(--sx-depth-a), transparent 40%)`; noise opacity now reads `var(--sx-depth-noise)`
+
+**Scrollbars (`base.css` §2.4):** Global thin overlay scrollbar on `--sx-scrollbar-thumb`; webkit + Firefox; buttons hidden
+
+**Purple-smear diagnosis (§2.3):** Reproduced by inspecting dark modal specimen over busy content in the lab. Saturate clamp (160%→130%) was sufficient — no hue fog visible in `shots/99ed0d6/lab-dark.png`. `refract` still enabled on modal; no violet leakage at 130% saturate. Culprit: excessive saturate amplifying status-hue chroma in blurred content. Fixed.
+
+**Gate results:**
+- `npm run lint` — clean
+- `npm run build` — green; `/glass-lab` absent from prod bundle
+- `npm run visual-qa` — both PNGs produced, contrast passed (dark ≥7.3:1, light ≥5.2:1)
+
+**What the screenshots showed (`shots/99ed0d6/`):**
+- **Dark / canvas strip**: Depth field now has visible luminance structure — three blobs + vertical ramp create subtle, clearly non-flat field. No longer a featureless black sea.
+- **Dark / sidebar over field**: Sidebar reads as lighter than the canvas behind it (brightness lift working). The blurred depth field diffuses through visibly. Glass character present.
+- **Dark / sidebar over-content**: Content clearly blurs through the sidebar slab. Rim reads as top-left arc only, not a uniform 1px border.
+- **Dark / modal**: Translucent over busy content; no purple or hue fog. Legible text.
+- **Dark / tier B**: All status/priority chips, table rows, board cards render as translucent alpha fills over canvas — zero solid hex boxes. In-Progress/Medium chips show gold, not violet. ✓ Law 17.
+- **Light / canvas**: Visible cool-slate structure — depth blobs (5.5%/3.5%/4%) create clear non-flat field. Canvas #f0f2f5 step darker than v1.
+- **Light / sidebar over field**: Sidebar distinct from canvas — the faint white glass fill (12%) over the visible depth field creates glass character. No more white-on-white invisibility.
+- **Light / sidebar over-content**: Content diffuses through glass; outer slate hairline (`--sx-edge`) defines the slab edge cleanly.
+- **Light / modal**: Translucent (45% fill); content visible through it; scrim at 22% lets the glass read properly. Not a muddy gray sheet.
+- **Light / tier B**: Rows/buttons/inputs show as faint slate tints — `rgb(15 23 42 / 0.045)` over white canvas is subtle but present.
+- **Scrollbars**: Thin styled scrollbar visible in the scrollable-box specimen (both themes). No OS arrow buttons.
+
+**DoD greps — all pass:**
+- No `#100f13/#17161b/#1d1c22` as surface values; `#ffffff` survivors are `--sx-accent-contrast`, `--sx-canvas-elevated`, `--sx-opaque` — all correct
+- Old light glass fills (0.65/0.72/0.85) gone; legacy `--sx-panel-alpha: 0.72` in alias block is deprecated, not consumed by glass recipes
+- `backdrop-filter: none` confirmed on both card and pill
+- Zero violet hex survivors (`8f8ae0/a190d9/7a64c2/6257c9`) in `src/`
+
+**Deviations:** None. All spec values applied exactly; tuning kept at spec mid-points (no lab iteration needed — first-pass values read correctly in both themes).
+
+**Next session (Phase 3):** Start with `Read docs/plans/liquid-glass-v2/00-MASTER.md fully, look at shots/99ed0d6/, then execute @docs/plans/liquid-glass-v2/03-chrome-vs-content.md`
