@@ -7,6 +7,7 @@ import type { WorkspaceDTO } from '@/types/dto.js';
 import { modalBackdropVariants, modalContentVariants } from '@/shared/lib/animations.js';
 import { WorkspaceIdentityForm } from '@/shared/ui/WorkspaceIdentityForm.js';
 import { WORKSPACE_ACCENT_PRESETS } from '@/shared/lib/workspaceIdentity.js';
+import { Glass } from '@/shared/ui/glass/index.js';
 
 interface WorkspaceCreateModalProps {
   isOpen: boolean;
@@ -77,11 +78,14 @@ export const WorkspaceCreateModal: React.FC<WorkspaceCreateModalProps> = ({
           initial="initial"
           animate="animate"
           exit="exit"
-          style={{ background: 'var(--sx-overlay)', backdropFilter: 'blur(8px)' }}
+          style={{ background: 'var(--sx-overlay)' }}
           onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
-          <motion.div
-            className="glass-card workspace-create-modal w-full max-w-lg rounded-2xl overflow-hidden"
+          <Glass
+            as={motion.div}
+            variant="modal"
+            depth="floating"
+            className="workspace-create-modal w-full max-w-lg overflow-hidden"
             variants={modalContentVariants}
           >
             <div className="flex items-center justify-between px-6 pt-6 pb-4">
@@ -90,7 +94,7 @@ export const WorkspaceCreateModal: React.FC<WorkspaceCreateModalProps> = ({
               </h2>
               <button
                 onClick={onClose}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] hover:bg-[color:var(--sx-control)] transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] hover:bg-[color:var(--sx-surface-hover)] transition-colors"
               >
                 <X size={16} />
               </button>
@@ -124,14 +128,14 @@ export const WorkspaceCreateModal: React.FC<WorkspaceCreateModalProps> = ({
                 <button
                   type="submit"
                   disabled={loading || !name.trim()}
-                  className="flex-1 liquid-button !justify-center !border-transparent !text-[color:var(--starlex-accent-contrast)] font-semibold disabled:opacity-40"
-                  style={{ background: color, boxShadow: `0 12px 34px ${color}32` }}
+                  className="flex-1 liquid-button !justify-center !border-transparent !text-[color:var(--sx-accent-contrast)] font-semibold disabled:opacity-40"
+                  style={{ background: color }}
                 >
                   {loading ? 'Creating…' : 'Create'}
                 </button>
               </div>
             </form>
-          </motion.div>
+          </Glass>
         </motion.div>
       )}
     </AnimatePresence>,

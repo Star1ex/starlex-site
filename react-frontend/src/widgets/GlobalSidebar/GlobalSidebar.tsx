@@ -184,7 +184,7 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
               </>
             ) : (
               <>
-                <div className="size-7 rounded-lg bg-[color:var(--sx-panel)] border border-[color:var(--sx-border)] flex-shrink-0" />
+                <div className="size-7 rounded-lg bg-[color:var(--sx-surface)] flex-shrink-0" />
                 <span className="sidebar-workspace-name text-[color:var(--sx-text-subtle)]">Select workspace</span>
               </>
             )}
@@ -210,7 +210,7 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
                       onClick={() => handleWorkspaceSwitch(ws)}
                       className={cn(
                         'dropdown-menu-item',
-                        ws.id === activeWorkspaceId && '!text-[color:var(--sx-text)] !bg-[color:var(--sx-control)]',
+                        ws.id === activeWorkspaceId && '!text-[color:var(--sx-text)] !bg-[color:var(--sx-surface-active)]',
                       )}
                     >
                       <WsGlyph workspace={ws} />

@@ -14,6 +14,7 @@ import {
 } from '@/entities/task/model/taskMeta.js';
 import { StatusMenu } from '@/features/taskStatus/StatusMenu.js';
 import { InlineLabelChips, LabelPicker } from '@/shared/ui/LabelPicker.js';
+import { Glass } from '@/shared/ui/glass/index.js';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -70,7 +71,7 @@ function AssigneeAvatar({ member }: { member: AvatarUser }) {
   const src = member.photo_url ?? member.avatar_url ?? undefined;
   const ini = initials(member.firstName, member.lastName);
   return (
-    <div className="w-6 h-6 rounded-full bg-[color:var(--sx-panel-strong)] flex items-center justify-center text-[10px] font-semibold text-[color:var(--sx-text)] overflow-hidden flex-shrink-0">
+    <div className="w-6 h-6 rounded-full bg-[color:var(--sx-surface-active)] flex items-center justify-center text-[10px] font-semibold text-[color:var(--sx-text)] overflow-hidden flex-shrink-0">
       {src ? <img src={src} alt={ini} className="w-full h-full object-cover" /> : ini}
     </div>
   );
@@ -108,7 +109,7 @@ function PriorityMenu({ priority, canEdit, onChange }: PriorityMenuProps) {
       <DropdownMenuTrigger asChild>
         <button
           type="button"
-          className="w-full h-9 flex items-center justify-between rounded-lg bg-[color:var(--sx-panel)] hover:bg-[color:var(--sx-control)] border border-[color:var(--sx-border)] px-3 text-label-sm transition-colors"
+          className="w-full h-9 flex items-center justify-between rounded-lg bg-[color:var(--sx-surface)] hover:bg-[color:var(--sx-surface-hover)] px-3 text-label-sm transition-colors"
         >
           <span className="flex items-center gap-2 font-medium" style={{ color: selected.color }}>
             <Flag size={13} />
@@ -127,7 +128,7 @@ function PriorityMenu({ priority, canEdit, onChange }: PriorityMenuProps) {
             <DropdownMenuItem
               key={priorityValue}
               onSelect={() => onChange(priorityValue)}
-              className="glass-menu-item flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer hover:bg-[color:var(--sx-control)] focus:bg-[color:var(--sx-control)]"
+              className="glass-menu-item flex items-center gap-2 px-2.5 py-2 rounded-lg cursor-pointer hover:bg-[color:var(--sx-surface-hover)] focus:bg-[color:var(--sx-surface-hover)]"
               style={{ color: priorityMeta.color }}
             >
               <Flag size={13} />
@@ -156,7 +157,7 @@ function AssigneeControl({ members, assignees, canEdit, onToggle }: AssigneeCont
       {assignees.length > 0 ? (
         <div className="flex flex-col gap-1.5">
           {assignees.map((assignee) => (
-            <div key={assignee.id} className="flex items-center gap-2 rounded-lg bg-[color:var(--sx-panel)] px-2.5 py-2">
+            <div key={assignee.id} className="flex items-center gap-2 rounded-lg bg-[color:var(--sx-surface)] px-2.5 py-2">
               <AssigneeAvatar member={assignee} />
               <span className="min-w-0 flex-1 truncate text-label-sm text-[color:var(--sx-text)]">
                 {assignee.firstName} {assignee.lastName}
@@ -165,7 +166,7 @@ function AssigneeControl({ members, assignees, canEdit, onToggle }: AssigneeCont
                 <button
                   type="button"
                   onClick={() => onToggle(assignee.id)}
-                  className="w-6 h-6 rounded-md flex items-center justify-center text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] hover:bg-[color:var(--sx-control)] transition-colors"
+                  className="w-6 h-6 rounded-md flex items-center justify-center text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] hover:bg-[color:var(--sx-surface-hover)] transition-colors"
                   aria-label="Remove assignee"
                 >
                   <X size={12} />
@@ -183,7 +184,7 @@ function AssigneeControl({ members, assignees, canEdit, onToggle }: AssigneeCont
           <DropdownMenuTrigger asChild>
             <button
               type="button"
-              className="w-full h-9 flex items-center justify-between rounded-lg bg-[color:var(--sx-panel)] hover:bg-[color:var(--sx-control)] border border-[color:var(--sx-border)] px-3 text-label-sm text-[color:var(--sx-text-muted)] transition-colors"
+              className="w-full h-9 flex items-center justify-between rounded-lg bg-[color:var(--sx-surface)] hover:bg-[color:var(--sx-surface-hover)] px-3 text-label-sm text-[color:var(--sx-text-muted)] transition-colors"
             >
               <span className="flex items-center gap-2">
                 <Plus size={13} />
@@ -209,7 +210,7 @@ function AssigneeControl({ members, assignees, canEdit, onToggle }: AssigneeCont
                       event.preventDefault();
                       onToggle(member.user.id);
                     }}
-                    className="glass-menu-item flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-pointer hover:bg-[color:var(--sx-control)] focus:bg-[color:var(--sx-control)]"
+                    className="glass-menu-item flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-pointer hover:bg-[color:var(--sx-surface-hover)] focus:bg-[color:var(--sx-surface-hover)]"
                   >
                     <AssigneeAvatar member={member.user} />
                     <span className={`min-w-0 flex-1 truncate text-label-sm ${active ? 'text-[color:var(--sx-text)]' : 'text-[color:var(--sx-text-muted)]'}`}>
@@ -243,7 +244,7 @@ export function TaskPropertiesPanel({
   const selectedAssignees = task.assignees ?? [];
 
   return (
-    <aside className="task-properties-panel">
+    <Glass as="aside" variant="panel" depth="raised" className="task-properties-panel">
       <div className="task-properties-head">
         <div>
           <Tag size={15} />
@@ -276,14 +277,14 @@ export function TaskPropertiesPanel({
                 type="date"
                 value={dueDateValue(task.due_date)}
                 onChange={(e) => onDueDateChange(e.target.value ? `${e.target.value}T00:00:00Z` : null)}
-                className="w-full h-9 rounded-lg bg-[color:var(--sx-panel)] border border-[color:var(--sx-border)] pl-9 pr-3 text-label-sm text-[color:var(--sx-text-muted)] outline-none hover:bg-[color:var(--sx-control)] focus:border-[color:var(--sx-border-strong)] [color-scheme:inherit]"
+                className="w-full h-9 rounded-lg bg-[color:var(--sx-surface)] pl-9 pr-3 text-label-sm text-[color:var(--sx-text-muted)] outline-none hover:bg-[color:var(--sx-surface-hover)] focus:shadow-[var(--sx-focus-ring)] [color-scheme:inherit]"
               />
             </label>
             {task.due_date && (
               <button
                 type="button"
                 onClick={() => onDueDateChange(null)}
-                className="w-9 h-9 rounded-lg flex items-center justify-center text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] hover:bg-[color:var(--sx-control)] transition-colors"
+                className="w-9 h-9 rounded-lg flex items-center justify-center text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] hover:bg-[color:var(--sx-surface-hover)] transition-colors"
                 aria-label="Clear due date"
               >
                 <X size={13} />
@@ -320,7 +321,7 @@ export function TaskPropertiesPanel({
               selected={selectedLabels}
               onChange={onLabelsChange}
               label="Edit labels"
-              triggerClassName="w-full h-9 flex items-center justify-between rounded-lg bg-[color:var(--sx-panel)] hover:bg-[color:var(--sx-control)] border border-[color:var(--sx-border)] px-3 text-label-sm text-[color:var(--sx-text-muted)] transition-colors disabled:opacity-40"
+              triggerClassName="w-full h-9 flex items-center justify-between rounded-lg bg-[color:var(--sx-surface)] hover:bg-[color:var(--sx-surface-hover)] px-3 text-label-sm text-[color:var(--sx-text-muted)] transition-colors disabled:opacity-40"
             />
           )}
         </div>
@@ -331,6 +332,6 @@ export function TaskPropertiesPanel({
           Updated {task.updated_at ? new Date(task.updated_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'recently'}
         </div>
       )}
-    </aside>
+    </Glass>
   );
 }

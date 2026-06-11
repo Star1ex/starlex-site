@@ -39,10 +39,7 @@ export const OnboardingPage: React.FC = () => {
   };
 
   return (
-    <div
-      className="min-h-screen flex flex-col items-center justify-center p-6"
-      style={{ background: 'var(--sx-canvas)' }}
-    >
+    <div className="auth-page min-h-screen flex flex-col items-center justify-center p-6">
       <Helmet>
         <title>Create workspace — Starlex</title>
         <meta name="robots" content="noindex, nofollow" />

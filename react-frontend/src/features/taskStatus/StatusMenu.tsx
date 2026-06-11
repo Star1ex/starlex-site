@@ -19,9 +19,12 @@ interface StatusPillProps {
 export function StatusPill({ status, small }: StatusPillProps) {
   const cfg = TASK_STATUS_META[status] ?? TASK_STATUS_META.backlog;
   return (
-    <span className={`inline-flex items-center gap-1 font-medium rounded-full ${cfg.pillClass} ${small ? 'text-[10px] px-1.5 py-0.5' : 'text-label-sm px-2.5 py-1'}`}>
-      <span className="w-1.5 h-1.5 rounded-full flex-shrink-0" style={{ background: cfg.dot }} />
-      {cfg.label}
+    <span
+      className={`sx-chip ${small ? '!min-h-0 !px-1.5 !py-0.5 text-[10px]' : ''}`}
+      style={{ color: cfg.dot }}
+    >
+      <span className="sx-dot" />
+      <span>{cfg.label}</span>
     </span>
   );
 }
@@ -76,9 +79,9 @@ export const StatusMenu: React.FC<StatusMenuProps> = ({ taskId, status, canEdit,
             <DropdownMenuItem
               key={s}
               onSelect={() => handleSelect(s)}
-              className="glass-menu-item flex items-center gap-2 px-2.5 py-1.5 rounded-lg cursor-pointer hover:bg-[color:var(--sx-control)] focus:bg-[color:var(--sx-control)]"
+              className="glass-menu-item flex items-center gap-2 px-2.5 py-1.5 rounded-lg cursor-pointer hover:bg-[color:var(--sx-surface-hover)] focus:bg-[color:var(--sx-surface-hover)]"
             >
-              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: cfg.dot }} />
+              <span className="sx-dot" style={{ color: cfg.dot }} />
               <span className="text-label-sm">{cfg.label}</span>
               {s === optimistic && (
                 <Check className="ml-auto w-3 h-3 text-[color:var(--sx-text-muted)]" strokeWidth={1.65} />

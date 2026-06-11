@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { Palette, Shield, User, LifeBuoy, Info, X, Building2, Bell } from 'lucide-react';
 import { userService } from '@/services/api/index.js';
 import Avatar from '@/shared/ui/Avatar.js';
+import { Glass } from '@/shared/ui/glass/index.js';
 import type { User as UserEntity } from '@/entities/types.js';
 
 type TabId = 'appearance' | 'accounts' | 'password' | 'support' | 'about' | 'workspace' | 'notifications';
@@ -135,16 +136,20 @@ export const SettingsModal: React.FC = () => {
         aria-hidden="true"
       />
 
-      {/* Modal box */}
-      <motion.div
+      {/* Modal box — Glass material (refraction = the showcase wow moment) */}
+      <Glass
+        as={motion.div}
+        variant="modal"
+        depth="floating"
+        refract
         role="dialog"
         aria-modal="true"
         aria-label="Settings"
         className="settings-modal-shell"
-        initial={{ opacity: 0, scale: 0.96, y: 12 }}
-        animate={{ opacity: 1, scale: 1, y: 0, transition: { duration: 0.22, ease: [0.16, 1, 0.3, 1] } }}
-        exit={{ opacity: 0, scale: 0.985, y: 4, transition: { duration: 0.10, ease: 'easeIn' } }}
-        onClick={e => e.stopPropagation()}
+        initial={{ opacity: 0, scale: 0.97, y: 12 }}
+        animate={{ opacity: 1, scale: 1, y: 0, transition: { duration: 0.18, ease: [0.16, 1, 0.3, 1] } }}
+        exit={{ opacity: 0, scale: 0.985, y: 4, transition: { duration: 0.12, ease: 'easeIn' } }}
+        onClick={(e: React.MouseEvent) => e.stopPropagation()}
       >
         {/* Left Sidebar */}
         <aside
@@ -184,13 +189,6 @@ export const SettingsModal: React.FC = () => {
                   className="settings-nav-item"
                   data-active={isActive}
                 >
-                  {isActive && (
-                    <motion.span
-                      layoutId="settings-active-pill"
-                      className="settings-nav-active-pill"
-                      transition={{ type: 'spring', stiffness: 420, damping: 36 }}
-                    />
-                  )}
                   <Icon size={15} className="settings-nav-icon" />
                   <span className="settings-nav-label">{tab.label}</span>
                 </button>
@@ -249,7 +247,7 @@ export const SettingsModal: React.FC = () => {
             </AnimatePresence>
           </div>
         </div>
-      </motion.div>
+      </Glass>
     </motion.div>,
     document.body
   );

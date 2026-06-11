@@ -24,13 +24,13 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           id={inputId}
           className={cn(
             'glass-input',
-            error && '!border-[rgba(239,68,68,0.50)] focus:!shadow-[inset_0_1px_1px_rgba(255,255,255,0.10),0_0_0_1px_rgba(239,68,68,0.40)]',
+            error && '!shadow-[var(--sx-focus-ring)]',
             className,
           )}
           {...props}
         />
         {error && (
-          <p className="text-xs text-[#fca5a5]">{error}</p>
+          <p className="text-xs text-[color:var(--sx-danger)]">{error}</p>
         )}
       </div>
     );

@@ -8,6 +8,7 @@ import { can } from '@/shared/lib/permissions.js';
 import { InlineLabelChips } from '@/shared/ui/LabelPicker.js';
 import { StatusMenu } from '@/features/taskStatus/StatusMenu.js';
 import { DarkSelect } from '@/shared/ui/DarkSelect.js';
+import { Glass } from '@/shared/ui/glass/index.js';
 import { TASK_PRIORITIES, TASK_PRIORITY_META } from '@/entities/task/model/taskMeta.js';
 
 const CREATE_PRIORITY_OPTIONS: TaskPriority[] = TASK_PRIORITIES.filter(
@@ -69,7 +70,7 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
     }
   };
 
-  const inputCls = 'w-full px-3 py-2.5 rounded-xl text-body-md text-[color:var(--sx-text)] bg-[color:var(--sx-panel)] border border-[color:var(--sx-border)] outline-none focus:border-[color:var(--sx-border-strong)] focus:ring-1 focus:ring-[color:var(--sx-border-strong)] transition-all disabled:opacity-40 placeholder:text-[color:var(--sx-text-disabled)]';
+  const inputCls = 'w-full px-3 py-2.5 rounded-xl text-body-md text-[color:var(--sx-text)] bg-[color:var(--sx-surface)] outline-none focus:shadow-[var(--sx-focus-ring)] transition-[background,box-shadow] disabled:opacity-40 placeholder:text-[color:var(--sx-text-disabled)]';
 
   return (
     <AnimatePresence>
@@ -77,13 +78,13 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
         <motion.div
           className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
           variants={modalBackdropVariants} initial="initial" animate="animate" exit="exit"
-          style={{ background: 'var(--sx-overlay)', backdropFilter: 'blur(8px)' }}
+          style={{ background: 'var(--sx-overlay)' }}
           onClick={e => { if (e.target === e.currentTarget) onClose(); }}
         >
-          <motion.div className="glass-card w-full max-w-lg rounded-2xl overflow-hidden" variants={modalContentVariants}>
+          <Glass as={motion.div} variant="modal" depth="floating" className="w-full max-w-lg overflow-hidden" variants={modalContentVariants}>
             <div className="flex items-center justify-between px-6 pt-6 pb-4">
               <h2 className="text-headline-sm font-hanken font-semibold text-[color:var(--sx-text)]">New Task</h2>
-              <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] transition-colors">
+              <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] hover:bg-[color:var(--sx-surface-hover)] transition-colors">
                 <X size={16} />
               </button>
             </div>
@@ -108,15 +109,15 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
                   className={`${inputCls} h-11 cursor-pointer`}
                 />
               </div>
-              {error && <p className="text-label-sm text-[#fca5a5]">{error}</p>}
+              {error && <p className="text-label-sm text-[color:var(--sx-danger)]">{error}</p>}
               <div className="flex gap-2 pt-1">
                 <button type="button" onClick={onClose} disabled={loading} className="flex-1 liquid-button !justify-center">Cancel</button>
-                <button type="submit" disabled={loading || !title.trim()} className="flex-1 liquid-button !justify-center !bg-[color:var(--starlex-accent)] !border-transparent !text-[color:var(--starlex-accent-contrast)] font-semibold disabled:opacity-40">
+                <button type="submit" disabled={loading || !title.trim()} className="flex-1 liquid-button !justify-center !bg-[color:var(--sx-accent)] !border-transparent !text-[color:var(--sx-accent-contrast)] font-semibold disabled:opacity-40">
                   {loading ? 'Creating…' : 'Create'}
                 </button>
               </div>
             </form>
-          </motion.div>
+          </Glass>
         </motion.div>
       )}
     </AnimatePresence>
@@ -151,7 +152,7 @@ function TaskRow({ task, onNavigate, onDelete, canEditStatus, onStatusChange }: 
   return (
     <motion.div
       variants={listItemVariants}
-      className="group flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer hover:bg-[color:var(--sx-control)] transition-all"
+      className="group flex items-center gap-3 px-3 py-3 rounded-xl cursor-pointer hover:bg-[color:var(--sx-surface-hover)] transition-colors"
       onClick={() => onNavigate(task.id)}
     >
       <div className="flex-shrink-0" onClick={e => e.stopPropagation()}>
@@ -201,12 +202,12 @@ function TaskRow({ task, onNavigate, onDelete, canEditStatus, onStatusChange }: 
               exit={{ opacity: 0, scale: 0.95, y: -4, transition: { duration: 0.07 } }}
             >
               <button onClick={() => { onNavigate(task.id); setMenuOpen(false); }}
-                className="w-full flex items-center gap-2 px-3 py-2 text-label-sm text-[color:var(--sx-text-muted)] hover:bg-[color:var(--sx-control)] transition-colors rounded-lg">
+                className="dropdown-menu-item">
                 <ChevronRight size={13} /> Open
               </button>
               {onDelete && (
                 <button onClick={() => { onDelete(task.id); setMenuOpen(false); }}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-label-sm text-red-400 hover:bg-red-900/20 transition-colors rounded-lg">
+                  className="dropdown-menu-item dropdown-menu-item--danger">
                   <Trash2 size={13} /> Delete
                 </button>
               )}
@@ -268,15 +269,15 @@ export const ProjectTaskList: React.FC<ProjectTaskListProps> = ({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0, transition: { delay: 0.1 } }}
         className="flex flex-col items-center justify-center py-12 text-center rounded-2xl"
-        style={{ border: '1.5px dashed var(--sx-border)' }}
+        style={{ background: 'var(--sx-canvas-elevated)' }}
       >
-        <div className="w-10 h-10 rounded-full bg-[color:var(--sx-control)] flex items-center justify-center mb-3">
+        <div className="w-10 h-10 rounded-xl bg-[color:var(--sx-surface)] flex items-center justify-center mb-3">
           <CheckCircle2 size={18} className="text-[color:var(--sx-text-disabled)]" />
         </div>
         <p className="text-body-md font-medium text-[color:var(--sx-text-muted)] mb-1">No tasks yet</p>
         <p className="text-label-sm text-[color:var(--sx-text-subtle)] mb-5">Add the first task to get started</p>
         {canCreate && (
-          <button onClick={onCreateOpen} className="liquid-button gap-1.5 !bg-[color:var(--starlex-accent)] !border-transparent !text-[color:var(--starlex-accent-contrast)]">
+          <button onClick={onCreateOpen} className="liquid-button gap-1.5 !bg-[color:var(--sx-accent)] !border-transparent !text-[color:var(--sx-accent-contrast)]">
             <Plus size={14} /> Add Task
           </button>
         )}

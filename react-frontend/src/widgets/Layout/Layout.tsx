@@ -87,12 +87,11 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Mobile topbar */}
       {isMobile && (
         <div
-          className="fixed top-0 left-0 right-0 z-50 h-12 flex items-center justify-between px-3"
-          style={{ background: 'var(--topbar-bg)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--sx-border)' }}
+          className="fixed top-0 left-0 right-0 z-50 h-12 flex items-center justify-between px-3 bg-[color:var(--sx-canvas-elevated)] shadow-[0_1px_0_var(--sx-line)]"
         >
           <button
             onClick={() => setMobileSidebarOpen(true)}
-            className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-[color:var(--sx-control)] transition-colors text-[color:var(--sx-text-muted)]"
+            className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-[color:var(--sx-surface-hover)] transition-colors text-[color:var(--sx-text-muted)]"
             aria-label="Open menu"
           >
             <Menu size={20} />

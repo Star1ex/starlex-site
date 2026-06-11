@@ -295,10 +295,10 @@ export const MembersPage: React.FC = () => {
 
       {/* Add member dialog */}
       <Dialog open={addOpen} onOpenChange={setAddOpen}>
-        <DialogContent className="glass-card border-[color:var(--sx-line)] bg-[color:var(--sx-surface)] backdrop-blur-2xl text-[color:var(--sx-text)] sm:max-w-md">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-[color:var(--sx-text)] font-hanken">Add member</DialogTitle>
-            <DialogDescription className="text-[color:var(--sx-text-muted)]">
+            <DialogTitle>Add member</DialogTitle>
+            <DialogDescription>
               Enter the email address and role for the new member.
             </DialogDescription>
           </DialogHeader>
@@ -342,20 +342,20 @@ export const MembersPage: React.FC = () => {
 
       {/* Remove confirmation */}
       <AlertDialog open={!!removeTarget} onOpenChange={(o) => !o && setRemoveTarget(null)}>
-        <AlertDialogContent className="glass-card border-[color:var(--sx-line)] bg-[color:var(--sx-surface)] backdrop-blur-2xl text-[color:var(--sx-text)] sm:max-w-sm">
+        <AlertDialogContent className="sm:max-w-sm">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-[color:var(--sx-text)] font-hanken">Remove member</AlertDialogTitle>
-            <AlertDialogDescription className="text-[color:var(--sx-text-muted)]">
+            <AlertDialogTitle>Remove member</AlertDialogTitle>
+            <AlertDialogDescription>
               Remove <strong className="text-[color:var(--sx-text)]">{removeTarget?.user.firstName} {removeTarget?.user.lastName}</strong> from this workspace? They will lose access immediately.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-[color:var(--sx-line)] text-[color:var(--sx-text-muted)] hover:bg-[color:var(--sx-surface-hover)]">
+            <AlertDialogCancel variant="ghost" className="text-[color:var(--sx-text-muted)] hover:bg-[color:var(--sx-surface-hover)] hover:text-[color:var(--sx-text)]">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
               onClick={handleRemove}
-              className="bg-[color:var(--sx-danger)] hover:brightness-110 text-[color:var(--sx-accent-contrast)] border-0"
+              className="border-0 bg-[color:var(--sx-danger)] text-white hover:brightness-110"
             >
               Remove
             </AlertDialogAction>

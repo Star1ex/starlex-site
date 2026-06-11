@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Bell } from 'lucide-react';
 import { userService } from '@/services/api/index.js';
 import { showToast } from '@/shared/lib/toast.js';
+import { Switch } from '@/components/ui/switch.js';
 import type { NotificationPreferences } from '@/types/dto.js';
 
 interface ToggleRowProps {
@@ -19,17 +20,12 @@ function ToggleRow({ label, description, checked, onChange, disabled }: ToggleRo
         <p className="settings-row-title">{label}</p>
         <p className="settings-row-description">{description}</p>
       </div>
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        onClick={() => onChange(!checked)}
+      <Switch
+        checked={checked}
+        onCheckedChange={onChange}
         disabled={disabled}
-        className="settings-toggle disabled:opacity-40"
-        data-checked={checked}
-      >
-        <span className="settings-toggle-knob" />
-      </button>
+        aria-label={label}
+      />
     </div>
   );
 }
@@ -71,7 +67,7 @@ export const NotificationsSettings: React.FC = () => {
   if (loading) {
     return (
       <div className="settings-page animate-pulse">
-        {[0, 1].map(i => <div key={i} className="h-14 rounded-xl bg-[color:var(--sx-control)]" />)}
+        {[0, 1].map(i => <div key={i} className="h-14 rounded-xl bg-[color:var(--sx-surface)]" />)}
       </div>
     );
   }

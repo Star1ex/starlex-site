@@ -64,7 +64,7 @@ export const LabelPicker: React.FC<LabelPickerProps> = ({
         <button
           type="button"
           disabled={disabled}
-          className={triggerClassName ?? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] hover:bg-[color:var(--sx-control)] transition-colors text-sm disabled:opacity-40'}
+          className={triggerClassName ?? 'flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] hover:bg-[color:var(--sx-surface-hover)] transition-colors text-sm disabled:opacity-40'}
           title="Labels"
         >
           <Tag size={13} />
@@ -103,7 +103,7 @@ export const LabelPicker: React.FC<LabelPickerProps> = ({
                   event.preventDefault();
                   toggle(workspaceLabel);
                 }}
-                className="glass-menu-item flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-pointer hover:bg-[color:var(--sx-control)] focus:bg-[color:var(--sx-control)]"
+                className="glass-menu-item flex items-center gap-2.5 px-2.5 py-2 rounded-lg cursor-pointer hover:bg-[color:var(--sx-surface-hover)] focus:bg-[color:var(--sx-surface-hover)]"
               >
                 <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ background: workspaceLabel.color }} />
                 <span className={`flex-1 truncate ${active ? 'text-[color:var(--sx-text)]' : 'text-[color:var(--sx-text-muted)]'}`}>{workspaceLabel.name}</span>
@@ -132,11 +132,9 @@ export const InlineLabelChips: React.FC<InlineLabelChipsProps> = ({ labels, maxV
       {visible.map(l => (
         <span
           key={l.id}
-          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs font-medium"
+          className="sx-chip !min-h-0 !px-1.5 !py-0.5 text-xs"
           style={{
-            background: `${l.color}20`,
             color: l.color,
-            border: `1px solid ${l.color}40`,
           }}
         >
           {l.name}

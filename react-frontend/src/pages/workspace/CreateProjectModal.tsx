@@ -5,6 +5,7 @@ import { projectService } from '@/services/api/index.js';
 import type { ProjectDTO, CreateProjectRequest } from '@/types/dto.js';
 import { modalBackdropVariants, modalContentVariants } from '@/shared/lib/animations.js';
 import { DarkSelect } from '@/shared/ui/DarkSelect.js';
+import { Glass } from '@/shared/ui/glass/index.js';
 import {
   PROJECT_PRIORITIES,
   PROJECT_PRIORITY_META,
@@ -12,7 +13,7 @@ import {
   PROJECT_STATUS_META,
 } from '@/entities/project/model/projectMeta.js';
 
-const inputCls = 'w-full px-3 py-2.5 rounded-xl text-body-md text-[color:var(--sx-text)] bg-[color:var(--sx-panel)] border border-[color:var(--sx-border)] outline-none focus:border-[color:var(--sx-border-strong)] transition-all disabled:opacity-40 placeholder:text-[color:var(--sx-text-disabled)]';
+const inputCls = 'w-full px-3 py-2.5 rounded-xl text-body-md text-[color:var(--sx-text)] bg-[color:var(--sx-surface)] outline-none focus:shadow-[var(--sx-focus-ring)] transition-[background,box-shadow] disabled:opacity-40 placeholder:text-[color:var(--sx-text-disabled)]';
 
 function Field({ label, optional, children }: { label: string; optional?: boolean; children: React.ReactNode }) {
   return (
@@ -84,13 +85,13 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
         <motion.div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
           variants={modalBackdropVariants} initial="initial" animate="animate" exit="exit"
-          style={{ background: 'var(--sx-overlay)', backdropFilter: 'blur(8px)' }}
+          style={{ background: 'var(--sx-overlay)' }}
           onClick={e => { if (e.target === e.currentTarget) onClose(); }}
         >
-          <motion.div className="glass-card w-full max-w-lg rounded-2xl overflow-hidden" variants={modalContentVariants}>
+          <Glass as={motion.div} variant="modal" depth="floating" className="w-full max-w-lg overflow-hidden" variants={modalContentVariants}>
             <div className="flex items-center justify-between px-6 pt-6 pb-4">
               <h2 className="text-headline-sm font-hanken font-semibold text-[color:var(--sx-text)]">New Project</h2>
-              <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] transition-colors">
+              <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] hover:bg-[color:var(--sx-surface-hover)] transition-colors">
                 <X size={16} />
               </button>
             </div>
@@ -127,16 +128,16 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
                   />
                 </Field>
               </div>
-              {error && <p className="text-label-sm text-[#fca5a5]">{error}</p>}
+              {error && <p className="text-label-sm text-[color:var(--sx-danger)]">{error}</p>}
               <div className="flex gap-2 pt-1">
                 <button type="button" onClick={onClose} disabled={loading} className="flex-1 liquid-button !justify-center">Cancel</button>
                 <button type="submit" disabled={loading || !name.trim()}
-                  className="flex-1 liquid-button !justify-center !bg-[color:var(--starlex-accent)] !border-transparent !text-[color:var(--starlex-accent-contrast)] font-semibold disabled:opacity-40">
+                  className="flex-1 liquid-button !justify-center !bg-[color:var(--sx-accent)] !border-transparent !text-[color:var(--sx-accent-contrast)] font-semibold disabled:opacity-40">
                   {loading ? 'Creating…' : 'Create'}
                 </button>
               </div>
             </form>
-          </motion.div>
+          </Glass>
         </motion.div>
       )}
     </AnimatePresence>

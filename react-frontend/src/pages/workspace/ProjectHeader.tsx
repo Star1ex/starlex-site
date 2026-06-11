@@ -468,19 +468,19 @@ export const ProjectPropertiesPanel: React.FC<ProjectPropertiesPanelProps> = ({
       )}
 
       <AlertDialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <AlertDialogContent className="glass-card border-[color:var(--sx-border)] bg-[color:var(--sx-panel)] backdrop-blur-2xl text-[color:var(--sx-text)] sm:max-w-sm">
+        <AlertDialogContent className="sm:max-w-sm">
           <AlertDialogHeader>
-            <AlertDialogTitle className="text-[color:var(--sx-text)] font-hanken">Delete project</AlertDialogTitle>
-            <AlertDialogDescription className="text-[color:var(--sx-text-muted)]">
+            <AlertDialogTitle>Delete project</AlertDialogTitle>
+            <AlertDialogDescription>
               Are you sure you want to delete <strong className="text-[color:var(--sx-text)]">{project.name}</strong>? This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-[color:var(--sx-border)] text-[color:var(--sx-text-muted)] hover:bg-[color:var(--sx-control)]">Cancel</AlertDialogCancel>
+            <AlertDialogCancel variant="ghost" className="text-[color:var(--sx-text-muted)] hover:bg-[color:var(--sx-surface-hover)] hover:text-[color:var(--sx-text)]">Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDelete}
               disabled={deleting}
-              className="bg-red-600/80 hover:bg-red-600 text-[color:var(--sx-accent-contrast)] border-0"
+              className="border-0 bg-[color:var(--sx-danger)] text-white hover:brightness-110"
             >
               {deleting ? 'Deleting...' : 'Delete'}
             </AlertDialogAction>

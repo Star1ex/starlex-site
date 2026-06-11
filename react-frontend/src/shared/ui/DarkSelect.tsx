@@ -44,7 +44,7 @@ export const DarkSelect: React.FC<DarkSelectProps> = ({
     <SelectTrigger
       className={
         className ??
-        'w-full h-11 px-3 rounded-xl text-body-md text-[color:var(--sx-text)] bg-[color:var(--sx-panel)] border border-[color:var(--sx-border)] outline-none focus:border-[color:var(--sx-border-strong)] transition-all disabled:opacity-40'
+        'w-full h-11 px-3 rounded-xl text-body-md text-[color:var(--sx-text)] bg-[color:var(--sx-surface)] outline-none focus:shadow-[var(--sx-focus-ring)] transition-[background,box-shadow] disabled:opacity-40'
       }
     >
       <SelectValue placeholder={placeholder} />
@@ -59,7 +59,7 @@ export const DarkSelect: React.FC<DarkSelectProps> = ({
           key={option.value || EMPTY_VALUE}
           value={encode(option.value)}
           disabled={option.disabled}
-          className="glass-menu-item cursor-pointer rounded-lg px-2.5 py-2 text-label-sm data-[highlighted]:bg-[color:var(--sx-control)] data-[highlighted]:text-[color:var(--sx-text)] data-[state=checked]:bg-[color:var(--sx-control)] data-[state=checked]:text-[color:var(--sx-text)]"
+          className="glass-menu-item cursor-pointer rounded-lg px-2.5 py-2 text-label-sm data-[highlighted]:bg-[color:var(--sx-surface-hover)] data-[highlighted]:text-[color:var(--sx-text)] data-[state=checked]:bg-[color:var(--sx-surface-active)] data-[state=checked]:text-[color:var(--sx-text)]"
         >
           {option.label}
         </SelectItem>

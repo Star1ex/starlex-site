@@ -1,12 +1,19 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Search, Users, Layers, FileText, ArrowRight, Loader, Plus, CircleCheck, Home, Kanban as ProjectsIcon } from 'lucide-react';
+import { Command } from 'cmdk';
+import {
+  Search, Users, Layers, FileText, Loader, Plus, CircleCheck, Home,
+  Kanban as ProjectsIcon, SunMoon, Clock,
+} from 'lucide-react';
 import { searchService, type GlobalSearchResponse } from '@/services/api/search.service.js';
 import { useDebounce } from '@/shared/hooks/useDebounce.js';
 import { useWorkspace } from '@/contexts/useWorkspace.js';
+import { useTheme } from '@/shared/contexts/useTheme.js';
 import { getAllViews } from '@/shared/lib/savedViews.js';
+import { getAllRecent, type RecentItem } from '@/shared/lib/recentItems.js';
+import { Glass } from '@/shared/ui/glass/index.js';
 
 export interface SearchModalProps {
   isOpen: boolean;
@@ -18,56 +25,49 @@ type ResultItem =
   | { kind: 'sprint';    id: string; name: string; url: string; status: string }
   | { kind: 'task';      id: string; name: string; url: string; progress: string };
 
-interface QuickAction { id: string; label: string; icon: React.ReactNode; url: string; hint?: string }
-
-const KIND_ICON = {
-  workspace: <Users size={14} />,
-  sprint:    <Layers size={14} />,
-  task:      <FileText size={14} />,
+const KIND_ICON: Record<ResultItem['kind'], React.ReactNode> = {
+  workspace: <Users size={15} />,
+  sprint:    <Layers size={15} />,
+  task:      <FileText size={15} />,
 };
-
-const KIND_LABEL = { workspace: 'Workspace', sprint: 'Sprint', task: 'Task' };
+const KIND_LABEL: Record<ResultItem['kind'], string> = { workspace: 'Workspace', sprint: 'Sprint', task: 'Task' };
+const RECENT_ICON: Record<RecentItem['type'], React.ReactNode> = {
+  workspace: <Users size={15} />,
+  team:      <Users size={15} />,
+  sprint:    <Layers size={15} />,
+  task:      <FileText size={15} />,
+};
 
 export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
   const { activeWorkspaceId } = useWorkspace();
+  const { theme, toggleTheme } = useTheme();
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<ResultItem[]>([]);
-  const [selected, setSelected] = useState(0);
   const debouncedQuery = useDebounce(query, 200);
   const abortRef = useRef<AbortController | null>(null);
 
-  const quickActions = useCallback((): QuickAction[] => {
-    const wsId = activeWorkspaceId ?? '';
-    const actions: QuickAction[] = [
-      { id: 'new-task',  label: 'New task',      icon: <Plus size={14} />,         url: wsId ? `/task/new?workspaceId=${wsId}` : '/dashboard',  hint: 'C' },
-      { id: 'home',      label: 'Home',           icon: <Home size={14} />,         url: wsId ? `/workspace/${wsId}` : '/dashboard' },
-      { id: 'projects',  label: 'Projects',       icon: <ProjectsIcon size={14} />, url: wsId ? `/workspace/${wsId}?view=projects` : '/dashboard' },
-      { id: 'my-issues', label: 'My Issues',      icon: <CircleCheck size={14} />,  url: '/my-issues' },
-    ];
-    const views = getAllViews();
-    for (const v of views.slice(0, 4)) {
-      actions.push({ id: `view-${v.id}`, label: v.name, icon: <FileText size={14} />, url: `/my-issues?view=${v.id}` });
-    }
-    return actions;
-  }, [activeWorkspaceId]);
+  const hasQuery = Boolean(query.trim());
+  const wsId = activeWorkspaceId ?? '';
 
-  const openAction = useCallback((url: string) => {
-    navigate(url);
-    onClose();
-  }, [navigate, onClose]);
+  const recent = useMemo(() => (isOpen ? getAllRecent() : { workspaces: [], sprints: [], tasks: [] }), [isOpen]);
+  const recentItems = useMemo(
+    () => [...recent.workspaces, ...recent.sprints, ...recent.tasks].slice(0, 5),
+    [recent],
+  );
 
-  // Focus input when opens
+  const go = useCallback((url: string) => { navigate(url); onClose(); }, [navigate, onClose]);
+
+  // Reset + focus on open
   useEffect(() => {
     if (!isOpen) return;
     const timer = window.setTimeout(() => {
       inputRef.current?.focus();
       setQuery('');
       setResults([]);
-      setSelected(0);
-    }, 50);
+    }, 40);
     return () => window.clearTimeout(timer);
   }, [isOpen]);
 
@@ -79,17 +79,14 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
     return () => document.removeEventListener('keydown', onKey);
   }, [isOpen, onClose]);
 
-  // Search
+  // Server search
   useEffect(() => {
     if (!isOpen) return;
     abortRef.current?.abort();
 
     if (!debouncedQuery.trim()) {
-      const timer = window.setTimeout(() => {
-        setResults([]);
-        setLoading(false);
-      }, 0);
-      return () => window.clearTimeout(timer);
+      const t = window.setTimeout(() => { setResults([]); setLoading(false); }, 0);
+      return () => window.clearTimeout(t);
     }
 
     const ctrl = new AbortController();
@@ -101,7 +98,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
     searchService.globalSearch(debouncedQuery, ctrl.signal)
       .then((data: GlobalSearchResponse) => {
         if (ctrl.signal.aborted) return;
-        const items: ResultItem[] = [
+        setResults([
           ...data.workspaces.map(t => ({ kind: 'workspace' as const, id: t.id, name: t.name, url: `/workspace/${t.id}` })),
           ...data.sprints.map(s => ({ kind: 'sprint' as const, id: s.id, name: s.name, url: `/workspace/${s.workspace_id}/sprints/${s.id}`, status: s.status })),
           ...data.tasks.map(t => ({
@@ -109,13 +106,12 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
             url: t.sprint_id ? `/workspace/${t.workspace_id}/sprints/${t.sprint_id}` : `/task/${t.id}`,
             progress: t.progress,
           })),
-        ];
-        setResults(items);
-        setSelected(0);
+        ]);
         setLoading(false);
       })
       .catch((e: unknown) => {
-        if ((e as { name?: string })?.name === 'CanceledError' || (e as { name?: string })?.name === 'AbortError') return;
+        const name = (e as { name?: string })?.name;
+        if (name === 'CanceledError' || name === 'AbortError') return;
         setLoading(false);
       });
 
@@ -125,151 +121,130 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
     };
   }, [debouncedQuery, isOpen]);
 
-  const open = useCallback((item: ResultItem) => {
-    navigate(item.url);
-    onClose();
-  }, [navigate, onClose]);
-
-  // Keyboard navigation
-  const onKeyDown = useCallback((e: React.KeyboardEvent) => {
-    const actions = !query.trim() ? quickActions() : [];
-    const listLen = query.trim() ? results.length : actions.length;
-    if (e.key === 'ArrowDown') { e.preventDefault(); setSelected(s => Math.min(s + 1, listLen - 1)); }
-    if (e.key === 'ArrowUp')   { e.preventDefault(); setSelected(s => Math.max(s - 1, 0)); }
-    if (e.key === 'Enter') {
-      if (query.trim() && results[selected]) open(results[selected]);
-      else if (!query.trim() && actions[selected]) openAction(actions[selected].url);
-    }
-  }, [results, selected, open, query, quickActions, openAction]);
+  const views = useMemo(() => (isOpen ? getAllViews().slice(0, 4) : []), [isOpen]);
 
   return createPortal(
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-start justify-center pt-[18vh]"
+          className="fixed inset-0 z-[60] flex items-start justify-center pt-[18vh] px-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1, transition: { duration: 0.15 } }}
           exit={{ opacity: 0, transition: { duration: 0.12 } }}
         >
-          {/* Backdrop */}
+          {/* Backdrop — flat dim + blur (background recedes) */}
           <div
             className="absolute inset-0"
-            style={{ background: 'var(--sx-overlay)', backdropFilter: 'blur(4px)' }}
+            style={{ background: 'var(--sx-overlay)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
             onClick={onClose}
           />
 
-          {/* Modal */}
-          <motion.div
-            className="relative w-full overflow-hidden search-modal-surface"
-            style={{
-              maxWidth: '560px',
-              background: 'var(--glass-bg)',
-              border: '1px solid var(--glass-border)',
-              borderRadius: '14px',
-              boxShadow: 'var(--sx-shadow-elevated)',
-              margin: '0 16px',
-            }}
+          <Glass
+            as={motion.div}
+            variant="modal"
+            depth="floating"
+            refract
+            className="relative w-full max-w-[560px] overflow-hidden"
             initial={{ opacity: 0, scale: 0.97, y: -8 }}
-            animate={{ opacity: 1, scale: 1, y: 0, transition: { duration: 0.18, ease: 'easeOut' } }}
-            exit={{ opacity: 0, scale: 0.97, y: -8, transition: { duration: 0.12 } }}
+            animate={{ opacity: 1, scale: 1, y: 0, transition: { duration: 0.18, ease: [0.16, 1, 0.3, 1] } }}
+            exit={{ opacity: 0, scale: 0.98, y: -6, transition: { duration: 0.12 } }}
           >
-            {/* Input row */}
-            <div className="flex items-center gap-3 px-4 py-3.5" style={{ borderBottom: results.length > 0 || loading ? '1px solid var(--border-color)' : 'none' }}>
-              {loading
-                ? <Loader size={16} className="animate-spin flex-shrink-0" style={{ color: 'var(--text-secondary)' }} />
-                : <Search size={16} className="flex-shrink-0" style={{ color: 'var(--text-secondary)' }} />
-              }
-              <input
-                ref={inputRef}
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                onKeyDown={onKeyDown}
-                placeholder="Search workspaces, sprints, tasks…"
-                className="flex-1 bg-transparent outline-none text-sm"
-                style={{ color: 'var(--text-primary)' }}
-                spellCheck={false}
-                autoComplete="off"
-              />
-              {query && (
-                <button
-                  onClick={() => setQuery('')}
-                  className="text-xs px-1.5 py-0.5 rounded"
-                  style={{ color: 'var(--text-secondary)', background: 'var(--bg-secondary)' }}
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-
-            {/* Results */}
-            {results.length > 0 && (
-              <div className="py-1.5 max-h-72 overflow-y-auto">
-                {results.map((item, i) => (
-                  <button
-                    key={`${item.kind}-${item.id}`}
-                    onClick={() => open(item)}
-                    onMouseEnter={() => setSelected(i)}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors group"
-                    style={{
-                      background: selected === i ? 'var(--bg-secondary)' : 'transparent',
-                      color: 'var(--text-primary)',
-                    }}
-                  >
-                    <span style={{ color: 'var(--text-secondary)' }}>{KIND_ICON[item.kind]}</span>
-                    <span className="flex-1 text-sm truncate">{item.name}</span>
-                    <span className="text-xs flex-shrink-0" style={{ color: 'var(--text-secondary)' }}>
-                      {KIND_LABEL[item.kind]}
-                    </span>
-                    <ArrowRight
-                      size={13}
-                      className="flex-shrink-0 opacity-0 group-hover:opacity-60 transition-opacity"
-                      style={{ color: 'var(--text-secondary)' }}
-                    />
-                  </button>
-                ))}
+            <Command shouldFilter={false} loop className="sx-cmd">
+              {/* Input row — borderless, 16px */}
+              <div className="sx-cmd__input-row">
+                {loading
+                  ? <Loader size={17} className="sx-cmd__leading animate-spin" />
+                  : <Search size={17} className="sx-cmd__leading" />}
+                <Command.Input
+                  ref={inputRef}
+                  value={query}
+                  onValueChange={setQuery}
+                  placeholder="Search or jump to…"
+                  className="sx-cmd__input"
+                />
+                <kbd className="sx-cmd__esc label-caps">esc</kbd>
               </div>
-            )}
 
-            {/* Empty state */}
-            {!loading && query.trim() && results.length === 0 && (
-              <div className="px-4 py-6 text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
-                No results for "{query}"
-              </div>
-            )}
+              <Command.List className="sx-cmd__list">
+                {hasQuery && !loading && results.length === 0 && (
+                  <Command.Empty className="sx-cmd__empty">No results for “{query}”</Command.Empty>
+                )}
 
-            {/* Quick actions when no query */}
-            {!query.trim() && (
-              <div>
-                <div className="px-4 pt-3 pb-1">
-                  <span className="label-caps text-[color:var(--sx-text-subtle)]">Quick actions</span>
-                </div>
-                {quickActions().map((action, i) => (
-                  <button
-                    key={action.id}
-                    onClick={() => openAction(action.url)}
-                    onMouseEnter={() => setSelected(i)}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors"
-                    style={{ background: selected === i ? 'var(--bg-secondary)' : 'transparent', color: 'var(--text-primary)' }}
-                  >
-                    <span style={{ color: 'var(--text-secondary)' }}>{action.icon}</span>
-                    <span className="flex-1 text-sm">{action.label}</span>
-                    {action.hint && (
-                      <kbd className="px-1.5 py-0.5 rounded text-[10px] font-mono" style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>
-                        {action.hint}
-                      </kbd>
+                {/* Server results */}
+                {hasQuery && results.length > 0 && (
+                  <Command.Group heading="Results" className="sx-cmd__group">
+                    {results.map((item) => (
+                      <Command.Item
+                        key={`${item.kind}-${item.id}`}
+                        value={`${item.kind}-${item.id}-${item.name}`}
+                        onSelect={() => go(item.url)}
+                        className="sx-cmd__item"
+                      >
+                        <span className="sx-cmd__icon">{KIND_ICON[item.kind]}</span>
+                        <span className="sx-cmd__label">{item.name}</span>
+                        <span className="sx-cmd__meta label-caps">{KIND_LABEL[item.kind]}</span>
+                      </Command.Item>
+                    ))}
+                  </Command.Group>
+                )}
+
+                {/* Actions + recents when idle */}
+                {!hasQuery && (
+                  <>
+                    <Command.Group heading="Actions" className="sx-cmd__group">
+                      <Command.Item value="action-new-task" onSelect={() => go(wsId ? `/task/new?workspaceId=${wsId}` : '/dashboard')} className="sx-cmd__item">
+                        <span className="sx-cmd__icon"><Plus size={15} /></span>
+                        <span className="sx-cmd__label">New task</span>
+                        <kbd className="sx-cmd__chip">C</kbd>
+                      </Command.Item>
+                      <Command.Item value="action-new-project" onSelect={() => go(wsId ? `/workspace/${wsId}?view=projects` : '/dashboard')} className="sx-cmd__item">
+                        <span className="sx-cmd__icon"><ProjectsIcon size={15} /></span>
+                        <span className="sx-cmd__label">New project</span>
+                      </Command.Item>
+                      <Command.Item value="action-theme" onSelect={() => toggleTheme()} className="sx-cmd__item">
+                        <span className="sx-cmd__icon"><SunMoon size={15} /></span>
+                        <span className="sx-cmd__label">Toggle theme</span>
+                        <span className="sx-cmd__meta label-caps">{theme === 'light' ? 'Light' : 'Dark'}</span>
+                      </Command.Item>
+                    </Command.Group>
+
+                    <Command.Group heading="Navigate" className="sx-cmd__group">
+                      <Command.Item value="nav-home" onSelect={() => go(wsId ? `/workspace/${wsId}` : '/dashboard')} className="sx-cmd__item">
+                        <span className="sx-cmd__icon"><Home size={15} /></span>
+                        <span className="sx-cmd__label">Home</span>
+                      </Command.Item>
+                      <Command.Item value="nav-projects" onSelect={() => go(wsId ? `/workspace/${wsId}?view=projects` : '/dashboard')} className="sx-cmd__item">
+                        <span className="sx-cmd__icon"><ProjectsIcon size={15} /></span>
+                        <span className="sx-cmd__label">Projects</span>
+                      </Command.Item>
+                      <Command.Item value="nav-my-issues" onSelect={() => go('/my-issues')} className="sx-cmd__item">
+                        <span className="sx-cmd__icon"><CircleCheck size={15} /></span>
+                        <span className="sx-cmd__label">My Issues</span>
+                      </Command.Item>
+                      {views.map((v) => (
+                        <Command.Item key={v.id} value={`view-${v.id}`} onSelect={() => go(`/my-issues?view=${v.id}`)} className="sx-cmd__item">
+                          <span className="sx-cmd__icon"><FileText size={15} /></span>
+                          <span className="sx-cmd__label">{v.name}</span>
+                        </Command.Item>
+                      ))}
+                    </Command.Group>
+
+                    {recentItems.length > 0 && (
+                      <Command.Group heading="Recent" className="sx-cmd__group">
+                        {recentItems.map((item) => (
+                          <Command.Item key={`${item.type}-${item.id}`} value={`recent-${item.type}-${item.id}`} onSelect={() => go(item.url)} className="sx-cmd__item">
+                            <span className="sx-cmd__icon">{RECENT_ICON[item.type] ?? <Clock size={15} />}</span>
+                            <span className="sx-cmd__label">{item.name}</span>
+                            {item.subtitle && <span className="sx-cmd__meta">{item.subtitle}</span>}
+                          </Command.Item>
+                        ))}
+                      </Command.Group>
                     )}
-                  </button>
-                ))}
-                <div className="flex items-center gap-4 px-4 py-2.5 mt-1" style={{ borderTop: '1px solid var(--border-color)' }}>
-                  {[['↑↓','navigate'],['↵','open'],['Esc','close']].map(([k, l]) => (
-                    <span key={k} className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                      <kbd className="px-1.5 py-0.5 rounded text-xs font-mono mr-1" style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>{k}</kbd>{l}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </motion.div>
+                  </>
+                )}
+              </Command.List>
+            </Command>
+          </Glass>
         </motion.div>
       )}
     </AnimatePresence>,

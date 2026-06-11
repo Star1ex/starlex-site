@@ -67,36 +67,43 @@
       var(--sx-glass-fill-bottom));
   }
 
-  /* Popovers/select menus — stable, no hover-brightening. */
+  /* Popovers/select menus — stable, no hover-brightening.
+     Ring-kill !important hacks removed: shadcn slots no longer
+     emit focus rings on content/items (fixed at the source). */
   .glass-menu {
-    --tw-ring-color: transparent !important;
-    --tw-ring-shadow: 0 0 #0000 !important;
     position: relative;
     isolation: isolate;
-    outline: none !important;
+    outline: none;
     border-radius: var(--radius-lg);
-    background: linear-gradient(180deg, var(--sx-glass-fill-top-strong), var(--sx-glass-fill-bottom)) !important;
+    background: linear-gradient(180deg, var(--sx-glass-fill-top-strong), var(--sx-glass-fill-bottom));
     backdrop-filter: blur(40px) saturate(var(--sx-glass-saturate));
     -webkit-backdrop-filter: blur(40px) saturate(var(--sx-glass-saturate));
     box-shadow:
       var(--sx-shadow-elevated),
-      inset 0 -12px 24px -16px var(--sx-thickness) !important;
+      inset 0 -12px 24px -16px var(--sx-thickness);
     color: var(--sx-text);
   }
 
+  /* Menu rows — unified geometry (height 30px, radius-sm). */
   .glass-menu-item {
-    outline: none !important;
+    min-height: 30px;
+    border-radius: var(--radius-sm);
+    outline: none;
     color: var(--sx-text-muted);
-    transition: background 140ms ease, color 140ms ease, transform 140ms ease;
+    transition: background 140ms ease, color 140ms ease;
   }
   .glass-menu-item[data-highlighted],
-  .glass-menu-item:focus {
-    background: var(--sx-surface-hover) !important;
-    color: var(--sx-text) !important;
-  }
-  .glass-menu-item[data-state="checked"] {
-    background: var(--sx-surface-active);
+  .glass-menu-item[data-state="open"] {
+    background: var(--sx-surface-hover);
     color: var(--sx-text);
+  }
+  /* Selected = accent indicator only (no full-row tint). */
+  .glass-menu-item[data-state="checked"] {
+    color: var(--sx-text);
+  }
+  .glass-menu-item[data-state="checked"] [data-slot$="indicator"] svg,
+  .glass-menu-item[aria-selected="true"] [data-slot$="indicator"] svg {
+    color: var(--sx-accent);
   }
 
   /* Primary/secondary actions — solid surface (no live blur; Design Law 8) */

@@ -77,9 +77,9 @@ function TaskExplorerLoading() {
     <div>
       {Array.from({ length: 8 }).map((_, i) => (
         <div key={i} className="tasks-loading-row animate-pulse">
-          <div className="w-16 h-4 bg-[color:var(--sx-control)] rounded-full" />
-          <div className="flex-1 h-3 bg-[color:var(--sx-control)] rounded-full" />
-          <div className="w-12 h-4 bg-[color:var(--sx-control)] rounded-full" />
+          <div className="w-16 h-4 bg-[color:var(--sx-surface)] rounded-full" />
+          <div className="flex-1 h-3 bg-[color:var(--sx-surface)] rounded-full" />
+          <div className="w-12 h-4 bg-[color:var(--sx-surface)] rounded-full" />
         </div>
       ))}
     </div>

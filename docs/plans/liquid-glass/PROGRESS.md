@@ -94,3 +94,51 @@ Each phase session appends one entry: date, phase, what shipped, deviations from
 - **Dialogs/Selects in Members + Project detail** still use `glass-card … backdrop-blur-2xl` with token swaps only — their full migration to `<Glass variant="modal">` belongs to Phase 4 (overlays). Same for `TaskPropertiesPanel` and the project-detail surfaces (`.project-detail-*`, `.task-*` detail blocks) which remain on hardcoded `rgba(255,255,255)` and will not be theme-correct in light until migrated.
 - **Live dual-theme visual QA not run** (gate was lint+build per plan). Phase 5 owns the full QA gate; recommend a manual light/dark pass on the migrated screens (chip ring contrast, progress-bar gradient, board card glass on the lanes) before then.
 - Marketing pages (`HomePage`, `AboutUs`, `Dashboard`) untouched — they were deferred to "the auth/marketing pass" in Phase 1 and are not in the Phase-3 product-surface scope.
+
+---
+
+## 2026-06-10 — Phase 1-3 verification + hardening iteration
+
+**What changed**
+- Re-verified the Phase 1-3 plan against the current tree, then cleaned remaining legacy material/color usage in the already-migrated scope instead of expanding into Phase 4.
+- Status pills now use the shared `.sx-chip` / `.sx-dot` doctrine directly, so task status menus, task rows, my-issues rows, board cards, and project/task chips share the same token-driven fill/ring behavior.
+- Removed lingering `--sx-control` / `--sx-panel` / `--sx-border`, raw red/green Tailwind classes, and duplicate `backdrop-blur` usage from the Phase 2/3 paths: GlobalSidebar, mobile topbar, WorkspaceCreateModal, CreateProjectModal, ProjectTaskList, task explorer loading rows, task detail properties/subtasks, shared Button/Input/DarkSelect/LabelPicker/PasswordStrengthMeter, and the shadcn dropdown sub-trigger.
+- Converted WorkspaceCreateModal, CreateProjectModal, CreateTaskModal, and TaskPropertiesPanel to the `<Glass>` material path (`variant="modal"` or `variant="panel"`), with token-surface controls and `--sx-focus-ring`.
+- Auth/onboarding routes now get their own token-driven depth field via `.auth-page`, so these pages are no longer flat `--sx-canvas` surfaces outside the app shell.
+
+**Verification**
+- `npm run lint` -> green.
+- `npm run build` -> green (Vite still reports the existing stale Browserslist advisory and >500 kB chunk advisory).
+- DoD greps: `glow|6366f1|ambient` in `react-frontend/src` -> 0; `!important` in `src/styles/themes` -> 0.
+- Focused Phase 2/3 greps across sidebar, workspace/project/task surfaces, auth/onboarding-adjacent shared controls -> 0 hits for old `--sx-control|--sx-panel|--sx-border`, `--starlex-accent`, `#fca5a5`, raw red/green Tailwind classes, `text-white|bg-white/`, and duplicate `backdropFilter|backdrop-blur`.
+- `components.css`: 2,888 -> 2,876 lines; `border` hits 181 -> 167 relative to `HEAD`. This is an improvement, but still not the original Phase 3 shrink target.
+
+**Deviations / known rough spots**
+- The original Phase 3 metric (`components.css < 1,500 lines` and 60% fewer border hits) is still unmet. Remaining bulk is largely Phase 4/5 or non-product-surface work: settings modal/sidebar, profile, search modal, marketing pages, project-detail header, rich editor styling, and old alias consumers in compatibility utilities.
+- Full browser dual-theme visual QA was not run in this iteration. Verification was lint/build plus targeted greps; Phase 5 should still do screenshot/viewport QA.
+
+---
+
+## 2026-06-11 — Phase 4 (Glass overlays) complete
+
+**Libraries added**
+- `cmdk` + `sonner` (`npm i`). `npx shadcn add switch` → `components/ui/switch.tsx`, immediately restyled off the shadcn gray theme onto the token contract (track `--sx-surface-active`→`--sx-accent`, white thumb, accent focus ring).
+
+**What shipped**
+- **4.1 Settings modal showcase.** Shell is now `<Glass variant="modal" depth="floating" refract>` (refraction = the wow moment) — the `.settings-modal-shell` CSS is geometry-only (960×640). The `.settings-*` block was fully rewritten onto tokens (≈+38 rgba-literal declarations purged): transparent inner nav column (no panel), ghost nav rows with a 2px crimson active tick (dropped the framer `layoutId` pill from the TSX), solid borderless profile mini-card, header reduced to a single hairline + `label-caps` kicker + tight title, borderless `.settings-row`/`.settings-section` (groups separate by spacing + one inter-group hairline), inputs solid `--sx-surface` with accent focus ring, `.settings-button(--primary)` on tokens, `.settings-message` tinted via `color-mix`, `.settings-toggle` retoned. `NotificationsSettings` toggles swapped to the shadcn `<Switch>`.
+- **4.2 Dialogs & alert dialogs.** `dialog.tsx` + `alert-dialog.tsx` content slots now render through `sx-glass sx-glass--modal sx-glass--floating` (dropped `bg-popover`/`ring-foreground/10`/`rounded-xl`); overlays get `backdrop-blur-[8px]`; footers dropped the `border-t bg-muted/50` bar (spacing only); titles tightened (−0.015em), descriptions on `--sx-text-muted`; `AlertDialogMedia` off `bg-muted`. Call-sites (ProjectHeader delete, MembersPage add/remove) stripped of their `glass-card …` override hacks — material is baked in; destructive confirms = ghost cancel + solid `--sx-danger` button.
+- **4.3 Dropdowns/selects/popovers.** Removed the `!important` ring-kill hacks from `.glass-menu`/`.glass-menu-item` and fixed at the source: shadcn item slots lost `focus:bg-transparent` + `text-accent-foreground`/`bg-destructive` theme deps; unified to 30px row height + radius-sm; highlight now driven by CSS `[data-highlighted]`; selected = accent-hued indicator (no full-row tint); destructive items on `--sx-danger`; labels → `label-caps`, separators → `--sx-line`, shortcuts → mono subtle. `SelectTrigger` retoned to solid `--sx-surface` + accent focus ring. Calendar day cells made circular (selected = accent circle, today = rim ring).
+- **4.4 ⌘K palette → cmdk.** `SearchModal` internals rebuilt on `cmdk` inside `<Glass variant="modal" refract>` at 18vh with an 8px backdrop. Borderless 16px input, `label-caps` group headings, ghost rows + mono key chips, server search preserved (abort + debounce), idle view = Actions (New task, New project, **Toggle theme** — instant switch) + Navigate + saved views + Recent (`recentItems`).
+- **4.5 Toasts → sonner.** `ToastHost` now renders sonner `<Toaster>` (bottom-right, `unstyled` + token classNames); `showToast()` API unchanged but calls `toast.success/error`. New `.sx-toast` on the glass-menu material — no colored fills, tint = status-hued icon + 3px left accent bar. Old `appToast` CustomEvent bus + `.app-toast*` CSS deleted.
+- **4.6 Workspace create modal.** Already on `<Glass variant="modal">` from the Phase-3 hardening pass; `WorkspaceIdentityForm` swatches/icon presets are solid token surfaces with rim-on-hover. The live preview was intentionally **kept solid** (`--sx-canvas-elevated`), not `<Glass variant="card">` — a blurred card inside a modal would violate the no-further-blur-inside-overlays doctrine.
+
+**Verification**
+- `npm run lint` → No issues. `npm run build` (tsc -b + vite) → green (~17s, only the pre-existing Browserslist + >500 kB chunk advisories).
+- DoD greps: zero `!important` rules in `glass.css` (lone hit is a comment); zero `bg-popover|bg-muted|popover-foreground|ring-foreground` in dialogs; zero legacy `--glass-bg|--bg-secondary|--text-primary|--sx-control|--sx-panel` in the rebuilt overlays; `appToast` references → 0; sonner Toaster mounted.
+
+**Deviations / known rough spots**
+- **Live dual-theme visual QA not run** (gate was lint+build per plan). Needs a manual Chromium pass: settings-modal refraction under the slab edge, cmdk palette glass over content, sonner toast accent bars, and **light theme** for every overlay (modals/menus must read as white frosted glass, not gray boxes). Phase 5 owns the full QA gate.
+- **`SettingsSidebar` widget left untouched** — it is a legacy `dark:bg-dark-*` Tailwind component still imported by `GeneralSettings.tsx` (a non-modal `/settings` surface). Not part of the showcase modal; flag for a later cleanup/removal pass.
+- **Profile page (`.profile-*`) still on rgba literals** — shares `.settings-button` (now tokenised) but its shell/cards remain hardcoded dark-only; out of the 4.x overlay scope, will not be light-correct until migrated.
+- The shadcn gray theme tokens (`shadcn.css` oklch set) are still declared but now only reached by un-migrated primitives; overlay primitives are fully on `--sx-*`. A future pass could delete the unused shadcn theme block.
+- This commit also folds in the previously-uncommitted Phase 1–3 hardening iteration that was sitting in the working tree.

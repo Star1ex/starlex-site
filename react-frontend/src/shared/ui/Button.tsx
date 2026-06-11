@@ -11,11 +11,11 @@ const buttonStyles = cva(
           "!bg-[color:var(--sx-accent)] !border-transparent !text-[color:var(--sx-accent-contrast)] hover:brightness-110",
         secondary: "liquid-button",
         outline:
-          "!bg-transparent border border-[color:var(--sx-control-border)] text-[color:var(--sx-text-muted)] hover:!bg-[color:var(--sx-control)] hover:!border-[color:var(--sx-control-border-strong)] hover:text-[color:var(--sx-text)]",
+          "!bg-transparent border border-[color:var(--sx-line)] text-[color:var(--sx-text-muted)] hover:!bg-[color:var(--sx-surface-hover)] hover:!border-[color:var(--sx-line-strong)] hover:text-[color:var(--sx-text)]",
         ghost:
-          "!bg-transparent !border-transparent text-[color:var(--sx-text-subtle)] hover:!bg-[color:var(--sx-control)] hover:!text-[color:var(--sx-text)] shadow-none",
+          "!bg-transparent !border-transparent text-[color:var(--sx-text-subtle)] hover:!bg-[color:var(--sx-surface-hover)] hover:!text-[color:var(--sx-text)] shadow-none",
         danger:
-          "!bg-[rgba(239,68,68,0.15)] !border-[rgba(239,68,68,0.30)] !text-[#fca5a5] hover:!bg-[rgba(239,68,68,0.25)]",
+          "!bg-[color:color-mix(in_srgb,var(--sx-danger)_14%,transparent)] !border-transparent !text-[color:var(--sx-danger)] hover:!bg-[color:color-mix(in_srgb,var(--sx-danger)_22%,transparent)]",
       },
       size: {
         sm:  "!px-3 !py-1.5 text-xs !gap-1.5 !rounded",
