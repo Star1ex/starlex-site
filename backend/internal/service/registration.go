@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"crypto/subtle"
 	"errors"
 	"fmt"
 	"time"
@@ -92,9 +93,10 @@ func (s *RegistrationService) Start(ctx context.Context, email, password, firstN
 	if err != nil {
 		return err
 	}
+	codeHash := hashToken(code)
 
 	pending := entity.NewPendingRegistration(
-		security.GenerateNewID(), email, hashed, firstName, lastName, code, signupIP, registrationCodeTTL,
+		security.GenerateNewID(), email, hashed, firstName, lastName, codeHash, signupIP, registrationCodeTTL,
 	)
 	if err := s.pendingRepo.Upsert(ctx, pending); err != nil {
 		return err
@@ -119,7 +121,7 @@ func (s *RegistrationService) Confirm(ctx context.Context, email, code, ip strin
 		return nil, ErrCodeExpired
 	}
 
-	if pending.Code != code {
+	if !registrationCodeMatches(pending.CodeHash, code) {
 		_ = s.pendingRepo.IncrementAttempts(ctx, email)
 		attempts := pending.Attempts + 1
 		if attempts >= maxVerifyAttempts {
@@ -171,7 +173,7 @@ func (s *RegistrationService) Resend(ctx context.Context, email string) error {
 	if err != nil {
 		return err
 	}
-	pending.Code = code
+	pending.CodeHash = hashToken(code)
 	pending.ExpiresAt = time.Now().Add(registrationCodeTTL)
 	pending.Attempts = 0
 	if err := s.pendingRepo.Upsert(ctx, pending); err != nil {
@@ -182,4 +184,9 @@ func (s *RegistrationService) Resend(ctx context.Context, email string) error {
 		return fmt.Errorf("failed to send verification email: %w", err)
 	}
 	return nil
+}
+
+func registrationCodeMatches(storedHash, code string) bool {
+	codeHash := hashToken(code)
+	return subtle.ConstantTimeCompare([]byte(storedHash), []byte(codeHash)) == 1
 }

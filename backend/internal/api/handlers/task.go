@@ -225,7 +225,8 @@ func (h *Handlers) PatchTaskDescription(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "description field is required"})
 	}
 
-	if err := h.taskService.UpdateTaskDescription(ctx.Context(), taskID, *input.Description); err != nil {
+	description := sanitizeMarkdown(*input.Description)
+	if err := h.taskService.UpdateTaskDescription(ctx.Context(), taskID, description); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "task not found"})
 		}

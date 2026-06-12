@@ -18,7 +18,7 @@ type PendingRegistrationModel struct {
 	PasswordHash string `gorm:"not null"`
 	FirstName    string `gorm:"not null;size:50"`
 	LastName     string `gorm:"not null;size:50"`
-	Code         string `gorm:"not null;size:6;index"`
+	CodeHash     string `gorm:"column:code;not null;size:64;index"`
 	ExpiresAt    int64  `gorm:"not null"`
 	Attempts     int    `gorm:"default:0"`
 	SignupIP     string `gorm:"default:''"`
@@ -44,7 +44,7 @@ func fromPendingDomain(p *entity.PendingRegistration) *PendingRegistrationModel 
 		PasswordHash: p.PasswordHash,
 		FirstName:    p.FirstName,
 		LastName:     p.LastName,
-		Code:         p.Code,
+		CodeHash:     p.CodeHash,
 		ExpiresAt:    p.ExpiresAt.Unix(),
 		Attempts:     p.Attempts,
 		SignupIP:     p.SignupIP,
@@ -58,7 +58,7 @@ func toPendingDomain(m *PendingRegistrationModel) *entity.PendingRegistration {
 		PasswordHash: m.PasswordHash,
 		FirstName:    m.FirstName,
 		LastName:     m.LastName,
-		Code:         m.Code,
+		CodeHash:     m.CodeHash,
 		ExpiresAt:    time.Unix(m.ExpiresAt, 0),
 		Attempts:     m.Attempts,
 		SignupIP:     m.SignupIP,

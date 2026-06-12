@@ -7,9 +7,10 @@ import (
 )
 
 const (
-	writeWait  = 10 * time.Second
-	pongWait   = 60 * time.Second
-	pingPeriod = 25 * time.Second
+	writeWait      = 10 * time.Second
+	pongWait       = 60 * time.Second
+	pingPeriod     = 25 * time.Second
+	maxMessageSize = 1024
 )
 
 type Client struct {
@@ -25,6 +26,7 @@ func (c *Client) ReadPump() {
 		c.Hub.Unregister(c)
 		_ = c.Conn.Close()
 	}()
+	c.Conn.SetReadLimit(maxMessageSize)
 	_ = c.Conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.Conn.SetPongHandler(func(string) error {
 		return c.Conn.SetReadDeadline(time.Now().Add(pongWait))

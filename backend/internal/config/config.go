@@ -42,6 +42,17 @@ type StorageConfig struct {
 	StorageType string
 	LocalPath   string
 	LocalURL    string
+	R2          R2StorageConfig
+}
+
+type R2StorageConfig struct {
+	AccountID       string
+	AccessKeyID     string
+	SecretAccessKey string
+	Bucket          string
+	Endpoint        string
+	PublicURL       string
+	KeyPrefix       string
 }
 
 type TelegramNotifications struct {
@@ -90,6 +101,15 @@ func LoadConfig() *Config {
 			StorageType: os.Getenv("STORAGE_TYPE"),
 			LocalPath:   os.Getenv("LOCAL_PATH"),
 			LocalURL:    os.Getenv("LOCAL_URL"),
+			R2: R2StorageConfig{
+				AccountID:       os.Getenv("R2_ACCOUNT_ID"),
+				AccessKeyID:     os.Getenv("R2_ACCESS_KEY_ID"),
+				SecretAccessKey: os.Getenv("R2_SECRET_ACCESS_KEY"),
+				Bucket:          os.Getenv("R2_BUCKET"),
+				Endpoint:        os.Getenv("R2_ENDPOINT"),
+				PublicURL:       os.Getenv("R2_PUBLIC_URL"),
+				KeyPrefix:       os.Getenv("R2_KEY_PREFIX"),
+			},
 		},
 
 		TelegramNotifications: TelegramNotifications{

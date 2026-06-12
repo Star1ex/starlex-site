@@ -3,6 +3,8 @@ package handlers
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -155,7 +157,7 @@ func TestLoginCreatesDeviceBoundSessionAndNeedsOnboarding(t *testing.T) {
 
 func TestVerifyEmailReturnsNeedsOnboardingAndCreatesSession(t *testing.T) {
 	pendingRepo := &fakePendingRegistrationRepo{byEmail: map[string]*entity.PendingRegistration{
-		"jane@example.com": entity.NewPendingRegistration("pending-1", "jane@example.com", "hashed", "Jane", "Doe", "123456", "1.2.3.4", 15*time.Minute),
+		"jane@example.com": entity.NewPendingRegistration("pending-1", "jane@example.com", "hashed", "Jane", "Doe", testHashToken("123456"), "1.2.3.4", 15*time.Minute),
 	}}
 	userRepo := &fakeRegistrationUserRepo{}
 	registrationService := service.NewRegistrationService(pendingRepo, userRepo, nil, events.NewBus())
@@ -201,4 +203,9 @@ func TestVerifyEmailReturnsNeedsOnboardingAndCreatesSession(t *testing.T) {
 	if len(sessionService.created) != 1 {
 		t.Fatalf("verify should create one session, got %d", len(sessionService.created))
 	}
+}
+
+func testHashToken(token string) string {
+	sum := sha256.Sum256([]byte(token))
+	return hex.EncodeToString(sum[:])
 }

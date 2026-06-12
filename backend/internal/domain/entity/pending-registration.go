@@ -13,21 +13,21 @@ type PendingRegistration struct {
 	PasswordHash string
 	FirstName    string
 	LastName     string
-	Code         string
+	CodeHash     string
 	ExpiresAt    time.Time
 	Attempts     int
 	SignupIP     string
 	CreatedAt    time.Time
 }
 
-func NewPendingRegistration(id, email, passwordHash, firstName, lastName, code, signupIP string, ttl time.Duration) *PendingRegistration {
+func NewPendingRegistration(id, email, passwordHash, firstName, lastName, codeHash, signupIP string, ttl time.Duration) *PendingRegistration {
 	return &PendingRegistration{
 		ID:           id,
 		Email:        email,
 		PasswordHash: passwordHash,
 		FirstName:    firstName,
 		LastName:     lastName,
-		Code:         code,
+		CodeHash:     codeHash,
 		ExpiresAt:    time.Now().Add(ttl),
 		Attempts:     0,
 		SignupIP:     signupIP,

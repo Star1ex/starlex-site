@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"html"
 
 	"github.com/Star1ex/starlex-site/internal/events"
 	"github.com/Star1ex/starlex-site/internal/logger"
@@ -10,6 +11,10 @@ import (
 
 func UserRegisteredTelegramHandler(tg *telegram.Client) events.Handler {
 	return func(e events.Event) {
+		if tg == nil {
+			logger.Log.Warnw("telegram handler disabled: nil client")
+			return
+		}
 
 		event, ok := e.(events.UserRegisteredEvent)
 		if !ok {
@@ -23,10 +28,10 @@ func UserRegisteredTelegramHandler(tg *telegram.Client) events.Handler {
 				"Email: %s\n"+
 				"First name: %s\n"+
 				"Last name: %s",
-			event.UserID,
-			event.Email,
-			event.FirstName,
-			event.LastName,
+			html.EscapeString(event.UserID),
+			html.EscapeString(event.Email),
+			html.EscapeString(event.FirstName),
+			html.EscapeString(event.LastName),
 		)
 
 		if err := tg.Send(msg); err != nil {
@@ -37,6 +42,11 @@ func UserRegisteredTelegramHandler(tg *telegram.Client) events.Handler {
 
 func UserLoginTelegramHandler(tg *telegram.Client) events.Handler {
 	return func(e events.Event) {
+		if tg == nil {
+			logger.Log.Warnw("telegram handler disabled: nil client")
+			return
+		}
+
 		event, ok := e.(events.UserLoginEvent)
 		if !ok {
 			logger.Log.Warnw("telegram handler: wrong event type")
@@ -49,10 +59,10 @@ func UserLoginTelegramHandler(tg *telegram.Client) events.Handler {
 				"Email: %s\n"+
 				"First name: %s\n"+
 				"Last name: %s",
-			event.UserID,
-			event.Email,
-			event.FirstName,
-			event.LastName,
+			html.EscapeString(event.UserID),
+			html.EscapeString(event.Email),
+			html.EscapeString(event.FirstName),
+			html.EscapeString(event.LastName),
 		)
 
 		if err := tg.Send(msg); err != nil {

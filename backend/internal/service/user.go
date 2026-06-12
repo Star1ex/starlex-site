@@ -5,14 +5,18 @@ import (
 	"errors"
 	"fmt"
 	"mime/multipart"
+	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
 	"github.com/Star1ex/starlex-site/internal/domain/user"
 	"github.com/Star1ex/starlex-site/internal/events"
+	"github.com/Star1ex/starlex-site/internal/logger"
 	"github.com/Star1ex/starlex-site/internal/security"
 	"github.com/Star1ex/starlex-site/internal/storage"
+	"github.com/google/uuid"
 )
 
 type UserService struct {
@@ -133,18 +137,33 @@ func (s *UserService) SetUserPhoto(id, photo_url string) error {
 }
 
 func (s *UserService) UploadUserPhoto(ctx context.Context, username string, file *multipart.FileHeader) (string, error) {
-	path := fmt.Sprintf("avatars/%s/%s", username, file.Filename)
+	path := avatarPhotoPath(username, file.Filename)
 
 	url, err := s.storage.UploadFile(ctx, file, path)
 	if err != nil {
 		return "", err
 	}
 
+	previousURL, _ := s.repo.GetPhoto(ctx, username)
 	if err := s.repo.UpdatePhoto(username, url); err != nil {
+		if deleteErr := s.storage.DeleteFile(ctx, url); deleteErr != nil {
+			logger.Log.Warnw("rollback uploaded user photo failed", "user_id", username, "error", deleteErr)
+		}
 		return "", err
 	}
 
+	if previousURL != "" && previousURL != url {
+		if deleteErr := s.storage.DeleteFile(ctx, previousURL); deleteErr != nil {
+			logger.Log.Warnw("delete previous user photo failed", "user_id", username, "error", deleteErr)
+		}
+	}
+
 	return url, nil
+}
+
+func avatarPhotoPath(userID, filename string) string {
+	ext := strings.ToLower(filepath.Ext(filename))
+	return fmt.Sprintf("avatars/%s/%s%s", userID, uuid.NewString(), ext)
 }
 
 func (s *UserService) GetPhoto(ctx context.Context, userID string) (string, error) {

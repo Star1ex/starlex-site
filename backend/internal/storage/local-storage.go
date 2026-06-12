@@ -43,14 +43,12 @@ func NewLocalStorage(basePath, baseURL string) *LocalStorage {
 }
 
 func (s *LocalStorage) UploadFile(ctx context.Context, file *multipart.FileHeader, path string) (string, error) {
-	// normalize path (no leading slash)
-	path = strings.TrimPrefix(path, "/")
-	cleanPath := filepath.Clean(path)
-	if cleanPath == "." || cleanPath == "/" || strings.HasPrefix(cleanPath, "..") {
+	cleanPath, err := normalizeObjectKey(path)
+	if err != nil {
 		return "", errors.New("invalid upload path")
 	}
 
-	dst := filepath.Join(s.BasePath, path)
+	dst := filepath.Join(s.BasePath, cleanPath)
 	baseAbs, err := filepath.Abs(s.BasePath)
 	if err != nil {
 		return "", fmt.Errorf("resolve storage base: %w", err)
@@ -84,12 +82,17 @@ func (s *LocalStorage) UploadFile(ctx context.Context, file *multipart.FileHeade
 	}
 
 	// Build URL by concatenating base URL and path
-	url := fmt.Sprintf("%s%s", s.BaseURL, path)
+	url := fmt.Sprintf("%s%s", s.BaseURL, cleanPath)
 	return url, nil
 }
 
 func (s *LocalStorage) DeleteFile(ctx context.Context, path string) error {
-	cleanPath := filepath.Clean(strings.TrimPrefix(path, "/"))
+	key, err := objectKeyFromReference(path, s.BaseURL)
+	if err != nil {
+		return errors.New("invalid delete path")
+	}
+
+	cleanPath := filepath.Clean(key)
 	if cleanPath == "." || cleanPath == "/" || strings.HasPrefix(cleanPath, "..") {
 		return errors.New("invalid delete path")
 	}

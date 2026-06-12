@@ -65,8 +65,20 @@ func newRegService() (*RegistrationService, *mockPendingRepo, *mockRegUserRepo) 
 
 func seedPending(pr *mockPendingRepo, email, code string, ttl time.Duration) {
 	pr.byEmail[email] = entity.NewPendingRegistration(
-		"pid", email, "hashed-pw", "Jane", "Doe", code, "1.2.3.4", ttl,
+		"pid", email, "hashed-pw", "Jane", "Doe", hashToken(code), "1.2.3.4", ttl,
 	)
+}
+
+func TestSeedPendingStoresCodeHash(t *testing.T) {
+	pr := &mockPendingRepo{byEmail: map[string]*entity.PendingRegistration{}}
+	seedPending(pr, "jane@x.io", "123456", 15*time.Minute)
+
+	if pr.byEmail["jane@x.io"].CodeHash == "123456" {
+		t.Fatal("pending registration must not store plaintext verification code")
+	}
+	if !registrationCodeMatches(pr.byEmail["jane@x.io"].CodeHash, "123456") {
+		t.Fatal("stored code hash should verify the original code")
+	}
 }
 
 // The user must only be created (persisted) after a correct code is supplied.

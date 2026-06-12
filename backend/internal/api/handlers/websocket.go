@@ -64,8 +64,15 @@ func (h *Handlers) websocketAccessToken(c *fiber.Ctx) string {
 	protocols := strings.Split(c.Get("Sec-WebSocket-Protocol"), ",")
 	for _, protocol := range protocols {
 		value := strings.TrimSpace(protocol)
-		if strings.HasPrefix(strings.ToLower(value), "bearer ") {
+		lowerValue := strings.ToLower(value)
+		if strings.HasPrefix(lowerValue, "bearer ") {
 			return strings.TrimSpace(value[len("bearer "):])
+		}
+		if strings.HasPrefix(lowerValue, "bearer.") {
+			return strings.TrimSpace(value[len("bearer."):])
+		}
+		if lowerValue == "bearer" {
+			continue
 		}
 		if value != "" {
 			return value

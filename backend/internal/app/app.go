@@ -47,15 +47,19 @@ func StartServer() {
 
 	storage, err := storage.NewStorageByEnv(&config.StorageConfig)
 	if err != nil {
-		logger.Log.Errorw("Error init storage", "error", err)
+		logger.Log.Fatalw("error init storage", "error", err)
 	}
 
 	app := fiber.New(fiber.Config{
-		BodyLimit:         2 * 1024 * 1024, // 2MB
-		ReadTimeout:       10 * time.Second,
-		WriteTimeout:      20 * time.Second,
-		IdleTimeout:       30 * time.Second,
-		ReduceMemoryUsage: true,
+		BodyLimit:               2 * 1024 * 1024, // 2MB
+		ReadTimeout:             10 * time.Second,
+		WriteTimeout:            20 * time.Second,
+		IdleTimeout:             30 * time.Second,
+		ReduceMemoryUsage:       true,
+		EnableIPValidation:      true,
+		ProxyHeader:             fiber.HeaderXForwardedFor,
+		EnableTrustedProxyCheck: true,
+		TrustedProxies:          trustedProxiesFromEnv(),
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			if err != nil {
 				sentry.CaptureException(err)
@@ -99,18 +103,22 @@ func StartServer() {
 	bus := events.NewBus()
 	realtimeHub := realtime.NewHub()
 
-	tg, _ := telegram.New(
+	tg, err := telegram.New(
 		config.TelegramNotifications.Token,
 		config.TelegramNotifications.ChatID,
 	)
-	bus.Subscribe(
-		"user.registered",
-		handlers.UserRegisteredTelegramHandler(tg),
-	)
-	bus.Subscribe(
-		"user.login",
-		handlers.UserLoginTelegramHandler(tg),
-	)
+	if err != nil {
+		logger.Log.Warnw("telegram notifications disabled", "error", err)
+	} else {
+		bus.Subscribe(
+			"user.registered",
+			handlers.UserRegisteredTelegramHandler(tg),
+		)
+		bus.Subscribe(
+			"user.login",
+			handlers.UserLoginTelegramHandler(tg),
+		)
+	}
 	bus.Subscribe(
 		events.WorkspaceMutationEventName,
 		realtime.WorkspaceMutationHandler(realtimeHub),
@@ -188,4 +196,20 @@ func StartServer() {
 	if err := app.Listen(":" + port); err != nil {
 		logger.Log.Fatalw("server failed to start", "error", err)
 	}
+}
+
+func trustedProxiesFromEnv() []string {
+	raw := strings.TrimSpace(os.Getenv("TRUSTED_PROXIES"))
+	if raw == "" {
+		return []string{"127.0.0.1", "::1"}
+	}
+
+	parts := strings.Split(raw, ",")
+	proxies := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if proxy := strings.TrimSpace(part); proxy != "" {
+			proxies = append(proxies, proxy)
+		}
+	}
+	return proxies
 }
