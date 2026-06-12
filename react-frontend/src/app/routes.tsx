@@ -30,6 +30,7 @@ const TaskDetailPage    = lazyWithRetry('task-detail', () => import('@/pages/tas
 const TaskExplorerPage  = lazyWithRetry('task-explorer', () => import('@/pages/tasks/TaskExplorerPage.js').then(m => ({ default: m.TaskExplorerPage })));
 const MembersPage       = lazyWithRetry('members', () => import('@/features/members/MembersPage.js').then(m => ({ default: m.MembersPage })));
 const AboutUs           = lazyWithRetry('about-us', () => import('@/pages/about-us/AboutUs.js'));
+const LanderPage        = lazyWithRetry('lander', () => import('@/pages/lander/LanderPage.js').then(m => ({ default: m.LanderPage })));
 const SettingsModal     = lazyWithRetry('settings-modal', () => import('@/widgets/SettingsModal/SettingsModal.js').then(m => ({ default: m.SettingsModal })));
 
 const Fallback = () => (
@@ -134,6 +135,7 @@ const AnimatedRoutes = () => {
         <Route path="/reset-password"  element={publicRoute(<ResetPasswordPage />)} />
         <Route path="/verify-email"    element={publicRoute(<VerifyEmailPage />)} />
         <Route path="/about-us"        element={publicRoute(<AboutUs />)} />
+        <Route path="/lander"          element={publicRoute(<LanderPage />)} />
         <Route path="/invite/:token"   element={publicRoute(<InviteAcceptPage />)} />
 
         {/* Onboarding — authed, no layout shell */}
