@@ -2,6 +2,7 @@ import React, { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { apiClient } from '@/services/api/client.js';
 import { authService } from '@/services/api/index.js';
+import { isExplicitLogoutPending } from '@/shared/lib/authManager.js';
 import { getCookie, setCookie } from '@/shared/lib/cookies.js';
 
 const LAST_URL_COOKIE_KEY = 'starlex-last-url';
@@ -85,6 +86,7 @@ export const LastVisitedManager: React.FC = () => {
         return;
       }
       if (saved === current) return;
+      if (isExplicitLogoutPending()) return;
 
       let authed = authService.isAuthenticated();
       if (!authed) {

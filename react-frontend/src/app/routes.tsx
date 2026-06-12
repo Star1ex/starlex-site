@@ -7,39 +7,39 @@ import { ErrorBoundary } from '@/components/ErrorBoundary.js';
 import { getLastWorkspaceId } from '@/contexts/useWorkspace.js';
 import { preloadCoreWorkspaceRoutes } from './routePreload.js';
 import { useAuth } from '@/contexts/useAuth.js';
-
-// DEV-only glass lab — tree-shaken out of prod bundle
-const GlassLabPage = import.meta.env.DEV
-  ? React.lazy(() => import('@/pages/GlassLab/GlassLabPage.js').then(m => ({ default: m.GlassLabPage })))
-  : null;
+import { lazyWithRetry } from '@/shared/lib/loadWithRetry.js';
+import { PageRouteSkeleton } from '@/shared/ui/PageLoadState.js';
+import { isExplicitLogoutPending } from '@/shared/lib/authManager.js';
 
 // Lazy-loaded pages
-const HomePage        = React.lazy(() => import('@/pages/home/HomePage.js').then(m => ({ default: m.HomePage })));
-const SignInPage      = React.lazy(() => import('@/pages/auth/SignInPage/SignInPage.js').then(m => ({ default: m.SignInPage })));
-const SignUpPage      = React.lazy(() => import('@/pages/auth/SignUpPage/SignUpPage.js').then(m => ({ default: m.SignUpPage })));
-const ForgotPasswordPage = React.lazy(() => import('@/pages/auth/ForgotPasswordPage/ForgotPasswordPage.js').then(m => ({ default: m.ForgotPasswordPage })));
-const ResetPasswordPage  = React.lazy(() => import('@/pages/auth/ResetPasswordPage/ResetPasswordPage.js').then(m => ({ default: m.ResetPasswordPage })));
-const OAuthCallbackPage  = React.lazy(() => import('@/pages/auth/OAuthCallbackPage/OAuthCallbackPage.js').then(m => ({ default: m.OAuthCallbackPage })));
-const OnboardingPage  = React.lazy(() => import('@/pages/onboarding/OnboardingPage.js').then(m => ({ default: m.OnboardingPage })));
-const VerifyEmailPage = React.lazy(() => import('@/pages/verify/VerifyEmailPage.js').then(m => ({ default: m.VerifyEmailPage })));
-const WorkspacePage   = React.lazy(() => import('@/pages/workspace/WorkspacePage.js').then(m => ({ default: m.WorkspacePage })));
-const ProjectPage     = React.lazy(() => import('@/pages/workspace/ProjectPage.js').then(m => ({ default: m.ProjectPage })));
-const ProfilePage     = React.lazy(() => import('@/pages/profile/UserProfile.js').then(m => ({ default: m.default })));
-const UserProfilePage = React.lazy(() => import('@/pages/profile/UserProfilePage.js').then(m => ({ default: m.UserProfilePage })));
-const InviteAcceptPage  = React.lazy(() => import('@/pages/invite/InviteAcceptPage.js').then(m => ({ default: m.InviteAcceptPage })));
-const MyIssuesPage      = React.lazy(() => import('@/pages/tasks/MyIssuesPage.js').then(m => ({ default: m.MyIssuesPage })));
-const TaskDetailPage    = React.lazy(() => import('@/pages/tasks/TaskDetailPage.js').then(m => ({ default: m.TaskDetailPage })));
-const TaskExplorerPage  = React.lazy(() => import('@/pages/tasks/TaskExplorerPage.js').then(m => ({ default: m.TaskExplorerPage })));
-const MembersPage       = React.lazy(() => import('@/features/members/MembersPage.js').then(m => ({ default: m.MembersPage })));
-const AboutUs           = React.lazy(() => import('@/pages/about-us/AboutUs.js'));
-const SettingsModal     = React.lazy(() => import('@/widgets/SettingsModal/SettingsModal.js').then(m => ({ default: m.SettingsModal })));
+const HomePage        = lazyWithRetry('home', () => import('@/pages/home/HomePage.js').then(m => ({ default: m.HomePage })));
+const SignInPage      = lazyWithRetry('sign-in', () => import('@/pages/auth/SignInPage/SignInPage.js').then(m => ({ default: m.SignInPage })));
+const SignUpPage      = lazyWithRetry('sign-up', () => import('@/pages/auth/SignUpPage/SignUpPage.js').then(m => ({ default: m.SignUpPage })));
+const ForgotPasswordPage = lazyWithRetry('forgot-password', () => import('@/pages/auth/ForgotPasswordPage/ForgotPasswordPage.js').then(m => ({ default: m.ForgotPasswordPage })));
+const ResetPasswordPage  = lazyWithRetry('reset-password', () => import('@/pages/auth/ResetPasswordPage/ResetPasswordPage.js').then(m => ({ default: m.ResetPasswordPage })));
+const OAuthCallbackPage  = lazyWithRetry('oauth-callback', () => import('@/pages/auth/OAuthCallbackPage/OAuthCallbackPage.js').then(m => ({ default: m.OAuthCallbackPage })));
+const OnboardingPage  = lazyWithRetry('onboarding', () => import('@/pages/onboarding/OnboardingPage.js').then(m => ({ default: m.OnboardingPage })));
+const VerifyEmailPage = lazyWithRetry('verify-email', () => import('@/pages/verify/VerifyEmailPage.js').then(m => ({ default: m.VerifyEmailPage })));
+const WorkspacePage   = lazyWithRetry('workspace', () => import('@/pages/workspace/WorkspacePage.js').then(m => ({ default: m.WorkspacePage })));
+const ProjectPage     = lazyWithRetry('project', () => import('@/pages/workspace/ProjectPage.js').then(m => ({ default: m.ProjectPage })));
+const ProfilePage     = lazyWithRetry('profile', () => import('@/pages/profile/UserProfile.js').then(m => ({ default: m.default })));
+const UserProfilePage = lazyWithRetry('user-profile', () => import('@/pages/profile/UserProfilePage.js').then(m => ({ default: m.UserProfilePage })));
+const InviteAcceptPage  = lazyWithRetry('invite-accept', () => import('@/pages/invite/InviteAcceptPage.js').then(m => ({ default: m.InviteAcceptPage })));
+const MyIssuesPage      = lazyWithRetry('my-issues', () => import('@/pages/tasks/MyIssuesPage.js').then(m => ({ default: m.MyIssuesPage })));
+const TaskDetailPage    = lazyWithRetry('task-detail', () => import('@/pages/tasks/TaskDetailPage.js').then(m => ({ default: m.TaskDetailPage })));
+const TaskExplorerPage  = lazyWithRetry('task-explorer', () => import('@/pages/tasks/TaskExplorerPage.js').then(m => ({ default: m.TaskExplorerPage })));
+const MembersPage       = lazyWithRetry('members', () => import('@/features/members/MembersPage.js').then(m => ({ default: m.MembersPage })));
+const AboutUs           = lazyWithRetry('about-us', () => import('@/pages/about-us/AboutUs.js'));
+const SettingsModal     = lazyWithRetry('settings-modal', () => import('@/widgets/SettingsModal/SettingsModal.js').then(m => ({ default: m.SettingsModal })));
 
 const Fallback = () => (
-  <div className="min-h-screen" style={{ background: 'var(--bg-primary)' }} />
+  <div className="app-loading-gate">
+    <div className="app-loading-spinner" />
+  </div>
 );
 
 const RouteContentFallback = () => (
-  <div className="route-content-fallback" aria-hidden="true" />
+  <PageRouteSkeleton />
 );
 
 const SettingsModalFallback = () => (
@@ -80,7 +80,16 @@ const SettingsModalFallback = () => (
   </div>
 );
 
-const withEB = (el: React.ReactNode) => <ErrorBoundary>{el}</ErrorBoundary>;
+const RouteErrorBoundary: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const location = useLocation();
+  return (
+    <ErrorBoundary resetKey={`${location.pathname}${location.search}`}>
+      {children}
+    </ErrorBoundary>
+  );
+};
+
+const withEB = (el: React.ReactNode) => <RouteErrorBoundary>{el}</RouteErrorBoundary>;
 const publicRoute = (el: React.ReactNode) => withEB(<Suspense fallback={<Fallback />}>{el}</Suspense>);
 const authedRoute = (el: React.ReactNode) => (
   withEB(<RequireAuth><Suspense fallback={<Fallback />}>{el}</Suspense></RequireAuth>)
@@ -115,11 +124,6 @@ const AnimatedRoutes = () => {
   return (
     <>
       <Routes location={background || location}>
-        {/* DEV-only */}
-        {import.meta.env.DEV && GlassLabPage && (
-          <Route path="/glass-lab" element={<Suspense fallback={<Fallback />}><GlassLabPage /></Suspense>} />
-        )}
-
         {/* Public */}
         <Route path="/"                element={publicRoute(<HomePage />)} />
         <Route path="/sign-in"         element={publicRoute(<SignInPage />)} />
@@ -175,20 +179,17 @@ const ShellRoute: React.FC = () => {
   return (
     <RequireAuth>
       <Layout>
-        {/* Content-only crossfade — the sidebar/topbar never animate on nav. */}
-        <AnimatePresence mode="popLayout" initial={false}>
-          <motion.div
-            key={contentKey}
-            variants={routeFadeVariants}
-            initial="initial"
-            animate="animate"
-            exit="exit"
-          >
-            <Suspense fallback={<RouteContentFallback />}>
-              <Outlet />
-            </Suspense>
-          </motion.div>
-        </AnimatePresence>
+        <motion.div
+          key={contentKey}
+          className="route-content-shell"
+          variants={routeFadeVariants}
+          initial="initial"
+          animate="animate"
+        >
+          <Suspense fallback={<RouteContentFallback />}>
+            <Outlet />
+          </Suspense>
+        </motion.div>
       </Layout>
     </RequireAuth>
   );
@@ -209,7 +210,9 @@ const RequireAuth: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-    localStorage.setItem('redirectPath', location.pathname + location.search);
+    if (!isExplicitLogoutPending()) {
+      localStorage.setItem('redirectPath', location.pathname + location.search);
+    }
     return <Navigate to="/sign-in" replace />;
   }
 

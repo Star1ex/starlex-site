@@ -1,5 +1,5 @@
 import { apiClient, httpClient } from './client.js';
-import { clearAuthStorage } from '@/shared/lib/authManager.js';
+import { clearAuthStorage, clearExplicitLogout } from '@/shared/lib/authManager.js';
 import {
   LoginRequest,
   LoginResponse,
@@ -22,6 +22,7 @@ import {
 export const authService = {
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     const response = await httpClient.post<LoginResponse>('/api/auth/login', credentials);
+    clearExplicitLogout();
     apiClient.setAccessToken(response.data.access_token);
     // Fetch CSRF token immediately after login so all mutations work
     await this.ensureCsrfToken();
@@ -36,6 +37,7 @@ export const authService = {
   async verifyEmail(data: VerifyEmailRequest): Promise<VerifyResponse> {
     const response = await httpClient.post<VerifyResponse>('/api/auth/verify', data);
     if (response.data.access_token) {
+      clearExplicitLogout();
       apiClient.setAccessToken(response.data.access_token);
       await this.ensureCsrfToken();
     }
@@ -116,12 +118,8 @@ export const authService = {
 
   async logout(): Promise<void> {
     try {
-      // keepalive allows the request to finish even during navigation
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-        keepalive: true,
-      });
+      await this.ensureCsrfToken();
+      await httpClient.post('/api/auth/logout');
     } catch (err) {
       console.error('Logout request failed:', err);
     } finally {

@@ -14,6 +14,8 @@ import {
 } from '@/entities/task/model/taskMeta.js';
 import { StatusMenu } from '@/features/taskStatus/StatusMenu.js';
 import { InlineLabelChips, LabelPicker } from '@/shared/ui/LabelPicker.js';
+import { DatePickerMenu } from '@/shared/ui/DatePickerMenu.js';
+import { dateFromPickerValue, toPickerDateValue } from '@/shared/ui/DatePickerMenu.utils.js';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -53,13 +55,14 @@ function initials(firstName: string, lastName: string) {
   return [firstName?.[0], lastName?.[0]].filter(Boolean).join('').toUpperCase() || '?';
 }
 
-function dueDateValue(value?: string | null) {
-  return value ? value.slice(0, 10) : '';
+function dueDateLabel(value?: string | null) {
+  const date = dateFromPickerValue(value);
+  if (!date) return 'No due date';
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
-function dueDateLabel(value?: string | null) {
-  if (!value) return 'No due date';
-  return new Date(value).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+function toDueDateValue(date: Date) {
+  return `${toPickerDateValue(date)}T00:00:00Z`;
 }
 
 function priorityConfig(priority: TaskPriority) {
@@ -269,27 +272,16 @@ export function TaskPropertiesPanel({
 
       <PropertyBlock label="Due date">
         {editable ? (
-          <div className="flex items-center gap-2">
-            <label className="relative flex-1">
-              <CalendarDays size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[color:var(--sx-text-subtle)] pointer-events-none" />
-              <input
-                type="date"
-                value={dueDateValue(task.due_date)}
-                onChange={(e) => onDueDateChange(e.target.value ? `${e.target.value}T00:00:00Z` : null)}
-                className="w-full h-9 rounded-lg bg-[color:var(--sx-surface)] pl-9 pr-3 text-label-sm text-[color:var(--sx-text-muted)] outline-none hover:bg-[color:var(--sx-surface-hover)] focus:shadow-[var(--sx-focus-ring)] [color-scheme:inherit]"
-              />
-            </label>
-            {task.due_date && (
-              <button
-                type="button"
-                onClick={() => onDueDateChange(null)}
-                className="w-9 h-9 rounded-lg flex items-center justify-center text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] hover:bg-[color:var(--sx-surface-hover)] transition-colors"
-                aria-label="Clear due date"
-              >
-                <X size={13} />
-              </button>
-            )}
-          </div>
+          <DatePickerMenu
+            value={task.due_date}
+            className="task-due-date-trigger"
+            align="start"
+            iconSize={14}
+            ariaLabel="Task due date"
+            formatValue={dueDateLabel}
+            serializeDate={toDueDateValue}
+            onChange={onDueDateChange}
+          />
         ) : (
           <span className="inline-flex items-center gap-2 text-label-sm text-[color:var(--sx-text-muted)]">
             <CalendarDays size={13} />

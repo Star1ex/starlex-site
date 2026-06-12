@@ -1,10 +1,6 @@
-import { useMemo, useState } from 'react';
 import {
-  CalendarDays,
   Check,
   ChevronDown,
-  ChevronLeft,
-  ChevronRight,
 } from 'lucide-react';
 import {
   TASK_PRIORITIES,
@@ -13,6 +9,8 @@ import {
 import { StatusMenu } from '@/features/taskStatus/StatusMenu.js';
 import { LabelPicker } from '@/shared/ui/LabelPicker.js';
 import { preloadTaskDetailShell } from '@/app/routePreload.js';
+import { DatePickerMenu } from '@/shared/ui/DatePickerMenu.js';
+import { toPickerDateValue } from '@/shared/ui/DatePickerMenu.utils.js';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -54,17 +52,7 @@ function dateFromValue(value?: string | null) {
 }
 
 function toDueDateValue(date: Date) {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}T00:00:00Z`;
-}
-
-function sameDay(a: Date | null, b: Date | null) {
-  if (!a || !b) return false;
-  return a.getFullYear() === b.getFullYear()
-    && a.getMonth() === b.getMonth()
-    && a.getDate() === b.getDate();
+  return `${toPickerDateValue(date)}T00:00:00Z`;
 }
 
 function formatShortDate(value?: string | null) {
@@ -126,121 +114,21 @@ interface DueDateMenuProps {
 }
 
 function DueDateMenu({ value, canEdit, onChange }: DueDateMenuProps) {
-  const selected = dateFromValue(value);
-  const today = new Date();
-  const [open, setOpen] = useState(false);
-  const [month, setMonth] = useState(() => selected ?? today);
-  const monthLabel = month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-  const cells = useMemo(() => {
-    const year = month.getFullYear();
-    const monthIndex = month.getMonth();
-    const firstDay = new Date(year, monthIndex, 1).getDay();
-    const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
-    const daysInPrevMonth = new Date(year, monthIndex, 0).getDate();
-
-    return Array.from({ length: 42 }, (_, index) => {
-      const dayNumber = index - firstDay + 1;
-      if (dayNumber < 1) {
-        return {
-          date: new Date(year, monthIndex - 1, daysInPrevMonth + dayNumber),
-          current: false,
-        };
-      }
-      if (dayNumber > daysInMonth) {
-        return {
-          date: new Date(year, monthIndex + 1, dayNumber - daysInMonth),
-          current: false,
-        };
-      }
-      return {
-        date: new Date(year, monthIndex, dayNumber),
-        current: true,
-      };
-    });
-  }, [month]);
-
   if (!canEdit) {
     return <span>{formatShortDate(value)}</span>;
   }
 
   return (
-    <DropdownMenu
-      open={open}
-      onOpenChange={(next) => {
-        setOpen(next);
-        if (next) setMonth(selected ?? today);
-      }}
-    >
-      <DropdownMenuTrigger asChild>
-        <button type="button" className="tasks-date-trigger">
-          <CalendarDays size={12} />
-          <span>{formatShortDate(value)}</span>
-          <ChevronDown size={12} className="tasks-inline-chevron" />
-        </button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="glass-menu tasks-calendar-menu">
-        <div className="tasks-calendar-head">
-          <button
-            type="button"
-            onClick={() => setMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() - 1, 1))}
-            aria-label="Previous month"
-          >
-            <ChevronLeft size={14} />
-          </button>
-          <span>{monthLabel}</span>
-          <button
-            type="button"
-            onClick={() => setMonth((prev) => new Date(prev.getFullYear(), prev.getMonth() + 1, 1))}
-            aria-label="Next month"
-          >
-            <ChevronRight size={14} />
-          </button>
-        </div>
-        <div className="tasks-calendar-grid tasks-calendar-weekdays">
-          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
-            <span key={`${day}-${index}`}>{day}</span>
-          ))}
-        </div>
-        <div className="tasks-calendar-grid">
-          {cells.map((cell) => (
-            <button
-              key={cell.date.toISOString()}
-              type="button"
-              className="tasks-calendar-day"
-              data-muted={!cell.current ? 'true' : undefined}
-              data-selected={sameDay(cell.date, selected) ? 'true' : undefined}
-              data-today={sameDay(cell.date, today) ? 'true' : undefined}
-              onClick={() => {
-                onChange(toDueDateValue(cell.date));
-                setOpen(false);
-              }}
-            >
-              {cell.date.getDate()}
-            </button>
-          ))}
-        </div>
-        <div className="tasks-calendar-footer">
-          <button
-            type="button"
-            onClick={() => {
-              onChange(null);
-              setOpen(false);
-            }}
-          >
-            Clear
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              onChange(toDueDateValue(today));
-              setOpen(false);
-            }}
-          >
-            Today
-          </button>
-        </div>
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <DatePickerMenu
+      value={value}
+      className="tasks-date-trigger"
+      align="end"
+      iconSize={12}
+      ariaLabel="Task due date"
+      formatValue={formatShortDate}
+      serializeDate={toDueDateValue}
+      onChange={onChange}
+    />
   );
 }
 

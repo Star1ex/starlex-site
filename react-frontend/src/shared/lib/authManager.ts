@@ -53,6 +53,32 @@ export const isTokenExpired = (): boolean => {
 
 // Display cache only. Keep credentials, ids, providers, and verification state out of localStorage.
 const USER_KEY = 'user';
+const EXPLICIT_LOGOUT_KEY = 'starlex:auth:explicit-logout';
+
+export const markExplicitLogout = (): void => {
+  try {
+    localStorage.setItem(EXPLICIT_LOGOUT_KEY, String(Date.now()));
+  } catch (err) {
+    console.error('Failed to mark explicit logout:', err);
+  }
+};
+
+export const clearExplicitLogout = (): void => {
+  try {
+    localStorage.removeItem(EXPLICIT_LOGOUT_KEY);
+  } catch (err) {
+    console.error('Failed to clear explicit logout marker:', err);
+  }
+};
+
+export const isExplicitLogoutPending = (): boolean => {
+  try {
+    return localStorage.getItem(EXPLICIT_LOGOUT_KEY) !== null;
+  } catch (err) {
+    console.error('Failed to read explicit logout marker:', err);
+    return false;
+  }
+};
 
 export const setAuthUser = (user: AuthUserSource): void => {
   const displayCache: AuthUserCache = {

@@ -29,22 +29,10 @@ import {
   PROJECT_STATUS_META,
 } from '@/entities/project/model/projectMeta.js';
 import type { ProjectDTO, ProjectPriority, ProjectStatus, UserDTO, WorkspaceRole } from '@/types/dto.js';
+import { ProjectTargetDateMenu } from './projects/ProjectTargetDateMenu.js';
+import { formatProjectTargetDate } from './projects/projectListUtils.js';
 
 const NO_LEAD_VALUE = '__no_lead__';
-
-function dueDateValue(value: string | null): string {
-  if (!value) return '';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return '';
-  return date.toISOString().slice(0, 10);
-}
-
-function dueDateLabel(value: string | null): string {
-  if (!value) return 'No target';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'No target';
-  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-}
 
 function memberName(member?: UserDTO): string {
   if (!member) return 'No lead';
@@ -403,20 +391,17 @@ export const ProjectPropertiesPanel: React.FC<ProjectPropertiesPanelProps> = ({
 
       <PropertyRow label="Target">
         {canManage ? (
-          <label className="project-date-field">
-            <CalendarDays size={13} />
-            <span>{dueDateLabel(project.deadline)}</span>
-            <input
-              type="date"
-              value={dueDateValue(project.deadline)}
-              onChange={(event) => handleDeadlineChange(event.target.value)}
-              aria-label="Project target date"
-            />
-          </label>
+          <ProjectTargetDateMenu
+            value={project.deadline}
+            className="project-date-field"
+            iconSize={13}
+            align="start"
+            onChange={handleDeadlineChange}
+          />
         ) : (
           <span className="project-property-static project-property-static--neutral">
             <CalendarDays size={13} />
-            {dueDateLabel(project.deadline)}
+            {formatProjectTargetDate(project.deadline)}
           </span>
         )}
       </PropertyRow>

@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 import { authService, userService } from '@/services/api/index.js';
-import { setAuthUser } from '@/shared/lib/authManager.js';
+import { clearExplicitLogout, setAuthUser } from '@/shared/lib/authManager.js';
 import { useAuth } from '@/contexts/useAuth.js';
 import { useTheme, useSystemThemeOnly } from '@/shared/contexts/useTheme.js';
 import { getLastWorkspaceId } from '@/contexts/useWorkspace.js';
@@ -153,6 +153,7 @@ export const SignInPage = () => {
   const handleOAuth = (provider: 'google' | 'github') => {
     setErrorMessage("");
     setSuccessMessage("");
+    clearExplicitLogout();
     setOauthLoading(provider);
     const redirectPath = localStorage.getItem('redirectPath') || '/dashboard';
     window.location.href = `/api/auth/${provider}?redirect=${encodeURIComponent(redirectPath)}`;

@@ -13,6 +13,9 @@ import { getAllViews, type SavedView } from '@/shared/lib/savedViews.js';
 import { pageVariants, listItemVariants, listVariants } from '@/shared/lib/animations.js';
 import { StatusMenu } from '@/features/taskStatus/StatusMenu.js';
 import { can } from '@/shared/lib/permissions.js';
+import { getApiErrorMessage } from '@/shared/lib/apiError.js';
+import { isRetryableRequestError, loadWithRetry } from '@/shared/lib/loadWithRetry.js';
+import { PageLoadError } from '@/shared/ui/PageLoadState.js';
 import { TASK_PRIORITY_META } from '@/entities/task/model/taskMeta.js';
 
 // ─── task row ──────────────────────────────────────────────────────────────────
@@ -145,24 +148,37 @@ export const MyIssuesPage: React.FC = () => {
 
   const [tasks, setTasks] = useState<TaskDTO[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const requestIdRef = useRef(0);
 
   const load = useCallback(async (params: TaskQueryParams, append = false) => {
     if (!activeWorkspaceId) return;
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
     setLoading(true);
+    if (!append) setLoadError(null);
     try {
       const queryParams: TaskQueryParams = {
         ...params,
         assignee_id: userId ?? undefined,
         limit: 50,
       };
-      const result = await taskService.queryTasks(activeWorkspaceId, queryParams);
+      const result = await loadWithRetry(
+        () => taskService.queryTasks(activeWorkspaceId, queryParams),
+        { shouldRetry: isRetryableRequestError },
+      );
+      if (requestId !== requestIdRef.current) return;
       setTasks(prev => append ? [...prev, ...result.tasks] : result.tasks);
       setNextCursor(result.next_cursor);
-    } catch {
+    } catch (error: unknown) {
+      if (requestId !== requestIdRef.current) return;
+      if (!append) {
+        setLoadError(getApiErrorMessage(error, 'Failed to load your issues. Please retry.'));
+      }
       showToast('Failed to load tasks');
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
   }, [activeWorkspaceId, userId]);
 
@@ -201,6 +217,10 @@ export const MyIssuesPage: React.FC = () => {
         <p className="text-body-md text-[color:var(--sx-text-subtle)]">Select a workspace to view issues</p>
       </div>
     );
+  }
+
+  if (loadError && tasks.length === 0 && activeView) {
+    return <PageLoadError message={loadError} onRetry={() => load(activeView.params)} />;
   }
 
   return (

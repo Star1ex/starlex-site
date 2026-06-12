@@ -1,7 +1,13 @@
 import React, { useEffect, useState, ReactNode } from 'react';
 import { apiClient } from '@/services/api/client.js';
 import { authService, userService } from '@/services/api/index.js';
-import { clearAuthStorage, setAuthUser } from '@/shared/lib/authManager.js';
+import {
+  clearAuthStorage,
+  clearExplicitLogout,
+  isExplicitLogoutPending,
+  markExplicitLogout,
+  setAuthUser,
+} from '@/shared/lib/authManager.js';
 import { realtimeClient } from '@/shared/lib/realtime.js';
 import type { UserProfileDTO } from '@/types/dto.js';
 import { AuthContext } from './authContext.js';
@@ -41,6 +47,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const refreshUser = async () => {
     try {
       setIsLoading(true);
+      if (isExplicitLogoutPending()) {
+        realtimeClient.disconnect();
+        apiClient.clearAccessToken();
+        clearAuthStorage();
+        setUserId(null);
+        setUserEmail(null);
+        setIsAuthenticated(false);
+        return;
+      }
+
       const hasSession = await apiClient.initialize();
       if (!hasSession) {
         setUserId(null);
@@ -75,22 +91,25 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   const login = async (accessToken: string) => {
+    clearExplicitLogout();
     apiClient.setAccessToken(accessToken);
     await refreshUser();
   };
 
   const logout = async () => {
+    markExplicitLogout();
+    realtimeClient.disconnect();
+    setUserId(null);
+    setUserEmail(null);
+    setIsAuthenticated(false);
+
     try {
       await authService.logout();
     } catch {
       // best-effort; still clear locally
     } finally {
-      realtimeClient.disconnect();
       apiClient.clearAccessToken();
       clearAuthStorage();
-      setUserId(null);
-      setUserEmail(null);
-      setIsAuthenticated(false);
       window.location.replace('/sign-in');
     }
   };

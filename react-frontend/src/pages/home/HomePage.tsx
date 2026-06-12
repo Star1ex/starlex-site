@@ -299,18 +299,6 @@ export const HomePage = () => {
         <meta property="og:image" content="https://starlex.cc/og-image.png" />
         <meta property="og:url" content="https://starlex.cc/" />
         <meta name="twitter:card" content="summary_large_image" />
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "SoftwareApplication",
-            name: "Starlex",
-            applicationCategory: "ProjectManagement",
-            operatingSystem: "Web",
-            offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-            description: "Task management with sprints, projects, and real-time collaboration.",
-            url: "https://starlex.cc",
-          })}
-        </script>
       </Helmet>
 
       {/* Video modal */}

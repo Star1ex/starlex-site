@@ -4,6 +4,7 @@ import { taskService, userService } from '@/services/api/index.js';
 import { can } from '@/shared/lib/permissions.js';
 import { showToast } from '@/shared/lib/toast.js';
 import { useWorkspace } from '@/contexts/useWorkspace.js';
+import { PageLoadError } from '@/shared/ui/PageLoadState.js';
 import { TaskExplorerContent } from './explorer/TaskExplorerContent.js';
 import { TaskExplorerHeader } from './explorer/TaskExplorerHeader.js';
 import {
@@ -37,6 +38,8 @@ export function TaskExplorerPage() {
     members,
     loading,
     loadingMore,
+    loadError,
+    reload,
     loadMore,
     refreshCategories,
   } = useTaskExplorerQuery(workspaceId, params);
@@ -155,6 +158,15 @@ export function TaskExplorerPage() {
     setLocalQ('');
     clearParams();
   }, [clearParams]);
+
+  if (loadError && tasks.length === 0) {
+    return (
+      <PageLoadError
+        message={loadError}
+        onRetry={() => reload({ showLoading: true, surfaceError: true })}
+      />
+    );
+  }
 
   return (
     <div className="tasks-page">

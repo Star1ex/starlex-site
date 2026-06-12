@@ -7,11 +7,15 @@ import React, {
 import type { WorkspaceDTO } from '@/types/dto.js';
 import { useTheme } from '@/shared/contexts/useTheme.js';
 import { realtimeClient } from '@/shared/lib/realtime.js';
+import { userService } from '@/services/api/index.js';
+import { useAuth } from './useAuth.js';
 import { WorkspaceContext } from './workspaceContext.js';
 import { clearLastWorkspaceId, getInitialWorkspace, setLastWorkspaceId } from './workspaceStorage.js';
+import { isRetryableRequestError, loadWithRetry } from '@/shared/lib/loadWithRetry.js';
 
 export const WorkspaceProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { setAccent, clearAccent } = useTheme();
+  const { isAuthenticated, isInitialized } = useAuth();
 
   const [activeWorkspace, setActiveWorkspaceState] = useState<WorkspaceDTO | null>(getInitialWorkspace);
 
@@ -22,6 +26,44 @@ export const WorkspaceProvider: React.FC<{ children: ReactNode }> = ({ children 
       clearAccent();
     }
   }, [activeWorkspace?.color, setAccent, clearAccent]);
+
+  useEffect(() => {
+    if (!isInitialized) return;
+
+    if (!isAuthenticated) {
+      const id = window.setTimeout(() => {
+        setActiveWorkspaceState(null);
+        clearAccent();
+      }, 0);
+      return () => window.clearTimeout(id);
+    }
+
+    if (!activeWorkspace?.id) return;
+
+    let ignore = false;
+    const workspaceId = activeWorkspace.id;
+
+    loadWithRetry(
+      () => userService.getWorkspaces(),
+      { shouldRetry: isRetryableRequestError },
+    )
+      .then((workspaces) => {
+        if (ignore) return;
+        const next = workspaces.find((workspace) => workspace.id === workspaceId) ?? null;
+        if (next) {
+          setActiveWorkspaceState(next);
+        } else {
+          setActiveWorkspaceState(null);
+          clearLastWorkspaceId();
+          clearAccent();
+        }
+      })
+      .catch(() => {
+        // Keep the saved workspace id; route-level loaders surface request errors.
+      });
+
+    return () => { ignore = true; };
+  }, [activeWorkspace?.id, clearAccent, isAuthenticated, isInitialized]);
 
   // Live sync: when the active workspace's identity changes (icon/colour/name),
   // patch it here so the accent + every context consumer updates instantly.

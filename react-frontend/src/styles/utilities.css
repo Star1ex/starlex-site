@@ -40,6 +40,12 @@
   .scrollbar-none::-webkit-scrollbar { display: none; }
 
   /* Page transition */
+  .route-content-shell {
+    min-height: calc(100vh - 140px);
+  }
+  .route-content-fallback {
+    min-height: min(34rem, calc(100vh - 140px));
+  }
   .page-transition {
     animation: pageFadeIn 420ms cubic-bezier(0.22, 1, 0.36, 1);
   }
@@ -76,6 +82,48 @@
     border-top-color: var(--sx-accent);
     border-radius: 50%;
     animation: spin 0.7s linear infinite;
+  }
+  .app-error-gate {
+    display: flex;
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background: var(--sx-body-bg, var(--bg-primary, #000000));
+  }
+  .app-error-card {
+    width: min(100%, 26rem);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--sx-line);
+    background: var(--sx-canvas-elevated);
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: var(--sx-shadow-elevated);
+  }
+  .app-error-card h2 {
+    color: var(--sx-text);
+    font-size: 1rem;
+    font-weight: 650;
+  }
+  .app-error-card p {
+    margin-top: 0.45rem;
+    color: var(--sx-text-subtle);
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  .app-error-card button {
+    margin-top: 1rem;
+    border-radius: 9999px;
+    background: var(--sx-accent);
+    padding: 0.55rem 0.9rem;
+    color: var(--sx-accent-contrast);
+    font-size: 0.8125rem;
+    font-weight: 620;
+    transition: filter 150ms ease, transform 150ms ease;
+  }
+  .app-error-card button:hover {
+    filter: brightness(1.06);
+    transform: translateY(-1px);
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 

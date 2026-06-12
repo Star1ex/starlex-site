@@ -9,6 +9,7 @@ import { Helmet } from 'react-helmet-async';
 import { pageVariants, listVariants, listItemVariants } from '@/shared/lib/animations.js';
 import { getApiErrorInfo } from '@/shared/lib/apiError.js';
 import { Glass } from '@/shared/ui/glass/index.js';
+import { clearExplicitLogout } from '@/shared/lib/authManager.js';
 
 export const SignUpPage = () => {
   useSystemThemeOnly();
@@ -101,6 +102,7 @@ export const SignUpPage = () => {
 
   const handleOAuth = (provider: 'google' | 'github') => {
     setErrorMessage('');
+    clearExplicitLogout();
     setOauthLoading(provider);
     const redirectPath = '/dashboard';
     window.location.href = `/api/auth/${provider}?redirect=${encodeURIComponent(redirectPath)}`;

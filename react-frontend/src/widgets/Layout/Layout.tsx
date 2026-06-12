@@ -7,10 +7,9 @@ import { Topbar } from '@/widgets/Topbar/Topbar.js';
 import SearchModal from '@/widgets/SearchModal/LazySearchModal.js';
 import { preloadSearchModal } from '@/app/routePreload.js';
 import { ToastHost } from '@/shared/ui/ToastHost.js';
-import { RefractionFilter } from '@/shared/ui/glass/index.js';
 import { useRealtimeConnection } from '@/shared/hooks/useRealtime.js';
 import { useWorkspace } from '@/contexts/useWorkspace.js';
-import { Menu, X } from 'lucide-react';
+import { Menu, Plus, Search, X } from 'lucide-react';
 
 type ViewTransitionDocument = Document & {
   startViewTransition?: (callback: () => void) => unknown;
@@ -28,7 +27,7 @@ interface LayoutProps {
 export const Layout: React.FC<LayoutProps> = ({ children }) => {
   useRealtimeConnection();
   const navigate = useNavigate();
-  const { activeWorkspaceId } = useWorkspace();
+  const { activeWorkspace, activeWorkspaceId } = useWorkspace();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(() =>
     typeof window !== 'undefined' ? window.innerWidth < 768 : false,
@@ -46,9 +45,31 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     return () => window.removeEventListener('resize', onResize);
   }, []);
 
+  const routeKey = `${location.pathname}${location.search}${location.hash}`;
+
   useEffect(() => {
     queueMicrotask(() => setMobileSidebarOpen(false));
-  }, [location.pathname]);
+  }, [routeKey]);
+
+  useEffect(() => {
+    if (!isMobile || !mobileSidebarOpen) return undefined;
+
+    const previousBodyOverflow = document.body.style.overflow;
+    const previousHtmlOverscroll = document.documentElement.style.overscrollBehavior;
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overscrollBehavior = 'none';
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobileSidebarOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+
+    return () => {
+      document.body.style.overflow = previousBodyOverflow;
+      document.documentElement.style.overscrollBehavior = previousHtmlOverscroll;
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isMobile, mobileSidebarOpen]);
 
   const openSearch = useCallback(() => {
     preloadSearchModal();
@@ -120,9 +141,6 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Depth field — the only thing behind the shell */}
       <div className="sx-depth" aria-hidden="true" />
 
-      {/* Chromium-only edge-refraction filter for opt-in lab/dev specimens. */}
-      <RefractionFilter />
-
       {/* Desktop sidebar */}
       {!isMobile && <GlobalSidebar />}
 
@@ -131,40 +149,68 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
       {/* Mobile topbar */}
       {isMobile && (
-        <div
-          className="fixed top-0 left-0 right-0 z-50 h-12 flex items-center justify-between px-3 bg-[color:var(--sx-canvas-elevated)] shadow-[0_1px_0_var(--sx-line)]"
-        >
+        <header className="mobile-app-topbar">
           <button
+            type="button"
             onClick={() => setMobileSidebarOpen(true)}
-            className="w-9 h-9 flex items-center justify-center rounded-lg hover:bg-[color:var(--sx-surface-hover)] transition-colors text-[color:var(--sx-text-muted)]"
+            className="mobile-icon-button"
             aria-label="Open menu"
+            aria-controls="mobile-navigation-drawer"
+            aria-expanded={mobileSidebarOpen}
           >
             <Menu size={20} />
           </button>
-          <span className="text-sm font-semibold text-[color:var(--sx-text)] truncate">Starlex</span>
-          <div className="w-9" />
-        </div>
+          <div className="mobile-topbar-title">
+            <span>Workspace</span>
+            <strong>{activeWorkspace?.name ?? 'Starlex'}</strong>
+          </div>
+          <div className="mobile-topbar-actions">
+            <button
+              type="button"
+              onClick={openSearch}
+              className="mobile-icon-button"
+              aria-label="Search"
+            >
+              <Search size={18} />
+            </button>
+            <button
+              type="button"
+              onClick={() => navigate(newTaskPath)}
+              className="mobile-icon-button mobile-icon-button--accent"
+              aria-label="New task"
+            >
+              <Plus size={18} />
+            </button>
+          </div>
+        </header>
       )}
 
       {/* Mobile sidebar overlay */}
       {isMobile && (
         <>
           <div
-            className={`fixed inset-0 z-[45] transition-opacity duration-300 ${
-              mobileSidebarOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
-            }`}
-            style={{ background: 'var(--sx-overlay)' }}
+            className={`mobile-menu-overlay ${mobileSidebarOpen ? 'is-open' : ''}`}
             onClick={() => setMobileSidebarOpen(false)}
+            aria-hidden="true"
           />
           <div
-            className={`fixed left-0 top-0 h-full z-[50] transition-transform duration-300 ease-out ${
-              mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-            }`}
+            id="mobile-navigation-drawer"
+            className={`mobile-sidebar-drawer ${mobileSidebarOpen ? 'is-open' : ''}`}
+            role="dialog"
+            aria-modal="true"
+            aria-hidden={!mobileSidebarOpen}
+            aria-label="Mobile navigation"
+            inert={mobileSidebarOpen ? undefined : true}
           >
-            <GlobalSidebar className="!w-72 !rounded-r-3xl" />
+            <div className="mobile-drawer-grabber" aria-hidden="true" />
+            <GlobalSidebar
+              className="app-sidebar--mobile"
+              onNavigate={() => setMobileSidebarOpen(false)}
+            />
             <button
+              type="button"
               onClick={() => setMobileSidebarOpen(false)}
-              className="absolute top-3 right-3 w-8 h-8 flex items-center justify-center rounded-lg glass-card text-[color:var(--sx-text-muted)] hover:text-[color:var(--sx-text)]"
+              className="mobile-drawer-close"
               aria-label="Close menu"
             >
               <X size={18} />
@@ -177,7 +223,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       <main
         className={
           isMobile
-            ? 'pt-12 pb-6 px-4'
+            ? 'mobile-main-content'
             : 'ml-[272px] pt-[92px] px-12 pb-12 max-w-[1640px]'
         }
       >

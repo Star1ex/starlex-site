@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { workspaceService, projectService, userService } from '@/services/api/index.js';
@@ -9,6 +9,9 @@ import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle.js';
 import { showToast } from '@/shared/lib/toast.js';
 import { useWorkspace } from '@/contexts/useWorkspace.js';
 import { useProjectRealtime, upsertProject } from '@/shared/hooks/useRealtimeSync.js';
+import { getApiErrorInfo, getApiErrorMessage } from '@/shared/lib/apiError.js';
+import { isRetryableRequestError, loadWithRetry } from '@/shared/lib/loadWithRetry.js';
+import { PageLoadError } from '@/shared/ui/PageLoadState.js';
 import { WorkspaceWelcome } from './WorkspaceWelcome.js';
 import { WorkspaceBento } from './WorkspaceBento.js';
 import { WorkspaceProjects } from './WorkspaceProjects.js';
@@ -46,21 +49,35 @@ export const WorkspacePage: React.FC = () => {
   const [projects, setProjects] = useState<ProjectDTO[]>([]);
   const [members, setMembers] = useState<UserDTO[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [currentUser, setCurrentUser] = useState<UserProfileDTO | null>(null);
+  const requestIdRef = useRef(0);
 
   useDocumentTitle(workspace?.name ?? 'Workspace');
 
   const load = useCallback(async () => {
-    if (!workspaceId) return;
+    if (!workspaceId) {
+      setLoadError('Workspace URL is missing.');
+      setLoading(false);
+      return;
+    }
+
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
     setLoading(true);
+    setLoadError(null);
     try {
-      const [ps, ms, wsList, profile] = await Promise.all([
-        projectService.getWorkspaceProjects(workspaceId),
-        workspaceService.getWorkspaceUsers(workspaceId),
-        userService.getWorkspaces(),
-        userService.getProfile().catch(() => null),
-      ]);
+      const [ps, ms, wsList, profile] = await loadWithRetry(
+        () => Promise.all([
+          projectService.getWorkspaceProjects(workspaceId),
+          workspaceService.getWorkspaceUsers(workspaceId),
+          userService.getWorkspaces(),
+          userService.getProfile().catch(() => null),
+        ]),
+        { shouldRetry: isRetryableRequestError },
+      );
+      if (requestId !== requestIdRef.current) return;
       setProjects(ps);
       setMembers(ms);
       const ws = wsList.find(w => w.id === workspaceId) ?? null;
@@ -68,10 +85,12 @@ export const WorkspacePage: React.FC = () => {
       if (ws) setActiveWorkspace(ws);
       if (profile) setCurrentUser(profile);
     } catch (err: unknown) {
-      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (requestId !== requestIdRef.current) return;
+      const status = getApiErrorInfo(err).status;
       if (status === 401) navigate('/sign-in');
+      else setLoadError(getApiErrorMessage(err, 'Failed to load workspace. Please retry.'));
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
   }, [workspaceId, navigate, setActiveWorkspace]);
 
@@ -121,6 +140,10 @@ export const WorkspacePage: React.FC = () => {
         <PageSkeleton />
       </motion.div>
     );
+  }
+
+  if (loadError) {
+    return <PageLoadError message={loadError} onRetry={load} />;
   }
 
   if (view === 'members') {

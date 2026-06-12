@@ -21,10 +21,14 @@ type Handler<T = unknown> = (envelope: RealtimeEnvelope<T>) => void;
 const BACKOFF_BASE = 1_000;
 const BACKOFF_MAX = 30_000;
 
-type RealtimeAuthMode = 'cookie' | 'query';
+type RealtimeAuthMode = 'subprotocol' | 'query';
+type RealtimeConnection = {
+  url: string;
+  protocols?: string[];
+};
 
 const getRealtimeAuthMode = (): RealtimeAuthMode => {
-  return import.meta.env.VITE_WS_AUTH_MODE === 'cookie' ? 'cookie' : 'query';
+  return import.meta.env.VITE_WS_AUTH_MODE === 'query' ? 'query' : 'subprotocol';
 };
 
 const getWebSocketBase = () => {
@@ -33,21 +37,23 @@ const getWebSocketBase = () => {
   return httpBase.replace(/^http:/, 'ws:').replace(/^https:/, 'wss:');
 };
 
-const buildRealtimeUrl = (workspaceId: string): string | null => {
+const buildRealtimeConnection = (workspaceId: string): RealtimeConnection | null => {
   const mode = getRealtimeAuthMode();
   const url = new URL('/api/ws', getWebSocketBase());
   url.searchParams.set('workspace_id', workspaceId);
 
-  if (mode === 'cookie') {
-    return url.toString();
-  }
-
   const token = apiClient.getAccessToken();
   if (!token) return null;
 
-  // TODO: remove query-token auth after the backend supports cookie auth or short-lived WS tickets everywhere.
-  url.searchParams.set('token', token);
-  return url.toString();
+  if (mode === 'query') {
+    url.searchParams.set('token', token);
+    return { url: url.toString() };
+  }
+
+  return {
+    url: url.toString(),
+    protocols: [`bearer.${token}`],
+  };
 };
 
 class RealtimeClient {
@@ -84,10 +90,10 @@ class RealtimeClient {
 
   private _open() {
     if (this.closed || !this.workspaceId) return;
-    const url = buildRealtimeUrl(this.workspaceId);
-    if (!url) return;
+    const connection = buildRealtimeConnection(this.workspaceId);
+    if (!connection) return;
 
-    const ws = new WebSocket(url);
+    const ws = new WebSocket(connection.url, connection.protocols);
     this.ws = ws;
 
     ws.onopen = () => { this.attempt = 0; };

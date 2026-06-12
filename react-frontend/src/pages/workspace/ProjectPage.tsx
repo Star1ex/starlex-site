@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { LayoutList, Kanban } from 'lucide-react';
@@ -12,6 +12,9 @@ import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle.js';
 import { useProjectRealtime, useTaskRealtime } from '@/shared/hooks/useRealtimeSync.js';
 import { showToast } from '@/shared/lib/toast.js';
 import { can } from '@/shared/lib/permissions.js';
+import { getApiErrorInfo, getApiErrorMessage } from '@/shared/lib/apiError.js';
+import { isRetryableRequestError, loadWithRetry } from '@/shared/lib/loadWithRetry.js';
+import { PageLoadError } from '@/shared/ui/PageLoadState.js';
 import { ProjectHeader, ProjectPropertiesPanel } from './ProjectHeader.js';
 import { ProjectTaskList } from './ProjectTaskList.js';
 import ProjectBoard from '@/features/taskBoard/LazyTaskBoard.js';
@@ -48,29 +51,45 @@ export const ProjectPage: React.FC = () => {
   const [tasks, setTasks] = useState<TaskDTO[]>([]);
   const [members, setMembers] = useState<UserDTO[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [view, setView] = useState<'list' | 'board'>('list');
+  const requestIdRef = useRef(0);
 
   useDocumentTitle(project?.name ?? 'Project');
 
   const load = useCallback(async () => {
-    if (!projectId) return;
+    if (!projectId) {
+      setLoadError('Project URL is missing.');
+      setLoading(false);
+      return;
+    }
+
+    const requestId = requestIdRef.current + 1;
+    requestIdRef.current = requestId;
     setLoading(true);
+    setLoadError(null);
     try {
-      const [proj, ts, ms] = await Promise.all([
-        projectService.getProjectById(projectId),
-        projectService.getProjectTasks(projectId),
-        projectService.getProjectMembers(projectId),
-      ]);
+      const [proj, ts, ms] = await loadWithRetry(
+        () => Promise.all([
+          projectService.getProjectById(projectId),
+          projectService.getProjectTasks(projectId),
+          projectService.getProjectMembers(projectId),
+        ]),
+        { shouldRetry: isRetryableRequestError },
+      );
+      if (requestId !== requestIdRef.current) return;
       setProject(proj);
       setTasks(ts);
       setMembers(ms);
     } catch (err: unknown) {
-      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (requestId !== requestIdRef.current) return;
+      const status = getApiErrorInfo(err).status;
       if (status === 401) navigate('/sign-in');
       else if (status === 404) navigate(`/workspace/${workspaceId}`);
+      else setLoadError(getApiErrorMessage(err, 'Failed to load project. Please retry.'));
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) setLoading(false);
     }
   }, [projectId, workspaceId, navigate]);
 
@@ -131,6 +150,10 @@ export const ProjectPage: React.FC = () => {
         <PageSkeleton />
       </motion.div>
     );
+  }
+
+  if (loadError) {
+    return <PageLoadError message={loadError} onRetry={load} />;
   }
 
   return (

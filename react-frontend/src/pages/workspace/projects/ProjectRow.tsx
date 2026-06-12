@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import {
-  CalendarDays,
   MoreHorizontal,
   Trash2,
   UserRound,
@@ -18,14 +17,14 @@ import { showToast } from '@/shared/lib/toast.js';
 import { listItemVariants } from '@/shared/lib/animations.js';
 import Avatar from '@/shared/ui/Avatar.js';
 import { ProjectIcon } from '@/shared/ui/ProjectIcon.js';
+import { cn } from '@/shared/lib/cn.js';
 import type { ProjectDTO, ProjectPriority, ProjectStatus, UserDTO } from '@/types/dto.js';
 import { ProjectPriorityBars } from './ProjectPriorityBars.js';
 import {
-  formatProjectTargetDate,
   getProjectMemberName,
   PROJECT_LIST_ICON_STROKE,
-  toProjectTargetInputDate,
 } from './projectListUtils.js';
+import { ProjectTargetDateMenu } from './ProjectTargetDateMenu.js';
 
 interface ProjectRowProps {
   project: ProjectDTO;
@@ -117,9 +116,12 @@ export function ProjectRow({ project, members, lead, onProjectUpdated, onDelete,
     <motion.div
       ref={menuRef}
       variants={listItemVariants}
-      className="projects-list-row group"
-      onClick={onClick}
-      whileHover={{ x: 2 }}
+      className={cn('projects-list-row group', menuOpen ? 'projects-list-row--menu-open' : false)}
+      onClick={(event) => {
+        if (event.target instanceof Element && event.target.closest('[data-floating-menu]')) return;
+        onClick();
+      }}
+      whileHover={menuOpen ? undefined : { x: 2 }}
       whileTap={{ scale: 0.998 }}
     >
       <div className="projects-list-name">
@@ -138,6 +140,7 @@ export function ProjectRow({ project, members, lead, onProjectUpdated, onDelete,
         <button
           type="button"
           className="project-chip-button"
+          data-state={menuOpen === 'priority' ? 'open' : undefined}
           style={{ color: priorityMeta.color }}
           disabled={saving}
           onClick={(event) => {
@@ -151,6 +154,10 @@ export function ProjectRow({ project, members, lead, onProjectUpdated, onDelete,
           {menuOpen === 'priority' && (
             <motion.div
               className="dropdown-menu project-inline-dropdown"
+              data-floating-menu="true"
+              onPointerDown={(event) => event.stopPropagation()}
+              onMouseDown={(event) => event.stopPropagation()}
+              onClick={(event) => event.stopPropagation()}
               initial={{ opacity: 0, scale: 0.96, y: -4 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: -4 }}
@@ -179,6 +186,7 @@ export function ProjectRow({ project, members, lead, onProjectUpdated, onDelete,
         <button
           type="button"
           className="project-inline-button project-lead-button"
+          data-state={menuOpen === 'lead' ? 'open' : undefined}
           disabled={saving}
           onClick={(event) => {
             event.stopPropagation();
@@ -196,6 +204,10 @@ export function ProjectRow({ project, members, lead, onProjectUpdated, onDelete,
           {menuOpen === 'lead' && (
             <motion.div
               className="dropdown-menu project-inline-dropdown project-inline-dropdown--wide"
+              data-floating-menu="true"
+              onPointerDown={(event) => event.stopPropagation()}
+              onMouseDown={(event) => event.stopPropagation()}
+              onClick={(event) => event.stopPropagation()}
               initial={{ opacity: 0, scale: 0.96, y: -4 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: -4 }}
@@ -220,17 +232,11 @@ export function ProjectRow({ project, members, lead, onProjectUpdated, onDelete,
         </AnimatePresence>
       </div>
 
-      <label className="project-cell project-date-control" onClick={(event) => event.stopPropagation()}>
-        <CalendarDays size={14} strokeWidth={PROJECT_LIST_ICON_STROKE} />
-        <span>{formatProjectTargetDate(project.deadline)}</span>
-        <input
-          type="date"
-          value={toProjectTargetInputDate(project.deadline)}
-          disabled={saving}
-          onChange={(event) => handleDeadlineChange(event.target.value)}
-          aria-label="Project target date"
-        />
-      </label>
+      <ProjectTargetDateMenu
+        value={project.deadline}
+        disabled={saving}
+        onChange={handleDeadlineChange}
+      />
 
       <div className="project-cell">
         <UsersRound size={14} strokeWidth={PROJECT_LIST_ICON_STROKE} />
@@ -241,6 +247,7 @@ export function ProjectRow({ project, members, lead, onProjectUpdated, onDelete,
         <button
           type="button"
           className="project-chip-button"
+          data-state={menuOpen === 'status' ? 'open' : undefined}
           style={{ color: status.dot }}
           disabled={saving}
           onClick={(event) => {
@@ -255,6 +262,10 @@ export function ProjectRow({ project, members, lead, onProjectUpdated, onDelete,
           {menuOpen === 'status' && (
             <motion.div
               className="dropdown-menu project-inline-dropdown project-inline-dropdown--wide"
+              data-floating-menu="true"
+              onPointerDown={(event) => event.stopPropagation()}
+              onMouseDown={(event) => event.stopPropagation()}
+              onClick={(event) => event.stopPropagation()}
               initial={{ opacity: 0, scale: 0.96, y: -4 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: -4 }}
@@ -305,6 +316,10 @@ export function ProjectRow({ project, members, lead, onProjectUpdated, onDelete,
           {menuOpen === 'actions' && (
             <motion.div
               className="dropdown-menu absolute right-0 top-8 z-30 min-w-[140px]"
+              data-floating-menu="true"
+              onPointerDown={(event) => event.stopPropagation()}
+              onMouseDown={(event) => event.stopPropagation()}
+              onClick={(event) => event.stopPropagation()}
               initial={{ opacity: 0, scale: 0.96, y: -4 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: -4 }}

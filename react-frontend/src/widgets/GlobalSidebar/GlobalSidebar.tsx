@@ -24,6 +24,7 @@ import { WorkspaceCreateModal } from '@/widgets/WorkspaceCreateModal/WorkspaceCr
 import { cn } from '@/shared/lib/cn.js';
 import { dropdownVariants, tapScale, springUI } from '@/shared/lib/animations.js';
 import { trackItem } from '@/shared/lib/recentItems.js';
+import { isRetryableRequestError, loadWithRetry } from '@/shared/lib/loadWithRetry.js';
 import type { User } from '@/entities/types.js';
 import type { WorkspaceDTO } from '@/types/dto.js';
 import { useWorkspace } from '@/contexts/useWorkspace.js';
@@ -38,6 +39,7 @@ import {
 
 interface GlobalSidebarProps {
   className?: string;
+  onNavigate?: () => void;
 }
 
 const ICON_STROKE = 1.55;
@@ -64,7 +66,7 @@ function WsGlyph({ workspace }: { workspace: WorkspaceDTO }) {
   );
 }
 
-export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) => {
+export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '', onNavigate }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { logout } = useAuth();
@@ -133,7 +135,10 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
 
   const fetchWorkspaces = useCallback(async () => {
     try {
-      const data = await userService.getWorkspaces();
+      const data = await loadWithRetry(
+        () => userService.getWorkspaces(),
+        { shouldRetry: isRetryableRequestError },
+      );
       setWorkspaces(Array.isArray(data) ? data : []);
     } catch {
       // silent — user may be unauthed
@@ -178,7 +183,8 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
     trackItem({ id: ws.id, name: ws.name, url: `/workspace/${ws.id}`, type: 'workspace' });
     setShowSwitcher(false);
     navigate(`/workspace/${ws.id}`);
-  }, [navigate]);
+    onNavigate?.();
+  }, [navigate, onNavigate]);
 
   const sidebarStyle = useMemo(() => ({
     ['--workspace-accent' as string]: activeWorkspace?.color || '#e6455a',
@@ -225,6 +231,9 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
             {showSwitcher && (
               <motion.div
                 className="absolute top-full mt-1.5 left-0 right-0 dropdown-menu sidebar-floating-menu z-[60]"
+                onPointerDown={(event) => event.stopPropagation()}
+                onMouseDown={(event) => event.stopPropagation()}
+                onClick={(event) => event.stopPropagation()}
                 variants={dropdownVariants}
                 initial="initial"
                 animate="animate"
@@ -255,6 +264,7 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
                     onClick={() => {
                       setShowSwitcher(false);
                       navigate('/settings?tab=workspace', { state: { background: location } });
+                      onNavigate?.();
                     }}
                     onMouseEnter={preloadSettingsModal}
                     onFocus={preloadSettingsModal}
@@ -291,7 +301,10 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
                 type="button"
                 onMouseEnter={preload}
                 onFocus={preload}
-                onClick={() => navigate(to)}
+                onClick={() => {
+                  navigate(to);
+                  onNavigate?.();
+                }}
                 className={cn('sidebar-nav-item', isActive && 'active')}
                 initial={{ opacity: 0, x: -8 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -326,6 +339,7 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
             state={{ background: location }}
             onMouseEnter={preloadSettingsModal}
             onFocus={preloadSettingsModal}
+            onClick={onNavigate}
             className={({ isActive }) => cn('sidebar-dock-pill', isActive && 'active')}
           >
             <Settings2 size={15} strokeWidth={ICON_STROKE} className="text-[color:var(--sx-text-subtle)] flex-shrink-0" />
@@ -360,6 +374,9 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
               {showProfileMenu && (
                 <motion.div
                   className="absolute bottom-full left-0 right-0 mb-1.5 dropdown-menu sidebar-floating-menu"
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onMouseDown={(event) => event.stopPropagation()}
+                  onClick={(event) => event.stopPropagation()}
                   variants={dropdownVariants}
                   initial="initial"
                   animate="animate"
@@ -367,7 +384,7 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
                 >
                   <button
                     type="button"
-                    onClick={() => { navigate('/profile'); setShowProfileMenu(false); }}
+                    onClick={() => { navigate('/profile'); setShowProfileMenu(false); onNavigate?.(); }}
                     className="dropdown-menu-item"
                   >
                     <UserRound size={14} strokeWidth={ICON_STROKE} />
@@ -375,7 +392,7 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
                   </button>
                   <button
                     type="button"
-                    onClick={() => { navigate('/settings', { state: { background: location } }); setShowProfileMenu(false); }}
+                    onClick={() => { navigate('/settings', { state: { background: location } }); setShowProfileMenu(false); onNavigate?.(); }}
                     onMouseEnter={preloadSettingsModal}
                     onFocus={preloadSettingsModal}
                     className="dropdown-menu-item"
@@ -386,7 +403,7 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
                   <div className="dropdown-divider" />
                   <button
                     type="button"
-                    onClick={() => { logout(); setShowProfileMenu(false); }}
+                    onClick={() => { logout(); setShowProfileMenu(false); onNavigate?.(); }}
                     className="dropdown-menu-item dropdown-menu-item--danger"
                   >
                     <LogOut size={14} strokeWidth={ICON_STROKE} />
