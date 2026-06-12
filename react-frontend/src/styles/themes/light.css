@@ -24,6 +24,9 @@
     --sx-glass-fill-top-strong: rgb(255 255 255 / 0.45);
     --sx-glass-brightness: 1.06;
     --sx-glass-saturate: 170%;
+    --sx-menu-fill-top: rgb(255 255 255 / 0.62);
+    --sx-menu-fill-bottom: rgb(255 255 255 / 0.18);
+    --sx-menu-scrim: rgb(15 23 42 / 0.045);
     --sx-rim-bright: rgb(255 255 255 / 0.95);
     --sx-rim-faint: rgb(15 23 42 / 0.06);
     --sx-thickness: rgb(15 23 42 / 0.06);

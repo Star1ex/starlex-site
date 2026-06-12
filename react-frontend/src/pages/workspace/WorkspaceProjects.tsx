@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Layers, Plus } from 'lucide-react';
 import type { ProjectDTO, UserDTO } from '@/types/dto.js';
 import { listVariants } from '@/shared/lib/animations.js';
-import { Glass } from '@/shared/ui/glass/index.js';
 import { CreateProjectModal } from './CreateProjectModal.js';
 import { ProjectRow } from './projects/ProjectRow.js';
 import { PROJECT_LIST_ICON_STROKE } from './projects/projectListUtils.js';
@@ -72,10 +71,7 @@ export const WorkspaceProjects: React.FC<WorkspaceProjectsProps> = ({
           </button>
         </motion.div>
       ) : (
-        <Glass
-          as={motion.div}
-          variant="panel"
-          depth="raised"
+        <motion.div
           className="projects-list-shell"
           variants={listVariants}
           initial="initial"
@@ -103,7 +99,7 @@ export const WorkspaceProjects: React.FC<WorkspaceProjectsProps> = ({
               onClick={() => onProjectClick(project.id)}
             />
           ))}
-        </Glass>
+        </motion.div>
       )}
 
       <CreateProjectModal

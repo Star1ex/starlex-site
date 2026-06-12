@@ -4,6 +4,9 @@ import { useWorkspace } from '@/contexts/useWorkspace.js';
 import { showToast } from '@/shared/lib/toast.js';
 import { LabelsManager } from './LabelsManager.js';
 import { DarkSelect } from '@/shared/ui/DarkSelect.js';
+import { WorkspaceAvatar } from '@/shared/ui/WorkspaceAvatar.js';
+import { buildGenerativeIcon, resolveWorkspaceIcon, GENERATIVE_VARIANTS } from '@/shared/lib/workspaceAvatar.js';
+import { RefreshCw } from 'lucide-react';
 import { TASK_STATUS_META } from '@/entities/task/model/taskMeta.js';
 import type { TaskStatus, WorkspaceDTO } from '@/types/dto.js';
 
@@ -57,6 +60,7 @@ export const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = () => {
   const [loading, setLoading] = useState(true);
 
   const [name, setName] = useState('');
+  const [icon, setIcon] = useState('');
   const [description, setDescription] = useState('');
   const [color, setColor] = useState('#e6455a');
   const [keyPrefix, setKeyPrefix] = useState('');
@@ -72,6 +76,7 @@ export const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = () => {
       setWorkspace(ws);
       if (ws) {
         setName(ws.name ?? '');
+        setIcon(ws.icon ?? '');
         setDescription(ws.description ?? '');
         setColor(ws.color ?? '#e6455a');
         setKeyPrefix(ws.key_prefix ?? '');
@@ -91,12 +96,13 @@ export const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = () => {
       await workspaceService.patchWorkspaceSettings(activeWorkspaceId, {
         name: trimmed,
         description: description.trim(),
+        icon,
         color,
         key_prefix: keyPrefix.trim() || undefined,
         default_task_status: defaultStatus || undefined,
         member_default_role: memberRole,
       });
-      setActiveWorkspace({ ...workspace, name: trimmed, description: description.trim(), color });
+      setActiveWorkspace({ ...workspace, name: trimmed, description: description.trim(), icon, color });
       showToast('Workspace settings saved', 'success');
     } catch (err: unknown) {
       const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
@@ -131,6 +137,26 @@ export const WorkspaceSettings: React.FC<WorkspaceSettingsProps> = () => {
         </div>
 
         <div className="grid gap-4">
+          <Field label="Avatar">
+            <div className="flex items-center gap-3">
+              <WorkspaceAvatar seed={workspace?.id || name || 'workspace'} name={name} icon={icon} color={color} size={48} />
+              <button
+                type="button"
+                className="workspace-avatar-regen"
+                disabled={saving}
+                title="Regenerate avatar"
+                aria-label="Regenerate avatar"
+                onClick={() => {
+                  const next = (resolveWorkspaceIcon(icon).variant + 1) % GENERATIVE_VARIANTS;
+                  setIcon(buildGenerativeIcon(next));
+                }}
+              >
+                <RefreshCw size={14} />
+              </button>
+              <span className="text-label-sm text-[color:var(--sx-text-subtle)]">Auto-generated from your workspace — colour follows the accent.</span>
+            </div>
+          </Field>
+
           <Field label="Workspace name">
             <input
               value={name}

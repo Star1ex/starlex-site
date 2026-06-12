@@ -25,8 +25,9 @@ export const OnboardingPage: React.FC = () => {
     setLoading(true);
     setError('');
     try {
-      const nextIcon = icon.trim() || trimmed.slice(0, 2).toUpperCase();
-      const ws = await workspaceService.createWorkspace({ name: trimmed, icon: nextIcon, color });
+      // Empty icon → deterministic generative avatar from the workspace id.
+      const nextIcon = icon.trim();
+      const ws = await workspaceService.createWorkspace({ name: trimmed, icon: nextIcon || undefined, color });
       window.dispatchEvent(new CustomEvent('workspaceCreated'));
       setActiveWorkspace({ ...ws, icon: nextIcon, color });
       navigate(`/workspace/${ws.id}`, { replace: true });

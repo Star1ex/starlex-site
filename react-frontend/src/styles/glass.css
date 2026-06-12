@@ -19,9 +19,9 @@
     pointer-events: none;
     background: linear-gradient(160deg,
       var(--sx-rim-bright),
-      var(--sx-rim-faint) 28%,
-      transparent 55%,
-      var(--sx-rim-faint) 100%);
+      var(--sx-rim-faint) 22%,
+      transparent 45%,
+      transparent 100%);
     -webkit-mask:
       linear-gradient(#000 0 0) content-box,
       linear-gradient(#000 0 0);
@@ -75,9 +75,11 @@
     isolation: isolate;
     outline: none;
     border-radius: var(--radius-lg);
-    background: linear-gradient(180deg, var(--sx-glass-fill-top-strong), var(--sx-glass-fill-bottom));
-    backdrop-filter: blur(40px) saturate(var(--sx-glass-saturate));
-    -webkit-backdrop-filter: blur(40px) saturate(var(--sx-glass-saturate));
+    background:
+      linear-gradient(180deg, var(--sx-menu-fill-top), var(--sx-menu-fill-bottom)),
+      var(--sx-menu-scrim);
+    backdrop-filter: blur(36px) saturate(var(--sx-glass-saturate)) brightness(var(--sx-glass-brightness, 1));
+    -webkit-backdrop-filter: blur(36px) saturate(var(--sx-glass-saturate)) brightness(var(--sx-glass-brightness, 1));
     box-shadow:
       var(--sx-shadow-elevated),
       inset 0 -12px 24px -16px var(--sx-thickness);

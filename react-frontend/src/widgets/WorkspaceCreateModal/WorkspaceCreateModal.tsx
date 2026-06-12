@@ -52,10 +52,12 @@ export const WorkspaceCreateModal: React.FC<WorkspaceCreateModalProps> = ({
     setLoading(true);
     setError('');
     try {
-      const nextIcon = icon.trim() || trimmed.slice(0, 2).toUpperCase();
+      // Empty icon → the sidebar renders a deterministic generative avatar
+      // from the workspace id. Only persist an explicit choice.
+      const nextIcon = icon.trim();
       const ws = await workspaceService.createWorkspace({
         name: trimmed,
-        icon: nextIcon,
+        icon: nextIcon || undefined,
         color,
         description: description.trim() || undefined,
       });
@@ -73,19 +75,18 @@ export const WorkspaceCreateModal: React.FC<WorkspaceCreateModalProps> = ({
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="product-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
           variants={modalBackdropVariants}
           initial="initial"
           animate="animate"
           exit="exit"
-          style={{ background: 'var(--sx-overlay)' }}
           onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
         >
           <Glass
             as={motion.div}
             variant="modal"
             depth="floating"
-            className="workspace-create-modal w-full max-w-lg overflow-hidden"
+            className="product-modal-shell workspace-create-modal w-full max-w-lg overflow-hidden"
             variants={modalContentVariants}
           >
             <div className="flex items-center justify-between px-6 pt-6 pb-4">

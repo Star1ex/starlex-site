@@ -6,19 +6,7 @@ import { workspaceService } from '@/services/api/index.js';
 import type { InvitePreviewDTO } from '@/types/dto.js';
 import { useAuth } from '@/contexts/useAuth.js';
 import { useWorkspace } from '@/contexts/useWorkspace.js';
-
-function WorkspaceGlyph({ name, color }: { name: string; color?: string }) {
-  const bg = color || '#e6455a';
-  const letter = name.charAt(0).toUpperCase();
-  return (
-    <div
-      className="w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold font-hanken text-[color:var(--sx-accent-contrast)] shadow-lg"
-      style={{ background: bg, boxShadow: `0 8px 32px ${bg}55` }}
-    >
-      {letter}
-    </div>
-  );
-}
+import { WorkspaceAvatar } from '@/shared/ui/WorkspaceAvatar.js';
 
 export const InviteAcceptPage: React.FC = () => {
   const { token } = useParams<{ token: string }>();
@@ -111,7 +99,13 @@ export const InviteAcceptPage: React.FC = () => {
             <div className="glass-card rounded-2xl p-8 space-y-6 text-center">
               <div className="flex flex-col items-center gap-4">
                 {preview.workspace && (
-                  <WorkspaceGlyph name={preview.workspace.name} color={preview.workspace.color} />
+                  <WorkspaceAvatar
+                    seed={preview.workspace.id || preview.workspace.name}
+                    name={preview.workspace.name}
+                    icon={preview.workspace.icon}
+                    color={preview.workspace.color}
+                    size={64}
+                  />
                 )}
                 <div>
                   <p className="text-label-sm text-[color:var(--sx-text-subtle)] mb-1">You've been invited to</p>

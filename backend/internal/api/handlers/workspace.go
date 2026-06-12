@@ -128,6 +128,7 @@ func (h *Handlers) PatchWorkspaceName(ctx *fiber.Ctx) error {
 		}
 	}
 
+	h.broadcast(workspaceID, userID, "workspace.updated", fiber.Map{"id": workspaceID, "name": name})
 	return ctx.SendStatus(fiber.StatusNoContent)
 }
 
@@ -169,6 +170,7 @@ func (h *Handlers) PatchWorkspaceDescription(ctx *fiber.Ctx) error {
 		}
 	}
 
+	h.broadcast(workspaceID, userID, "workspace.updated", fiber.Map{"id": workspaceID, "description": *input.Description})
 	return ctx.SendStatus(fiber.StatusNoContent)
 }
 
@@ -204,6 +206,7 @@ func (h *Handlers) PatchWorkspaceIcon(ctx *fiber.Ctx) error {
 		}
 	}
 
+	h.broadcast(workspaceID, userID, "workspace.updated", fiber.Map{"id": workspaceID, "icon": *input.Icon})
 	return ctx.SendStatus(fiber.StatusNoContent)
 }
 
@@ -253,6 +256,7 @@ func (h *Handlers) PatchWorkspaceColor(ctx *fiber.Ctx) error {
 		}
 	}
 
+	h.broadcast(workspaceID, userID, "workspace.updated", fiber.Map{"id": workspaceID, "color": *input.Color})
 	return ctx.SendStatus(fiber.StatusNoContent)
 }
 
@@ -297,7 +301,9 @@ func (h *Handlers) PatchWorkspaceSettings(ctx *fiber.Ctx) error {
 	if err != nil {
 		return h.writeWorkspaceSettingsError(ctx, err)
 	}
-	return ctx.Status(fiber.StatusOK).JSON(dto.ToWorkspaceResponse(updated))
+	response := dto.ToWorkspaceResponse(updated)
+	h.broadcast(workspaceID, userID, "workspace.updated", response)
+	return ctx.Status(fiber.StatusOK).JSON(response)
 }
 
 // Swagger disabled: GetUsers godoc

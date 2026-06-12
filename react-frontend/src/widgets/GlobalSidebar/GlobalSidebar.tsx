@@ -17,16 +17,17 @@ import {
 import Avatar from '@/shared/ui/Avatar.js';
 import { Glass } from '@/shared/ui/glass/index.js';
 import { getAuthUser } from '@/shared/lib/authManager.js';
-import { WorkspaceGlyph } from '@/shared/lib/workspaceIcon.js';
+import { WorkspaceAvatar } from '@/shared/ui/WorkspaceAvatar.js';
 import { userService } from '@/services/api/index.js';
 import { useAuth } from '@/contexts/useAuth.js';
 import { WorkspaceCreateModal } from '@/widgets/WorkspaceCreateModal/WorkspaceCreateModal.js';
 import { cn } from '@/shared/lib/cn.js';
-import { dropdownVariants } from '@/shared/lib/animations.js';
+import { dropdownVariants, tapScale, springUI } from '@/shared/lib/animations.js';
 import { trackItem } from '@/shared/lib/recentItems.js';
 import type { User } from '@/entities/types.js';
 import type { WorkspaceDTO } from '@/types/dto.js';
 import { useWorkspace } from '@/contexts/useWorkspace.js';
+import { useWorkspaceRealtime } from '@/shared/hooks/useRealtimeSync.js';
 import {
   preloadMembersShell,
   preloadMyIssuesShell,
@@ -51,17 +52,16 @@ const NAV_ITEMS = [
 ] as const;
 
 function WsGlyph({ workspace }: { workspace: WorkspaceDTO }) {
-  if (workspace.icon && workspace.icon.length <= 2 && !workspace.icon.startsWith('/')) {
-    return (
-      <div
-        className="sidebar-workspace-glyph size-6 rounded-lg flex items-center justify-center text-xs font-bold text-[color:var(--sx-accent-contrast)] flex-shrink-0"
-        style={{ backgroundColor: workspace.color || '#e6455a' }}
-      >
-        <span className="text-xs leading-none">{workspace.icon}</span>
-      </div>
-    );
-  }
-  return <WorkspaceGlyph name={workspace.name} color={workspace.color} size={24} />;
+  return (
+    <WorkspaceAvatar
+      seed={workspace.id || workspace.name}
+      name={workspace.name}
+      icon={workspace.icon}
+      color={workspace.color}
+      size={24}
+      className="sidebar-workspace-glyph flex-shrink-0"
+    />
+  );
 }
 
 export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) => {
@@ -78,6 +78,30 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const switcherRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
+  const sidebarRef = useRef<HTMLElement>(null);
+
+  // Specular cursor tracking — one rAF-throttled listener writes --mx/--my
+  // so the glass rim catches light under the pointer (Design Law: respond to light).
+  useEffect(() => {
+    const el = sidebarRef.current;
+    if (!el) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let raf = 0;
+    const onMove = (e: PointerEvent) => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const r = el.getBoundingClientRect();
+        el.style.setProperty('--mx', `${((e.clientX - r.left) / r.width) * 100}%`);
+        el.style.setProperty('--my', `${((e.clientY - r.top) / r.height) * 100}%`);
+      });
+    };
+    el.addEventListener('pointermove', onMove);
+    return () => {
+      el.removeEventListener('pointermove', onMove);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
 
   const activeWorkspaceId = useMemo(() => {
     const match = location.pathname.match(/\/workspace\/([^/]+)/);
@@ -88,6 +112,12 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
     () => workspaces.find((w) => w.id === activeWorkspaceId) ?? workspaces[0],
     [workspaces, activeWorkspaceId],
   );
+
+  // Live sync: workspace identity (icon/colour/name) changed — patch the list
+  // so the sidebar glyph + switcher update without a reload.
+  useWorkspaceRealtime(useCallback((patch) => {
+    setWorkspaces((prev) => prev.map((w) => (w.id === patch.id ? { ...w, ...patch } : w)));
+  }, []));
 
   const displayName = useMemo(() => {
     if (!user) return getAuthUser()?.firstName ?? 'User';
@@ -157,11 +187,11 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
   return (
     <>
       <Glass
+        ref={sidebarRef}
         as={motion.aside}
         variant="sidebar"
         depth="floating"
-        refract
-        className={cn('app-sidebar scrollbar-none', className)}
+        className={cn('app-sidebar scrollbar-none sx-glass--specular', className)}
         style={sidebarStyle}
         initial={{ opacity: 0, x: -16 }}
         animate={{ opacity: 1, x: 0 }}
@@ -175,7 +205,7 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
             className="sidebar-workspace-button"
             data-state={showSwitcher ? 'open' : 'closed'}
             whileHover={{ y: -1 }}
-            whileTap={{ scale: 0.98 }}
+            whileTap={tapScale}
           >
             {activeWorkspace ? (
               <>
@@ -267,12 +297,18 @@ export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) 
                 animate={{ opacity: 1, x: 0 }}
                 transition={{
                   duration: 0.28,
-                  delay: 0.08 + index * 0.025,
+                  delay: 0.04 + index * 0.016, // capped: 6 items → ≤0.12s total
                   ease: [0.16, 1, 0.3, 1],
                 }}
-                whileHover={{ x: 3 }}
-                whileTap={{ scale: 0.98 }}
+                whileTap={tapScale}
               >
+                {isActive && (
+                  <motion.span
+                    layoutId="sx-nav-tick"
+                    className="sidebar-nav-tick"
+                    transition={springUI}
+                  />
+                )}
                 <span className="sidebar-nav-icon">
                   <Icon size={16} strokeWidth={ICON_STROKE} />
                 </span>

@@ -163,17 +163,16 @@
     background: var(--sx-surface-active);
     color: var(--sx-text);
   }
-  /* The only accent in the sidebar: a 2px tick on the active item's edge. */
-  .sidebar-nav-item.active::before {
-    content: "";
+  /* The only accent in the sidebar: a 2px tick that springs between items. */
+  .sidebar-nav-tick {
     position: absolute;
     left: 0;
-    top: 50%;
+    top: calc(50% - 8px);
     width: 2px;
     height: 16px;
     border-radius: 0 2px 2px 0;
     background: var(--sx-accent);
-    transform: translateY(-50%);
+    pointer-events: none;
   }
   .sidebar-nav-icon {
     display: inline-flex;
@@ -251,9 +250,11 @@
     min-width: 180px;
     overflow: hidden;
     border-radius: var(--radius-lg);
-    background: linear-gradient(180deg, var(--sx-glass-fill-top-strong), var(--sx-glass-fill-bottom));
-    backdrop-filter: blur(40px) saturate(var(--sx-glass-saturate));
-    -webkit-backdrop-filter: blur(40px) saturate(var(--sx-glass-saturate));
+    background:
+      linear-gradient(180deg, var(--sx-menu-fill-top), var(--sx-menu-fill-bottom)),
+      var(--sx-menu-scrim);
+    backdrop-filter: blur(36px) saturate(var(--sx-glass-saturate)) brightness(var(--sx-glass-brightness, 1));
+    -webkit-backdrop-filter: blur(36px) saturate(var(--sx-glass-saturate)) brightness(var(--sx-glass-brightness, 1));
     box-shadow:
       var(--sx-shadow-elevated),
       inset 0 -12px 24px -16px var(--sx-thickness);
@@ -270,7 +271,10 @@
     padding: 1px;
     pointer-events: none;
     background: linear-gradient(160deg,
-      var(--sx-rim-bright), var(--sx-rim-faint) 28%, transparent 55%, var(--sx-rim-faint) 100%);
+      var(--sx-rim-bright),
+      var(--sx-rim-faint) 22%,
+      transparent 45%,
+      transparent 100%);
     -webkit-mask:
       linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
     -webkit-mask-composite: xor;
@@ -304,7 +308,6 @@
   .dropdown-menu-item:hover {
     background: var(--sx-surface-hover);
     color: var(--sx-text);
-    transform: translateX(2px);
   }
   .dropdown-menu-item svg {
     flex-shrink: 0;

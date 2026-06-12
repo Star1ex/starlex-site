@@ -17,6 +17,8 @@ import {
 } from '@/components/ui/alert-dialog.js';
 import RichEditor from '@/features/markdown/LazyRichEditor.js';
 import Avatar from '@/shared/ui/Avatar.js';
+import { IconColorPicker } from '@/shared/ui/IconColorPicker.js';
+import { ProjectIcon } from '@/shared/ui/ProjectIcon.js';
 import { projectService } from '@/services/api/index.js';
 import { showToast } from '@/shared/lib/toast.js';
 import { can } from '@/shared/lib/permissions.js';
@@ -47,11 +49,6 @@ function dueDateLabel(value: string | null): string {
 function memberName(member?: UserDTO): string {
   if (!member) return 'No lead';
   return `${member.firstName || ''}${member.lastName ? ` ${member.lastName}` : ''}`.trim() || member.email;
-}
-
-function projectInitial(project: ProjectDTO, fallbackName?: string): string {
-  const source = (project.icon || fallbackName || project.name || 'P').trim();
-  return source.charAt(0).toUpperCase() || 'P';
 }
 
 function projectProgress(tasks: { status?: string }[]) {
@@ -150,18 +147,13 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       </button>
 
       <div className="project-title-row">
-        <label className="project-icon-editor" aria-label="Project icon">
-          {canManage ? (
-            <input
-              value={icon}
-              onChange={(event) => setIcon(event.target.value)}
-              placeholder={projectInitial(project, name)}
-              spellCheck={false}
-            />
-          ) : (
-            <span>{project.icon || projectInitial(project, name)}</span>
-          )}
-        </label>
+        {canManage ? (
+          <IconColorPicker value={icon} onChange={setIcon} triggerClassName="project-icon-editor" triggerIconSize={20} />
+        ) : (
+          <div className="project-icon-editor" aria-label="Project icon">
+            <ProjectIcon icon={project.icon} name={name} size={20} />
+          </div>
+        )}
 
         {canManage ? (
           <textarea

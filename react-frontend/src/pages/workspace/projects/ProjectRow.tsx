@@ -17,11 +17,11 @@ import { projectService } from '@/services/api/index.js';
 import { showToast } from '@/shared/lib/toast.js';
 import { listItemVariants } from '@/shared/lib/animations.js';
 import Avatar from '@/shared/ui/Avatar.js';
+import { ProjectIcon } from '@/shared/ui/ProjectIcon.js';
 import type { ProjectDTO, ProjectPriority, ProjectStatus, UserDTO } from '@/types/dto.js';
 import { ProjectPriorityBars } from './ProjectPriorityBars.js';
 import {
   formatProjectTargetDate,
-  getProjectGlyph,
   getProjectMemberName,
   PROJECT_LIST_ICON_STROKE,
   toProjectTargetInputDate,
@@ -41,6 +41,7 @@ export function ProjectRow({ project, members, lead, onProjectUpdated, onDelete,
   const [saving, setSaving] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const status = PROJECT_STATUS_META[project.status] ?? PROJECT_STATUS_META.backlog;
+  const priorityMeta = PROJECT_PRIORITY_META[project.priority] ?? PROJECT_PRIORITY_META.none;
   const membersCount = project.member_ids.length;
 
   useEffect(() => {
@@ -123,7 +124,7 @@ export function ProjectRow({ project, members, lead, onProjectUpdated, onDelete,
     >
       <div className="projects-list-name">
         <div className="project-row-glyph">
-          {getProjectGlyph(project)}
+          <ProjectIcon icon={project.icon} name={project.name} size={16} />
         </div>
         <div className="min-w-0">
           <div className="project-row-title">{project.name}</div>
@@ -136,7 +137,8 @@ export function ProjectRow({ project, members, lead, onProjectUpdated, onDelete,
       <div className="project-cell project-inline-menu">
         <button
           type="button"
-          className="project-inline-button"
+          className="project-chip-button"
+          style={{ color: priorityMeta.color }}
           disabled={saving}
           onClick={(event) => {
             event.stopPropagation();
@@ -238,14 +240,15 @@ export function ProjectRow({ project, members, lead, onProjectUpdated, onDelete,
       <div className="project-cell project-status-cell project-inline-menu">
         <button
           type="button"
-          className="project-inline-button project-status-button"
+          className="project-chip-button"
+          style={{ color: status.dot }}
           disabled={saving}
           onClick={(event) => {
             event.stopPropagation();
             setMenuOpen((open) => open === 'status' ? null : 'status');
           }}
         >
-          <span className="project-status-dot" style={{ background: status.dot }} />
+          <span className="sx-dot" />
           <span>{status.label}</span>
         </button>
         <AnimatePresence>
@@ -269,7 +272,7 @@ export function ProjectRow({ project, members, lead, onProjectUpdated, onDelete,
                     }}
                     className="dropdown-menu-item"
                   >
-                    <span className="project-status-dot" style={{ background: item.dot }} />
+                    <span className="sx-dot" style={{ color: item.dot }} />
                     {item.label}
                   </button>
                 );

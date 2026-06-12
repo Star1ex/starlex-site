@@ -8,7 +8,7 @@
  *   node scripts/visual-qa.mjs --url http://localhost:5173 --routes /sign-in,/sign-up
  *
  * Output: docs/plans/liquid-glass-v2/shots/<git-sha>/lab-{dark,light}.png
- * Exit:   1 if contrast check fails (any cell < 4.5:1)
+ * Exit:   1 if contrast check fails (any sampled cell < 4.5:1)
  */
 
 import { chromium } from 'playwright-core';
@@ -80,47 +80,110 @@ async function startVite(port) {
   return proc;
 }
 
-// ─── WCAG helpers (runs inside page.evaluate) ─────────────────────────────────
-const CONTRAST_SCRIPT = /* js */ `
-(function() {
-  function parseRgba(str) {
-    const m = str.match(/rgba?\\((\\d+\\.?\\d*)[,\\s]+(\\d+\\.?\\d*)[,\\s]+(\\d+\\.?\\d*)(?:[,\\s\\/]+(\\d+\\.?\\d*))?\\)/);
-    if (!m) return { r: 0, g: 0, b: 0, a: 1 };
-    return { r: +m[1], g: +m[2], b: +m[3], a: m[4] !== undefined ? +m[4] : 1 };
+// ─── WCAG helpers ─────────────────────────────────────────────────────────────
+function parseColor(str) {
+  const rgb = str.match(/rgba?\(\s*([\d.]+)(?:,|\s)+([\d.]+)(?:,|\s)+([\d.]+)(?:(?:\s*\/\s*|,\s*)([\d.]+%?))?\s*\)/);
+  if (rgb) {
+    const alpha = rgb[4]?.endsWith('%') ? Number(rgb[4].slice(0, -1)) / 100 : Number(rgb[4] ?? 1);
+    return { r: Number(rgb[1]), g: Number(rgb[2]), b: Number(rgb[3]), a: alpha };
   }
-  function compose(fg, bg) {
+
+  const srgb = str.match(/color\(srgb\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+%?))?\s*\)/);
+  if (srgb) {
+    const alpha = srgb[4]?.endsWith('%') ? Number(srgb[4].slice(0, -1)) / 100 : Number(srgb[4] ?? 1);
     return {
-      r: fg.r * fg.a + bg.r * (1 - fg.a),
-      g: fg.g * fg.a + bg.g * (1 - fg.a),
-      b: fg.b * fg.a + bg.b * (1 - fg.a),
-      a: 1,
+      r: Number(srgb[1]) * 255,
+      g: Number(srgb[2]) * 255,
+      b: Number(srgb[3]) * 255,
+      a: alpha,
     };
   }
-  function lum({ r, g, b }) {
-    return [r, g, b]
-      .map(c => { c /= 255; return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4; })
-      .reduce((s, c, i) => s + c * [0.2126, 0.7152, 0.0722][i], 0);
-  }
-  function wcag(a, b) {
-    const l1 = lum(a), l2 = lum(b);
-    return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
-  }
 
-  const htmlBg = parseRgba(getComputedStyle(document.documentElement).backgroundColor);
+  throw new Error(`Unsupported color format in contrast check: ${str}`);
+}
 
-  return [...document.querySelectorAll('[data-contrast-cell]')].map(cell => {
-    const label = cell.dataset.contrastCell;
-    const textEl = cell.querySelector('[data-fg]');
-    const rawText = parseRgba(getComputedStyle(textEl).color);
-    const rawBg   = parseRgba(getComputedStyle(cell).backgroundColor);
+function compose(fg, bg) {
+  return {
+    r: fg.r * fg.a + bg.r * (1 - fg.a),
+    g: fg.g * fg.a + bg.g * (1 - fg.a),
+    b: fg.b * fg.a + bg.b * (1 - fg.a),
+    a: 1,
+  };
+}
 
-    const bg   = rawBg.a < 1 ? compose(rawBg, htmlBg) : rawBg;
+function lum({ r, g, b }) {
+  return [r, g, b]
+    .map(c => {
+      c /= 255;
+      return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+    })
+    .reduce((sum, c, i) => sum + c * [0.2126, 0.7152, 0.0722][i], 0);
+}
+
+function wcag(a, b) {
+  const l1 = lum(a);
+  const l2 = lum(b);
+  return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
+}
+
+async function averagePngSwatch(page, png) {
+  return page.evaluate(async (base64) => {
+    const img = new Image();
+    img.src = `data:image/png;base64,${base64}`;
+    await img.decode();
+
+    const canvas = document.createElement('canvas');
+    canvas.width = img.naturalWidth;
+    canvas.height = img.naturalHeight;
+
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(img, 0, 0);
+
+    const size = Math.max(8, Math.floor(Math.min(canvas.width, canvas.height) * 0.08));
+    const startX = Math.min(canvas.width - size, Math.floor(canvas.width * 0.74));
+    const startY = Math.min(canvas.height - size, Math.floor(canvas.height * 0.18));
+    const { data } = ctx.getImageData(startX, startY, size, size);
+
+    let r = 0;
+    let g = 0;
+    let b = 0;
+    let a = 0;
+    const count = data.length / 4;
+
+    for (let i = 0; i < data.length; i += 4) {
+      r += data[i];
+      g += data[i + 1];
+      b += data[i + 2];
+      a += data[i + 3] / 255;
+    }
+
+    return { r: r / count, g: g / count, b: b / count, a: a / count };
+  }, png.toString('base64'));
+}
+
+async function runContrastCheck(page) {
+  const targets = await page.locator('[data-contrast-cell]').evaluateAll(cells => cells.map(cell => {
+    const textEl = cell.querySelector('[data-fg]') ?? cell;
+    return {
+      label: cell.getAttribute('data-contrast-cell'),
+      textColor: getComputedStyle(textEl).color,
+    };
+  }));
+
+  const results = [];
+  for (let i = 0; i < targets.length; i += 1) {
+    const png = await page.locator('[data-contrast-cell]').nth(i).screenshot();
+    const bg = await averagePngSwatch(page, png);
+    const rawText = parseColor(targets[i].textColor);
     const text = rawText.a < 1 ? compose(rawText, bg) : rawText;
+    results.push({
+      label: targets[i].label,
+      ratio: Math.round(wcag(text, bg) * 100) / 100,
+    });
+  }
 
-    return { label, ratio: Math.round(wcag(text, bg) * 100) / 100 };
-  });
-})()
-`;
+  return results;
+}
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 async function main() {
@@ -170,7 +233,7 @@ async function main() {
     console.log(`  → ${shotPath}`);
 
     // Contrast check
-    const cells = await page.evaluate(CONTRAST_SCRIPT);
+    const cells = await runContrastCheck(page);
     results[theme] = cells;
     console.log(`\n  Contrast (${theme}):`);
     for (const { label, ratio } of cells) {

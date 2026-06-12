@@ -136,12 +136,12 @@ export const SettingsModal: React.FC = () => {
         aria-hidden="true"
       />
 
-      {/* Modal box — Glass material (refraction = the showcase wow moment) */}
+      {/* Modal box — Glass material. Keep SVG refraction off in product UI:
+          it pulls depth blobs into visible color-map artifacts in Chromium. */}
       <Glass
         as={motion.div}
         variant="modal"
         depth="floating"
-        refract
         role="dialog"
         aria-modal="true"
         aria-label="Settings"

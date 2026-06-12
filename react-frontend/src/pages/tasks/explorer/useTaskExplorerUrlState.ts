@@ -14,7 +14,6 @@ export function useTaskExplorerUrlState() {
     q:           searchParams.get('q')           ?? undefined,
     sort_by:     (searchParams.get('sort_by') as TaskQueryParams['sort_by']) ?? 'updated_at',
     direction:   (searchParams.get('direction') as TaskQueryParams['direction']) ?? 'desc',
-    cursor:      searchParams.get('cursor')      ?? undefined,
   }), [searchParams]);
 
   const updateParams = useCallback((update: Partial<TaskQueryParams>) => {

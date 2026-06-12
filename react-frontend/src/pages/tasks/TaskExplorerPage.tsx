@@ -36,6 +36,8 @@ export function TaskExplorerPage() {
     categories,
     members,
     loading,
+    loadingMore,
+    loadMore,
     refreshCategories,
   } = useTaskExplorerQuery(workspaceId, params);
   const [showRail, setShowRail] = useState(true);
@@ -144,6 +146,10 @@ export function TaskExplorerPage() {
     searchRef.current = setTimeout(() => updateParams({ q: q || undefined, cursor: undefined }), 350);
   }, [updateParams]);
 
+  useEffect(() => () => {
+    if (searchRef.current) clearTimeout(searchRef.current);
+  }, []);
+
   const activeFilterCount = countActiveTaskFilters(params);
   const clearAllFilters = useCallback(() => {
     setLocalQ('');
@@ -192,7 +198,8 @@ export function TaskExplorerPage() {
         onDueDateChange={handleDueDateChange}
         onOpenTask={(id) => navigate(`/task/${id}`)}
         nextCursor={nextCursor}
-        onLoadMore={() => updateParams({ cursor: nextCursor ?? undefined })}
+        loadingMore={loadingMore}
+        onLoadMore={loadMore}
       />
     </div>
   );

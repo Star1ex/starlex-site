@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { flushSync } from 'react-dom';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import { GlobalSidebar } from '@/widgets/GlobalSidebar/GlobalSidebar.js';
@@ -10,6 +11,15 @@ import { RefractionFilter } from '@/shared/ui/glass/index.js';
 import { useRealtimeConnection } from '@/shared/hooks/useRealtime.js';
 import { useWorkspace } from '@/contexts/useWorkspace.js';
 import { Menu, X } from 'lucide-react';
+
+type ViewTransitionDocument = Document & {
+  startViewTransition?: (callback: () => void) => unknown;
+};
+
+function prefersReducedMotion(): boolean {
+  return typeof window !== 'undefined'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -42,8 +52,23 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const openSearch = useCallback(() => {
     preloadSearchModal();
-    setSearchOpen(true);
+    const doc = document as ViewTransitionDocument;
+    if (typeof doc.startViewTransition === 'function' && !prefersReducedMotion()) {
+      doc.startViewTransition(() => { flushSync(() => setSearchOpen(true)); });
+    } else {
+      setSearchOpen(true);
+    }
   }, []);
+
+  const closeSearch = useCallback(() => {
+    const doc = document as ViewTransitionDocument;
+    if (typeof doc.startViewTransition === 'function' && !prefersReducedMotion()) {
+      doc.startViewTransition(() => { flushSync(() => setSearchOpen(false)); });
+    } else {
+      setSearchOpen(false);
+    }
+  }, []);
+
   const newTaskPath = activeWorkspaceId ? `/task/new?workspaceId=${activeWorkspaceId}` : '/dashboard';
 
   useEffect(() => {
@@ -63,6 +88,26 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
     return () => document.removeEventListener('keydown', onKey);
   }, [navigate, newTaskPath]);
 
+  // Depth-field scroll parallax (Law 12): scrollY * -0.04px via rAF.
+  // Disabled under prefers-reduced-motion.
+  useEffect(() => {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const field = document.querySelector('.sx-depth') as HTMLElement | null;
+    if (!field) return;
+    let rafId = 0;
+    const onScroll = () => {
+      cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(() => {
+        field.style.setProperty('--depth-shift', `${window.scrollY * -0.04}px`);
+      });
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', onScroll);
+      cancelAnimationFrame(rafId);
+    };
+  }, []);
+
   // Track last non-settings route
   useEffect(() => {
     if (!location.pathname.startsWith('/settings')) {
@@ -75,14 +120,14 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       {/* Depth field — the only thing behind the shell */}
       <div className="sx-depth" aria-hidden="true" />
 
-      {/* Chromium-only edge-refraction filter for <Glass refract> (sidebar) */}
+      {/* Chromium-only edge-refraction filter for opt-in lab/dev specimens. */}
       <RefractionFilter />
 
       {/* Desktop sidebar */}
       {!isMobile && <GlobalSidebar />}
 
       {/* Desktop topbar */}
-      {!isMobile && <Topbar onSearchOpen={openSearch} />}
+      {!isMobile && <Topbar onSearchOpen={openSearch} isSearchOpen={searchOpen} />}
 
       {/* Mobile topbar */}
       {isMobile && (
@@ -142,7 +187,7 @@ export const Layout: React.FC<LayoutProps> = ({ children }) => {
       </main>
 
       <ToastHost />
-      <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
+      <SearchModal isOpen={searchOpen} onClose={closeSearch} />
     </div>
   );
 };

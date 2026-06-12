@@ -3,6 +3,7 @@ import { apiClient } from '@/services/api/client.js';
 export type RealtimeEventType =
   | 'task.created' | 'task.updated' | 'task.deleted' | 'task.moved'
   | 'project.created' | 'project.updated' | 'project.deleted'
+  | 'workspace.updated'
   | 'member.added' | 'member.removed' | 'member.role_changed'
   | 'discussion.message'
   | 'presence.sync';

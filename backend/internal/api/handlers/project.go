@@ -63,7 +63,9 @@ func (h *Handlers) CreateProject(ctx *fiber.Ctx) error {
 	if err != nil {
 		return projectError(ctx, err)
 	}
-	return ctx.Status(fiber.StatusCreated).JSON(dto.ToProjectResponse(created))
+	response := dto.ToProjectResponse(created)
+	h.broadcast(created.WorkspaceID, userID, "project.created", response)
+	return ctx.Status(fiber.StatusCreated).JSON(response)
 }
 
 func (h *Handlers) GetWorkspaceProjects(ctx *fiber.Ctx) error {
@@ -131,7 +133,9 @@ func (h *Handlers) UpdateProject(ctx *fiber.Ctx) error {
 	if err != nil {
 		return projectError(ctx, err)
 	}
-	return ctx.Status(fiber.StatusOK).JSON(dto.ToProjectResponse(updated))
+	response := dto.ToProjectResponse(updated)
+	h.broadcast(updated.WorkspaceID, userID, "project.updated", response)
+	return ctx.Status(fiber.StatusOK).JSON(response)
 }
 
 func (h *Handlers) DeleteProject(ctx *fiber.Ctx) error {
@@ -144,8 +148,13 @@ func (h *Handlers) DeleteProject(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "project id is required"})
 	}
 
+	// Resolve the workspace before deletion so we can target the broadcast.
+	existing, lookupErr := h.projectService.GetProjectByID(ctx.Context(), projectID, userID)
 	if err := h.projectService.Delete(ctx.Context(), projectID, userID); err != nil {
 		return projectError(ctx, err)
+	}
+	if lookupErr == nil && existing != nil {
+		h.broadcast(existing.WorkspaceID, userID, "project.deleted", fiber.Map{"id": projectID})
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)
 }

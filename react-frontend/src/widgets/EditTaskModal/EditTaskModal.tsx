@@ -3,6 +3,7 @@ import { X } from 'lucide-react';
 import MarkdownPreview from '@/features/markdown/MarkdownPreview.js';
 import type { Task, User } from '@/entities/types.js';
 import { taskService } from '@/services/api/index.js';
+import { Glass } from '@/shared/ui/glass/index.js';
 
 interface EditTaskModalProps {
   isOpen: boolean;
@@ -97,18 +98,21 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-fadeIn"
-      style={{ background: 'var(--sx-overlay)' }}
+      className="product-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-fadeIn"
       role="dialog"
       aria-modal="true"
     >
-      <div className="bg-white dark:bg-dark-surface rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto animate-slideUp">
+      <Glass
+        variant="modal"
+        depth="floating"
+        className="product-modal-shell rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto animate-slideUp"
+      >
         <div className="px-6 sm:px-8 pt-6 sm:pt-8 pb-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 dark:text-dark-text">Edit Task</h2>
+            <h2 className="text-xl sm:text-2xl font-semibold text-[color:var(--sx-text)]">Edit Task</h2>
             <button
               onClick={onClose}
-              className="flex-shrink-0 p-2 text-gray-400 dark:text-dark-text-muted hover:text-gray-600 dark:hover:text-dark-text hover:bg-gray-100 dark:hover:bg-dark-border rounded-lg transition-all duration-200"
+              className="flex-shrink-0 p-2 text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] hover:bg-[color:var(--sx-surface-hover)] rounded-lg transition-all duration-200"
             >
               <X className="w-5 h-5" strokeWidth={1.55} />
             </button>
@@ -117,7 +121,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
 
         <form onSubmit={handleSubmit} className="px-6 sm:px-8 pb-6 sm:pb-8 space-y-6">
           <div>
-            <label className="block text-xs uppercase tracking-[0.2em] text-gray-500 dark:text-dark-text-muted mb-2" htmlFor="task-name">
+            <label className="block label-caps mb-2" htmlFor="task-name">
               Title
             </label>
             <input
@@ -126,14 +130,14 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
               type="text"
               value={formData.task}
               onChange={(e) => setFormData({ ...formData, task: e.target.value })}
-              className="w-full px-0 py-2 border-0 border-b border-gray-200 dark:border-dark-border focus:outline-none focus:ring-0 focus:border-gray-900 dark:focus:border-white text-2xl font-medium bg-transparent text-gray-900 dark:text-dark-text transition-colors duration-200"
+              className="w-full px-0 py-2 border-0 border-b border-[color:var(--sx-line)] focus:outline-none focus:ring-0 focus:border-[color:var(--sx-text-muted)] text-2xl font-medium bg-transparent text-[color:var(--sx-text)] transition-colors duration-200"
               placeholder="Task title"
               disabled={isLoading}
             />
           </div>
 
           <div>
-            <label className="block text-xs uppercase tracking-[0.2em] text-gray-500 dark:text-dark-text-muted mb-3" htmlFor="description">
+            <label className="block label-caps mb-3" htmlFor="description">
               Description
             </label>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -142,11 +146,11 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
                 value={formData.description}
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 rows={18}
-                className="w-full min-h-[320px] px-4 py-4 border border-gray-200 dark:border-dark-border rounded-xl focus:outline-none focus:ring-2 focus:ring-black/5 dark:focus:ring-white/10 focus:border-gray-300 dark:focus:border-dark-border transition-all duration-200 resize-y text-sm leading-relaxed font-mono bg-white dark:bg-dark-surface text-gray-900 dark:text-dark-text"
+                className="w-full min-h-[320px] px-4 py-4 border border-[color:var(--sx-line)] rounded-xl focus:outline-none focus:shadow-[var(--sx-focus-ring)] focus:border-transparent transition-all duration-200 resize-y text-sm leading-relaxed font-mono bg-[color:var(--sx-surface)] text-[color:var(--sx-text)] placeholder:text-[color:var(--sx-text-disabled)]"
                 placeholder="Write in Markdown..."
                 disabled={isLoading}
               />
-              <div className="min-h-[320px] border border-gray-200 dark:border-dark-border rounded-xl px-4 py-4 bg-gray-50/40 dark:bg-dark-border/20 overflow-y-auto">
+              <div className="min-h-[320px] border border-[color:var(--sx-line)] rounded-xl px-4 py-4 bg-[color:var(--sx-surface)] overflow-y-auto">
                 <div className="task-edit-preview">
                   <MarkdownPreview value={formData.description} />
                 </div>
@@ -159,7 +163,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
               type="button"
               onClick={onClose}
               disabled={isLoading}
-              className="px-5 py-2 border border-gray-200 dark:border-dark-border text-gray-700 dark:text-dark-text rounded-full hover:bg-gray-50 dark:hover:bg-dark-border font-medium text-sm transition-all duration-200"
+              className="liquid-button px-5 py-2 rounded-full font-medium text-sm"
             >
               Cancel
             </button>
@@ -172,7 +176,7 @@ const EditTaskModal: React.FC<EditTaskModalProps> = ({
             </button>
           </div>
         </form>
-      </div>
+      </Glass>
 
       <style>{`
         @keyframes fadeIn {

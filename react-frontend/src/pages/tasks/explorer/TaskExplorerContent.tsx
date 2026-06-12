@@ -1,5 +1,4 @@
 import React, { Suspense } from 'react';
-import { Glass } from '@/shared/ui/glass/index.js';
 import TaskBoard from '@/features/taskBoard/LazyTaskBoard.js';
 import { TaskExplorerFilters } from './TaskExplorerFilters.js';
 import { TaskRow } from './TaskExplorerList.js';
@@ -69,6 +68,7 @@ interface TaskExplorerContentProps {
   onDueDateChange: (id: string, dueDate: string | null) => void;
   onOpenTask: (id: string) => void;
   nextCursor: string | null;
+  loadingMore: boolean;
   onLoadMore: () => void;
 }
 
@@ -108,6 +108,7 @@ export function TaskExplorerContent({
   onDueDateChange,
   onOpenTask,
   nextCursor,
+  loadingMore,
   onLoadMore,
 }: TaskExplorerContentProps) {
   const renderTaskRow = (task: TaskDTO) => (
@@ -133,7 +134,7 @@ export function TaskExplorerContent({
         <TaskExplorerFilters categories={categories} params={params} onChange={onFilterChange} />
       )}
 
-      <Glass variant="panel" depth="raised" className="tasks-table-shell">
+      <div className="tasks-table-shell">
         {loading ? (
           <TaskExplorerLoading />
         ) : tasks.length === 0 ? (
@@ -167,14 +168,14 @@ export function TaskExplorerContent({
             )}
             {nextCursor && (
               <div className="tasks-load-more">
-                <button onClick={onLoadMore}>
-                  Load more
+                <button onClick={onLoadMore} disabled={loadingMore}>
+                  {loadingMore ? 'Loading…' : 'Load more'}
                 </button>
               </div>
             )}
           </>
         )}
-      </Glass>
+      </div>
     </div>
   );
 }

@@ -1,38 +1,20 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link2, Plus, Trash2, ChevronDown, Check, X, Shield, Crown, Eye, User } from 'lucide-react';
+import { Link2, Plus, Trash2, ChevronDown, Check, X } from 'lucide-react';
 import { workspaceService } from '@/services/api/index.js';
 import type { WorkspaceMemberDTO, WorkspaceRole } from '@/types/dto.js';
 import { showToast } from '@/shared/lib/toast.js';
 import { useAuth } from '@/contexts/useAuth.js';
-import { Glass } from '@/shared/ui/glass/index.js';
-
-const ROLE_META: Record<WorkspaceRole, { label: string; icon: React.ReactNode; cls: string }> = {
-  owner:  { label: 'Owner',  icon: <Crown size={11} />,  cls: 'text-[color:var(--priority-high-text)] bg-[color:var(--priority-high-bg)]' },
-  admin:  { label: 'Admin',  icon: <Shield size={11} />, cls: 'text-[color:var(--priority-medium-text)] bg-[color:var(--priority-medium-bg)]' },
-  member: { label: 'Member', icon: <User size={11} />,   cls: 'text-[color:var(--priority-low-text)] bg-[color:var(--priority-low-bg)]' },
-  guest:  { label: 'Guest',  icon: <Eye size={11} />,    cls: 'text-[color:var(--sx-text-subtle)] bg-[color:var(--sx-surface)]' },
-};
-
-const ROLE_ORDER: WorkspaceRole[] = ['owner', 'admin', 'member', 'guest'];
-
-function canManage(currentRole: WorkspaceRole | undefined): boolean {
-  return currentRole === 'owner' || currentRole === 'admin';
-}
-
-function RoleBadge({ role }: { role: WorkspaceRole }) {
-  // Owner reads as a quiet label-caps mark in the done hue — no crown, no pill.
-  if (role === 'owner') {
-    return <span className="label-caps text-[color:var(--status-done-text)]">Owner</span>;
-  }
-  const m = ROLE_META[role] ?? ROLE_META.member;
-  return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-label-sm font-medium ${m.cls}`}>
-      {m.icon}
-      {m.label}
-    </span>
-  );
-}
+import { can } from '@/shared/lib/permissions.js';
+import { copyTextToClipboard } from '@/shared/lib/clipboard.js';
+import { MemberRoleBadge } from './MemberRoleBadge.js';
+import {
+  EDITABLE_MEMBER_ROLES,
+  MEMBER_ROLE_META,
+  getApiErrorMessage,
+  getMemberAvatarSrc,
+  getMemberInitials,
+} from './memberRoleData.js';
 
 interface RolePickerProps {
   value: WorkspaceRole;
@@ -58,9 +40,9 @@ function RolePicker({ value, onChange, disabled }: RolePickerProps) {
       <button
         onClick={() => !disabled && setOpen(p => !p)}
         disabled={disabled}
-        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-label-sm text-[color:var(--sx-text-muted)] bg-[color:var(--sx-surface)] hover:bg-[color:var(--sx-surface-hover)] transition-colors disabled:opacity-40 disabled:cursor-default"
+        className="members-role-trigger"
       >
-        {ROLE_META[value]?.label ?? value}
+        {MEMBER_ROLE_META[value]?.label ?? value}
         {!disabled && <ChevronDown size={11} className="text-[color:var(--sx-text-subtle)]" />}
       </button>
       <AnimatePresence>
@@ -71,13 +53,13 @@ function RolePicker({ value, onChange, disabled }: RolePickerProps) {
             animate={{ opacity: 1, scale: 1, y: 0, transition: { duration: 0.1 } }}
             exit={{ opacity: 0, scale: 0.95, y: -4, transition: { duration: 0.07 } }}
           >
-            {ROLE_ORDER.filter(r => r !== 'owner').map(r => (
+            {EDITABLE_MEMBER_ROLES.map(r => (
               <button
                 key={r}
                 onClick={() => { onChange(r); setOpen(false); }}
                 className="dropdown-menu-item justify-between"
               >
-                {ROLE_META[r].label}
+                {MEMBER_ROLE_META[r].label}
                 {r === value && <Check size={12} className="text-[color:var(--sx-accent)]" />}
               </button>
             ))}
@@ -104,15 +86,16 @@ function MemberRow({
   const u = member.user;
   const isCurrentUser = u.id === currentUserId;
   const isOwner = member.role === 'owner';
-  const canEdit = canManage(currentRole) && !isOwner;
+  const canEdit = can.manageMembers(currentRole) && !isOwner;
+  const src = getMemberAvatarSrc(u);
 
   return (
-    <div className="flex items-center gap-3 px-2 py-2.5 rounded-lg hover:bg-[color:var(--sx-surface-hover)] transition-colors">
-      {u.photo_url || u.avatar_url ? (
-        <img src={(u.photo_url || u.avatar_url)!} className="w-8 h-8 rounded-full object-cover flex-shrink-0" alt="" />
+    <div className="members-row">
+      {src ? (
+        <img src={src} className="members-avatar" alt="" />
       ) : (
-        <div className="w-8 h-8 rounded-full bg-[color:var(--sx-surface-active)] flex items-center justify-center text-sm font-semibold text-[color:var(--sx-text-muted)] flex-shrink-0">
-          {u.firstName.charAt(0)}
+        <div className="members-avatar">
+          {getMemberInitials(u)}
         </div>
       )}
       <div className="flex-1 min-w-0">
@@ -126,7 +109,7 @@ function MemberRow({
         {canEdit ? (
           <RolePicker value={member.role} onChange={r => onRoleChange(u.id, r)} />
         ) : (
-          <RoleBadge role={member.role} />
+          <MemberRoleBadge role={member.role} />
         )}
         {canEdit && !isCurrentUser && (
           <button
@@ -147,13 +130,17 @@ function InviteSection({ workspaceId, canManageMembers }: { workspaceId: string;
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [creating, setCreating] = useState(false);
   const [copied, setCopied] = useState(false);
+  const copyResetRef = useRef<number | null>(null);
+
+  useEffect(() => () => {
+    if (copyResetRef.current) window.clearTimeout(copyResetRef.current);
+  }, []);
 
   const generate = async () => {
     setCreating(true);
     try {
-      const { token } = await workspaceService.createInvite(workspaceId, 'member');
-      const url = `${window.location.origin}/invite/${token}`;
-      setInviteUrl(url);
+      const invite = await workspaceService.createInvite(workspaceId, 'member');
+      setInviteUrl(invite.url || `${window.location.origin}/invite/${invite.token}`);
     } catch {
       showToast('Failed to generate invite link');
     } finally {
@@ -163,15 +150,20 @@ function InviteSection({ workspaceId, canManageMembers }: { workspaceId: string;
 
   const copy = async () => {
     if (!inviteUrl) return;
-    await navigator.clipboard.writeText(inviteUrl);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    try {
+      await copyTextToClipboard(inviteUrl);
+      setCopied(true);
+      if (copyResetRef.current) window.clearTimeout(copyResetRef.current);
+      copyResetRef.current = window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      showToast('Failed to copy invite link');
+    }
   };
 
   if (!canManageMembers) return null;
 
   return (
-    <div className="rounded-xl p-4 space-y-3 bg-[color:var(--sx-canvas-elevated)]">
+    <div className="members-invite-section members-invite-section--solid">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-body-md text-[color:var(--sx-text)] font-medium">Invite link</p>
@@ -186,7 +178,7 @@ function InviteSection({ workspaceId, canManageMembers }: { workspaceId: string;
       </div>
       {inviteUrl && (
         <div className="flex items-center gap-2">
-          <code className="flex-1 text-label-sm text-[color:var(--sx-text-muted)] bg-[color:var(--sx-surface)] rounded-lg px-3 py-2 truncate font-mono">
+          <code className="members-invite-code">
             {inviteUrl}
           </code>
           <button onClick={copy} className="liquid-button gap-1.5 !py-1.5 !px-3 !text-label-sm flex-shrink-0">
@@ -220,8 +212,7 @@ function AddMemberForm({ workspaceId, onAdded }: { workspaceId: string; onAdded:
       onAdded();
       showToast('Member invited');
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
-      setError(msg || 'Failed to add member');
+      setError(getApiErrorMessage(err, 'Failed to add member'));
     } finally {
       setLoading(false);
     }
@@ -301,10 +292,10 @@ export const MembersPanel: React.FC<MembersPanelProps> = ({ workspaceId, current
     }
   }, [members, workspaceId]);
 
-  const isAdmin = canManage(currentRole);
+  const isAdmin = can.manageMembers(currentRole);
 
   return (
-    <div className="space-y-6">
+    <div className="members-panel">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-headline-sm font-hanken font-semibold text-[color:var(--sx-text)]">Members</h2>
@@ -313,14 +304,14 @@ export const MembersPanel: React.FC<MembersPanelProps> = ({ workspaceId, current
       </div>
 
       {isAdmin && (
-        <div className="space-y-4">
+        <div className="members-stack">
           <InviteSection workspaceId={workspaceId} canManageMembers={isAdmin} />
           <AddMemberForm workspaceId={workspaceId} onAdded={load} />
         </div>
       )}
 
       {loading ? (
-        <div className="space-y-3">
+        <div className="members-skeleton-stack">
           {[0,1,2].map(i => <div key={i} className="h-14 rounded-xl bg-[color:var(--sx-surface)] animate-pulse" />)}
         </div>
       ) : error ? (
@@ -328,7 +319,7 @@ export const MembersPanel: React.FC<MembersPanelProps> = ({ workspaceId, current
       ) : members.length === 0 ? (
         <p className="text-body-md text-[color:var(--sx-text-subtle)] text-center py-8">No members yet</p>
       ) : (
-        <Glass variant="panel" depth="raised" className="rounded-xl p-2">
+        <div className="members-list-shell">
           {members.map(m => (
             <MemberRow
               key={m.user.id}
@@ -339,7 +330,7 @@ export const MembersPanel: React.FC<MembersPanelProps> = ({ workspaceId, current
               onRemove={handleRemove}
             />
           ))}
-        </Glass>
+        </div>
       )}
     </div>
   );

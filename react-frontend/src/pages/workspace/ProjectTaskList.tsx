@@ -76,12 +76,11 @@ export const CreateTaskModal: React.FC<CreateTaskModalProps> = ({ isOpen, onClos
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
+          className="product-modal-overlay fixed inset-0 z-50 flex items-end sm:items-center justify-center p-4"
           variants={modalBackdropVariants} initial="initial" animate="animate" exit="exit"
-          style={{ background: 'var(--sx-overlay)' }}
           onClick={e => { if (e.target === e.currentTarget) onClose(); }}
         >
-          <Glass as={motion.div} variant="modal" depth="floating" className="w-full max-w-lg overflow-hidden" variants={modalContentVariants}>
+          <Glass as={motion.div} variant="modal" depth="floating" className="product-modal-shell w-full max-w-lg overflow-hidden" variants={modalContentVariants}>
             <div className="flex items-center justify-between px-6 pt-6 pb-4">
               <h2 className="text-headline-sm font-hanken font-semibold text-[color:var(--sx-text)]">New Task</h2>
               <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] hover:bg-[color:var(--sx-surface-hover)] transition-colors">

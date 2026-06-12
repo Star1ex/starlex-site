@@ -1,4 +1,4 @@
-import type { ProjectDTO, UserDTO } from '@/types/dto.js';
+import type { UserDTO } from '@/types/dto.js';
 
 export const PROJECT_LIST_ICON_STROKE = 1.55;
 
@@ -19,9 +19,4 @@ export function toProjectTargetInputDate(value: string | null): string {
 export function getProjectMemberName(member?: UserDTO): string {
   if (!member) return 'No lead';
   return `${member.firstName || ''}${member.lastName ? ` ${member.lastName}` : ''}`.trim() || member.email;
-}
-
-export function getProjectGlyph(project: ProjectDTO) {
-  if (project.icon) return project.icon;
-  return project.name.trim().charAt(0).toUpperCase() || 'P';
 }

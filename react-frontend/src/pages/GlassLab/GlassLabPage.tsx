@@ -1,4 +1,4 @@
-import { useLayoutEffect } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import {
   ChevronDown, CircleCheckBig, House, Inbox, ListTodo,
   LogOut, Plus, Settings2, SquareKanban, UserRound, UsersRound,
@@ -6,6 +6,21 @@ import {
 } from 'lucide-react';
 import { Glass } from '@/shared/ui/glass/index.js';
 import { RefractionFilter } from '@/shared/ui/glass/RefractionFilter.js';
+import { GenerativeAvatar } from '@/shared/ui/GenerativeAvatar.js';
+import { ProjectIcon } from '@/shared/ui/ProjectIcon.js';
+import { buildLucideIcon, PROJECT_ICON_COLORS } from '@/shared/lib/projectIcon.js';
+import { hexToHue } from '@/shared/lib/generativeAvatar.js';
+import { IconColorPicker } from '@/shared/ui/IconColorPicker.js';
+
+function IconPickerDemo() {
+  const [icon, setIcon] = useState(buildLucideIcon('Rocket', PROJECT_ICON_COLORS[3].value));
+  return (
+    <div data-icp-demo style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+      <IconColorPicker value={icon} onChange={setIcon} triggerClassName="project-icon-trigger" />
+      <span style={{ fontSize: '0.78rem', color: 'var(--sx-text-subtle)' }}>click to open the Liquid-Glass picker</span>
+    </div>
+  );
+}
 
 /* ─── Theme detection ─── */
 function applyTheme() {
@@ -196,6 +211,68 @@ const SECTION_LABEL: React.CSSProperties = {
   marginBottom: '1.5rem',
 };
 
+const CONTRAST_CELLS = [
+  { id: 'canvas', label: 'on canvas', surface: 'canvas' },
+  { id: 'field', label: 'on field (bright)', surface: 'field' },
+  { id: 'tier-b', label: 'on tier-B surface', surface: 'tier-b' },
+  { id: 'glass', label: 'on tier-A glass', surface: 'glass' },
+] as const;
+
+function ContrastCell({
+  id,
+  label,
+  surface,
+}: {
+  id: string;
+  label: string;
+  surface: 'canvas' | 'field' | 'tier-b' | 'glass';
+}) {
+  const body = (
+    <>
+      <p data-fg="true" style={{ color: 'var(--sx-text-muted)', fontSize: '1.25rem', fontWeight: 600, marginBottom: '0.25rem' }}>Aa</p>
+      <p style={{ color: 'var(--sx-text-muted)', fontSize: '0.84rem', lineHeight: 1.5 }}>Muted text sample</p>
+      <p className="label-caps" style={{ marginTop: '0.5rem' }}>{label}</p>
+    </>
+  );
+
+  const baseStyle: React.CSSProperties = {
+    minHeight: 128,
+    borderRadius: 12,
+    padding: '1.25rem 1rem',
+  };
+
+  if (surface === 'glass') {
+    return (
+      <Glass
+        variant="modal"
+        depth="floating"
+        data-contrast-cell={id}
+        style={baseStyle}
+      >
+        {body}
+      </Glass>
+    );
+  }
+
+  const background =
+    surface === 'canvas' ? 'var(--sx-canvas)' :
+    surface === 'tier-b' ? 'var(--sx-surface)' :
+    'transparent';
+
+  return (
+    <div
+      data-contrast-cell={id}
+      style={{
+        ...baseStyle,
+        background,
+        boxShadow: surface === 'field' ? 'inset 0 0 0 1px var(--sx-line)' : undefined,
+      }}
+    >
+      {body}
+    </div>
+  );
+}
+
 /* ─── Main export ─── */
 export function GlassLabPage() {
   useLayoutEffect(() => {
@@ -382,7 +459,7 @@ export function GlassLabPage() {
               <span className="label-caps">label caps — metadata keys</span>
             </div>
             {/* On glass slab */}
-            <Glass variant="panel" style={{ padding: '1.5rem' } as React.CSSProperties}>
+            <Glass variant="card" style={{ padding: '1.5rem' } as React.CSSProperties}>
               <div className="label-caps" style={{ marginBottom: '1rem' }}>on glass slab</div>
               <h1 style={{ fontSize: '1.75rem', fontWeight: 700, letterSpacing: '-0.025em', color: 'var(--sx-text)', marginBottom: '0.5rem' }}>Heading 1 — Page title</h1>
               <h2 style={{ fontSize: '1.25rem', fontWeight: 620, letterSpacing: '-0.015em', color: 'var(--sx-text)', marginBottom: '0.5rem' }}>Heading 2 — Section title</h2>
@@ -394,25 +471,56 @@ export function GlassLabPage() {
           </div>
         </section>
 
+        {/* ── S6: Generative avatars + project icons ── */}
+        <section style={{ marginBottom: '3rem' }}>
+          <div style={SECTION_LABEL}>generative workspace avatars — deterministic geometry, hue per seed</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.85rem', marginBottom: '1.5rem' }}>
+            {['Acme Engineering', 'Starlex', 'Nimbus Labs', 'Polaris', 'Quantum', 'Vertex', 'Helios Group',
+              'Orbit', 'Cobalt', 'Meridian', 'Atlas Works', 'Zenith', 'Lumen', 'Forge', 'Drift', 'Northwind']
+              .map((name) => (
+                <div key={name} style={{ display: 'grid', justifyItems: 'center', gap: '0.35rem' }}>
+                  <GenerativeAvatar seed={name} size={48} />
+                  <span style={{ fontSize: '0.62rem', color: 'var(--sx-text-subtle)', maxWidth: 52, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{name}</span>
+                </div>
+              ))}
+          </div>
+
+          <div className="label-caps" style={{ marginBottom: '0.6rem' }}>regenerate — same seed + hue, salted geometry (variant 0–7)</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', marginBottom: '1.5rem' }}>
+            {Array.from({ length: 8 }, (_, v) => (
+              <GenerativeAvatar key={v} seed="Starlex" hue={hexToHue('#8b5cf6')} variant={v} size={44} />
+            ))}
+          </div>
+
+          <div className="label-caps" style={{ marginBottom: '0.6rem' }}>accent hue sweep — one seed, palette swatches</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.6rem', marginBottom: '1.5rem' }}>
+            {PROJECT_ICON_COLORS.map((c) => (
+              <GenerativeAvatar key={c.value} seed="Meridian" hue={hexToHue(c.value)} size={40} />
+            ))}
+          </div>
+
+          <div className="label-caps" style={{ marginBottom: '0.6rem' }}>project icons — Lucide glyph tinted per colour · emoji · initial</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '0.5rem' }}>
+            {['Code2', 'Database', 'Server', 'Rocket', 'Bug', 'GitBranch', 'Cloud', 'Cpu', 'Palette', 'Shield', 'Zap', 'Globe', 'Target', 'Flame']
+              .map((nm, i) => (
+                <div key={nm} className="project-row-glyph" style={{ width: '1.9rem', height: '1.9rem' }}>
+                  <ProjectIcon icon={buildLucideIcon(nm, PROJECT_ICON_COLORS[i % PROJECT_ICON_COLORS.length].value)} size={17} />
+                </div>
+              ))}
+            <div className="project-row-glyph" style={{ width: '1.9rem', height: '1.9rem' }}><ProjectIcon icon="🚀" size={17} /></div>
+            <div className="project-row-glyph" style={{ width: '1.9rem', height: '1.9rem' }}><ProjectIcon icon="" name="Default" size={17} /></div>
+          </div>
+
+          <div className="label-caps" style={{ margin: '1.5rem 0 0.6rem' }}>icon + colour picker — Liquid-Glass popover</div>
+          <IconPickerDemo />
+        </section>
+
         {/* ── S5: Contrast row ── */}
         <section>
           <div style={SECTION_LABEL}>contrast — --sx-text-muted vs each surface (WCAG AA floor = 4.5 : 1)</div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0.75rem' }}>
-            {[
-              { id: 'canvas',   label: 'on canvas',        bg: 'var(--sx-canvas)' },
-              { id: 'field',    label: 'on field (bright)', bg: 'var(--sx-canvas-elevated)' },
-              { id: 'tier-b',   label: 'on tier-B surface', bg: 'var(--sx-surface)' },
-              { id: 'glass',    label: 'on glass fill',     bg: 'var(--sx-canvas-elevated)' },
-            ].map(({ id, label, bg }) => (
-              <div
-                key={id}
-                data-contrast-cell={id}
-                style={{ background: bg, borderRadius: 12, padding: '1.25rem 1rem' }}
-              >
-                <p data-fg="true" style={{ color: 'var(--sx-text-muted)', fontSize: '1.25rem', fontWeight: 600, marginBottom: '0.25rem' }}>Aa</p>
-                <p data-fg="true" style={{ color: 'var(--sx-text-muted)', fontSize: '0.84rem', lineHeight: 1.5 }}>Muted text sample</p>
-                <p className="label-caps" style={{ marginTop: '0.5rem' }}>{label}</p>
-              </div>
+            {CONTRAST_CELLS.map(cell => (
+              <ContrastCell key={cell.id} {...cell} />
             ))}
           </div>
         </section>

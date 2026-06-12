@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { CalendarDays, Flag, GripVertical } from 'lucide-react';
+import { CalendarDays, GripVertical } from 'lucide-react';
 import { normalizeTaskPriority, TASK_PRIORITY_META } from '@/entities/task/model/taskMeta.js';
 import { cn } from '@/shared/lib/cn.js';
 import { Glass, type GlassDepth } from '@/shared/ui/glass/index.js';
@@ -25,7 +25,7 @@ interface TaskBoardCardProps {
 }
 
 export function TaskBoardCard({ task, isDragging = false, canEdit, depth = 'rest' }: TaskBoardCardProps) {
-  const priorityColor = TASK_PRIORITY_META[normalizeTaskPriority(task.priority)].color;
+  const priorityMeta = TASK_PRIORITY_META[normalizeTaskPriority(task.priority)];
   const isOverdue = task.due_date && new Date(task.due_date) < new Date();
 
   return (
@@ -43,7 +43,15 @@ export function TaskBoardCard({ task, isDragging = false, canEdit, depth = 'rest
         <span className="text-body-sm text-[color:var(--sx-text)] leading-snug line-clamp-2 flex-1">
           {task.task || 'Untitled'}
         </span>
-        <Flag size={12} style={{ color: priorityColor, flexShrink: 0, marginTop: 2 }} />
+        {task.priority !== 'none' && (
+          <span
+            className="sx-chip !min-h-0 !px-1.5 !py-0.5 text-[10px] flex-shrink-0"
+            style={{ color: priorityMeta.color }}
+          >
+            <span className="sx-dot" />
+            <span>{priorityMeta.label}</span>
+          </span>
+        )}
       </div>
 
       <div className="flex items-center gap-2 flex-wrap">
@@ -57,9 +65,10 @@ export function TaskBoardCard({ task, isDragging = false, canEdit, depth = 'rest
         {task.labels?.slice(0, 2).map((label) => (
           <span
             key={label.id}
-            className="text-[9px] px-1.5 py-0.5 rounded-full font-medium"
-            style={{ background: `${label.color}22`, color: label.color }}
+            className="sx-chip !min-h-0 !px-1.5 !py-0.5 text-[9px]"
+            style={{ color: label.color }}
           >
+            <span className="sx-dot" />
             {label.name}
           </span>
         ))}

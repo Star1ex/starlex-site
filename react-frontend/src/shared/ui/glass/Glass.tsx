@@ -4,14 +4,13 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/shared/lib/cn.js';
 import { SUPPORTS_REFRACTION } from './refraction.js';
 
-export type GlassVariant = 'sidebar' | 'panel' | 'card' | 'menu' | 'modal' | 'pill' | 'dock';
+export type GlassVariant = 'sidebar' | 'card' | 'menu' | 'modal' | 'pill' | 'dock';
 export type GlassDepth = 'rest' | 'raised' | 'floating';
 
 const glass = cva('sx-glass', {
   variants: {
     variant: {
       sidebar: 'sx-glass--sidebar',
-      panel: 'sx-glass--panel',
       card: 'sx-glass--card',
       menu: 'sx-glass--menu',
       modal: 'sx-glass--modal',

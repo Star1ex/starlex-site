@@ -5,6 +5,7 @@ import { projectService } from '@/services/api/index.js';
 import type { ProjectDTO, CreateProjectRequest } from '@/types/dto.js';
 import { modalBackdropVariants, modalContentVariants } from '@/shared/lib/animations.js';
 import { DarkSelect } from '@/shared/ui/DarkSelect.js';
+import { IconColorPicker } from '@/shared/ui/IconColorPicker.js';
 import { Glass } from '@/shared/ui/glass/index.js';
 import {
   PROJECT_PRIORITIES,
@@ -35,6 +36,7 @@ interface CreateProjectModalProps {
 
 export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, onClose, onCreated, workspaceId }) => {
   const [name, setName] = useState('');
+  const [icon, setIcon] = useState('');
   const [description, setDescription] = useState('');
   const [goal, setGoal] = useState('');
   const [status, setStatus] = useState<CreateProjectRequest['status']>('backlog');
@@ -45,7 +47,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
 
   useEffect(() => {
     if (isOpen) {
-      setName(''); setDescription(''); setGoal(''); setStatus('backlog'); setPriority('none'); setError('');
+      setName(''); setIcon(''); setDescription(''); setGoal(''); setStatus('backlog'); setPriority('none'); setError('');
       setTimeout(() => nameRef.current?.focus(), 60);
     }
   }, [isOpen]);
@@ -65,6 +67,7 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
     try {
       const p = await projectService.createProject(workspaceId, {
         name: trimmed,
+        icon: icon || undefined,
         description: description.trim() || undefined,
         goal: goal.trim() || undefined,
         status,
@@ -83,12 +86,11 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="product-modal-overlay fixed inset-0 z-50 flex items-center justify-center p-4"
           variants={modalBackdropVariants} initial="initial" animate="animate" exit="exit"
-          style={{ background: 'var(--sx-overlay)' }}
           onClick={e => { if (e.target === e.currentTarget) onClose(); }}
         >
-          <Glass as={motion.div} variant="modal" depth="floating" className="w-full max-w-lg overflow-hidden" variants={modalContentVariants}>
+          <Glass as={motion.div} variant="modal" depth="floating" className="product-modal-shell w-full max-w-lg overflow-hidden" variants={modalContentVariants}>
             <div className="flex items-center justify-between px-6 pt-6 pb-4">
               <h2 className="text-headline-sm font-hanken font-semibold text-[color:var(--sx-text)]">New Project</h2>
               <button onClick={onClose} className="w-8 h-8 flex items-center justify-center rounded-lg text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] hover:bg-[color:var(--sx-surface-hover)] transition-colors">
@@ -97,8 +99,11 @@ export const CreateProjectModal: React.FC<CreateProjectModalProps> = ({ isOpen, 
             </div>
             <form onSubmit={handleSubmit} className="px-6 pb-6 space-y-4">
               <Field label="Name">
-                <input ref={nameRef} value={name} onChange={e => { setName(e.target.value); setError(''); }}
-                  placeholder="Project name" disabled={loading} className={inputCls} />
+                <div className="flex items-center gap-2.5">
+                  <IconColorPicker value={icon} onChange={setIcon} disabled={loading} triggerClassName="project-icon-trigger" />
+                  <input ref={nameRef} value={name} onChange={e => { setName(e.target.value); setError(''); }}
+                    placeholder="Project name" disabled={loading} className={inputCls} />
+                </div>
               </Field>
               <Field label="Description" optional>
                 <textarea value={description} onChange={e => setDescription(e.target.value)}

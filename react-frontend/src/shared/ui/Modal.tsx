@@ -23,8 +23,7 @@ export const Modal = ({ open, onClose, children, maxWidth = 'max-w-xl', hideClos
       {open && (
         <div className="fixed inset-0 z-50">
           <motion.div
-            className="absolute inset-0 backdrop-blur-sm"
-            style={{ background: 'var(--sx-overlay)' }}
+            className="product-modal-overlay absolute inset-0"
             variants={modalBackdropVariants}
             initial="initial"
             animate="animate"
@@ -34,7 +33,7 @@ export const Modal = ({ open, onClose, children, maxWidth = 'max-w-xl', hideClos
           />
           <div className="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
             <motion.div
-              className={`w-full ${maxWidth} rounded-2xl glass-card relative pointer-events-auto shadow-modal`}
+              className={`product-modal-shell w-full ${maxWidth} rounded-2xl glass-card relative pointer-events-auto shadow-modal`}
               variants={modalContentVariants}
               initial="initial"
               animate="animate"

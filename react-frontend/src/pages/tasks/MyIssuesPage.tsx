@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { CheckCircle2, ChevronRight, MoreHorizontal, Trash2 } from 'lucide-react';
@@ -7,6 +7,7 @@ import type { TaskDTO, TaskQueryParams, TaskStatus } from '@/types/dto.js';
 import { useWorkspace } from '@/contexts/useWorkspace.js';
 import { useAuth } from '@/contexts/useAuth.js';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle.js';
+import { useTaskRealtime } from '@/shared/hooks/useRealtimeSync.js';
 import { showToast } from '@/shared/lib/toast.js';
 import { getAllViews, type SavedView } from '@/shared/lib/savedViews.js';
 import { pageVariants, listItemVariants, listVariants } from '@/shared/lib/animations.js';
@@ -67,8 +68,9 @@ function TaskRow({
       </span>
 
       {priorityMeta && (
-        <span className="text-label-sm font-medium flex-shrink-0" style={{ color: priorityMeta.color }}>
-          {priorityMeta.label}
+        <span className="sx-chip my-issue-priority-chip" style={{ color: priorityMeta.color }}>
+          <span className="sx-dot" />
+          <span>{priorityMeta.label}</span>
         </span>
       )}
 
@@ -134,9 +136,12 @@ export const MyIssuesPage: React.FC = () => {
 
   useDocumentTitle('My Issues');
 
-  const views = getAllViews();
+  const views = useMemo(() => getAllViews(), []);
   const activeViewId = searchParams.get('view') ?? views[0]?.id ?? 'my-open';
-  const activeView = views.find(v => v.id === activeViewId) ?? views[0];
+  const activeView = useMemo(
+    () => views.find(v => v.id === activeViewId) ?? views[0],
+    [activeViewId, views],
+  );
 
   const [tasks, setTasks] = useState<TaskDTO[]>([]);
   const [loading, setLoading] = useState(true);
@@ -184,6 +189,11 @@ export const MyIssuesPage: React.FC = () => {
     if (!nextCursor || !activeView) return;
     load({ ...activeView.params, cursor: nextCursor }, true);
   }, [nextCursor, activeView, load]);
+
+  // Live sync: refetch the current view when any task changes.
+  useTaskRealtime(useCallback(() => {
+    if (activeView) load(activeView.params);
+  }, [activeView, load]));
 
   if (!activeWorkspaceId) {
     return (

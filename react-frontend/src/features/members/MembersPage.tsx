@@ -1,6 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
-import { Check, Copy, Crown, Eye, Link2, Loader2, Plus, Shield, Trash2, User } from 'lucide-react';
+import { Check, Copy, Link2, Loader2, Plus, Trash2 } from 'lucide-react';
 import { workspaceService } from '@/services/api/index.js';
 import { useWorkspace } from '@/contexts/useWorkspace.js';
 import { can } from '@/shared/lib/permissions.js';
@@ -16,39 +16,16 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select.js';
 import type { WorkspaceMemberDTO, WorkspaceRole } from '@/types/dto.js';
-import { Glass } from '@/shared/ui/glass/index.js';
-
-const ROLE_META: Record<WorkspaceRole, { label: string; icon: React.ReactNode; cls: string }> = {
-  owner:  { label: 'Owner',  icon: <Crown size={11} />,  cls: 'text-[color:var(--priority-high-text)] bg-[color:var(--priority-high-bg)]' },
-  admin:  { label: 'Admin',  icon: <Shield size={11} />, cls: 'text-[color:var(--priority-medium-text)] bg-[color:var(--priority-medium-bg)]' },
-  member: { label: 'Member', icon: <User size={11} />,   cls: 'text-[color:var(--priority-low-text)] bg-[color:var(--priority-low-bg)]' },
-  guest:  { label: 'Guest',  icon: <Eye size={11} />,    cls: 'text-[color:var(--sx-text-subtle)] bg-[color:var(--sx-surface)]' },
-};
-
-const ROLES: WorkspaceRole[] = ['admin', 'member', 'guest'];
-
-function RoleBadge({ role }: { role: WorkspaceRole }) {
-  // Owner reads as a quiet label-caps mark in the done hue — no crown, no pill.
-  if (role === 'owner') {
-    return <span className="label-caps text-[color:var(--status-done-text)]">Owner</span>;
-  }
-  const m = ROLE_META[role] ?? ROLE_META.member;
-  return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-label-sm font-medium ${m.cls}`}>
-      {m.icon}{m.label}
-    </span>
-  );
-}
-
-function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-function apiErrorMessage(error: unknown, fallback: string) {
-  return (error as { response?: { data?: { error?: string; message?: string } } })?.response?.data?.error
-    ?? (error as { response?: { data?: { message?: string } } })?.response?.data?.message
-    ?? fallback;
-}
+import { copyTextToClipboard } from '@/shared/lib/clipboard.js';
+import { MemberRoleBadge } from './MemberRoleBadge.js';
+import {
+  EDITABLE_MEMBER_ROLES,
+  MEMBER_ROLE_META,
+  formatMemberJoinedDate,
+  getApiErrorMessage,
+  getMemberAvatarSrc,
+  getMemberInitials,
+} from './memberRoleData.js';
 
 export const MembersPage: React.FC = () => {
   const { workspaceId } = useParams<{ workspaceId: string }>();
@@ -71,6 +48,7 @@ export const MembersPage: React.FC = () => {
   const [inviteRole, setInviteRole] = useState<WorkspaceRole>('member');
   const [inviteLoading, setInviteLoading] = useState(false);
   const [copied, setCopied] = useState(false);
+  const copyResetRef = useRef<number | null>(null);
 
   const loadMembers = useCallback(() => {
     if (!workspaceId) return;
@@ -82,6 +60,10 @@ export const MembersPage: React.FC = () => {
   }, [workspaceId]);
 
   useEffect(() => { loadMembers(); }, [loadMembers]);
+
+  useEffect(() => () => {
+    if (copyResetRef.current) window.clearTimeout(copyResetRef.current);
+  }, []);
 
   const handleRoleChange = useCallback(async (userId: string, role: WorkspaceRole) => {
     if (!workspaceId) return;
@@ -121,7 +103,7 @@ export const MembersPage: React.FC = () => {
       setAddOpen(false);
       showToast('Member added');
     } catch (err: unknown) {
-      showToast(apiErrorMessage(err, 'Failed to add member'));
+      showToast(getApiErrorMessage(err, 'Failed to add member'));
     } finally {
       setAddLoading(false);
     }
@@ -131,8 +113,8 @@ export const MembersPage: React.FC = () => {
     if (!workspaceId) return;
     setInviteLoading(true);
     try {
-      const { url } = await workspaceService.createInvite(workspaceId, inviteRole);
-      setInviteUrl(url);
+      const invite = await workspaceService.createInvite(workspaceId, inviteRole);
+      setInviteUrl(invite.url || `${window.location.origin}/invite/${invite.token}`);
     } catch {
       showToast('Failed to generate invite link');
     } finally {
@@ -142,11 +124,12 @@ export const MembersPage: React.FC = () => {
 
   const handleCopy = useCallback(() => {
     if (!inviteUrl) return;
-    navigator.clipboard.writeText(inviteUrl).then(() => {
+    copyTextToClipboard(inviteUrl).then(() => {
       setCopied(true);
       showToast('Invite link copied!');
-      setTimeout(() => setCopied(false), 2000);
-    });
+      if (copyResetRef.current) window.clearTimeout(copyResetRef.current);
+      copyResetRef.current = window.setTimeout(() => setCopied(false), 2000);
+    }).catch(() => showToast('Failed to copy invite link'));
   }, [inviteUrl]);
 
   const ownerCount = members.filter((m) => m.role === 'owner').length;
@@ -170,7 +153,7 @@ export const MembersPage: React.FC = () => {
       </div>
 
       {/* Members list */}
-      <Glass variant="panel" depth="raised" className="rounded-2xl overflow-hidden mb-6 p-2">
+      <div className="members-list-shell">
         {loading ? (
           <div className="flex items-center justify-center py-12">
             <Loader2 className="w-5 h-5 text-[color:var(--sx-text-subtle)] animate-spin" />
@@ -181,19 +164,19 @@ export const MembersPage: React.FC = () => {
           </div>
         ) : (
           members.map((m) => {
-            const src = m.user.photo_url ?? m.user.avatar_url ?? undefined;
-            const ini = [m.user.firstName?.[0], m.user.lastName?.[0]].filter(Boolean).join('').toUpperCase() || '?';
+            const src = getMemberAvatarSrc(m.user);
+            const ini = getMemberInitials(m.user);
             const isOwner = m.role === 'owner';
             const isLastOwner = isOwner && ownerCount <= 1;
             const isRemoving = removingId === m.user.id;
             return (
               <div
                 key={m.user.id}
-                className={`flex items-center gap-3 px-3 py-3 rounded-lg hover:bg-[color:var(--sx-surface-hover)] ${isRemoving ? 'opacity-40' : ''} transition-colors`}
+                className={`members-row ${isRemoving ? 'opacity-40' : ''}`}
               >
                 {/* Avatar */}
-                <div className="w-8 h-8 rounded-full bg-[color:var(--sx-surface-active)] flex items-center justify-center text-[11px] font-bold text-[color:var(--sx-text)] overflow-hidden flex-shrink-0">
-                  {src ? <img src={src} alt={ini} className="w-full h-full object-cover" /> : ini}
+                <div className="members-avatar">
+                  {src ? <img src={src} alt={ini} /> : ini}
                 </div>
 
                 {/* Name + email */}
@@ -206,7 +189,7 @@ export const MembersPage: React.FC = () => {
 
                 {/* Joined */}
                 <span className="hidden sm:block text-[10px] text-[color:var(--sx-text-subtle)] flex-shrink-0">
-                  {fmtDate(m.joined_at)}
+                  {formatMemberJoinedDate(m.joined_at)}
                 </span>
 
                 {/* Role badge / selector */}
@@ -219,15 +202,15 @@ export const MembersPage: React.FC = () => {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent className="glass-menu rounded-xl p-1">
-                      {ROLES.map((r) => (
+                      {EDITABLE_MEMBER_ROLES.map((r) => (
                         <SelectItem key={r} value={r} className="glass-menu-item text-label-sm hover:text-[color:var(--sx-text)] focus:text-[color:var(--sx-text)]">
-                          {ROLE_META[r].label}
+                          {MEMBER_ROLE_META[r].label}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 ) : (
-                  <RoleBadge role={m.role} />
+                  <MemberRoleBadge role={m.role} />
                 )}
 
                 {/* Remove button */}
@@ -244,11 +227,11 @@ export const MembersPage: React.FC = () => {
             );
           })
         )}
-      </Glass>
+      </div>
 
       {/* Invite link section */}
       {canManage && (
-        <Glass variant="panel" depth="raised" className="rounded-2xl p-5">
+        <div className="members-invite-section">
           <div className="flex items-center gap-2 mb-4">
             <Link2 size={14} className="text-[color:var(--sx-text-muted)]" />
             <h2 className="text-body-md font-medium text-[color:var(--sx-text)]">Invite link</h2>
@@ -262,9 +245,9 @@ export const MembersPage: React.FC = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="glass-menu rounded-xl p-1">
-                {ROLES.map((r) => (
+                {EDITABLE_MEMBER_ROLES.map((r) => (
                   <SelectItem key={r} value={r} className="glass-menu-item text-label-sm">
-                    {ROLE_META[r].label}
+                    {MEMBER_ROLE_META[r].label}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -279,7 +262,7 @@ export const MembersPage: React.FC = () => {
             </button>
           </div>
           {inviteUrl && (
-            <div className="flex items-center gap-2 p-3 rounded-xl bg-[color:var(--sx-canvas-elevated)]">
+            <div className="members-invite-url">
               <span className="flex-1 text-[11px] text-[color:var(--sx-text-muted)] font-mono truncate">{inviteUrl}</span>
               <button
                 onClick={handleCopy}
@@ -290,7 +273,7 @@ export const MembersPage: React.FC = () => {
               </button>
             </div>
           )}
-        </Glass>
+        </div>
       )}
 
       {/* Add member dialog */}
@@ -317,9 +300,9 @@ export const MembersPage: React.FC = () => {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent className="glass-menu rounded-xl p-1">
-                {ROLES.map((r) => (
+                {EDITABLE_MEMBER_ROLES.map((r) => (
                   <SelectItem key={r} value={r} className="glass-menu-item text-label-sm">
-                    {ROLE_META[r].label}
+                    {MEMBER_ROLE_META[r].label}
                   </SelectItem>
                 ))}
               </SelectContent>

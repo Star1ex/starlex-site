@@ -1,5 +1,4 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 
 interface SkeletonProps {
   className?: string;
@@ -22,11 +21,9 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   }[rounded];
 
   return (
-    <motion.div
+    <div
       className={`skeleton-shimmer ${roundedClass} ${className}`}
       style={{ width, height }}
-      animate={{ backgroundPosition: ['200% 0', '-200% 0'] }}
-      transition={{ repeat: Infinity, duration: 1.8, ease: 'linear' }}
     />
   );
 };

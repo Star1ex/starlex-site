@@ -149,15 +149,9 @@
     box-shadow: var(--sx-focus-ring);
   }
 
+  /* Global reduced-motion lives in styles/motion.css; these are the
+     component-specific hard stops that also drop the residual 0.01ms. */
   @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-      animation-duration: 0.01ms !important;
-      animation-iteration-count: 1 !important;
-      scroll-behavior: auto !important;
-      transition-duration: 0.01ms !important;
-    }
     .page-transition, .star, .tt-button,
     .dropdown-overlay, .dropdown-panel,
     .app-sidebar::before { transition: none; animation: none; }

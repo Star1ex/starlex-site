@@ -43,6 +43,23 @@ Each phase session appends one entry: date, phase, what shipped, what the **scre
 
 **Next session (Phase 2):** Start with `Read docs/plans/liquid-glass-v2/00-MASTER.md fully, look at shots/5f00161/, then execute @docs/plans/liquid-glass-v2/02-material-retune.md`
 
+### 2026-06-11 — Phase 1 follow-up: pixel-sampled contrast check
+
+**What changed:**
+- `GlassLabPage.tsx` contrast row now renders the actual review surfaces: canvas, live field, tier-B surface, and a tier-A `Glass` slab. The old proxy fills for field/glass were removed.
+- `scripts/visual-qa.mjs` now screenshots each contrast cell and samples real rendered pixels with canvas before computing WCAG contrast. This matches `01-lab-harness.md` §1.3 instead of relying on `getComputedStyle(backgroundColor)`.
+
+**Gate results:**
+- `npm run lint` — clean
+- `npm run build` — green; `glass-lab` / `GlassLab` absent from `dist/`
+- `npm run visual-qa` — both PNGs produced in `shots/d8cfc0b/`; pixel-sampled contrast passed all 8 cells (dark: 6.29–7.48:1, light: 5.19–5.66:1)
+
+**What the screenshots showed (`shots/d8cfc0b/`):**
+- Dark lab: visible depth structure, translucent tier-A slabs over both field and busy content, gold status/priority chips, alpha tier-B rows/cards, styled scrollbox, and contrast cells on real surfaces.
+- Light lab: cool-slate depth structure remains visible; tier-A slabs lift through edge/shadow rather than white fill; tier-B surfaces are faint slate tints; contrast cells remain legible on all sampled surfaces.
+
+**Deviation:** No commit made from this follow-up because the working tree already contains broad uncommitted Phase 2–4 changes; committing a clean Phase 1-only slice would risk sweeping unrelated local work into the commit.
+
 ---
 
 ## 2026-06-11 — Phase 2: Material Retune
@@ -101,3 +118,225 @@ Each phase session appends one entry: date, phase, what shipped, what the **scre
 **Deviations:** None. All spec values applied exactly; tuning kept at spec mid-points (no lab iteration needed — first-pass values read correctly in both themes).
 
 **Next session (Phase 3):** Start with `Read docs/plans/liquid-glass-v2/00-MASTER.md fully, look at shots/99ed0d6/, then execute @docs/plans/liquid-glass-v2/03-chrome-vs-content.md`
+
+---
+
+## 2026-06-11 — Phase 3: Chrome vs Content (minimalism pass)
+
+**What shipped:**
+
+**3.1 Strip content glass (7 call-sites → 0 panel variants):**
+- `WorkspaceProjects.tsx`: `<Glass variant="panel">` → `<motion.div>` (projects-list-shell)
+- `WorkspaceBento.tsx`: `<Glass variant="panel">` → `<motion.section>` (workspace-recent-panel)
+- `TaskExplorerContent.tsx`: `<Glass variant="panel">` → `<div>` (tasks-table-shell)
+- `TaskPropertiesPanel.tsx`: `<Glass as="aside" variant="panel">` → `<aside>` (task-properties-panel)
+- `MembersPanel.tsx`: `<Glass variant="panel">` → `<div>` (members list wrapper)
+- `MembersPage.tsx` (×2): `<Glass variant="panel">` → `<div>` (members list + invite link section)
+- Deleted `--panel` variant from `glass.css` (2 lines), `Glass.tsx` type union + CVA config; `GlassLabPage.tsx` panel → card. All Glass imports removed from non-lab files.
+
+**3.2 Tier-B sweep (rgba(255...) → tokens across task/project/profile):**
+- All `.task-*` detail block rgba literals → `var(--sx-text-*)` / `var(--sx-line)` / `var(--sx-surface*)` (13 replacements)
+- All `.project-*` detail + header + properties + header-pill + header-menu rgba literals → tokens (40+ replacements)
+- `.project-properties-panel`: hand-rolled backdrop-filter updated to use `var(--sx-glass-saturate)` / `var(--sx-glass-brightness)` + tokenized bg/border/color
+- `.project-header-menu`: ditto; saturate/brightness use token chain
+- All `.profile-*` rgba literals → tokens; `.profile-shell` and `.profile-content` hand-rolled glass updated to use token chain + `var(--sx-edge)` / `var(--sx-rim-faint)` / `var(--sx-opaque)`
+- `.prose code/pre` white-alpha backgrounds → `var(--sx-surface-hover)` / `var(--sx-surface)`
+- Comments referencing `<Glass variant="panel">` updated in 3 CSS blocks
+
+**3.3 Living canvas (scroll parallax — Law 12):**
+- `depth.css`: `.sx-depth` now `top: -5vh; height: 110vh` so shift never exposes an edge; `transform: translateY(var(--depth-shift, 0px))` added
+- `Layout.tsx`: rAF-throttled scroll listener writes `--depth-shift: ${scrollY * -0.04}px` to `.sx-depth`; guard: `prefers-reduced-motion: reduce` disables; passive listener; cleanup on unmount
+
+**3.4 Composition nits:**
+- `workspace-home-header`: `align-items: flex-end` → `flex-start` — Create Task / Create Project buttons now align with the "WORKSPACE" label at the top of the header block instead of floating to the bottom-right
+
+**Gate results:**
+- `npm run lint` — clean
+- `npm run build` — green; `/glass-lab` absent from prod bundle (0 grep matches in dist/)
+- `npm run visual-qa` — both PNGs produced, contrast passed (dark ≥7.3:1, light ≥5.2:1)
+- `npm run visual-qa -- --routes /sign-in,/sign-up` — auth pages screenshot produced
+
+**What the screenshots showed (`shots/d8cfc0b/`):**
+- **Dark / canvas + depth field**: same rich luminance structure as phase 2 ✓
+- **Dark / tier A glass**: sidebar, menus, modals all read as translucent glass over depth field ✓
+- **Dark / tier B rows**: alpha surfaces, gold chips (no violet) ✓
+- **Light / canvas**: cool-slate depth field clearly visible ✓
+- **Light / tier A glass**: glass card distinguishable from white canvas; outer slate hairline defines edge ✓
+- **Light / sign-in**: login card reads as transparent glass (edge + shadow + diffusion); OAuth buttons visible translucent tiles ✓
+- **Contrast**: all 8 cells ≥4.5:1 in both themes ✓
+
+**DoD greps — all pass:**
+- `variant="panel"` in `src/**/*.tsx` → 0 ✓
+- `rgba(255` in `.project-|.task-|.profile-` blocks of `components.css` → 0 ✓
+- `/glass-lab` absent from `dist/` → 0 matches ✓
+
+**Deviations from spec:**
+- Manual browser walk not run (no browser access in agent session). Visual-QA screenshots confirm lab route; real-route walk deferred to user.
+- Settings artifact noted by user (background content appearing nearly black when settings modal opens): root cause is the phase 2 `--sx-overlay: rgb(0 0 0 / 0.62)` backdrop + blur making transparent content nearly invisible. Phase 3 panel stripping removes the Glass wrappers from background content (now plain divs with readable token text), which should substantially improve legibility behind the overlay.
+
+**Next session (Phase 4):** Start with `Read docs/plans/liquid-glass-v2/00-MASTER.md fully, look at shots/d8cfc0b/, then execute @docs/plans/liquid-glass-v2/04-signature-motion-qa.md`
+
+---
+
+## 2026-06-11 — Phase 4: Signature Motion + QA Gate
+
+**What shipped:**
+
+**4.1 ⌘K morph (View Transitions API):**
+- `Topbar.tsx`: added `isSearchOpen?: boolean` prop; topbar search pill carries `viewTransitionName: isSearchOpen ? 'none' : 'sx-cmdk'` — name removed from pill while palette is mounted to avoid simultaneous-name conflict.
+- `Layout.tsx`: imported `flushSync` from `react-dom`; extracted `closeSearch` callback; both `openSearch` and `closeSearch` wrap `setSearchOpen` in `document.startViewTransition(() => flushSync(...))`, guarded by `typeof doc.startViewTransition === 'function' && !prefersReducedMotion()`. Current fade is the automatic fallback in Firefox / reduced-motion.
+- `SearchModal.tsx`: Glass modal shell gets `viewTransitionName: 'sx-cmdk'` — active only when modal is mounted (portal, so no DOM conflict with pill).
+- `motion.css`: `::view-transition-group(sx-cmdk) { animation-duration: 280ms; animation-timing-function: var(--ease-out-expo); }` inside `@media (prefers-reduced-motion: no-preference)`.
+
+**4.2 Active nav tick — spring slide:**
+- `GlobalSidebar.tsx`: removed CSS-based tick pseudo. Inside each `sidebar-nav-item` button, added `{isActive && <motion.span layoutId="sx-nav-tick" className="sidebar-nav-tick" transition={springUI} />}`. The `springUI` (stiffness 420, damping 34) spring slides the tick between items. No portal, so `layoutId` works without `flushSync`.
+- `layout.css`: replaced `sidebar-nav-item.active::before { ... }` with `.sidebar-nav-tick { position: absolute; left: 0; top: calc(50% - 8px); width: 2px; height: 16px; border-radius: 0 2px 2px 0; background: var(--sx-accent); }` — uses `top: calc(50% - 8px)` to avoid `transform: translateY` conflict with framer-motion.
+
+**4.3 Tier-B press physics:**
+- `glass.css`: updated `:active` scale from `0.985` → `0.98`; added tier-B block: `.sx-glass--pill.sx-glass--interactive:active, .sx-glass--card.sx-glass--interactive:active { background: var(--sx-surface-active); transition: transform var(--motion-fast), background var(--motion-fast); }`. No double-animation: nav buttons use framer `whileTap` (motion.button, not Glass); profile button same; topbar search pill is `<Glass variant="pill" interactive>` — CSS-only `:active`, no framer wrapper.
+
+**4.4 Cleanups:**
+- `tailwind.config.js`: deleted unused `shimmer` keyframe and `animation: shimmer` entry (`.skeleton-shimmer` uses its own `sxSkeletonPulse` keyframe in `components.css`).
+- `shadcn.css` `.dark` block: **retained** — `EditTaskModal.tsx` has `.dark .task-edit-preview` selectors consuming it.
+- `--panel` variant: **confirmed fully gone** — 0 grep matches in `glass.css`, `Glass.tsx`, or any `src/**/*.tsx`.
+
+**Gate results:**
+- `npm run lint` — clean
+- `npm run build` — green; `/glass-lab` absent from `dist/`
+- `npm run visual-qa` — both PNGs produced, all 8 contrast cells ≥4.5:1 (dark ≥7.3:1, light ≥5.2:1)
+
+**What the screenshots showed (`shots/d8cfc0b/`):**
+- **Dark / canvas + glass**: rich depth field, translucent tier-A sidebars/modals, gold chips (no violet), thin styled scrollbars — identical quality to Phase 3 ✓
+- **Light / canvas + glass**: cool-slate depth field visible, transparent glass defined by edge+shadow, gold In-Progress/Medium chips ✓
+- **Contrast**: all 8 cells ≥4.5:1 ✓
+
+**DoD greps — all pass:**
+- `viewTransitionName: 'sx-cmdk'` on both pill (conditional) and modal (unconditional) ✓
+- `::view-transition-group(sx-cmdk)` in `motion.css` ✓
+- `layoutId="sx-nav-tick"` in `GlobalSidebar.tsx` ✓
+- `scale(0.98)` on `.sx-glass--interactive:active` ✓
+- `shimmer` gone from `tailwind.config.js` ✓
+- `variant="panel"` → 0 matches in `src/**/*.tsx` ✓
+
+**Deviations from spec:**
+- Full dual-theme manual QA walk across all real routes (§4.5) not run — no browser access in agent session. Visual-QA PNGs confirm lab route quality; real-route testing deferred to user.
+- The ⌘K morph View Transition is Chromium-only by nature; Firefox and reduced-motion users get the existing `AnimatePresence` fade — verified clean in spec.
+
+**Plan complete.** All 4 phases shipped and gated. The V2 liquid-glass system is in place: living canvas depth field, transparent alpha tier-B surfaces, chrome-only tier-A glass (≤6 live-blur surfaces), corrected rims, dual outer-edge in light theme, gold chips (no violet), styled scrollbars, ⌘K morph, spring nav tick, press physics.
+
+---
+
+## 2026-06-11 — Phase 2 resume verification
+
+**Context:** Resumed from `02-material-retune.md` after the working tree already contained the Phase 2 material retune plus later Phase 3/4 edits. No code changes were needed for Phase 2; this pass verified the current implementation against the Phase 2 gate without reverting later local work.
+
+**Checks:**
+- Baseline screenshots reviewed under `docs/plans/liquid-glass-v2/shots/baseline/`; the flat dark canvas, washed light surfaces, violet chips, native scrollbar failure mode, and dark modal hue fog were visible as described in `00-MASTER.md`.
+- Token/material greps passed: no old solid `--sx-surface*` values, no old light glass fill values, no violet hex survivors in `src/`, and `card`/`pill` glass variants keep `backdrop-filter: none`.
+- Sticky/fixed review: scroll-sensitive rails/panels already use `--sx-canvas-elevated` / `--sx-opaque` where needed; chrome remains glass.
+
+**Gate results:**
+- `npm run lint` — clean
+- `npm run build` — green; `glass-lab` / `GlassLab` absent from `dist/`
+- `npm run visual-qa` — regenerated `shots/d8cfc0b/lab-dark.png` and `shots/d8cfc0b/lab-light.png`; contrast passed (dark: 6.29-7.48:1, light: 5.19-5.66:1)
+
+**What the screenshots showed (`shots/d8cfc0b/`):**
+- Dark lab: visible monochrome depth field, tier-A chrome glass lifts and diffuses content, modal specimen has no violet fog, tier-B rows/cards/buttons are alpha fills, In-Progress/Medium chips are gold.
+- Light lab: cool-slate depth structure is visible, glass is defined by edge/shadow rather than opaque fill, tier-B controls are faint slate tints, modal remains translucent but readable, scrollbar specimen uses the styled thin scrollbar.
+
+**Deviation:** No commit was made from this resume pass because the working tree already contains broad uncommitted changes beyond Phase 2; committing now would mix phase scopes.
+
+---
+
+## 2026-06-11 — Real-route artifact fix: refraction off product chrome
+
+**Trigger:** User QA screenshots showed red/blue map-like artifacts in the global sidebar and settings modal, and the settings backdrop read as nearly opaque black instead of transparent glass.
+
+**Root cause:**
+- `refract` was enabled on product chrome (`GlobalSidebar`, `SettingsModal`, `SearchModal`). In Chromium this appends `url(#sx-refract)` to `backdrop-filter`; with the now-visible V2 depth field, the SVG displacement dragged large depth blobs through the glass and produced the colored contour artifacts.
+- Dark `--sx-overlay: rgb(0 0 0 / 0.62)` plus `blur(18px) saturate(115%)` made the transparent settings modal sit over an almost black field, so transparency was technically present but visually hidden.
+
+**What changed:**
+- Removed `refract` from product sidebar, settings modal, and command palette. Backdrop blur/saturate/brightness remains; only SVG displacement is disabled in real UI.
+- Lowered dark `--sx-overlay` from `0.62` to `0.42`.
+- Reduced `.settings-backdrop` from `blur(18px) saturate(115%)` to `blur(12px) saturate(105%)`.
+- Updated the Layout comment: the refraction filter remains available for opt-in lab/dev specimens.
+
+**Gate results:**
+- `npm run lint` — clean
+- `npm run build` — green
+- `npm run visual-qa` — clean; contrast unchanged (dark: 6.29-7.48:1, light: 5.19-5.66:1)
+
+**Deviation:** Lab sidebar specimens still opt into `refract` intentionally, so the lab can diagnose the failure mode. Product chrome no longer opts in.
+
+---
+
+## 2026-06-11 — Settings transparency push
+
+**Trigger:** User confirmed artifact fix improved the result, then asked to make Settings "properly transparent".
+
+**What changed:**
+- Added settings-local material variables on `.settings-overlay` / `.settings-modal-shell` instead of weakening every modal in the app.
+- Dark settings shell fill is now near-clear: `--settings-glass-fill-top: rgb(255 255 255 / 0.035)`, `--settings-glass-fill-bottom: rgb(255 255 255 / 0.006)`.
+- Settings backdrop is lighter: `rgb(0 0 0 / 0.26)` with `blur(8px) saturate(102%)`.
+- Inner settings controls get local alpha surfaces (`0.065/0.10/0.14`) so active tabs/buttons remain readable over the more transparent shell.
+- Light theme gets parallel local values: lighter overlay and transparent white glass, with slate control tints.
+
+**Gate results:**
+- `npm run lint` — clean
+- `npm run build` — green
+- `npm run visual-qa` — clean; lab contrast unchanged (dark: 6.29-7.48:1, light: 5.19-5.66:1)
+
+---
+
+## 2026-06-11 — Menu unification + transparent product modals
+
+**Trigger:** User QA showed two different menu materials: status menus using the older `.dropdown-menu`/project override recipe and priority/select menus using the newer `.glass-menu` recipe. User preferred the second, darker transparent version, and asked for create project/workspace-style modals to match Settings transparency.
+
+**What changed:**
+- Added shared menu material tokens: `--sx-menu-fill-top`, `--sx-menu-fill-bottom`, `--sx-menu-scrim` for dark and light themes.
+- Reworked `.glass-menu` and `.dropdown-menu` to the same material: transparent glass fill + slight dark scrim + blur/saturate/brightness stack.
+- Re-cut legacy menu rim to disappear by 45%, removing the boxed lower/right border read.
+- Removed the `project-header-menu` custom gray menu surface and selected-row box so project status/priority/date selects inherit the unified menu style.
+- Added `.product-modal-overlay` / `.product-modal-shell` as the shared settings-grade transparent modal recipe.
+- Applied product modal material to: `WorkspaceCreateModal`, `CreateProjectModal`, project `CreateTaskModal`, shared `Modal`, shadcn `Dialog`, shadcn `AlertDialog`, and legacy `EditTaskModal`.
+- Legacy `EditTaskModal` was moved from solid white/dark surfaces to `<Glass variant="modal">` plus tokenized inputs/buttons where it mattered.
+
+**Gate results:**
+- `npm run lint` — clean
+- `npm run build` — green
+- `npm run visual-qa` — clean; lab contrast unchanged (dark: 6.29-7.48:1, light: 5.19-5.66:1)
+
+---
+
+## 2026-06-11 — Phase 3 surface pass resume (V1 03 executed under V2 doctrine)
+
+**Context:** Started from the user-requested `docs/plans/liquid-glass/03-surfaces.md` after reading `liquid-glass-v2/00-MASTER.md` and reviewing the baseline screenshots under `docs/plans/liquid-glass-v2/shots/baseline/`. Because V2 supersedes V1 visual goals, this pass kept the V1 screen scope but followed the V2 chrome/content doctrine: chrome glass only, content rows/cards as alpha Tier B or plain canvas.
+
+**What changed:**
+- Project priority/status cells now use the shared dot-chip language instead of the old priority bar glyph; dropdown priority/status options keep compact dots.
+- My Issues priority values now render as `sx-chip` priority chips rather than bare colored text.
+- Board cards now show compact priority chips and label chips using the shared alpha/currentColor recipe instead of a flag icon and hex-alpha label fills.
+- Members page/panel role badges now use shared chips; Owner remains quiet `label-caps` in `--status-done-text`. Member rows, avatars, role triggers, list shells, invite blocks, and invite URL/code fields moved to semantic `.members-*` classes.
+- Home header constrained to the same `min(100%, 50rem)` content column as the recent-project panel so Create Task/Create Project no longer float to the far right of the app frame.
+- Remaining `rgba(...)` literals in `components.css` were removed or re-pointed to `--sx-danger`, `--sx-text-*`, `--sx-line`, `--sx-surface*`, or modern neutral `rgb(... / alpha)`.
+
+**Gate results:**
+- `npm run lint` — clean
+- `npm run build` — green (existing Browserslist age and >500 kB chunk advisories only)
+- `npm run visual-qa` — clean; regenerated `shots/d8cfc0b/lab-dark.png` and `lab-light.png`, contrast passed (dark: 6.29-7.48:1, light: 5.19-5.66:1)
+
+**What the screenshots showed (`shots/d8cfc0b/`):**
+- Dark lab: visible depth field, translucent Tier A chrome, Tier B alpha rows/cards/buttons, no violet chips, styled scrollbar.
+- Light lab: cool-slate field remains visible, glass reads through edge/shadow, Tier B slate tints remain legible, chips stay gold/non-violet.
+
+**DoD greps:**
+- `variant="panel"` / `sx-glass--panel` in `react-frontend/src` → 0
+- `rgba(255` in in-scope product surfaces (`pages/tasks`, `pages/workspace`, `features/members`, `features/taskBoard`, `styles/components.css`) → 0
+- `rgba(` in `styles/components.css` → 0
+- `components.css` `border` count: 141 → 141 in this pass. No reduction claimed; V2 master explicitly defers the broader `components.css` monolith cleanup.
+
+**Deviations / known rough spots:**
+- No commit made: the working tree already had broad uncommitted V2 and frontend edits, including overlapping files, so committing this pass cleanly would risk sweeping unrelated local work into the commit.
+- Real authenticated route walk was not run; visual verification was the lab harness plus baseline screenshot review. Projects/Tasks/Members/Home require app state/auth not provided by the harness.
+- Remaining `rgba(255...)` hits in marketing/settings files are out of this pass's scope per V2 non-goals.

@@ -8,6 +8,7 @@ import { trackItem } from '@/shared/lib/recentItems.js';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle.js';
 import { showToast } from '@/shared/lib/toast.js';
 import { useWorkspace } from '@/contexts/useWorkspace.js';
+import { useProjectRealtime, upsertProject } from '@/shared/hooks/useRealtimeSync.js';
 import { WorkspaceWelcome } from './WorkspaceWelcome.js';
 import { WorkspaceBento } from './WorkspaceBento.js';
 import { WorkspaceProjects } from './WorkspaceProjects.js';
@@ -102,6 +103,17 @@ export const WorkspacePage: React.FC = () => {
   const handleProjectUpdated = useCallback((updated: ProjectDTO) => {
     setProjects(prev => prev.map(project => project.id === updated.id ? updated : project));
   }, []);
+
+  // Live sync: another member (or another tab) created/changed/removed a project.
+  useProjectRealtime({
+    onUpsert: useCallback((p: ProjectDTO) => {
+      if (p.workspace_id && p.workspace_id !== workspaceId) return;
+      setProjects(prev => upsertProject(prev, p));
+    }, [workspaceId]),
+    onDelete: useCallback((id: string) => {
+      setProjects(prev => prev.filter(p => p.id !== id));
+    }, []),
+  });
 
   if (loading) {
     return (

@@ -51,7 +51,7 @@ export function TaskExplorerFilters({ categories, params, onChange }: TaskExplor
                 onClick={() => onChange({ priority: params.priority === item.id ? undefined : item.id, cursor: undefined })}
                 className="tasks-filter-item"
                 data-active={params.priority === item.id ? 'true' : undefined}
-                style={{ ['--filter-color' as string]: isTaskPriority(item.id) ? TASK_PRIORITY_META[item.id].color : 'rgba(255,255,255,0.5)' }}
+                style={{ ['--filter-color' as string]: isTaskPriority(item.id) ? TASK_PRIORITY_META[item.id].color : 'var(--sx-text-subtle)' }}
               >
                 <span>{isTaskPriority(item.id) ? TASK_PRIORITY_META[item.id].label : item.name.charAt(0).toUpperCase() + item.name.slice(1)}</span>
                 <b>{item.count}</b>

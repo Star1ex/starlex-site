@@ -80,8 +80,6 @@
     --glass-fill-top: var(--sx-glass-fill-top-raised);
     --glass-shadow: var(--sx-shadow-elevated);
   }
-  /* @deprecated — removed in phase 3 */
-  .sx-glass--panel { --glass-blur: 24px; }
   /* Tier B: no blur, alpha surface fill (Law 13) */
   .sx-glass--card {
     backdrop-filter: none;
@@ -128,7 +126,13 @@
     --glass-fill-top: color-mix(in srgb, #fff 2%, var(--sx-glass-fill-top));
     transform: translateY(-1px);
   }
-  .sx-glass--interactive:active { transform: scale(0.985); }
+  .sx-glass--interactive:active { transform: scale(0.98); }
+  /* Tier-B press: fill steps up on active (physics cue). */
+  .sx-glass--pill.sx-glass--interactive:active,
+  .sx-glass--card.sx-glass--interactive:active {
+    background: var(--sx-surface-active);
+    transition: transform var(--motion-fast), background var(--motion-fast);
+  }
   /* Cards lift further and raise a shadow tier on hover (signature card feel). */
   .sx-glass--card.sx-glass--interactive:hover {
     --glass-shadow: var(--sx-shadow-elevated);

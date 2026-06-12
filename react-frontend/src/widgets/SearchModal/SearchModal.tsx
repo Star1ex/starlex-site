@@ -135,7 +135,7 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
           {/* Backdrop — flat dim + blur (background recedes) */}
           <div
             className="absolute inset-0"
-            style={{ background: 'var(--sx-overlay)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)' }}
+            style={{ background: 'var(--sx-overlay)', backdropFilter: 'blur(18px) saturate(115%)', WebkitBackdropFilter: 'blur(18px) saturate(115%)' }}
             onClick={onClose}
           />
 
@@ -143,8 +143,8 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
             as={motion.div}
             variant="modal"
             depth="floating"
-            refract
             className="relative w-full max-w-[560px] overflow-hidden"
+            style={{ viewTransitionName: 'sx-cmdk' } as React.CSSProperties}
             initial={{ opacity: 0, scale: 0.97, y: -8 }}
             animate={{ opacity: 1, scale: 1, y: 0, transition: { duration: 0.18, ease: [0.16, 1, 0.3, 1] } }}
             exit={{ opacity: 0, scale: 0.98, y: -6, transition: { duration: 0.12 } }}

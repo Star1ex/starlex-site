@@ -1,4 +1,4 @@
-import React, { useEffect, useState, ReactNode } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, ReactNode } from 'react';
 import { getCookie, setCookie } from '@/shared/lib/cookies.js';
 import { ThemeContext } from './themeContext.js';
 import {
@@ -17,6 +17,31 @@ function applyThemeClasses(theme: Theme) {
   // keep working under ultra-dark.
   root.dataset.theme = theme;
   root.classList.toggle('dark', theme === 'ultra-dark');
+}
+
+type ViewTransitionDocument = Document & {
+  startViewTransition?: (callback: () => void) => unknown;
+};
+
+function prefersReducedMotion(): boolean {
+  return typeof window !== 'undefined'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+/** Flip the theme on the DOM, wrapped in a View Transition cross-dissolve
+ *  where supported (Chromium). The data-theme attribute must change inside
+ *  the callback so the API can snapshot before/after. */
+function commitThemeToDom(theme: Theme) {
+  const doc = document as ViewTransitionDocument;
+  if (typeof doc.startViewTransition === 'function' && !prefersReducedMotion()) {
+    doc.startViewTransition(() => {
+      applyThemeClasses(theme);
+      applyFavicon(theme);
+    });
+    return;
+  }
+  applyThemeClasses(theme);
+  applyFavicon(theme);
 }
 
 function applyFavicon(theme: Theme) {
@@ -79,34 +104,51 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
       localStorage.getItem(THEME_STORAGE_KEY);
     return migrateTheme(saved);
   });
+  const themeRef = useRef(theme);
 
   const [accent, setAccentState] = useState<string>(DEFAULT_ACCENT);
 
   useEffect(() => {
+    themeRef.current = theme;
     applyThemeClasses(theme);
     applyFavicon(theme);
     localStorage.setItem(THEME_STORAGE_KEY, theme);
     setCookie(THEME_COOKIE_KEY, theme, { maxAge: THEME_COOKIE_MAX_AGE, path: '/' });
   }, [theme]);
 
-  const setTheme = (newTheme: Theme) => setThemeState(newTheme);
+  const setTheme = useCallback((newTheme: Theme) => {
+    if (newTheme === themeRef.current) return;
+    // Flip the DOM inside a View Transition first; the effect below then
+    // re-applies the same classes idempotently and persists the choice.
+    themeRef.current = newTheme;
+    commitThemeToDom(newTheme);
+    setThemeState(newTheme);
+  }, []);
 
-  const toggleTheme = () => {
-    setThemeState((prev) => (prev === 'light' ? 'ultra-dark' : 'light'));
-  };
+  const toggleTheme = useCallback(() => {
+    setTheme(themeRef.current === 'light' ? 'ultra-dark' : 'light');
+  }, [setTheme]);
 
-  const setAccent = (color: string) => {
+  const setAccent = useCallback((color: string) => {
     setAccentState(color);
     applyStarlexAccent(color);
-  };
+  }, []);
 
-  const clearAccent = () => {
-    setAccentState(DEFAULT_ACCENT);
-    applyStarlexAccent(DEFAULT_ACCENT);
-  };
+  const clearAccent = useCallback(() => {
+    setAccent(DEFAULT_ACCENT);
+  }, [setAccent]);
+
+  const value = useMemo(() => ({
+    theme,
+    toggleTheme,
+    setTheme,
+    accent,
+    setAccent,
+    clearAccent,
+  }), [accent, clearAccent, setAccent, setTheme, theme, toggleTheme]);
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme, accent, setAccent, clearAccent }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );

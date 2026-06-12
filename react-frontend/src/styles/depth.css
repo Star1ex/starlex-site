@@ -7,9 +7,13 @@
 @layer base {
   .sx-depth {
     position: fixed;
-    inset: 0;
+    top: -5vh;
+    left: 0;
+    right: 0;
+    height: 110vh;
     z-index: -1;
     pointer-events: none;
+    transform: translateY(var(--depth-shift, 0px));
     background:
       linear-gradient(180deg, var(--sx-depth-a), transparent 40%),
       radial-gradient(900px 600px at 12% -8%, var(--sx-depth-a), transparent 70%),

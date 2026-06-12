@@ -14,7 +14,6 @@ import {
 } from '@/entities/task/model/taskMeta.js';
 import { StatusMenu } from '@/features/taskStatus/StatusMenu.js';
 import { InlineLabelChips, LabelPicker } from '@/shared/ui/LabelPicker.js';
-import { Glass } from '@/shared/ui/glass/index.js';
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -244,7 +243,7 @@ export function TaskPropertiesPanel({
   const selectedAssignees = task.assignees ?? [];
 
   return (
-    <Glass as="aside" variant="panel" depth="raised" className="task-properties-panel">
+    <aside className="task-properties-panel">
       <div className="task-properties-head">
         <div>
           <Tag size={15} />
@@ -332,6 +331,6 @@ export function TaskPropertiesPanel({
           Updated {task.updated_at ? new Date(task.updated_at).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'recently'}
         </div>
       )}
-    </Glass>
+    </aside>
   );
 }

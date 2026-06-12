@@ -1,14 +1,12 @@
 import React, { useEffect, useRef } from 'react';
-import { Check } from 'lucide-react';
-import { WORKSPACE_ACCENT_PRESETS, WORKSPACE_ICON_PRESETS } from '@/shared/lib/workspaceIdentity.js';
-
-function fallbackIcon(name: string) {
-  return name.trim().slice(0, 2).toUpperCase() || 'WS';
-}
-
-function normalizeIcon(value: string) {
-  return value.trim().slice(0, 2).toUpperCase();
-}
+import { Check, RefreshCw } from 'lucide-react';
+import { WORKSPACE_ACCENT_PRESETS } from '@/shared/lib/workspaceIdentity.js';
+import { WorkspaceAvatar } from '@/shared/ui/WorkspaceAvatar.js';
+import {
+  buildGenerativeIcon,
+  resolveWorkspaceIcon,
+  GENERATIVE_VARIANTS,
+} from '@/shared/lib/workspaceAvatar.js';
 
 interface WorkspaceIdentityFormProps {
   name: string;
@@ -40,7 +38,7 @@ export const WorkspaceIdentityForm: React.FC<WorkspaceIdentityFormProps> = ({
   showDescription = false,
 }) => {
   const nameRef = useRef<HTMLInputElement>(null);
-  const previewIcon = icon || fallbackIcon(name);
+  const seed = name.trim() || 'workspace';
 
   useEffect(() => {
     if (!autoFocus) return;
@@ -48,16 +46,30 @@ export const WorkspaceIdentityForm: React.FC<WorkspaceIdentityFormProps> = ({
     return () => window.clearTimeout(timer);
   }, [autoFocus]);
 
+  const regenerate = () => {
+    const current = resolveWorkspaceIcon(icon).variant;
+    const next = (current + 1) % GENERATIVE_VARIANTS;
+    onIconChange(buildGenerativeIcon(next));
+  };
+
   return (
     <div className="workspace-identity-form">
       <div className="workspace-identity-preview">
-        <div className="workspace-identity-glyph" style={{ backgroundColor: color }}>
-          {previewIcon}
-        </div>
+        <WorkspaceAvatar seed={seed} name={name} icon={icon} color={color} size={64} />
         <div className="workspace-identity-copy">
           <strong>{name.trim() || 'My Workspace'}</strong>
           <span>Workspace</span>
         </div>
+        <button
+          type="button"
+          className="workspace-avatar-regen"
+          onClick={regenerate}
+          disabled={disabled}
+          title="Regenerate avatar"
+          aria-label="Regenerate avatar"
+        >
+          <RefreshCw size={14} />
+        </button>
       </div>
 
       <div className="workspace-identity-field">
@@ -75,35 +87,10 @@ export const WorkspaceIdentityForm: React.FC<WorkspaceIdentityFormProps> = ({
       </div>
 
       <div className="workspace-identity-field">
-        <label>Icon</label>
-        <div className="workspace-icon-row">
-          <input
-            value={icon}
-            onChange={(event) => onIconChange(normalizeIcon(event.target.value))}
-            placeholder={fallbackIcon(name)}
-            disabled={disabled}
-            className="workspace-icon-input"
-            autoComplete="off"
-            maxLength={2}
-          />
-          <div className="workspace-icon-presets">
-            {WORKSPACE_ICON_PRESETS.map((preset) => (
-              <button
-                key={preset}
-                type="button"
-                onClick={() => onIconChange(preset)}
-                disabled={disabled}
-                data-active={icon === preset ? 'true' : undefined}
-              >
-                {preset}
-              </button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="workspace-identity-field">
-        <label>Accent color</label>
+        <label>
+          Color
+          <span>tints the avatar</span>
+        </label>
         <div className="workspace-color-presets">
           {WORKSPACE_ACCENT_PRESETS.map((preset) => (
             <button

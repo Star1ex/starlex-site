@@ -25,6 +25,9 @@
     --sx-glass-blur: 28px;
     --sx-glass-saturate: 130%;
     --sx-glass-brightness: 1.12;
+    --sx-menu-fill-top: rgb(255 255 255 / 0.07);
+    --sx-menu-fill-bottom: rgb(255 255 255 / 0.018);
+    --sx-menu-scrim: rgb(0 0 0 / 0.26);
     --sx-rim-bright: rgb(255 255 255 / 0.38);  /* light-catching edge */
     --sx-rim-faint: rgb(255 255 255 / 0.05);
     --sx-thickness: rgb(0 0 0 / 0.35);          /* bottom inner shadow */
@@ -58,7 +61,7 @@
     /* Shadows — NEUTRAL, never tinted; two-layer: contact + ambient */
     --sx-shadow-soft: 0 1px 2px rgb(0 0 0 / 0.40), 0 16px 48px rgb(0 0 0 / 0.50);
     --sx-shadow-elevated: 0 2px 6px rgb(0 0 0 / 0.45), 0 32px 80px rgb(0 0 0 / 0.60);
-    --sx-overlay: rgb(0 0 0 / 0.62);
+    --sx-overlay: rgb(0 0 0 / 0.42);
     --sx-scrollbar-thumb: rgb(255 255 255 / 0.14);
 
     /* Radii */

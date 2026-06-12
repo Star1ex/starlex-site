@@ -142,3 +142,53 @@ Each phase session appends one entry: date, phase, what shipped, deviations from
 - **Profile page (`.profile-*`) still on rgba literals** — shares `.settings-button` (now tokenised) but its shell/cards remain hardcoded dark-only; out of the 4.x overlay scope, will not be light-correct until migrated.
 - The shadcn gray theme tokens (`shadcn.css` oklch set) are still declared but now only reached by un-migrated primitives; overlay primitives are fully on `--sx-*`. A future pass could delete the unused shadcn theme block.
 - This commit also folds in the previously-uncommitted Phase 1–3 hardening iteration that was sitting in the working tree.
+
+---
+
+## 2026-06-11 — Phase 5 (Motion system, micro-details, QA gate) complete
+
+**What shipped**
+- **5.1 Motion token system.** New `styles/motion.css` is the single timing source: `--motion-fast/base/slow` (120/180/280ms), canonical easings (`--ease-out-expo`, `--spring-gentle`, `--spring-snappy` — moved out of `tokens.css`), `--motion-stagger`, the View-Transition `::view-transition-*(root)` 300ms tuning, and the **one** global `prefers-reduced-motion` reset (removed the duplicate `*` block from `utilities.css`). `shared/lib/animations.ts` rewritten as the framer source that mirrors those vars: `springUI {420/34}` / `springSoft {260/30}`, `durations`, a capped `staggerDelay()` (12ms/row ≤10 rows), `routeFadeVariants`, `cardHover`, `tapScale` now `0.97`; legacy `springs.*` collapsed onto the two presets (kept for back-compat). All existing variant export names preserved, so no call-site churn.
+- **5.2 Choreography.** Sidebar nav stagger capped (`0.04 + index*0.016` → ≤0.12s total) and the cheap `whileHover x:3` jiggle removed (nav items keep only `whileTap` 0.97). Sidebar/profile buttons `whileTap` → `tapScale`. **Route transitions:** `ShellRoute` now wraps the `<Outlet>` in `AnimatePresence mode="popLayout"` with an opacity-only `routeFadeVariants` crossfade (140ms), keyed on the *background* path so the sidebar/topbar never animate on nav and opening `/settings` doesn't flash the content. **Hover physics:** board cards (`.sx-glass--card.sx-glass--interactive:hover`) now lift `-2px` + raise to the elevated shadow tier (CSS, reduced-motion-safe).
+- **5.3 Wow micro-details.** (1) **Specular cursor tracking** on the sidebar glass: one rAF-throttled `pointermove` listener in `GlobalSidebar` writes `--mx/--my`; `.sx-glass--specular::before` composites a `--sx-rim-bright` radial into the **rim layer**, whose 1px mask clamps it to the slab edge — a faint glint travels the border under the pointer. (First cut put the radial in the glass *body* and produced a glowing cloud — a Design-Law-2 haze violation, reported + corrected to the rim-only version. Settings/⌘K scrim blur also raised 8→18px so high-contrast page chrome diffuses cleanly behind overlays.) (2) **Theme switch = 300ms cross-dissolve** via `document.startViewTransition` (guarded, Chromium) — `ThemeContext.commitThemeToDom` flips `data-theme` inside the transition callback; effect re-applies idempotently + persists. (3) **Chip dots crossfade** their hue (`.sx-dot { transition: color }`). (4) **Skeletons de-shimmered:** `.skeleton-shimmer` is now a static `--sx-surface` block with a 1.2s `0.6→1` opacity pulse (`Skeleton.tsx` dropped the framer `backgroundPosition` loop) — kills the gradient-shimmer template tell. (5) **Empty-state icons** float (`sxEmptyFloat`, 4s/3px, reduced-motion off). (6) Progress-bar width transitions retokened onto `--motion-slow`.
+
+**Verification**
+- `npm run lint` → No issues. `npm run build` (tsc -b + vite) → green (~13s). No new dependency added (cmdk/sonner already from Phase 4); **no new chunk** from this redesign — largest bundles are unchanged pre-existing vendor chunks (framer `motion-vendor` 41.8kb gz, editor 256kb gz). Redesign delta is CSS + small TSX only.
+- `glow|6366f1|ambient` in `src/` → 0.
+- `!important` in `src/styles` → 22 lines, of which 4 are the standard reduced-motion overrides (required; net-zero, moved from utilities.css) and 1 is a comment — **17 real survivors**, all icon `width/height` sizing or rgba on legacy profile/project-detail surfaces. **Target <10 NOT met** (see below).
+
+**Deviations / known rough spots**
+- **Signature `layoutId` glass morphs (5.2) deliberately deferred.** The search-pill⇄⌘K-modal and workspace-switcher⇄dropdown morphs were assessed and *not* shipped: the search pill is always-mounted and the modal renders through a `createPortal` to `document.body`, so a shared-`layoutId` morph needs a `LayoutGroup` spanning the portal + conditional un-mount of the pill, and the pill→560px-modal aspect change distorts glass/text mid-morph. With no live visual QA available this session (gate was lint+build, per every prior phase), shipping a janky morph was judged worse than none. The two reliable signature moves that *did* land — cursor-tracked specular on the sidebar and the View-Transition theme cross-dissolve — carry the "how'd you build this" weight. Flag the morphs for a session with live browser access.
+- **5.4 live dual-theme QA walk NOT run** (no browser this session). The automatable half is recorded above; the per-route walk in both themes (contrast spot-checks, refraction present-in-Chromium/clean-in-Firefox, 60fps on 50-row table + 20-card board, keyboard tab order + ESC overlay ordering) still needs a manual Chromium+Firefox pass and is the one true blocking item before "done".
+- **DoD metrics carried over unmet:** `components.css` = **2,965 lines** (target <1,200) and `!important` = 17 real (target <10). Both are dominated by Phase-4-owned/non-product surfaces (settings, profile `.profile-*`, project-detail `.project-*`/`.task-*`, rich-editor) that were never assigned to a single phase — the monolith refactor is the explicit job of the `FRONTEND-REVIEW-01-REFACTOR-CLEANUP.md` follow-up, not Phase 5. The deprecated alias block in `tokens.css` also still has live consumers (profile, project-detail, marketing) and stays until that pass.
+- **Motion-token sweep partial.** ~47 ms literals remain in `components.css`; Phase 5 retokened the high-visibility ones (progress bars) and centralised the source. Full sweep folds into the refactor-cleanup follow-up.
+- The `shimmer` keyframe in `tailwind.config.js` is now unused (skeletons no longer reference it); left in place, safe to delete in cleanup.
+
+### Phase 5 dual-theme QA checklist (for the manual pass — not yet walked)
+- [ ] Walk every route in **both** themes ×(Chrome+Firefox): Home, Projects, Project detail, Tasks (list+board), Task detail, My Issues, Members, Inbox, Settings (all tabs), Profile, Auth, Onboarding, Invite, ⌘K, dialogs/toasts
+- [ ] No purple/glow; no uniform 4-side glass borders; ≤6 live blur surfaces/view
+- [ ] Muted text ≥4.5:1 on its surface in both themes; chip text AA
+- [ ] Refraction present in Chromium, absent-but-clean in Firefox/Safari
+- [ ] 60fps scroll on 50+ row table and 20-card board
+- [ ] Keyboard: sidebar→content tab order, focus ring visible on glass, ESC closes overlays in order
+- [ ] Specular spotlight tracks the sidebar; theme toggle cross-dissolves (Chromium)
+
+---
+
+## 2026-06-11 — Phase 3 surface pass resumed under V2 doctrine
+
+**What shipped**
+- Re-read `docs/plans/liquid-glass-v2/00-MASTER.md` and reviewed the committed baseline screenshots under `docs/plans/liquid-glass-v2/shots/baseline/`.
+- Applied the requested `03-surfaces.md` scope through the V2 doctrine: project status/priority cells, My Issues priority, board priority/label chips, and members role/list/invite surfaces now use shared alpha chip/surface recipes instead of older opaque or one-off treatments.
+- Constrained the Home header actions to the content column so they no longer float at the far right.
+- Removed in-scope `rgba(255...)` usage from product surfaces and removed all `rgba(...)` literals from `components.css`.
+
+**Verification**
+- `npm run lint` — clean
+- `npm run build` — green (existing Browserslist age and large-chunk advisories only)
+- `npm run visual-qa` — clean; screenshots regenerated in `docs/plans/liquid-glass-v2/shots/d8cfc0b/`, contrast passed (dark: 6.29-7.48:1, light: 5.19-5.66:1)
+- Greps: `variant="panel"` / `sx-glass--panel` in `react-frontend/src` → 0; in-scope `rgba(255` → 0.
+
+**Deviations**
+- The V1 border-count DoD is not claimed: `components.css` remains at 141 `border` hits for this pass. V2 supersedes that cleanup goal and explicitly defers the monolith/refactor work.
+- No commit made because the worktree already contained broad uncommitted overlapping frontend changes.

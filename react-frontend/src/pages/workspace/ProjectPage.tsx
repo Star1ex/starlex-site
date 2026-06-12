@@ -9,6 +9,7 @@ import type { ProjectDTO, TaskDTO, TaskStatus, UserDTO } from '@/types/dto.js';
 import { pageVariants } from '@/shared/lib/animations.js';
 import { trackItem } from '@/shared/lib/recentItems.js';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle.js';
+import { useProjectRealtime, useTaskRealtime } from '@/shared/hooks/useRealtimeSync.js';
 import { showToast } from '@/shared/lib/toast.js';
 import { can } from '@/shared/lib/permissions.js';
 import { ProjectHeader, ProjectPropertiesPanel } from './ProjectHeader.js';
@@ -104,6 +105,25 @@ export const ProjectPage: React.FC = () => {
   const handleTaskStatusChange = useCallback((id: string, status: TaskStatus) => {
     setTasks((prev) => prev.map((task) => task.id === id ? { ...task, status } : task));
   }, []);
+
+  // Live sync: the current project changed (icon/status/name) or was deleted.
+  useProjectRealtime({
+    onUpsert: useCallback((p: ProjectDTO) => {
+      setProject((prev) => (prev && prev.id === p.id ? p : prev));
+    }, []),
+    onDelete: useCallback((id: string) => {
+      if (id === projectId) navigate(`/workspace/${workspaceId}`);
+    }, [projectId, workspaceId, navigate]),
+  });
+
+  // Live sync: any task in this workspace changed — refetch this project's tasks.
+  const reloadTasks = useCallback(async () => {
+    if (!projectId) return;
+    try {
+      setTasks(await projectService.getProjectTasks(projectId));
+    } catch { /* transient; next event or reload reconciles */ }
+  }, [projectId]);
+  useTaskRealtime(reloadTasks);
 
   if (loading) {
     return (
