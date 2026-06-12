@@ -6,6 +6,7 @@ import { Reveal } from './Reveal.js';
 
 interface ChapterProps {
   id: string;
+  mark: string;
   kicker: string;
   title: ReactNode;
   body: string;
@@ -14,11 +15,11 @@ interface ChapterProps {
   flip?: boolean;
 }
 
-function Chapter({ id, kicker, title, body, points, demo, flip }: ChapterProps) {
+function Chapter({ id, mark, kicker, title, body, points, demo, flip }: ChapterProps) {
   return (
     <section className={`lx-section lx-container lx-chapter ${flip ? 'lx-chapter--flip' : ''}`} id={id}>
       <Reveal className="lx-chapter-copy">
-        <span className="lx-kicker">{kicker}</span>
+        <span className="lx-mark"><span className="lx-mark-id">{mark}</span>{kicker}</span>
         <h2 className="lx-h2">{title}</h2>
         <p className="lx-body">{body}</p>
         <ul className="lx-chapter-points">
@@ -36,6 +37,7 @@ export function LanderChapters() {
     <>
       <Chapter
         id="speed"
+        mark="SLX-01"
         kicker="Speed"
         title={<>Your keyboard is <span className="lx-dim">the interface.</span></>}
         body="Press ⌘K anywhere and the command palette takes over — create tasks, jump between projects, reassign work, switch themes. Latency is treated as a bug, so every interaction lands instantly."
@@ -49,6 +51,7 @@ export function LanderChapters() {
 
       <Chapter
         id="realtime"
+        mark="SLX-02"
         kicker="Realtime"
         title={<>One source of truth, <span className="lx-dim">always live.</span></>}
         body="Every change is broadcast over a persistent connection the moment it happens. When a teammate moves a task, your board moves too — no refresh button, no stale state, no asking around."
@@ -63,6 +66,7 @@ export function LanderChapters() {
 
       <Chapter
         id="structure"
+        mark="SLX-03"
         kicker="Structure"
         title={<>Structure that <span className="lx-dim">scales down.</span></>}
         body="Workspaces hold projects, projects hold tasks, tasks hold subtasks — and that's the whole model. Statuses, priorities, and labels stay out of the way until you need to filter by them."

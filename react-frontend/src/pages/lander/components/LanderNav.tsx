@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Glass } from '@/shared/ui/glass/index.js';
 import iconStarlex from '@/assets/icon-starlex.png';
 
@@ -30,7 +31,15 @@ export function LanderNav() {
 
   return (
     <div className="lx-nav-wrap">
-      <Glass as="nav" variant="dock" className={`lx-nav ${scrolled ? '' : 'lx-nav--top'}`} aria-label="Landing">
+      <Glass
+        as={motion.nav}
+        variant="dock"
+        className={`lx-nav ${scrolled ? '' : 'lx-nav--top'}`}
+        aria-label="Landing"
+        initial={false}
+        animate={scrolled ? { y: 0, scale: 1 } : { y: 10, scale: 1.045 }}
+        transition={{ type: 'spring', stiffness: 220, damping: 24 }}
+      >
         <a
           className="lx-nav-brand"
           href="#top"

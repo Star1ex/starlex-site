@@ -12,7 +12,6 @@ import { PageRouteSkeleton } from '@/shared/ui/PageLoadState.js';
 import { isExplicitLogoutPending } from '@/shared/lib/authManager.js';
 
 // Lazy-loaded pages
-const HomePage        = lazyWithRetry('home', () => import('@/pages/home/HomePage.js').then(m => ({ default: m.HomePage })));
 const SignInPage      = lazyWithRetry('sign-in', () => import('@/pages/auth/SignInPage/SignInPage.js').then(m => ({ default: m.SignInPage })));
 const SignUpPage      = lazyWithRetry('sign-up', () => import('@/pages/auth/SignUpPage/SignUpPage.js').then(m => ({ default: m.SignUpPage })));
 const ForgotPasswordPage = lazyWithRetry('forgot-password', () => import('@/pages/auth/ForgotPasswordPage/ForgotPasswordPage.js').then(m => ({ default: m.ForgotPasswordPage })));
@@ -126,7 +125,7 @@ const AnimatedRoutes = () => {
     <>
       <Routes location={background || location}>
         {/* Public */}
-        <Route path="/"                element={publicRoute(<HomePage />)} />
+        <Route path="/"                element={publicRoute(<LanderPage />)} />
         <Route path="/sign-in"         element={publicRoute(<SignInPage />)} />
         <Route path="/sign-up"         element={publicRoute(<SignUpPage />)} />
         <Route path="/oauth/callback"  element={publicRoute(<OAuthCallbackPage />)} />
@@ -135,7 +134,7 @@ const AnimatedRoutes = () => {
         <Route path="/reset-password"  element={publicRoute(<ResetPasswordPage />)} />
         <Route path="/verify-email"    element={publicRoute(<VerifyEmailPage />)} />
         <Route path="/about-us"        element={publicRoute(<AboutUs />)} />
-        <Route path="/lander"          element={publicRoute(<LanderPage />)} />
+        <Route path="/lander"          element={withEB(<Navigate to="/" replace />)} />
         <Route path="/invite/:token"   element={publicRoute(<InviteAcceptPage />)} />
 
         {/* Onboarding — authed, no layout shell */}

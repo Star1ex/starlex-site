@@ -2,6 +2,7 @@ import { useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, useInView, useScroll, useSpring, useTransform } from 'framer-motion';
 import { Glass } from '@/shared/ui/glass/index.js';
+import iconStarlex from '@/assets/icon-starlex.png';
 import { BoardDemo } from './BoardDemo.js';
 import { EASE } from './Reveal.js';
 
@@ -38,10 +39,6 @@ export function LanderHero() {
 
   return (
     <header className="lx-hero lx-container" id="top">
-      <motion.span className="lx-kicker" {...fadeIn(0.05)}>
-        Task tracking for small teams
-      </motion.span>
-
       <h1 className="lx-display" aria-label="Every task. One pane of glass.">
         <span className="lx-mask-line" aria-hidden>
           <motion.span style={{ display: 'block' }} custom={0} variants={lineReveal} initial="hidden" animate="visible">
@@ -56,8 +53,8 @@ export function LanderHero() {
       </h1>
 
       <motion.p className="lx-lede" {...fadeIn(0.45)}>
-        Starlex keeps projects, tasks, and people in one fast, keyboard-driven
-        workspace — synced live for everyone on your team.
+        The open-source tracker for small teams: boards that move when your
+        teammates do, and a command palette that makes the mouse optional.
       </motion.p>
 
       <motion.div className="lx-hero-actions" {...fadeIn(0.58)}>
@@ -72,10 +69,6 @@ export function LanderHero() {
         </a>
       </motion.div>
 
-      <motion.span className="lx-hero-meta" {...fadeIn(0.7)}>
-        Open source · no credit card · built by a team of three
-      </motion.span>
-
       <div className="lx-hero-stage" ref={stageRef} id="product">
         <Glass
           as={motion.div}
@@ -85,10 +78,19 @@ export function LanderHero() {
           style={{ rotateX, scale, opacity: frameOpacity, transformOrigin: 'center 20%' }}
         >
           <div className="lx-frame-bar" aria-hidden>
-            <span className="lx-frame-dot" />
-            <span className="lx-frame-dot" />
-            <span className="lx-frame-dot" />
-            <span className="lx-frame-title">starlex — all tasks</span>
+            <img src={iconStarlex} className="lx-frame-glyph" alt="" />
+            <span className="lx-frame-crumbs">
+              Starlex HQ <i>›</i> Tasks <i>›</i> <strong>Board</strong>
+            </span>
+            <span className="lx-frame-bar-right">
+              <span className="lx-rt-avatars">
+                <span className="lx-avatar">AR</span>
+                <span className="lx-avatar">ZK</span>
+                <span className="lx-avatar">AT</span>
+              </span>
+              <span className="lx-frame-sync"><i />Synced</span>
+              <span className="lx-kbd">⌘K</span>
+            </span>
           </div>
           <BoardDemo active={boardInView} />
         </Glass>

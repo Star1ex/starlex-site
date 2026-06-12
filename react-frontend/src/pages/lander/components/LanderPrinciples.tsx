@@ -22,7 +22,7 @@ export function LanderPrinciples() {
 
       <section className="lx-section lx-container" id="teams">
         <Reveal className="lx-grid-head">
-          <span className="lx-kicker">Who it&apos;s for</span>
+          <span className="lx-mark"><span className="lx-mark-id">SLX-04</span>Who it&apos;s for</span>
           <h2 className="lx-h2">Built for teams that ship.</h2>
           <p className="lx-body">
             Starlex is deliberately small-team software: fast to adopt, honest
@@ -44,7 +44,7 @@ export function LanderPrinciples() {
 
       <section className="lx-section lx-container" id="principles">
         <Reveal className="lx-grid-head">
-          <span className="lx-kicker">Principles</span>
+          <span className="lx-mark"><span className="lx-mark-id">SLX-05</span>Principles</span>
           <h2 className="lx-h2">Four rules we don&apos;t break.</h2>
         </Reveal>
         <div className="lx-cards lx-cards--four">
