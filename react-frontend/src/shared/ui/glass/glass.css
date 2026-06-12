@@ -76,7 +76,7 @@
   /* ---------- Variants (token-driven deltas only) ---------- */
   .sx-glass--sidebar {
     --glass-radius: var(--radius-xl);
-    --glass-blur: 36px;
+    --glass-blur: var(--sx-blur-sidebar);
     --glass-fill-top: var(--sx-glass-fill-top-raised);
     --glass-shadow: var(--sx-shadow-elevated);
   }
@@ -88,13 +88,13 @@
   }
   .sx-glass--menu {
     --glass-radius: var(--radius-lg);
-    --glass-blur: 40px;
+    --glass-blur: var(--sx-blur-menu);
     --glass-fill-top: var(--sx-glass-fill-top-strong);
     --glass-shadow: var(--sx-shadow-elevated);
   }
   .sx-glass--modal {
     --glass-radius: var(--radius-xl);
-    --glass-blur: 40px;
+    --glass-blur: var(--sx-blur-modal);
     --glass-fill-top: var(--sx-glass-fill-top-strong);
     --glass-shadow: var(--sx-shadow-elevated);
   }
@@ -162,14 +162,5 @@
     .sx-glass--interactive:active { transform: none; transition: none; }
     /* freeze the glint at the resting position */
     .sx-glass--specular { --mx: 50%; --my: 0%; }
-  }
-
-  /* ---------- Edge refraction (Chromium only, opt-in) ----------
-     Appended AFTER variants so the full backdrop-filter wins.
-     The component only attaches this class when the runtime
-     capability check passes; other engines keep the blur stack. */
-  .sx-glass--refract {
-    backdrop-filter: blur(var(--glass-blur, var(--sx-glass-blur))) saturate(var(--sx-glass-saturate)) brightness(var(--sx-glass-brightness, 1)) url(#sx-refract);
-    -webkit-backdrop-filter: blur(var(--glass-blur, var(--sx-glass-blur))) saturate(var(--sx-glass-saturate)) brightness(var(--sx-glass-brightness, 1)) url(#sx-refract);
   }
 }

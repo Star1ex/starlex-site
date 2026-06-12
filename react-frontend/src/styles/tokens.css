@@ -23,6 +23,9 @@
     --sx-glass-fill-top-raised: rgb(255 255 255 / 0.06);   /* sidebar / dock */
     --sx-glass-fill-top-strong: rgb(255 255 255 / 0.12);   /* menu / modal — legibility over content */
     --sx-glass-blur: 28px;
+    --sx-blur-sidebar: 36px;
+    --sx-blur-menu: 36px;
+    --sx-blur-modal: 40px;
     --sx-glass-saturate: 130%;
     --sx-glass-brightness: 1.12;
     --sx-menu-fill-top: rgb(255 255 255 / 0.07);
@@ -145,14 +148,8 @@
     --text-secondary: var(--sx-text-muted);
     --text-tertiary: var(--sx-text-subtle);
     --border-color: var(--sx-line);
-    --border-sidebar: rgb(255 255 255 / 0.05);
     --glass-bg: var(--sx-surface);
     --glass-border: var(--sx-line);
-    --glass-highlight: var(--sx-rim-faint);
-    --glass-bg-hover: var(--sx-surface-hover);
-    --glass-border-hover: var(--sx-line-strong);
-    --bg-sidebar: rgb(0 0 0 / 0.50);
-    --topbar-bg: rgb(0 0 0 / 0.40);
     --button-bg: var(--sx-surface);
     --button-bg-hover: var(--sx-surface-hover);
     --button-bg-active: var(--sx-surface-active);

@@ -74,21 +74,27 @@
     position: relative;
     isolation: isolate;
     outline: none;
+    pointer-events: auto;
     border-radius: var(--radius-lg);
     background:
-      linear-gradient(180deg, var(--sx-menu-fill-top), var(--sx-menu-fill-bottom)),
-      var(--sx-menu-scrim);
-    backdrop-filter: blur(36px) saturate(var(--sx-glass-saturate)) brightness(var(--sx-glass-brightness, 1));
-    -webkit-backdrop-filter: blur(36px) saturate(var(--sx-glass-saturate)) brightness(var(--sx-glass-brightness, 1));
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--sx-menu-fill-top) 68%, var(--sx-canvas-elevated) 32%),
+        color-mix(in srgb, var(--sx-menu-fill-bottom) 50%, var(--sx-canvas-elevated) 50%)
+      ),
+      color-mix(in srgb, var(--sx-menu-scrim) 72%, var(--sx-canvas-elevated) 28%);
+    backdrop-filter: blur(calc(var(--sx-blur-menu) + 10px)) saturate(var(--sx-glass-saturate)) brightness(var(--sx-glass-brightness, 1));
+    -webkit-backdrop-filter: blur(calc(var(--sx-blur-menu) + 10px)) saturate(var(--sx-glass-saturate)) brightness(var(--sx-glass-brightness, 1));
     box-shadow:
-      var(--sx-shadow-elevated),
+      0 24px 64px rgb(0 0 0 / 0.40),
+      0 0 0 1px var(--sx-edge),
       inset 0 -12px 24px -16px var(--sx-thickness);
     color: var(--sx-text);
   }
 
-  /* Menu rows — unified geometry (height 30px, radius-sm). */
+  /* Menu rows — unified geometry, large enough for reliable pointer targeting. */
   .glass-menu-item {
-    min-height: 30px;
+    min-height: 34px;
     border-radius: var(--radius-sm);
     outline: none;
     color: var(--sx-text-muted);

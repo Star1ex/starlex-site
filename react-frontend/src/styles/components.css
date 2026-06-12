@@ -416,9 +416,9 @@
     -webkit-backdrop-filter: blur(8px) saturate(102%);
   }
   :root[data-theme="light"] .product-modal-overlay {
-    --product-modal-overlay-fill: rgb(20 24 33 / 0.12);
-    --product-modal-glass-fill-top: rgb(255 255 255 / 0.18);
-    --product-modal-glass-fill-bottom: rgb(255 255 255 / 0.035);
+    --product-modal-overlay-fill: rgb(20 24 33 / 0.10);
+    --product-modal-glass-fill-top: rgb(255 255 255 / 0.10);
+    --product-modal-glass-fill-bottom: rgb(255 255 255 / 0.02);
     --product-modal-control-surface: rgb(15 23 42 / 0.055);
     --product-modal-control-hover: rgb(15 23 42 / 0.085);
     --product-modal-control-active: rgb(15 23 42 / 0.12);
@@ -817,7 +817,6 @@
   }
   .task-description-panel {
     position: relative;
-    border-top: 1px solid var(--sx-line);
     padding-top: 1.15rem;
   }
   .task-description-head {
@@ -936,6 +935,40 @@
     color: var(--sx-text-subtle);
     font-size: 0.8125rem;
     font-weight: 600;
+  }
+  .task-due-date-trigger {
+    display: flex;
+    width: 100%;
+    height: 2.25rem;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.5rem;
+    border-radius: 0.65rem;
+    background: var(--sx-surface);
+    padding: 0 0.72rem;
+    color: var(--sx-text-muted);
+    font-size: 0.8125rem;
+    line-height: 1;
+    outline: none;
+    transition: background 150ms ease, box-shadow 150ms ease, color 150ms ease;
+  }
+  .task-due-date-trigger:hover,
+  .task-due-date-trigger[data-state="open"] {
+    background: var(--sx-surface-hover);
+    box-shadow: inset 0 0 0 1px var(--sx-line);
+    color: var(--sx-text);
+  }
+  .task-due-date-trigger > span {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    text-align: left;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .task-due-date-trigger > svg:last-child {
+    flex: 0 0 auto;
+    color: var(--sx-text-subtle);
   }
   .task-updated-at {
     border-top: 1px solid var(--sx-line);
@@ -1360,6 +1393,14 @@
     width: 16rem !important;
     padding: 0.75rem;
   }
+  .liquid-date-menu,
+  .project-calendar-menu {
+    --glass-radius: var(--radius-lg);
+    --glass-blur: var(--sx-blur-menu);
+    --glass-fill-top: var(--sx-glass-fill-top-strong);
+    --glass-fill-bottom: var(--sx-glass-fill-bottom);
+    color: var(--sx-text);
+  }
   .tasks-calendar-head {
     display: flex;
     align-items: center;
@@ -1729,6 +1770,13 @@
     background: var(--sx-surface-hover);
     color: var(--sx-text);
   }
+  .projects-list-row--menu-open {
+    z-index: 90;
+  }
+  .projects-list-row--menu-open:hover {
+    background: transparent;
+    color: var(--sx-text-muted);
+  }
   .projects-list-name {
     display: flex;
     min-width: 0;
@@ -1790,6 +1838,10 @@
     background: var(--sx-surface-hover);
     color: var(--sx-text);
   }
+  .project-inline-button[data-state="open"] {
+    background: var(--sx-surface-hover);
+    color: var(--sx-text);
+  }
   .project-inline-button:disabled {
     cursor: wait;
     opacity: 0.55;
@@ -1830,6 +1882,20 @@
     left: 0;
     z-index: 80;
     min-width: 9.25rem;
+    padding: 0.42rem;
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--sx-menu-fill-top) 54%, var(--sx-canvas-elevated) 46%),
+        color-mix(in srgb, var(--sx-menu-fill-bottom) 38%, var(--sx-canvas-elevated) 62%)
+      ),
+      color-mix(in srgb, var(--sx-canvas-elevated) 84%, transparent);
+    backdrop-filter: blur(calc(var(--sx-blur-menu) + 16px)) saturate(var(--sx-glass-saturate)) brightness(var(--sx-glass-brightness, 1));
+    -webkit-backdrop-filter: blur(calc(var(--sx-blur-menu) + 16px)) saturate(var(--sx-glass-saturate)) brightness(var(--sx-glass-brightness, 1));
+    box-shadow:
+      0 24px 64px rgb(0 0 0 / 0.44),
+      0 0 0 1px var(--sx-edge),
+      inset 0 -12px 24px -16px var(--sx-thickness);
   }
   .project-inline-dropdown--wide {
     min-width: 12rem;
@@ -1859,20 +1925,30 @@
     font-size: 0.8125rem;
   }
   .project-date-control {
-    position: relative;
+    width: 100%;
+    justify-content: flex-start;
+    border: 0;
     border-radius: 0.55rem;
+    background: transparent;
     padding: 0.3rem 0.45rem;
+    cursor: pointer;
+    font: inherit;
+    text-align: left;
     transition: background 150ms ease, color 150ms ease;
   }
-  .project-date-control:hover {
+  .project-date-control:hover,
+  .project-date-control[data-state="open"] {
     background: var(--sx-surface-hover);
     color: var(--sx-text);
   }
-  .project-date-control input {
-    position: absolute;
-    inset: 0;
-    cursor: pointer;
-    opacity: 0;
+  .project-date-control:disabled {
+    cursor: wait;
+    opacity: 0.55;
+  }
+  .project-date-chevron {
+    margin-left: auto;
+    flex: 0 0 auto;
+    color: var(--sx-text-subtle);
   }
   .project-row-progress {
     position: relative;
@@ -2176,11 +2252,10 @@
     position: relative;
     cursor: pointer;
   }
-  .project-date-field input {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    cursor: pointer;
+  .project-date-field[data-state="open"] {
+    border-color: var(--sx-line);
+    background: var(--sx-surface);
+    color: var(--sx-text);
   }
   .project-members-inline {
     width: auto;
@@ -2402,6 +2477,62 @@
       width: 100%;
       justify-content: space-between;
     }
+    .projects-list-shell {
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+    .projects-list-header {
+      display: none;
+    }
+    .projects-list-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      row-gap: 0.65rem;
+      column-gap: 0.75rem;
+      min-height: 0;
+      margin: 0;
+      border-radius: 1rem;
+      background: var(--sx-surface);
+      padding: 0.9rem;
+      box-shadow: inset 0 0 0 1px var(--sx-line);
+    }
+    .projects-list-row:hover {
+      background: var(--sx-surface-hover);
+    }
+    .projects-list-name {
+      grid-column: 1 / -1;
+      padding-right: 2.4rem;
+    }
+    .project-cell,
+    .project-progress-cell {
+      min-height: 2.25rem;
+    }
+    .project-inline-button,
+    .project-chip-button,
+    .project-date-control {
+      min-height: 2.25rem;
+    }
+    .project-lead,
+    .project-status-cell,
+    .project-date-control {
+      grid-column: 1 / -1;
+    }
+    .project-lead-button,
+    .project-date-control {
+      background: var(--sx-surface-hover);
+    }
+    .project-progress-cell {
+      grid-column: 1 / -1;
+    }
+    .project-row-menu {
+      position: absolute;
+      top: 0.85rem;
+      right: 0.72rem;
+    }
+    .project-inline-dropdown {
+      min-width: min(15rem, calc(100vw - 2.5rem));
+    }
   }
 
   /* =====================================================
@@ -2425,9 +2556,9 @@
     --settings-control-active: rgb(255 255 255 / 0.14);
   }
   :root[data-theme="light"] .settings-overlay {
-    --settings-overlay-fill: rgb(20 24 33 / 0.12);
-    --settings-glass-fill-top: rgb(255 255 255 / 0.18);
-    --settings-glass-fill-bottom: rgb(255 255 255 / 0.035);
+    --settings-overlay-fill: rgb(20 24 33 / 0.10);
+    --settings-glass-fill-top: rgb(255 255 255 / 0.10);
+    --settings-glass-fill-bottom: rgb(255 255 255 / 0.02);
     --settings-control-surface: rgb(15 23 42 / 0.055);
     --settings-control-hover: rgb(15 23 42 / 0.085);
     --settings-control-active: rgb(15 23 42 / 0.12);
@@ -3078,8 +3209,8 @@
     padding: 0.7rem 0.875rem 0.7rem 0.95rem;
     border-radius: var(--radius-md);
     background: linear-gradient(180deg, var(--sx-glass-fill-top-strong), var(--sx-glass-fill-bottom));
-    backdrop-filter: blur(40px) saturate(var(--sx-glass-saturate));
-    -webkit-backdrop-filter: blur(40px) saturate(var(--sx-glass-saturate));
+    backdrop-filter: blur(var(--sx-blur-modal)) saturate(var(--sx-glass-saturate));
+    -webkit-backdrop-filter: blur(var(--sx-blur-modal)) saturate(var(--sx-glass-saturate));
     box-shadow:
       var(--sx-shadow-elevated),
       inset 0 -12px 24px -16px var(--sx-thickness);

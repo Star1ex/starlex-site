@@ -17,16 +17,20 @@
     --sx-depth-c: rgb(20 24 33 / 0.04);
     --sx-depth-noise: 0.3;
 
-    /* Glass material inputs */
-    --sx-glass-fill-top: rgb(255 255 255 / 0.12);
-    --sx-glass-fill-bottom: rgb(255 255 255 / 0.03);
-    --sx-glass-fill-top-raised: rgb(255 255 255 / 0.16);
-    --sx-glass-fill-top-strong: rgb(255 255 255 / 0.45);
-    --sx-glass-brightness: 1.06;
+    /* Glass material inputs — clear glass: near-zero fills, the material
+       reads through rim + edge + blur, not through white paint. */
+    --sx-glass-fill-top: rgb(255 255 255 / 0.06);
+    --sx-glass-fill-bottom: rgb(255 255 255 / 0.01);
+    --sx-glass-fill-top-raised: rgb(255 255 255 / 0.03);   /* sidebar — clear pane */
+    --sx-glass-fill-top-strong: rgb(255 255 255 / 0.16);   /* menu / modal */
+    --sx-glass-brightness: 1.04;
     --sx-glass-saturate: 170%;
-    --sx-menu-fill-top: rgb(255 255 255 / 0.62);
-    --sx-menu-fill-bottom: rgb(255 255 255 / 0.18);
-    --sx-menu-scrim: rgb(15 23 42 / 0.045);
+    --sx-blur-sidebar: 6px;     /* clear glass — barely frosted */
+    --sx-blur-menu: 14px;       /* just enough to keep content beneath legible */
+    --sx-blur-modal: 22px;
+    --sx-menu-fill-top: rgb(255 255 255 / 0.26);
+    --sx-menu-fill-bottom: rgb(255 255 255 / 0.08);
+    --sx-menu-scrim: rgb(255 255 255 / 0.04);
     --sx-rim-bright: rgb(255 255 255 / 0.95);
     --sx-rim-faint: rgb(15 23 42 / 0.06);
     --sx-thickness: rgb(15 23 42 / 0.06);
@@ -82,9 +86,5 @@
     --sx-border-strong-alpha: 0.14;
     --sx-text-rgb: 22 24 29;
 
-    /* Legacy literals not derived from the contract */
-    --border-sidebar: rgb(15 23 42 / 0.06);
-    --bg-sidebar: rgb(255 255 255 / 0.62);
-    --topbar-bg: rgb(255 255 255 / 0.55);
   }
 }
