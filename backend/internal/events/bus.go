@@ -1,6 +1,10 @@
 package events
 
-import "sync"
+import (
+	"sync"
+
+	"github.com/Star1ex/starlex-site/internal/logger"
+)
 
 type Handler func(Event)
 
@@ -28,7 +32,14 @@ func (b *Bus) Publish(event Event) {
 
 	if handlers, ok := b.handlers[event.Name()]; ok {
 		for _, h := range handlers {
-			go h(event)
+			go func(handler Handler) {
+				defer func() {
+					if recovered := recover(); recovered != nil {
+						logger.Log.Errorw("event handler panic", "event", event.Name(), "panic", recovered)
+					}
+				}()
+				handler(event)
+			}(h)
 		}
 	}
 }

@@ -1,0 +1,56 @@
+/* =====================================================
+   MOTION TOKENS — the single source for all timing.
+   Every CSS transition consumes these vars; framer presets
+   live in shared/lib/animations.ts and MIRROR the spring
+   values below (springUI ↔ --spring-ui, springSoft ↔
+   --spring-soft). No ad-hoc ms literals in component CSS.
+   ===================================================== */
+@layer base {
+  :root {
+    /* Durations */
+    --motion-fast: 120ms;
+    --motion-base: 180ms;
+    --motion-slow: 280ms;
+
+    /* Easing (canonical — was scattered in tokens.css pre-Phase-5) */
+    --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+    --spring-gentle: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --spring-snappy: cubic-bezier(0.26, 1.4, 0.48, 1);
+
+    /* Stagger — list entrance, capped per row in JS (see animations.ts) */
+    --motion-stagger: 12ms;
+
+    /* Framer spring presets, documented here for parity:
+       --spring-ui   → { stiffness: 420, damping: 34 }
+       --spring-soft → { stiffness: 260, damping: 30 } */
+  }
+
+  /* Theme switch = a 300ms cross-dissolve of the whole UI via the View
+     Transitions API (Chromium). Wrapped in ThemeContext.commitThemeToDom. */
+  @media (prefers-reduced-motion: no-preference) {
+    ::view-transition-old(root),
+    ::view-transition-new(root) {
+      animation-duration: 300ms;
+      animation-timing-function: var(--ease-out-expo);
+    }
+
+    /* ⌘K morph: search pill → palette glass-stretch (280ms expo). */
+    ::view-transition-group(sx-cmdk) {
+      animation-duration: 280ms;
+      animation-timing-function: var(--ease-out-expo);
+    }
+  }
+
+  /* Global reduced-motion: kill transforms + animations, keep opacity.
+     Single canonical declaration (depth.css tunes its own noise). */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

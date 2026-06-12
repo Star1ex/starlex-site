@@ -1,0 +1,90 @@
+/* =====================================================
+   LIGHT THEME — re-valuation of the token contract.
+   Same token names as tokens.css :root, light values.
+   No override flags. No descendant selectors. Re-point the
+   contract; aliases that reference contract tokens follow
+   automatically.
+   ===================================================== */
+@layer base {
+  :root[data-theme="light"] {
+    color-scheme: light;
+
+    /* Canvas & depth field — visible cool-slate structure */
+    --sx-canvas: #f0f2f5;
+    --sx-canvas-elevated: #ffffff;
+    --sx-depth-a: rgb(20 24 33 / 0.055);
+    --sx-depth-b: rgb(20 24 33 / 0.035);
+    --sx-depth-c: rgb(20 24 33 / 0.04);
+    --sx-depth-noise: 0.3;
+
+    /* Glass material inputs — clear glass: near-zero fills, the material
+       reads through rim + edge + blur, not through white paint. */
+    --sx-glass-fill-top: rgb(255 255 255 / 0.06);
+    --sx-glass-fill-bottom: rgb(255 255 255 / 0.01);
+    --sx-glass-fill-top-raised: rgb(255 255 255 / 0.03);   /* sidebar — clear pane */
+    --sx-glass-fill-top-strong: rgb(255 255 255 / 0.16);   /* menu / modal */
+    --sx-glass-brightness: 1.04;
+    --sx-glass-saturate: 170%;
+    --sx-blur-sidebar: 6px;     /* clear glass — barely frosted */
+    --sx-blur-menu: 14px;       /* just enough to keep content beneath legible */
+    --sx-blur-modal: 22px;
+    --sx-menu-fill-top: rgb(255 255 255 / 0.26);
+    --sx-menu-fill-bottom: rgb(255 255 255 / 0.08);
+    --sx-menu-scrim: rgb(255 255 255 / 0.04);
+    --sx-rim-bright: rgb(255 255 255 / 0.95);
+    --sx-rim-faint: rgb(15 23 42 / 0.06);
+    --sx-thickness: rgb(15 23 42 / 0.06);
+    --sx-edge: rgb(15 23 42 / 0.12);            /* Law 14 dual edge — light theme outer hairline */
+
+    /* Tier B surfaces — faint slate tint over white canvas */
+    --sx-surface: rgb(15 23 42 / 0.045);
+    --sx-surface-hover: rgb(15 23 42 / 0.07);
+    --sx-surface-active: rgb(15 23 42 / 0.10);
+    --sx-opaque: #ffffff;
+
+    /* Hairlines */
+    --sx-line: rgb(15 23 42 / 0.08);
+    --sx-line-strong: rgb(15 23 42 / 0.14);
+
+    /* Text — slate */
+    --sx-text: #16181d;
+    --sx-text-muted: rgb(22 24 29 / 0.66);
+    --sx-text-subtle: rgb(22 24 29 / 0.48);
+    --sx-text-disabled: rgb(22 24 29 / 0.32);
+
+    /* Accent */
+    --sx-accent: #d63852;
+    --sx-accent-rgb: 214 56 82;
+
+    /* Danger */
+    --sx-danger: #c2473f;
+
+    /* Shadows — cool slate, two-layer */
+    --sx-shadow-soft: 0 1px 2px rgb(20 24 33 / 0.08), 0 16px 48px rgb(20 24 33 / 0.14);
+    --sx-shadow-elevated: 0 2px 6px rgb(20 24 33 / 0.10), 0 32px 80px rgb(20 24 33 / 0.22);
+    --sx-overlay: rgb(20 24 33 / 0.22);
+    --sx-scrollbar-thumb: rgb(15 23 42 / 0.18);
+
+    /* Status & priority — same hues, darkened for AA on white */
+    --status-backlog-text: #6b6770;
+    --status-todo-text: #3f6bb5;
+    --status-progress-text: #8f7426;
+    --status-review-text: #b5733a;
+    --status-done-text: #2f9e74;
+    --priority-urgent-text: #d0524e;
+    --priority-high-text: #b5733a;
+    --priority-medium-text: #8f7426;
+    --priority-low-text: #3f6bb5;
+
+    /* Legacy rgb/alpha machinery (re-valued for light) */
+    --sx-panel-rgb: 255 255 255;
+    --sx-panel-alpha: 0.72;
+    --sx-panel-strong-alpha: 0.88;
+    --sx-panel-muted-alpha: 0.52;
+    --sx-border-rgb: 15 23 42;
+    --sx-border-alpha: 0.08;
+    --sx-border-strong-alpha: 0.14;
+    --sx-text-rgb: 22 24 29;
+
+  }
+}

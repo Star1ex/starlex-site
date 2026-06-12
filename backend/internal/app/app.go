@@ -14,6 +14,7 @@ import (
 	emailService "github.com/Star1ex/starlex-site/internal/infra/email"
 	"github.com/Star1ex/starlex-site/internal/logger"
 	"github.com/Star1ex/starlex-site/internal/notifications/telegram"
+	"github.com/Star1ex/starlex-site/internal/realtime"
 	"github.com/Star1ex/starlex-site/internal/repository"
 	"github.com/Star1ex/starlex-site/internal/service"
 	"github.com/Star1ex/starlex-site/internal/storage"
@@ -46,15 +47,19 @@ func StartServer() {
 
 	storage, err := storage.NewStorageByEnv(&config.StorageConfig)
 	if err != nil {
-		logger.Log.Errorw("Error init storage", "error", err)
+		logger.Log.Fatalw("error init storage", "error", err)
 	}
 
 	app := fiber.New(fiber.Config{
-		BodyLimit:         2 * 1024 * 1024, // 2MB
-		ReadTimeout:       10 * time.Second,
-		WriteTimeout:      20 * time.Second,
-		IdleTimeout:       30 * time.Second,
-		ReduceMemoryUsage: true,
+		BodyLimit:               2 * 1024 * 1024, // 2MB
+		ReadTimeout:             10 * time.Second,
+		WriteTimeout:            20 * time.Second,
+		IdleTimeout:             30 * time.Second,
+		ReduceMemoryUsage:       true,
+		EnableIPValidation:      true,
+		ProxyHeader:             fiber.HeaderXForwardedFor,
+		EnableTrustedProxyCheck: true,
+		TrustedProxies:          trustedProxiesFromEnv(),
 		ErrorHandler: func(c *fiber.Ctx, err error) error {
 			if err != nil {
 				sentry.CaptureException(err)
@@ -96,27 +101,40 @@ func StartServer() {
 	}))
 
 	bus := events.NewBus()
+	realtimeHub := realtime.NewHub()
 
-	tg, _ := telegram.New(
+	tg, err := telegram.New(
 		config.TelegramNotifications.Token,
 		config.TelegramNotifications.ChatID,
 	)
+	if err != nil {
+		logger.Log.Warnw("telegram notifications disabled", "error", err)
+	} else {
+		bus.Subscribe(
+			"user.registered",
+			handlers.UserRegisteredTelegramHandler(tg),
+		)
+		bus.Subscribe(
+			"user.login",
+			handlers.UserLoginTelegramHandler(tg),
+		)
+	}
 	bus.Subscribe(
-		"user.registered",
-		handlers.UserRegisteredTelegramHandler(tg),
-	)
-	bus.Subscribe(
-		"user.login",
-		handlers.UserLoginTelegramHandler(tg),
+		events.WorkspaceMutationEventName,
+		realtime.WorkspaceMutationHandler(realtimeHub),
 	)
 
 	userRepo := repository.NewUserRepository(db.DB)
-	teamRepo := repository.NewTeamRepository(db.DB)
+	workspaceRepo := repository.NewWorkspaceRepository(db.DB)
+	projectRepo := repository.NewProjectRepository(db.DB)
 	taskRepo := repository.NewTaskRepository(db.DB)
-	folderRepo := repository.NewFolderRepository(db.DB)
+	labelRepo := repository.NewLabelRepository(db.DB)
 	sprintRepo := repository.NewSprintRepository(db.DB)
 	discussionRepo := repository.NewDiscussionRepository(db.DB)
-	verificationRepo := repository.NewVerificationRepository(db.DB)
+	sessionRepo := repository.NewSessionRepository(db.DB)
+	inviteRepo := repository.NewInviteRepository(db.DB)
+	preferenceRepo := repository.NewUserPreferenceRepository(db.DB)
+	pendingRegistrationRepo := repository.NewPendingRegistrationRepository(db.DB)
 	passwordResetRepo := repository.NewPasswordResetRepository(db.DB)
 	passwordAuditRepo := repository.NewPasswordAuditRepository(db.DB)
 
@@ -129,14 +147,18 @@ func StartServer() {
 		FromName:     config.EmailConfig.FromName,
 	})
 
-	verificationService := service.NewVerificationService(verificationRepo, userRepo, emailService)
+	registrationService := service.NewRegistrationService(pendingRegistrationRepo, userRepo, emailService, bus)
 	passwordService := service.NewPasswordService(userRepo, passwordResetRepo, passwordAuditRepo, emailService, config.FrontendBaseURL)
 	userService := service.NewUserService(userRepo, storage, bus)
-	teamService := service.NewTeamService(teamRepo, userRepo)
-	taskService := service.NewTaskService(taskRepo, userRepo, teamRepo)
-	folderService := service.NewFolderService(folderRepo)
+	workspaceService := service.NewWorkspaceService(workspaceRepo, userRepo)
+	projectService := service.NewProjectService(projectRepo, workspaceRepo, userRepo)
+	taskService := service.NewTaskService(taskRepo, userRepo, workspaceRepo, bus)
+	labelService := service.NewLabelService(labelRepo, workspaceRepo)
 	sprintService := service.NewSprintService(sprintRepo)
 	discussionService := service.NewDiscussionService(discussionRepo)
+	sessionService := service.NewSessionService(sessionRepo)
+	inviteService := service.NewInviteService(inviteRepo, workspaceRepo)
+	preferenceService := service.NewUserPreferenceService(preferenceRepo, workspaceRepo)
 	authConfig := handlers.AuthConfig{
 		JWTSecret:       config.JWTSecret,
 		FrontendBaseURL: config.FrontendBaseURL,
@@ -149,7 +171,7 @@ func StartServer() {
 			GithubCallbackURL:  config.OAuthConfig.GithubCallbackURL,
 		},
 	}
-	httpHandlers := handlers.NewHandlers(userService, teamService, taskService, folderService, verificationService, passwordService, sprintService, discussionService, db, authConfig)
+	httpHandlers := handlers.NewHandlers(userService, workspaceService, projectService, taskService, registrationService, passwordService, sprintService, discussionService, sessionService, inviteService, labelService, preferenceService, realtimeHub, db, authConfig)
 	routes.InitRoutes(app, httpHandlers)
 
 	go func() {
@@ -174,4 +196,20 @@ func StartServer() {
 	if err := app.Listen(":" + port); err != nil {
 		logger.Log.Fatalw("server failed to start", "error", err)
 	}
+}
+
+func trustedProxiesFromEnv() []string {
+	raw := strings.TrimSpace(os.Getenv("TRUSTED_PROXIES"))
+	if raw == "" {
+		return []string{"127.0.0.1", "::1"}
+	}
+
+	parts := strings.Split(raw, ",")
+	proxies := make([]string, 0, len(parts))
+	for _, part := range parts {
+		if proxy := strings.TrimSpace(part); proxy != "" {
+			proxies = append(proxies, proxy)
+		}
+	}
+	return proxies
 }

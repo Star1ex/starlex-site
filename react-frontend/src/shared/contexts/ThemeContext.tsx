@@ -1,121 +1,155 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState, ReactNode } from 'react';
 import { getCookie, setCookie } from '@/shared/lib/cookies.js';
+import { ThemeContext } from './themeContext.js';
+import {
+  DEFAULT_ACCENT,
+  migrateTheme,
+  THEME_COOKIE_KEY,
+  THEME_COOKIE_MAX_AGE,
+  THEME_STORAGE_KEY,
+  type Theme,
+} from './themeConfig.js';
 
-export type Theme = 'light' | 'dark' | 'ultra-dark' | 'solarized';
-
-interface ThemeContextType {
-  theme: Theme;
-  toggleTheme: () => void;
-  setTheme: (theme: Theme) => void;
+function applyThemeClasses(theme: Theme) {
+  const root = document.documentElement;
+  // The contract switches on data-theme; the `dark` class is kept only so
+  // Tailwind `dark:` variants and class-sniffing consumers (e.g. BlockNote)
+  // keep working under ultra-dark.
+  root.dataset.theme = theme;
+  root.classList.toggle('dark', theme === 'ultra-dark');
 }
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
+type ViewTransitionDocument = Document & {
+  startViewTransition?: (callback: () => void) => unknown;
+};
 
-const THEME_STORAGE_KEY = 'starlex-theme';
-const THEME_COOKIE_KEY = 'starlex-theme';
-const THEME_COOKIE_MAX_AGE = 60 * 60 * 24 * 365;
-const LIGHT_FAVICON = '/favicon.png';
-const DARK_FAVICON = '/favicon-white.png';
+function prefersReducedMotion(): boolean {
+  return typeof window !== 'undefined'
+    && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+/** Flip the theme on the DOM, wrapped in a View Transition cross-dissolve
+ *  where supported (Chromium). The data-theme attribute must change inside
+ *  the callback so the API can snapshot before/after. */
+function commitThemeToDom(theme: Theme) {
+  const doc = document as ViewTransitionDocument;
+  if (typeof doc.startViewTransition === 'function' && !prefersReducedMotion()) {
+    doc.startViewTransition(() => {
+      applyThemeClasses(theme);
+      applyFavicon(theme);
+    });
+    return;
+  }
+  applyThemeClasses(theme);
+  applyFavicon(theme);
+}
+
+function applyFavicon(theme: Theme) {
+  const isDark = theme === 'ultra-dark';
+  const href = isDark ? '/favicon-white.png' : '/favicon.png';
+  const link =
+    document.querySelector<HTMLLinkElement>('#app-favicon') ||
+    document.querySelector<HTMLLinkElement>('link[rel="icon"]');
+  if (link) {
+    link.href = href;
+    link.type = 'image/png';
+  } else {
+    const el = document.createElement('link');
+    el.id = 'app-favicon';
+    el.rel = 'icon';
+    el.type = 'image/png';
+    el.href = href;
+    document.head.appendChild(el);
+  }
+}
+
+function getAccentChannels(color: string): string {
+  const value = color.trim();
+  const hex = value.match(/^#?([0-9a-f]{3}|[0-9a-f]{6})$/i)?.[1];
+
+  if (hex) {
+    const normalized = hex.length === 3
+      ? hex.split('').map((char) => `${char}${char}`).join('')
+      : hex;
+    const intValue = Number.parseInt(normalized, 16);
+    const red = (intValue >> 16) & 255;
+    const green = (intValue >> 8) & 255;
+    const blue = intValue & 255;
+    return `${red} ${green} ${blue}`;
+  }
+
+  const rgb = value.match(/^rgba?\(\s*(\d{1,3})[\s,]+(\d{1,3})[\s,]+(\d{1,3})/i);
+  if (rgb) {
+    return `${rgb[1]} ${rgb[2]} ${rgb[3]}`;
+  }
+
+  return '230 69 90';
+}
+
+function applyStarlexAccent(color: string) {
+  const root = document.documentElement;
+  const channels = getAccentChannels(color);
+
+  root.style.setProperty('--starlex-accent', color);
+  root.style.setProperty('--starlex-accent-rgb', channels);
+  root.style.setProperty('--starlex-accent-soft', `rgb(${channels} / 0.14)`);
+  root.style.setProperty('--starlex-accent-border', `rgb(${channels} / 0.32)`);
+  root.style.setProperty('--workspace-accent', color);
+}
 
 export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [theme, setThemeState] = useState<Theme>(() => {
-    const savedCookie = getCookie(THEME_COOKIE_KEY);
-    if (savedCookie === 'dark' || savedCookie === 'light' || savedCookie === 'ultra-dark' || savedCookie === 'solarized') {
-      return savedCookie;
-    }
-    const saved = localStorage.getItem(THEME_STORAGE_KEY);
-    if (saved === 'dark' || saved === 'light' || saved === 'ultra-dark' || saved === 'solarized') {
-      return saved as Theme;
-    }
-    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      return 'dark';
-    }
-    return 'light';
+    const saved =
+      getCookie(THEME_COOKIE_KEY) ||
+      localStorage.getItem(THEME_STORAGE_KEY);
+    return migrateTheme(saved);
   });
+  const themeRef = useRef(theme);
+
+  const [accent, setAccentState] = useState<string>(DEFAULT_ACCENT);
 
   useEffect(() => {
-    const root = document.documentElement;
-
-    root.classList.remove('dark', 'theme-ultra-dark', 'theme-solarized');
-
-    if (theme === 'dark') {
-      root.classList.add('dark');
-    }
-    if (theme === 'ultra-dark') {
-      root.classList.add('dark', 'theme-ultra-dark');
-    }
-    if (theme === 'solarized') {
-      root.classList.add('theme-solarized');
-    }
-
-    const isDarkTheme = theme === 'dark' || theme === 'ultra-dark';
-    const faviconHref = isDarkTheme ? DARK_FAVICON : LIGHT_FAVICON;
-    const faviconLink =
-      document.querySelector<HTMLLinkElement>('#app-favicon') ||
-      document.querySelector<HTMLLinkElement>('link[rel="icon"]');
-    if (faviconLink) {
-      faviconLink.href = faviconHref;
-      faviconLink.type = 'image/png';
-    } else {
-      const link = document.createElement('link');
-      link.id = 'app-favicon';
-      link.rel = 'icon';
-      link.type = 'image/png';
-      link.href = faviconHref;
-      document.head.appendChild(link);
-    }
-
+    themeRef.current = theme;
+    applyThemeClasses(theme);
+    applyFavicon(theme);
     localStorage.setItem(THEME_STORAGE_KEY, theme);
     setCookie(THEME_COOKIE_KEY, theme, { maxAge: THEME_COOKIE_MAX_AGE, path: '/' });
   }, [theme]);
 
-  const setTheme = (newTheme: Theme) => {
+  const setTheme = useCallback((newTheme: Theme) => {
+    if (newTheme === themeRef.current) return;
+    // Flip the DOM inside a View Transition first; the effect below then
+    // re-applies the same classes idempotently and persists the choice.
+    themeRef.current = newTheme;
+    commitThemeToDom(newTheme);
     setThemeState(newTheme);
-  };
+  }, []);
 
-  const toggleTheme = () => {
-    setThemeState((prev) => {
-      switch (prev) {
-        case 'light': return 'dark';
-        case 'dark': return 'ultra-dark';
-        case 'ultra-dark': return 'solarized';
-        default: return 'light';
-      }
-    });
-  };
+  const toggleTheme = useCallback(() => {
+    setTheme(themeRef.current === 'light' ? 'ultra-dark' : 'light');
+  }, [setTheme]);
+
+  const setAccent = useCallback((color: string) => {
+    setAccentState(color);
+    applyStarlexAccent(color);
+  }, []);
+
+  const clearAccent = useCallback(() => {
+    setAccent(DEFAULT_ACCENT);
+  }, [setAccent]);
+
+  const value = useMemo(() => ({
+    theme,
+    toggleTheme,
+    setTheme,
+    accent,
+    setAccent,
+    clearAccent,
+  }), [accent, clearAccent, setAccent, setTheme, theme, toggleTheme]);
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
+    <ThemeContext.Provider value={value}>
       {children}
     </ThemeContext.Provider>
   );
 };
-
-export const useTheme = (): ThemeContextType => {
-  const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error('useTheme must be used within a ThemeProvider');
-  }
-  return context;
-};
-
-/**
- * Forces light/dark based on system preference while the calling component is mounted.
- * Restores the user's saved theme on unmount.
- * Use this on public pages (landing, login, signup).
- */
-export function useSystemThemeOnly(): void {
-  const { setTheme } = useTheme();
-
-  useEffect(() => {
-    const savedTheme = (localStorage.getItem(THEME_STORAGE_KEY) as Theme | null) ?? 'light';
-    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    setTheme(systemDark ? 'dark' : 'light');
-
-    return () => {
-      // Restore user's actual theme when leaving the page
-      setTheme(savedTheme);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-}

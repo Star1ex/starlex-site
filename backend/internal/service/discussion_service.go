@@ -30,23 +30,22 @@ func NewDiscussionService(repo *repository.DiscussionRepository) *DiscussionServ
 	return &DiscussionService{repo: repo}
 }
 
-func (s *DiscussionService) CreateDiscussion(ctx context.Context, taskID *string, folderID *string, teamID, createdBy, title, content, contentType string) (*entity.Discussion, error) {
+func (s *DiscussionService) CreateDiscussion(ctx context.Context, taskID *string, workspaceID, createdBy, title, content, contentType string) (*entity.Discussion, error) {
 	now := time.Now().UTC()
-	var teamIDPtr *string
-	if strings.TrimSpace(teamID) != "" {
-		teamIDCopy := teamID
-		teamIDPtr = &teamIDCopy
+	var workspaceIDPtr *string
+	if strings.TrimSpace(workspaceID) != "" {
+		workspaceIDCopy := workspaceID
+		workspaceIDPtr = &workspaceIDCopy
 	}
 	discussion := &entity.Discussion{
-		ID:         security.GenerateNewID(),
-		Title:      title,
-		TaskID:     taskID,
-		FolderID:   folderID,
-		TeamID:     teamIDPtr,
-		CreatedBy:  createdBy,
-		IsResolved: false,
-		CreatedAt:  now,
-		UpdatedAt:  now,
+		ID:          security.GenerateNewID(),
+		Title:       title,
+		TaskID:      taskID,
+		WorkspaceID: workspaceIDPtr,
+		CreatedBy:   createdBy,
+		IsResolved:  false,
+		CreatedAt:   now,
+		UpdatedAt:   now,
 	}
 	if err := s.repo.Create(ctx, discussion); err != nil {
 		return nil, err
@@ -73,10 +72,6 @@ func (s *DiscussionService) CreateDiscussion(ctx context.Context, taskID *string
 
 func (s *DiscussionService) GetDiscussionsByTask(ctx context.Context, taskID string) ([]*entity.Discussion, error) {
 	return s.repo.GetByTask(ctx, taskID)
-}
-
-func (s *DiscussionService) GetDiscussionsByFolder(ctx context.Context, folderID string) ([]*entity.Discussion, error) {
-	return s.repo.GetByFolder(ctx, folderID)
 }
 
 func (s *DiscussionService) GetDiscussionByID(ctx context.Context, id string) (*entity.Discussion, error) {

@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { motion, useInView, AnimatePresence, type Variants } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { isAuthenticated } from "@/shared/lib/authManager.js";
-import { useSystemThemeOnly, useTheme } from "@/shared/contexts/ThemeContext.js";
+import { useSystemThemeOnly, useTheme } from "@/shared/contexts/useTheme.js";
 import iconStarlex from "@/assets/icon-starlex.png";
 import { Helmet } from "react-helmet-async";
 import markdownDark from "@/public/MarkdownSupportBlackTheme.mp4";
@@ -133,7 +133,7 @@ function FeatureSection({
       <ul className="space-y-3">
         {bullets.map((bullet) => (
           <li key={bullet} className="flex items-start gap-3 text-sm text-[color:var(--text-secondary)]">
-            <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[color:var(--accent-blue)] shrink-0" />
+            <span className="mt-2 h-1.5 w-1.5 rounded-full bg-[color:var(--starlex-accent)] shrink-0" />
             {bullet}
           </li>
         ))}
@@ -241,7 +241,7 @@ export const HomePage = () => {
       ],
       mediaType: "image",
       mediaPosition: "right",
-      videoSrc: theme === "dark" ? markdownDark : markdownLight,
+      videoSrc: theme !== "light" ? markdownDark : markdownLight,
     },
     {
       title: "Your team, always in sync",
@@ -253,7 +253,7 @@ export const HomePage = () => {
       ],
       mediaType: "video",
       mediaPosition: "left",
-      videoSrc: theme === "dark" ? collabDark : collabLight,
+      videoSrc: theme !== "light" ? collabDark : collabLight,
     },
   ];
 
@@ -268,7 +268,7 @@ export const HomePage = () => {
   return (
     <div
       className="relative min-h-screen font-sans bg-[color:var(--bg-primary)] text-[color:var(--text-primary)] transition-colors duration-300"
-      style={theme === "dark" ? {
+      style={theme !== "light" ? {
         "--bg-primary": "#0b090a",
         "--bg-secondary": "#121011",
         "--bg-tertiary": "#191617",
@@ -278,7 +278,8 @@ export const HomePage = () => {
         "--text-secondary": "#c2bbb6",
         "--text-tertiary": "#9b928c",
         "--border-color": "#241f21",
-        "--accent-blue": "#7c3aed",
+        "--starlex-accent": "#7c3aed",
+        "--starlex-accent-rgb": "124 58 237",
         "--button-bg": "rgba(255,255,255,0.08)",
         "--button-bg-hover": "rgba(255,255,255,0.13)",
         "--button-bg-active": "rgba(255,255,255,0.18)",
@@ -298,18 +299,6 @@ export const HomePage = () => {
         <meta property="og:image" content="https://starlex.cc/og-image.png" />
         <meta property="og:url" content="https://starlex.cc/" />
         <meta name="twitter:card" content="summary_large_image" />
-        <script type="application/ld+json">
-          {JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "SoftwareApplication",
-            name: "Starlex",
-            applicationCategory: "ProjectManagement",
-            operatingSystem: "Web",
-            offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
-            description: "Task management with sprints, folders, and real-time collaboration.",
-            url: "https://starlex.cc",
-          })}
-        </script>
       </Helmet>
 
       {/* Video modal */}
@@ -445,7 +434,7 @@ export const HomePage = () => {
                 →
               </motion.span>
               <motion.span
-                className="absolute inset-0 bg-white/10"
+                className="absolute inset-0 bg-[color:var(--sx-rim-faint)]"
                 variants={{ rest: { opacity: 0 }, hover: { opacity: 1 } }}
                 transition={{ duration: 0.2 }}
               />
@@ -554,7 +543,7 @@ export const HomePage = () => {
                 →
               </motion.span>
               <motion.span
-                className="absolute inset-0 bg-white/10"
+                className="absolute inset-0 bg-[color:var(--sx-rim-faint)]"
                 variants={{ rest: { opacity: 0 }, hover: { opacity: 1 } }}
                 transition={{ duration: 0.2 }}
               />

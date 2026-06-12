@@ -1,12 +1,433 @@
-import React from 'react';
-import Sidebar from '@/components/Sidebar/Sidebar.js';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import {
+  ChevronDown,
+  CircleCheckBig,
+  House,
+  Inbox,
+  ListTodo,
+  LogOut,
+  Plus,
+  Settings2,
+  SquareKanban,
+  UserRound,
+  UsersRound,
+} from 'lucide-react';
+import Avatar from '@/shared/ui/Avatar.js';
+import { Glass } from '@/shared/ui/glass/index.js';
+import { getAuthUser } from '@/shared/lib/authManager.js';
+import { WorkspaceAvatar } from '@/shared/ui/WorkspaceAvatar.js';
+import { userService } from '@/services/api/index.js';
+import { useAuth } from '@/contexts/useAuth.js';
+import { WorkspaceCreateModal } from '@/widgets/WorkspaceCreateModal/WorkspaceCreateModal.js';
+import { cn } from '@/shared/lib/cn.js';
+import { dropdownVariants, tapScale, springUI } from '@/shared/lib/animations.js';
+import { trackItem } from '@/shared/lib/recentItems.js';
+import { isRetryableRequestError, loadWithRetry } from '@/shared/lib/loadWithRetry.js';
+import type { User } from '@/entities/types.js';
+import type { WorkspaceDTO } from '@/types/dto.js';
+import { useWorkspace } from '@/contexts/useWorkspace.js';
+import { useWorkspaceRealtime } from '@/shared/hooks/useRealtimeSync.js';
+import {
+  preloadMembersShell,
+  preloadMyIssuesShell,
+  preloadSettingsModal,
+  preloadTaskExplorerShell,
+  preloadWorkspaceShell,
+} from '@/app/routePreload.js';
 
 interface GlobalSidebarProps {
   className?: string;
+  onNavigate?: () => void;
 }
 
-export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '' }) => {
-  return <Sidebar className={className} />;
+const ICON_STROKE = 1.55;
+
+const NAV_ITEMS = [
+  { label: 'Home',       icon: House,          path: (wsId: string) => `/workspace/${wsId}`, preload: preloadWorkspaceShell },
+  { label: 'Projects',   icon: SquareKanban,  path: (wsId: string) => `/workspace/${wsId}?view=projects`, preload: preloadWorkspaceShell },
+  { label: 'Tasks',      icon: ListTodo,      path: (wsId: string) => `/workspace/${wsId}/tasks`, preload: preloadTaskExplorerShell },
+  { label: 'Members',    icon: UsersRound,    path: (wsId: string) => `/workspace/${wsId}/members`, preload: preloadMembersShell },
+  { label: 'My Issues',  icon: CircleCheckBig, path: () => `/my-issues`, preload: preloadMyIssuesShell },
+  { label: 'Inbox',      icon: Inbox,         path: (wsId: string) => `/workspace/${wsId}?view=inbox`, preload: preloadWorkspaceShell },
+] as const;
+
+function WsGlyph({ workspace }: { workspace: WorkspaceDTO }) {
+  return (
+    <WorkspaceAvatar
+      seed={workspace.id || workspace.name}
+      name={workspace.name}
+      icon={workspace.icon}
+      color={workspace.color}
+      size={24}
+      className="sidebar-workspace-glyph flex-shrink-0"
+    />
+  );
+}
+
+export const GlobalSidebar: React.FC<GlobalSidebarProps> = ({ className = '', onNavigate }) => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { logout } = useAuth();
+  const { setActiveWorkspace } = useWorkspace();
+
+  const [user, setUser] = useState<User | null>(null);
+  const [workspaces, setWorkspaces] = useState<WorkspaceDTO[]>([]);
+  const [loadingWorkspaces, setLoadingWorkspaces] = useState(true);
+  const [showCreateWorkspace, setShowCreateWorkspace] = useState(false);
+  const [showSwitcher, setShowSwitcher] = useState(false);
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const switcherRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
+  const sidebarRef = useRef<HTMLElement>(null);
+
+  // Specular cursor tracking — one rAF-throttled listener writes --mx/--my
+  // so the glass rim catches light under the pointer (Design Law: respond to light).
+  useEffect(() => {
+    const el = sidebarRef.current;
+    if (!el) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    let raf = 0;
+    const onMove = (e: PointerEvent) => {
+      if (raf) return;
+      raf = requestAnimationFrame(() => {
+        raf = 0;
+        const r = el.getBoundingClientRect();
+        el.style.setProperty('--mx', `${((e.clientX - r.left) / r.width) * 100}%`);
+        el.style.setProperty('--my', `${((e.clientY - r.top) / r.height) * 100}%`);
+      });
+    };
+    el.addEventListener('pointermove', onMove);
+    return () => {
+      el.removeEventListener('pointermove', onMove);
+      if (raf) cancelAnimationFrame(raf);
+    };
+  }, []);
+
+  const activeWorkspaceId = useMemo(() => {
+    const match = location.pathname.match(/\/workspace\/([^/]+)/);
+    return match ? match[1] : null;
+  }, [location.pathname]);
+
+  const activeWorkspace = useMemo(
+    () => workspaces.find((w) => w.id === activeWorkspaceId) ?? workspaces[0],
+    [workspaces, activeWorkspaceId],
+  );
+
+  // Live sync: workspace identity (icon/colour/name) changed — patch the list
+  // so the sidebar glyph + switcher update without a reload.
+  useWorkspaceRealtime(useCallback((patch) => {
+    setWorkspaces((prev) => prev.map((w) => (w.id === patch.id ? { ...w, ...patch } : w)));
+  }, []));
+
+  const displayName = useMemo(() => {
+    if (!user) return getAuthUser()?.firstName ?? 'User';
+    const first = user.firstName || '';
+    const last = user.lastName || '';
+    return `${first}${last ? ` ${last}` : ''}`.trim() || 'User';
+  }, [user]);
+
+  const displayEmail = useMemo(() => {
+    if (!user) return getAuthUser()?.email ?? '';
+    return user.email ?? '';
+  }, [user]);
+
+  const fetchWorkspaces = useCallback(async () => {
+    try {
+      const data = await loadWithRetry(
+        () => userService.getWorkspaces(),
+        { shouldRetry: isRetryableRequestError },
+      );
+      setWorkspaces(Array.isArray(data) ? data : []);
+    } catch {
+      // silent — user may be unauthed
+    } finally {
+      setLoadingWorkspaces(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    const storedUser = getAuthUser();
+    if (storedUser) setUser(storedUser as unknown as User);
+
+    userService.getProfile().then((data) => setUser(data as unknown as User)).catch(() => null);
+    fetchWorkspaces();
+
+    const onCreated = () => fetchWorkspaces();
+    window.addEventListener('workspaceCreated', onCreated);
+    return () => window.removeEventListener('workspaceCreated', onCreated);
+  }, [fetchWorkspaces]);
+
+  useEffect(() => {
+    if (!activeWorkspaceId) return;
+    const workspace = workspaces.find((w) => w.id === activeWorkspaceId);
+    if (workspace) setActiveWorkspace(workspace);
+  }, [activeWorkspaceId, workspaces, setActiveWorkspace]);
+
+  useEffect(() => {
+    if (!showSwitcher && !showProfileMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (showSwitcher && switcherRef.current && !switcherRef.current.contains(e.target as Node)) {
+        setShowSwitcher(false);
+      }
+      if (showProfileMenu && profileRef.current && !profileRef.current.contains(e.target as Node)) {
+        setShowProfileMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showSwitcher, showProfileMenu]);
+
+  const handleWorkspaceSwitch = useCallback((ws: WorkspaceDTO) => {
+    trackItem({ id: ws.id, name: ws.name, url: `/workspace/${ws.id}`, type: 'workspace' });
+    setShowSwitcher(false);
+    navigate(`/workspace/${ws.id}`);
+    onNavigate?.();
+  }, [navigate, onNavigate]);
+
+  const sidebarStyle = useMemo(() => ({
+    ['--workspace-accent' as string]: activeWorkspace?.color || '#e6455a',
+  }) as React.CSSProperties, [activeWorkspace?.color]);
+
+  return (
+    <>
+      <Glass
+        ref={sidebarRef}
+        as={motion.aside}
+        variant="sidebar"
+        depth="floating"
+        className={cn('app-sidebar scrollbar-none sx-glass--specular', className)}
+        style={sidebarStyle}
+        initial={{ opacity: 0, x: -16 }}
+        animate={{ opacity: 1, x: 0 }}
+        transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
+      >
+        {/* Workspace switcher */}
+        <div className="mb-6 relative z-20" ref={switcherRef}>
+          <motion.button
+            type="button"
+            onClick={() => setShowSwitcher((p) => !p)}
+            className="sidebar-workspace-button"
+            data-state={showSwitcher ? 'open' : 'closed'}
+            whileHover={{ y: -1 }}
+            whileTap={tapScale}
+          >
+            {activeWorkspace ? (
+              <>
+                <WsGlyph workspace={activeWorkspace} />
+                <span className="sidebar-workspace-name">{activeWorkspace.name}</span>
+              </>
+            ) : (
+              <>
+                <div className="size-7 rounded-lg bg-[color:var(--sx-surface)] flex-shrink-0" />
+                <span className="sidebar-workspace-name text-[color:var(--sx-text-subtle)]">Select workspace</span>
+              </>
+            )}
+            <ChevronDown size={14} strokeWidth={ICON_STROKE} className="sidebar-workspace-chevron flex-shrink-0" />
+          </motion.button>
+
+          <AnimatePresence>
+            {showSwitcher && (
+              <motion.div
+                className="absolute top-full mt-1.5 left-0 right-0 dropdown-menu sidebar-floating-menu z-[60]"
+                onPointerDown={(event) => event.stopPropagation()}
+                onMouseDown={(event) => event.stopPropagation()}
+                onClick={(event) => event.stopPropagation()}
+                variants={dropdownVariants}
+                initial="initial"
+                animate="animate"
+                exit="exit"
+              >
+                {loadingWorkspaces ? (
+                  <div className="px-3 py-2 text-xs text-[color:var(--sx-text-subtle)]">Loading…</div>
+                ) : (
+                  workspaces.map((ws) => (
+                    <button
+                      key={ws.id}
+                      type="button"
+                      onClick={() => handleWorkspaceSwitch(ws)}
+                      className={cn(
+                        'dropdown-menu-item',
+                        ws.id === activeWorkspaceId && '!text-[color:var(--sx-text)] !bg-[color:var(--sx-surface-active)]',
+                      )}
+                    >
+                      <WsGlyph workspace={ws} />
+                      <span className="truncate">{ws.name}</span>
+                    </button>
+                  ))
+                )}
+                <div className="dropdown-divider" />
+                {activeWorkspace && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowSwitcher(false);
+                      navigate('/settings?tab=workspace', { state: { background: location } });
+                      onNavigate?.();
+                    }}
+                    onMouseEnter={preloadSettingsModal}
+                    onFocus={preloadSettingsModal}
+                    className="dropdown-menu-item"
+                  >
+                    <Settings2 size={14} strokeWidth={ICON_STROKE} className="text-[color:var(--sx-text-subtle)]" />
+                    <span>Workspace settings</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => { setShowSwitcher(false); setShowCreateWorkspace(true); }}
+                  className="dropdown-menu-item"
+                >
+                  <Plus size={14} strokeWidth={ICON_STROKE} className="text-[color:var(--sx-text-subtle)]" />
+                  <span>New workspace</span>
+                </button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+
+        {/* Nav */}
+        <nav className="sidebar-nav flex-1">
+          {NAV_ITEMS.map(({ label, icon: Icon, path, preload }, index) => {
+            const to = activeWorkspace ? path(activeWorkspace.id) : '/dashboard';
+            const isActive = activeWorkspace
+              ? location.pathname + location.search === to ||
+                (label === 'Home' && location.pathname === `/workspace/${activeWorkspace.id}` && !location.search)
+              : false;
+            return (
+              <motion.button
+                key={label}
+                type="button"
+                onMouseEnter={preload}
+                onFocus={preload}
+                onClick={() => {
+                  navigate(to);
+                  onNavigate?.();
+                }}
+                className={cn('sidebar-nav-item', isActive && 'active')}
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{
+                  duration: 0.28,
+                  delay: 0.04 + index * 0.016, // capped: 6 items → ≤0.12s total
+                  ease: [0.16, 1, 0.3, 1],
+                }}
+                whileTap={tapScale}
+              >
+                {isActive && (
+                  <motion.span
+                    layoutId="sx-nav-tick"
+                    className="sidebar-nav-tick"
+                    transition={springUI}
+                  />
+                )}
+                <span className="sidebar-nav-icon">
+                  <Icon size={16} strokeWidth={ICON_STROKE} />
+                </span>
+                <span className="sidebar-nav-label text-body-md">{label}</span>
+              </motion.button>
+            );
+          })}
+        </nav>
+
+        {/* Bottom dock */}
+        <div className="mt-auto flex flex-col gap-2 pt-4">
+          {/* Settings */}
+          <NavLink
+            to="/settings"
+            state={{ background: location }}
+            onMouseEnter={preloadSettingsModal}
+            onFocus={preloadSettingsModal}
+            onClick={onNavigate}
+            className={({ isActive }) => cn('sidebar-dock-pill', isActive && 'active')}
+          >
+            <Settings2 size={15} strokeWidth={ICON_STROKE} className="text-[color:var(--sx-text-subtle)] flex-shrink-0" />
+            <span className="text-body-md text-[color:var(--sx-text-muted)]">Settings</span>
+          </NavLink>
+
+          {/* Profile */}
+          <div className="relative" ref={profileRef}>
+            <motion.button
+              type="button"
+              onClick={() => setShowProfileMenu((p) => !p)}
+              className={cn('sidebar-dock-pill w-full', showProfileMenu && 'active')}
+              whileHover={{ y: -1 }}
+              whileTap={{ scale: 0.98 }}
+            >
+              {user ? (
+                <Avatar user={user} size="sm" className="sidebar-profile-avatar" />
+              ) : (
+                <div className="sidebar-profile-avatar flex items-center justify-center text-sm font-medium text-[color:var(--sx-text-muted)]">
+                  {displayName.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div className="sidebar-profile-copy flex-1 min-w-0 text-left">
+                <p className="text-sm font-medium text-[color:var(--sx-text)] truncate leading-none mb-0.5">{displayName}</p>
+                {displayEmail && (
+                  <p className="text-xs text-[color:var(--sx-text-subtle)] truncate">{displayEmail}</p>
+                )}
+              </div>
+            </motion.button>
+
+            <AnimatePresence>
+              {showProfileMenu && (
+                <motion.div
+                  className="absolute bottom-full left-0 right-0 mb-1.5 dropdown-menu sidebar-floating-menu"
+                  onPointerDown={(event) => event.stopPropagation()}
+                  onMouseDown={(event) => event.stopPropagation()}
+                  onClick={(event) => event.stopPropagation()}
+                  variants={dropdownVariants}
+                  initial="initial"
+                  animate="animate"
+                  exit="exit"
+                >
+                  <button
+                    type="button"
+                    onClick={() => { navigate('/profile'); setShowProfileMenu(false); onNavigate?.(); }}
+                    className="dropdown-menu-item"
+                  >
+                    <UserRound size={14} strokeWidth={ICON_STROKE} />
+                    View Profile
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { navigate('/settings', { state: { background: location } }); setShowProfileMenu(false); onNavigate?.(); }}
+                    onMouseEnter={preloadSettingsModal}
+                    onFocus={preloadSettingsModal}
+                    className="dropdown-menu-item"
+                  >
+                    <Settings2 size={14} strokeWidth={ICON_STROKE} />
+                    Settings
+                  </button>
+                  <div className="dropdown-divider" />
+                  <button
+                    type="button"
+                    onClick={() => { logout(); setShowProfileMenu(false); onNavigate?.(); }}
+                    className="dropdown-menu-item dropdown-menu-item--danger"
+                  >
+                    <LogOut size={14} strokeWidth={ICON_STROKE} />
+                    Logout
+                  </button>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+      </Glass>
+
+      <WorkspaceCreateModal
+        isOpen={showCreateWorkspace}
+        onClose={() => setShowCreateWorkspace(false)}
+        onCreated={(ws) => {
+          setWorkspaces((prev) => [...prev, ws]);
+          setActiveWorkspace(ws);
+          setShowCreateWorkspace(false);
+          navigate(`/workspace/${ws.id}`);
+        }}
+      />
+    </>
+  );
 };
 
 export default GlobalSidebar;

@@ -2,33 +2,25 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { authService } from '@/services/api/index.js';
 import { SettingsSidebar } from '@/widgets/SettingsSidebar/SettingsSidebar.js';
-import { Contributing } from '@/pages/settings/Contributing.js';
 import { Appearance } from '@/pages/settings/Appearance.js';
 import { ChangePassword } from '@/pages/settings/ChangePassword.js';
 import { ConnectedAccounts } from '@/pages/settings/ConnectedAccounts.js';
 import { Support } from '@/pages/settings/Support.js';
 import AboutUs from '@/pages/about-us/AboutUs.js';
-import { Palette, User, Shield, SlidersHorizontal, Info, LifeBuoy } from 'lucide-react';
+import { BadgeInfo, LifeBuoy, Menu, Paintbrush, ShieldCheck, UserRound } from 'lucide-react';
 import BreadcrumbBack from '@/shared/ui/BreadcrumbBack.js';
 
 export const GeneralSettings: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const [isAuthenticated, setIsAuthenticated] = useState(authService.isAuthenticated());
+  const isAuthenticated = authService.isAuthenticated();
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activeTab, setActiveTab] = useState<'contributing' | 'appearance' | 'password' | 'accounts' | 'about' | 'support'>('appearance');
   const [isMobileView, setIsMobileView] = useState(() => (typeof window !== 'undefined' ? window.innerWidth < 768 : false));
   const touchStartXRef = useRef(0);
   const touchStartYRef = useRef(0);
 
   useEffect(() => {
     // Auth gate handled by routing; no redirect here
-  }, []);
-
-  useEffect(() => {
-    if (authService.isAuthenticated()) {
-      setIsAuthenticated(true);
-    }
   }, []);
 
   useEffect(() => {
@@ -45,27 +37,21 @@ export const GeneralSettings: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const tab = params.get('tab');
-    if (tab === 'contributing' || tab === 'appearance' || tab === 'password' || tab === 'accounts' || tab === 'about' || tab === 'support') {
-      setActiveTab(tab);
-    }
-  }, [location.search]);
-
   const tabs = useMemo(() => ([
-    { id: 'appearance', label: 'Theme', icon: Palette },
-    { id: 'accounts', label: 'Account', icon: User },
-    { id: 'password', label: 'Security', icon: Shield },
-    { id: 'contributing', label: 'Prefs', icon: SlidersHorizontal },
+    { id: 'appearance', label: 'Theme', icon: Paintbrush },
+    { id: 'accounts', label: 'Account', icon: UserRound },
+    { id: 'password', label: 'Security', icon: ShieldCheck },
     { id: 'support', label: 'Support', icon: LifeBuoy },
-    { id: 'about', label: 'About', icon: Info },
+    { id: 'about', label: 'About', icon: BadgeInfo },
   ] as const), []);
 
   const tabOrder = useMemo(() => tabs.map((t) => t.id), [tabs]);
+  const activeTab = useMemo<typeof tabOrder[number]>(() => {
+    const tab = new URLSearchParams(location.search).get('tab');
+    return tabOrder.includes(tab as typeof tabOrder[number]) ? tab as typeof tabOrder[number] : 'appearance';
+  }, [location.search, tabOrder]);
 
   const handleTabChange = (tab: typeof tabOrder[number]) => {
-    setActiveTab(tab);
     navigate(`/settings?tab=${tab}`, { replace: true });
   };
 
@@ -106,8 +92,6 @@ export const GeneralSettings: React.FC = () => {
 
   const renderContent = () => {
     switch (activeTab) {
-      case 'contributing':
-        return <Contributing />;
       case 'appearance':
         return <Appearance />;
       case 'password':
@@ -155,9 +139,7 @@ export const GeneralSettings: React.FC = () => {
               className="p-2 rounded-lg bg-gray-100 dark:bg-dark-surface hover:bg-gray-200 dark:hover:bg-dark-border transition-colors text-gray-700 dark:text-dark-text shadow-sm"
               aria-label="Toggle settings menu"
             >
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+              <Menu className="w-6 h-6" strokeWidth={1.55} />
             </button>
           </div>
 
@@ -194,7 +176,7 @@ export const GeneralSettings: React.FC = () => {
                 }`}
                 aria-label={tab.label}
               >
-                <Icon size={18} />
+                <Icon size={18} strokeWidth={1.55} />
                 <span className={`mt-0.5 h-0.5 w-4 rounded-full ${isActive ? 'bg-gray-900 dark:bg-dark-text' : 'bg-transparent'}`} />
               </button>
             );

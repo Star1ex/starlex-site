@@ -10,16 +10,15 @@ import (
 )
 
 type DiscussionModel struct {
-	ID         string  `gorm:"primaryKey"`
-	Title      string  `gorm:"not null;default:''"`
-	TaskID     *string `gorm:"index:idx_discussion_task;check:discussion_parent_check,((task_id IS NOT NULL AND folder_id IS NULL) OR (task_id IS NULL AND folder_id IS NOT NULL))"`
-	FolderID   *string `gorm:"index:idx_discussion_folder"`
-	TeamID     *string `gorm:"index:idx_discussion_team"`
-	CreatedBy  string  `gorm:"not null"`
-	IsResolved bool    `gorm:"not null;default:false"`
-	CreatedAt  time.Time
-	UpdatedAt  time.Time
-	Messages   []DiscussionMessageModel `gorm:"foreignKey:DiscussionID"`
+	ID          string  `gorm:"primaryKey"`
+	Title       string  `gorm:"not null;default:''"`
+	TaskID      *string `gorm:"index:idx_discussion_task"`
+	WorkspaceID *string `gorm:"index:idx_discussion_workspace"`
+	CreatedBy   string  `gorm:"not null"`
+	IsResolved  bool    `gorm:"not null;default:false"`
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
+	Messages    []DiscussionMessageModel `gorm:"foreignKey:DiscussionID"`
 }
 
 type DiscussionMessageModel struct {
@@ -43,16 +42,15 @@ func NewDiscussionRepository(db *gorm.DB) *DiscussionRepository {
 
 func toDiscussionDomain(model DiscussionModel) *entity.Discussion {
 	return &entity.Discussion{
-		ID:         model.ID,
-		Title:      model.Title,
-		TaskID:     model.TaskID,
-		FolderID:   model.FolderID,
-		TeamID:     model.TeamID,
-		CreatedBy:  model.CreatedBy,
-		IsResolved: model.IsResolved,
-		CreatedAt:  model.CreatedAt,
-		UpdatedAt:  model.UpdatedAt,
-		Messages:   toDiscussionMessagesDomain(model.Messages),
+		ID:          model.ID,
+		Title:       model.Title,
+		TaskID:      model.TaskID,
+		WorkspaceID: model.WorkspaceID,
+		CreatedBy:   model.CreatedBy,
+		IsResolved:  model.IsResolved,
+		CreatedAt:   model.CreatedAt,
+		UpdatedAt:   model.UpdatedAt,
+		Messages:    toDiscussionMessagesDomain(model.Messages),
 	}
 }
 
@@ -91,15 +89,14 @@ func toDiscussionMessagesDomain(models []DiscussionMessageModel) []*entity.Discu
 
 func fromDiscussionDomain(entity *entity.Discussion) *DiscussionModel {
 	return &DiscussionModel{
-		ID:         entity.ID,
-		Title:      entity.Title,
-		TaskID:     entity.TaskID,
-		FolderID:   entity.FolderID,
-		TeamID:     entity.TeamID,
-		CreatedBy:  entity.CreatedBy,
-		IsResolved: entity.IsResolved,
-		CreatedAt:  entity.CreatedAt,
-		UpdatedAt:  entity.UpdatedAt,
+		ID:          entity.ID,
+		Title:       entity.Title,
+		TaskID:      entity.TaskID,
+		WorkspaceID: entity.WorkspaceID,
+		CreatedBy:   entity.CreatedBy,
+		IsResolved:  entity.IsResolved,
+		CreatedAt:   entity.CreatedAt,
+		UpdatedAt:   entity.UpdatedAt,
 	}
 }
 
@@ -127,17 +124,6 @@ func (r *DiscussionRepository) GetByTask(ctx context.Context, taskID string) ([]
 	var models []DiscussionModel
 	if err := r.db.WithContext(ctx).
 		Where("task_id = ?", taskID).
-		Order("created_at DESC").
-		Find(&models).Error; err != nil {
-		return nil, err
-	}
-	return toDiscussionDomains(models), nil
-}
-
-func (r *DiscussionRepository) GetByFolder(ctx context.Context, folderID string) ([]*entity.Discussion, error) {
-	var models []DiscussionModel
-	if err := r.db.WithContext(ctx).
-		Where("folder_id = ?", folderID).
 		Order("created_at DESC").
 		Find(&models).Error; err != nil {
 		return nil, err

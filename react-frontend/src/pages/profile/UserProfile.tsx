@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Check, Pencil, Upload, X } from 'lucide-react';
 import { userService } from '@/services/api/index.js';
 import BreadcrumbBack from '@/shared/ui/BreadcrumbBack.js';
+import { showToast } from '@/shared/lib/toast.js';
 
 type UserProfile = {
   email: string;
@@ -14,24 +15,29 @@ type UserProfile = {
 };
 
 const ProfilePage: React.FC = () => {
-  const navigate = useNavigate();
   const [user, setUser] = useState<UserProfile | null>(null);
   const [editable, setEditable] = useState(false);
   const [form, setForm] = useState<UserProfile | null>(null);
   const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let cancelled = false;
     const fetchUser = async () => {
       try {
         const data = await userService.getProfile();
+        if (cancelled) return;
         setUser(data);
         setForm(data);
-      } catch (err) {
-        console.error('Failed to fetch profile:', err);
+      } catch {
+        if (!cancelled) showToast('Failed to load profile', 'error');
+      } finally {
+        if (!cancelled) setLoading(false);
       }
     };
     fetchUser();
+    return () => { cancelled = true; };
   }, []);
 
   const handleChange = (field: keyof UserProfile, value: string) => {
@@ -43,16 +49,14 @@ const ProfilePage: React.FC = () => {
     if (!e.target.files?.length) return;
     const file = e.target.files[0];
 
-    const formData = new FormData();
-    formData.append('photo', file);
-
     try {
       setUploading(true);
       const data = await userService.uploadPhoto(file);
       setUser(prev => (prev ? { ...prev, photo_url: data.url } : prev));
       setForm(prev => (prev ? { ...prev, photo_url: data.url } : prev));
-    } catch (err) {
-      console.error('Failed to upload photo:', err);
+      showToast('Profile photo updated', 'success');
+    } catch {
+      showToast('Failed to upload photo', 'error');
     } finally {
       setUploading(false);
     }
@@ -72,8 +76,9 @@ const ProfilePage: React.FC = () => {
 
       setUser(form);
       setEditable(false);
-    } catch (err) {
-      console.error('Failed to update profile:', err);
+      showToast('Profile saved', 'success');
+    } catch {
+      showToast('Failed to save profile', 'error');
     } finally {
       setSaving(false);
     }
@@ -84,167 +89,170 @@ const ProfilePage: React.FC = () => {
     setEditable(false);
   };
 
-  if (!user || !form) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-white dark:bg-dark-bg transition-colors duration-300 px-4 sm:px-8 py-10">
-        <div className="max-w-5xl mx-auto animate-pulse">
-          <div className="rounded-2xl overflow-hidden border border-gray-200/40 dark:border-dark-border/40 bg-white dark:bg-dark-surface shadow-sm">
-            <div className="px-8 py-6 border-b border-gray-100/50 dark:border-dark-border/40 bg-gray-50 dark:bg-dark-bg/40">
-              <div className="h-6 w-32 bg-gray-200 dark:bg-dark-border rounded-full" />
-              <div className="mt-2 h-3 w-48 bg-gray-200 dark:bg-dark-border rounded-full" />
+      <div className="profile-page animate-pulse">
+        <div className="mb-4 h-5 w-28 rounded-full bg-[color:var(--sx-control)]" />
+        <section className="profile-shell">
+          <div className="profile-header">
+            <div>
+              <div className="h-7 w-28 rounded-full bg-[color:var(--sx-control)]" />
+              <div className="mt-3 h-4 w-52 rounded-full bg-[color:var(--sx-control)]" />
             </div>
-            <div className="p-8">
-              <div className="flex flex-col lg:flex-row gap-8">
-                <div className="lg:w-1/3">
-                  <div className="flex items-center gap-4">
-                    <div className="w-20 h-20 rounded-2xl bg-gray-200 dark:bg-dark-border" />
-                    <div className="space-y-2">
-                      <div className="h-4 w-32 bg-gray-200 dark:bg-dark-border rounded-full" />
-                      <div className="h-3 w-40 bg-gray-200 dark:bg-dark-border rounded-full" />
-                    </div>
-                  </div>
-                </div>
-                <div className="lg:flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  {Array.from({ length: 4 }).map((_, idx) => (
-                    <div key={idx} className="p-4 rounded-xl border border-gray-200/40 dark:border-dark-border/40">
-                      <div className="h-3 w-20 bg-gray-200 dark:bg-dark-border rounded-full" />
-                      <div className="mt-3 h-4 w-48 bg-gray-200 dark:bg-dark-border rounded-full" />
-                    </div>
-                  ))}
-                </div>
-              </div>
+            <div className="hidden sm:flex gap-3">
+              <div className="h-10 w-36 rounded-full bg-[color:var(--sx-control)]" />
+              <div className="h-10 w-28 rounded-full bg-[color:var(--sx-control)]" />
             </div>
           </div>
-        </div>
+          <div className="profile-content">
+            <div className="profile-identity-card">
+              <div className="profile-avatar-skeleton" />
+              <div className="h-4 w-36 rounded-full bg-[color:var(--sx-control)]" />
+              <div className="h-3 w-44 rounded-full bg-[color:var(--sx-control)]" />
+            </div>
+            <div className="profile-details-card">
+              {Array.from({ length: 3 }).map((_, idx) => (
+                <div key={idx} className="profile-field-skeleton">
+                  <div className="h-3 w-20 rounded-full bg-[color:var(--sx-control)]" />
+                  <div className="h-10 rounded-full bg-[color:var(--sx-control)]" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
       </div>
     );
   }
 
+  if (!user || !form) {
+    return (
+      <div className="profile-page">
+        <section className="settings-section text-center">
+          <h1 className="settings-section-title">Profile unavailable</h1>
+          <p className="settings-section-description">We could not load your profile right now.</p>
+        </section>
+      </div>
+    );
+  }
+
+  const displayName = `${form.firstName || ''}${form.lastName ? ` ${form.lastName}` : ''}`.trim() || 'User';
+  const avatarSrc = user.photo_url || user.avatar_url || '';
+
   return (
-    <div className="min-h-screen bg-white dark:bg-dark-bg transition-colors duration-300 px-4 sm:px-8 py-10">
-      <div className="max-w-5xl mx-auto">
-        <div className="mb-4">
-          <BreadcrumbBack
-            label={sessionStorage.getItem('prevRouteLabel') || 'Dashboard'}
-            to={sessionStorage.getItem('prevRoutePath') || '/dashboard'}
-          />
-        </div>
-        <div className="rounded-2xl overflow-hidden border border-gray-200 dark:border-dark-border bg-white dark:bg-dark-surface shadow-sm">
-          <div className="px-8 py-6 border-b border-gray-100 dark:border-dark-border bg-gray-50 dark:bg-dark-bg/40">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h1 className="text-2xl sm:text-3xl font-semibold text-gray-900 dark:text-dark-text">Profile</h1>
-                <p className="text-sm text-gray-600 dark:text-dark-text-muted mt-1">Manage your account details</p>
-              </div>
-              {!editable && (
-                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
-                  <button
-                    onClick={() => navigate('/settings?tab=password')}
-                    className="px-5 py-2 rounded-full border border-black dark:border-white text-black dark:text-white text-xs tracking-wide bg-transparent hover:bg-gray-100 dark:hover:bg-dark-border transition-colors duration-200 w-full sm:w-auto"
-                  >
-                    Change Password
-                  </button>
-                  <button
-                    onClick={() => setEditable(true)}
-                    className="px-5 py-2 rounded-full bg-black dark:bg-white text-white dark:text-black text-xs tracking-wide hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors duration-200 w-full sm:w-auto"
-                  >
-                    Edit Profile
-                  </button>
-                </div>
+    <div className="profile-page">
+      <div className="mb-4">
+        <BreadcrumbBack
+          label={sessionStorage.getItem('prevRouteLabel') || 'Dashboard'}
+          to={sessionStorage.getItem('prevRoutePath') || '/dashboard'}
+        />
+      </div>
+
+      <section className="profile-shell">
+        <header className="profile-header">
+          <div>
+            <p className="settings-label">Account</p>
+            <h1 className="profile-title">Profile</h1>
+            <p className="profile-subtitle">Manage your account details.</p>
+          </div>
+
+          {!editable && (
+            <div className="profile-actions">
+              <button
+                onClick={() => setEditable(true)}
+                className="settings-button settings-button--primary"
+              >
+                <Pencil size={14} />
+                Edit Profile
+              </button>
+            </div>
+          )}
+        </header>
+
+        <div className="profile-content">
+          <aside className="profile-identity-card">
+            <div className="profile-avatar">
+              {avatarSrc ? (
+                <img
+                  src={avatarSrc}
+                  alt={displayName}
+                  className="size-full object-cover"
+                />
+              ) : (
+                <span>{displayName.charAt(0).toUpperCase()}</span>
               )}
             </div>
-          </div>
 
-          <div className="p-8">
-            <div className="flex flex-col lg:flex-row gap-8">
-              <div className="lg:w-1/3">
-                <div className="flex items-center gap-4">
-                  <div className="w-20 h-20 rounded-2xl overflow-hidden border border-gray-200 dark:border-dark-border bg-gray-100 dark:bg-dark-border flex items-center justify-center flex-shrink-0 transition-all duration-300">
-                    {(user.photo_url || user.avatar_url) ? (
-                      <img
-                        src={user.photo_url || user.avatar_url || ''}
-                        alt="Avatar"
-                        className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                      />
-                    ) : (
-                      <div className="w-16 h-16 bg-gray-300 dark:bg-dark-surface rounded-full transition-colors duration-300" />
-                    )}
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium text-gray-900 dark:text-dark-text">{form.firstName} {form.lastName}</div>
-                    <div className="text-xs text-gray-500 dark:text-dark-text-muted">{form.email}</div>
-                    {user.auth_providers && user.auth_providers.length > 0 && (
-                      <div className="text-[11px] uppercase tracking-wider text-gray-400 dark:text-dark-text-muted mt-1">
-                        Signed in with {user.auth_providers.join(', ')}
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {editable && (
-                  <div className="mt-6 space-y-2 text-sm text-gray-700 dark:text-dark-text-muted">
-                    <span className="font-medium">Profile photo</span>
-                    <label className="inline-flex items-center justify-center px-4 py-2 rounded-full bg-black dark:bg-white text-white dark:text-black cursor-pointer hover:bg-gray-800 dark:hover:bg-gray-200 text-xs tracking-wide transition-colors duration-200 whitespace-nowrap">
-                      {uploading ? 'Uploading...' : 'Upload new'}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleUploadPhoto}
-                        disabled={uploading}
-                      />
-                    </label>
-                    <span className="text-[11px] text-gray-500 dark:text-dark-text-muted">
-                      JPG/PNG, max 5MB
-                    </span>
-                  </div>
-                )}
-              </div>
-
-              <div className="lg:flex-1">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <ProfileField
-                    label="First name"
-                    value={form.firstName}
-                    editable={editable}
-                    onChange={v => handleChange('firstName', v)}
-                  />
-                  <ProfileField
-                    label="Last name"
-                    value={form.lastName}
-                    editable={editable}
-                    onChange={v => handleChange('lastName', v)}
-                  />
-                  <ProfileField
-                    label="Email"
-                    value={form.email}
-                    editable={editable}
-                    onChange={v => handleChange('email', v)}
-                  />
-                </div>
-              </div>
+            <div className="min-w-0 text-center">
+              <div className="profile-name">{displayName}</div>
+              <div className="profile-email">{form.email}</div>
             </div>
 
-            {editable && (
-              <div className="mt-8 flex flex-col sm:flex-row justify-end gap-3">
-                <button
-                  onClick={handleCancel}
-                  className="px-5 py-2 rounded-full border border-black dark:border-white text-black dark:text-white text-xs tracking-wide bg-transparent hover:bg-gray-100 dark:hover:bg-dark-border transition-colors duration-200 w-full sm:w-auto"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={handleSave}
-                  disabled={saving}
-                  className="px-5 py-2 rounded-full bg-black dark:bg-white text-white dark:text-black text-xs tracking-wide hover:bg-gray-800 dark:hover:bg-gray-200 disabled:opacity-60 transition-colors duration-200 w-full sm:w-auto"
-                >
-                  {saving ? 'Saving...' : 'Save'}
-                </button>
+            {user.auth_providers && user.auth_providers.length > 0 && (
+              <div className="settings-status-pill">
+                Signed in with {user.auth_providers.join(', ')}
               </div>
             )}
+
+            {editable && (
+              <label className="settings-button mt-2 cursor-pointer">
+                <Upload size={14} />
+                {uploading ? 'Uploading...' : 'Upload photo'}
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleUploadPhoto}
+                  disabled={uploading}
+                />
+              </label>
+            )}
+          </aside>
+
+          <div className="profile-details-card">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <ProfileField
+                label="First name"
+                value={form.firstName}
+                editable={editable}
+                onChange={v => handleChange('firstName', v)}
+              />
+              <ProfileField
+                label="Last name"
+                value={form.lastName}
+                editable={editable}
+                onChange={v => handleChange('lastName', v)}
+              />
+              <ProfileField
+                label="Email"
+                value={form.email}
+                editable={editable}
+                onChange={v => handleChange('email', v)}
+                wide
+              />
+            </div>
           </div>
         </div>
-      </div>
+
+        {editable && (
+          <div className="profile-edit-actions">
+            <button
+              onClick={handleCancel}
+              className="settings-button"
+            >
+              <X size={14} />
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="settings-button settings-button--primary"
+            >
+              <Check size={14} />
+              {saving ? 'Saving...' : 'Save'}
+            </button>
+          </div>
+        )}
+      </section>
     </div>
   );
 };
@@ -254,6 +262,7 @@ type ProfileFieldProps = {
   value: string;
   editable: boolean;
   onChange: (v: string) => void;
+  wide?: boolean;
 };
 
 const ProfileField: React.FC<ProfileFieldProps> = ({
@@ -261,20 +270,21 @@ const ProfileField: React.FC<ProfileFieldProps> = ({
   value,
   editable,
   onChange,
+  wide = false,
 }) => {
   return (
-    <div className="flex flex-col gap-1">
-      <span className="text-xs uppercase tracking-[0.2em] text-gray-500 dark:text-dark-text-muted transition-colors duration-300">
+    <div className={wide ? 'profile-field sm:col-span-2' : 'profile-field'}>
+      <span className="settings-label">
         {label}
       </span>
       {editable ? (
         <input
-          className="w-full px-4 py-2 rounded-full bg-gray-100 dark:bg-dark-border border border-gray-300 dark:border-dark-border text-sm text-black dark:text-dark-text focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white transition-all duration-200"
+          className="settings-input"
           value={value}
           onChange={e => onChange(e.target.value)}
         />
       ) : (
-        <div className="w-full px-4 py-2 rounded-full bg-gray-50 dark:bg-dark-border/30 border border-transparent text-sm text-black dark:text-dark-text transition-colors duration-300">
+        <div className="profile-readonly-value">
           {value}
         </div>
       )}

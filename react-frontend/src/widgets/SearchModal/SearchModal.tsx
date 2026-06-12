@@ -1,47 +1,74 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import React, { useEffect, useMemo, useRef, useState, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
-import { Search, Users, Layers, FileText, ArrowRight, Loader } from 'lucide-react';
+import { Command } from 'cmdk';
+import {
+  Search, Users, Layers, FileText, Loader, Plus, CircleCheck, Home,
+  Kanban as ProjectsIcon, SunMoon, Clock,
+} from 'lucide-react';
 import { searchService, type GlobalSearchResponse } from '@/services/api/search.service.js';
 import { useDebounce } from '@/shared/hooks/useDebounce.js';
+import { useWorkspace } from '@/contexts/useWorkspace.js';
+import { useTheme } from '@/shared/contexts/useTheme.js';
+import { getAllViews } from '@/shared/lib/savedViews.js';
+import { getAllRecent, type RecentItem } from '@/shared/lib/recentItems.js';
+import { Glass } from '@/shared/ui/glass/index.js';
 
-interface SearchModalProps {
+export interface SearchModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
 type ResultItem =
-  | { kind: 'team';   id: string; name: string; url: string }
-  | { kind: 'sprint'; id: string; name: string; url: string; status: string }
-  | { kind: 'task';   id: string; name: string; url: string; progress: string };
+  | { kind: 'workspace'; id: string; name: string; url: string }
+  | { kind: 'sprint';    id: string; name: string; url: string; status: string }
+  | { kind: 'task';      id: string; name: string; url: string; progress: string };
 
-const KIND_ICON = {
-  team:   <Users size={14} />,
-  sprint: <Layers size={14} />,
-  task:   <FileText size={14} />,
+const KIND_ICON: Record<ResultItem['kind'], React.ReactNode> = {
+  workspace: <Users size={15} />,
+  sprint:    <Layers size={15} />,
+  task:      <FileText size={15} />,
 };
-
-const KIND_LABEL = { team: 'Team', sprint: 'Sprint', task: 'Task' };
+const KIND_LABEL: Record<ResultItem['kind'], string> = { workspace: 'Workspace', sprint: 'Sprint', task: 'Task' };
+const RECENT_ICON: Record<RecentItem['type'], React.ReactNode> = {
+  workspace: <Users size={15} />,
+  team:      <Users size={15} />,
+  sprint:    <Layers size={15} />,
+  task:      <FileText size={15} />,
+};
 
 export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => {
   const navigate = useNavigate();
+  const { activeWorkspaceId } = useWorkspace();
+  const { theme, toggleTheme } = useTheme();
   const inputRef = useRef<HTMLInputElement>(null);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<ResultItem[]>([]);
-  const [selected, setSelected] = useState(0);
   const debouncedQuery = useDebounce(query, 200);
   const abortRef = useRef<AbortController | null>(null);
 
-  // Focus input when opens
+  const hasQuery = Boolean(query.trim());
+  const wsId = activeWorkspaceId ?? '';
+
+  const recent = useMemo(() => (isOpen ? getAllRecent() : { workspaces: [], sprints: [], tasks: [] }), [isOpen]);
+  const recentItems = useMemo(
+    () => [...recent.workspaces, ...recent.sprints, ...recent.tasks].slice(0, 5),
+    [recent],
+  );
+
+  const go = useCallback((url: string) => { navigate(url); onClose(); }, [navigate, onClose]);
+
+  // Reset + focus on open
   useEffect(() => {
-    if (isOpen) {
-      setTimeout(() => inputRef.current?.focus(), 50);
+    if (!isOpen) return;
+    const timer = window.setTimeout(() => {
+      inputRef.current?.focus();
       setQuery('');
       setResults([]);
-      setSelected(0);
-    }
+    }, 40);
+    return () => window.clearTimeout(timer);
   }, [isOpen]);
 
   // Escape to close
@@ -52,170 +79,172 @@ export const SearchModal: React.FC<SearchModalProps> = ({ isOpen, onClose }) => 
     return () => document.removeEventListener('keydown', onKey);
   }, [isOpen, onClose]);
 
-  // Search
+  // Server search
   useEffect(() => {
     if (!isOpen) return;
     abortRef.current?.abort();
 
     if (!debouncedQuery.trim()) {
-      setResults([]);
-      setLoading(false);
-      return;
+      const t = window.setTimeout(() => { setResults([]); setLoading(false); }, 0);
+      return () => window.clearTimeout(t);
     }
 
     const ctrl = new AbortController();
     abortRef.current = ctrl;
-    setLoading(true);
+    const loadingTimer = window.setTimeout(() => {
+      if (!ctrl.signal.aborted) setLoading(true);
+    }, 0);
 
     searchService.globalSearch(debouncedQuery, ctrl.signal)
       .then((data: GlobalSearchResponse) => {
         if (ctrl.signal.aborted) return;
-        const items: ResultItem[] = [
-          ...data.teams.map(t => ({ kind: 'team' as const, id: t.id, name: t.name, url: `/team/${t.id}` })),
-          ...data.sprints.map(s => ({ kind: 'sprint' as const, id: s.id, name: s.name, url: `/team/${s.team_id}/sprints/${s.id}`, status: s.status })),
+        setResults([
+          ...data.workspaces.map(t => ({ kind: 'workspace' as const, id: t.id, name: t.name, url: `/workspace/${t.id}` })),
+          ...data.sprints.map(s => ({ kind: 'sprint' as const, id: s.id, name: s.name, url: `/workspace/${s.workspace_id}/sprints/${s.id}`, status: s.status })),
           ...data.tasks.map(t => ({
             kind: 'task' as const, id: t.id, name: t.task,
-            url: t.sprint_id ? `/team/${t.team_id}/sprints/${t.sprint_id}` : `/task/${t.id}`,
+            url: t.sprint_id ? `/workspace/${t.workspace_id}/sprints/${t.sprint_id}` : `/task/${t.id}`,
             progress: t.progress,
           })),
-        ];
-        setResults(items);
-        setSelected(0);
+        ]);
         setLoading(false);
       })
       .catch((e: unknown) => {
-        if ((e as { name?: string })?.name === 'CanceledError' || (e as { name?: string })?.name === 'AbortError') return;
+        const name = (e as { name?: string })?.name;
+        if (name === 'CanceledError' || name === 'AbortError') return;
         setLoading(false);
       });
 
-    return () => ctrl.abort();
+    return () => {
+      window.clearTimeout(loadingTimer);
+      ctrl.abort();
+    };
   }, [debouncedQuery, isOpen]);
 
-  const open = useCallback((item: ResultItem) => {
-    navigate(item.url);
-    onClose();
-  }, [navigate, onClose]);
-
-  // Keyboard navigation
-  const onKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'ArrowDown') { e.preventDefault(); setSelected(s => Math.min(s + 1, results.length - 1)); }
-    if (e.key === 'ArrowUp')   { e.preventDefault(); setSelected(s => Math.max(s - 1, 0)); }
-    if (e.key === 'Enter' && results[selected]) open(results[selected]);
-  }, [results, selected, open]);
+  const views = useMemo(() => (isOpen ? getAllViews().slice(0, 4) : []), [isOpen]);
 
   return createPortal(
     <AnimatePresence>
       {isOpen && (
         <motion.div
-          className="fixed inset-0 z-50 flex items-start justify-center pt-[18vh]"
+          className="fixed inset-0 z-[60] flex items-start justify-center pt-[18vh] px-4"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1, transition: { duration: 0.15 } }}
           exit={{ opacity: 0, transition: { duration: 0.12 } }}
         >
-          {/* Backdrop */}
+          {/* Backdrop — flat dim + blur (background recedes) */}
           <div
             className="absolute inset-0"
-            style={{ background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)' }}
+            style={{ background: 'var(--sx-overlay)', backdropFilter: 'blur(18px) saturate(115%)', WebkitBackdropFilter: 'blur(18px) saturate(115%)' }}
             onClick={onClose}
           />
 
-          {/* Modal */}
-          <motion.div
-            className="relative w-full overflow-hidden"
-            style={{
-              maxWidth: '560px',
-              background: 'var(--bg-primary)',
-              border: '1px solid var(--border-color)',
-              borderRadius: '14px',
-              boxShadow: '0 24px 60px rgba(0,0,0,0.25)',
-              margin: '0 16px',
-            }}
+          <Glass
+            as={motion.div}
+            variant="modal"
+            depth="floating"
+            className="relative w-full max-w-[560px] overflow-hidden"
+            style={{ viewTransitionName: 'sx-cmdk' } as React.CSSProperties}
             initial={{ opacity: 0, scale: 0.97, y: -8 }}
-            animate={{ opacity: 1, scale: 1, y: 0, transition: { duration: 0.18, ease: 'easeOut' } }}
-            exit={{ opacity: 0, scale: 0.97, y: -8, transition: { duration: 0.12 } }}
+            animate={{ opacity: 1, scale: 1, y: 0, transition: { duration: 0.18, ease: [0.16, 1, 0.3, 1] } }}
+            exit={{ opacity: 0, scale: 0.98, y: -6, transition: { duration: 0.12 } }}
           >
-            {/* Input row */}
-            <div className="flex items-center gap-3 px-4 py-3.5" style={{ borderBottom: results.length > 0 || loading ? '1px solid var(--border-color)' : 'none' }}>
-              {loading
-                ? <Loader size={16} className="animate-spin flex-shrink-0" style={{ color: 'var(--text-secondary)' }} />
-                : <Search size={16} className="flex-shrink-0" style={{ color: 'var(--text-secondary)' }} />
-              }
-              <input
-                ref={inputRef}
-                value={query}
-                onChange={e => setQuery(e.target.value)}
-                onKeyDown={onKeyDown}
-                placeholder="Search teams, sprints, tasks…"
-                className="flex-1 bg-transparent outline-none text-sm"
-                style={{ color: 'var(--text-primary)' }}
-                spellCheck={false}
-                autoComplete="off"
-              />
-              {query && (
-                <button
-                  onClick={() => setQuery('')}
-                  className="text-xs px-1.5 py-0.5 rounded"
-                  style={{ color: 'var(--text-secondary)', background: 'var(--bg-secondary)' }}
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-
-            {/* Results */}
-            {results.length > 0 && (
-              <div className="py-1.5 max-h-72 overflow-y-auto">
-                {results.map((item, i) => (
-                  <button
-                    key={`${item.kind}-${item.id}`}
-                    onClick={() => open(item)}
-                    onMouseEnter={() => setSelected(i)}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left transition-colors group"
-                    style={{
-                      background: selected === i ? 'var(--bg-secondary)' : 'transparent',
-                      color: 'var(--text-primary)',
-                    }}
-                  >
-                    <span style={{ color: 'var(--text-secondary)' }}>{KIND_ICON[item.kind]}</span>
-                    <span className="flex-1 text-sm truncate">{item.name}</span>
-                    <span className="text-xs flex-shrink-0" style={{ color: 'var(--text-secondary)' }}>
-                      {KIND_LABEL[item.kind]}
-                    </span>
-                    <ArrowRight
-                      size={13}
-                      className="flex-shrink-0 opacity-0 group-hover:opacity-60 transition-opacity"
-                      style={{ color: 'var(--text-secondary)' }}
-                    />
-                  </button>
-                ))}
+            <Command shouldFilter={false} loop className="sx-cmd">
+              {/* Input row — borderless, 16px */}
+              <div className="sx-cmd__input-row">
+                {loading
+                  ? <Loader size={17} className="sx-cmd__leading animate-spin" />
+                  : <Search size={17} className="sx-cmd__leading" />}
+                <Command.Input
+                  ref={inputRef}
+                  value={query}
+                  onValueChange={setQuery}
+                  placeholder="Search or jump to…"
+                  className="sx-cmd__input"
+                />
+                <kbd className="sx-cmd__esc label-caps">esc</kbd>
               </div>
-            )}
 
-            {/* Empty state */}
-            {!loading && query.trim() && results.length === 0 && (
-              <div className="px-4 py-6 text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
-                No results for "{query}"
-              </div>
-            )}
+              <Command.List className="sx-cmd__list">
+                {hasQuery && !loading && results.length === 0 && (
+                  <Command.Empty className="sx-cmd__empty">No results for “{query}”</Command.Empty>
+                )}
 
-            {/* Hint */}
-            {!query && (
-              <div className="px-4 py-3 flex items-center gap-4" style={{ borderTop: '0' }}>
-                <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                  <kbd className="px-1.5 py-0.5 rounded text-xs font-mono" style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>↑↓</kbd>
-                  {' '}navigate
-                </span>
-                <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                  <kbd className="px-1.5 py-0.5 rounded text-xs font-mono" style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>↵</kbd>
-                  {' '}open
-                </span>
-                <span className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                  <kbd className="px-1.5 py-0.5 rounded text-xs font-mono" style={{ background: 'var(--bg-secondary)', color: 'var(--text-secondary)' }}>Esc</kbd>
-                  {' '}close
-                </span>
-              </div>
-            )}
-          </motion.div>
+                {/* Server results */}
+                {hasQuery && results.length > 0 && (
+                  <Command.Group heading="Results" className="sx-cmd__group">
+                    {results.map((item) => (
+                      <Command.Item
+                        key={`${item.kind}-${item.id}`}
+                        value={`${item.kind}-${item.id}-${item.name}`}
+                        onSelect={() => go(item.url)}
+                        className="sx-cmd__item"
+                      >
+                        <span className="sx-cmd__icon">{KIND_ICON[item.kind]}</span>
+                        <span className="sx-cmd__label">{item.name}</span>
+                        <span className="sx-cmd__meta label-caps">{KIND_LABEL[item.kind]}</span>
+                      </Command.Item>
+                    ))}
+                  </Command.Group>
+                )}
+
+                {/* Actions + recents when idle */}
+                {!hasQuery && (
+                  <>
+                    <Command.Group heading="Actions" className="sx-cmd__group">
+                      <Command.Item value="action-new-task" onSelect={() => go(wsId ? `/task/new?workspaceId=${wsId}` : '/dashboard')} className="sx-cmd__item">
+                        <span className="sx-cmd__icon"><Plus size={15} /></span>
+                        <span className="sx-cmd__label">New task</span>
+                        <kbd className="sx-cmd__chip">C</kbd>
+                      </Command.Item>
+                      <Command.Item value="action-new-project" onSelect={() => go(wsId ? `/workspace/${wsId}?view=projects` : '/dashboard')} className="sx-cmd__item">
+                        <span className="sx-cmd__icon"><ProjectsIcon size={15} /></span>
+                        <span className="sx-cmd__label">New project</span>
+                      </Command.Item>
+                      <Command.Item value="action-theme" onSelect={() => toggleTheme()} className="sx-cmd__item">
+                        <span className="sx-cmd__icon"><SunMoon size={15} /></span>
+                        <span className="sx-cmd__label">Toggle theme</span>
+                        <span className="sx-cmd__meta label-caps">{theme === 'light' ? 'Light' : 'Dark'}</span>
+                      </Command.Item>
+                    </Command.Group>
+
+                    <Command.Group heading="Navigate" className="sx-cmd__group">
+                      <Command.Item value="nav-home" onSelect={() => go(wsId ? `/workspace/${wsId}` : '/dashboard')} className="sx-cmd__item">
+                        <span className="sx-cmd__icon"><Home size={15} /></span>
+                        <span className="sx-cmd__label">Home</span>
+                      </Command.Item>
+                      <Command.Item value="nav-projects" onSelect={() => go(wsId ? `/workspace/${wsId}?view=projects` : '/dashboard')} className="sx-cmd__item">
+                        <span className="sx-cmd__icon"><ProjectsIcon size={15} /></span>
+                        <span className="sx-cmd__label">Projects</span>
+                      </Command.Item>
+                      <Command.Item value="nav-my-issues" onSelect={() => go('/my-issues')} className="sx-cmd__item">
+                        <span className="sx-cmd__icon"><CircleCheck size={15} /></span>
+                        <span className="sx-cmd__label">My Issues</span>
+                      </Command.Item>
+                      {views.map((v) => (
+                        <Command.Item key={v.id} value={`view-${v.id}`} onSelect={() => go(`/my-issues?view=${v.id}`)} className="sx-cmd__item">
+                          <span className="sx-cmd__icon"><FileText size={15} /></span>
+                          <span className="sx-cmd__label">{v.name}</span>
+                        </Command.Item>
+                      ))}
+                    </Command.Group>
+
+                    {recentItems.length > 0 && (
+                      <Command.Group heading="Recent" className="sx-cmd__group">
+                        {recentItems.map((item) => (
+                          <Command.Item key={`${item.type}-${item.id}`} value={`recent-${item.type}-${item.id}`} onSelect={() => go(item.url)} className="sx-cmd__item">
+                            <span className="sx-cmd__icon">{RECENT_ICON[item.type] ?? <Clock size={15} />}</span>
+                            <span className="sx-cmd__label">{item.name}</span>
+                            {item.subtitle && <span className="sx-cmd__meta">{item.subtitle}</span>}
+                          </Command.Item>
+                        ))}
+                      </Command.Group>
+                    )}
+                  </>
+                )}
+              </Command.List>
+            </Command>
+          </Glass>
         </motion.div>
       )}
     </AnimatePresence>,

@@ -1,5 +1,7 @@
 package entity
 
+import "time"
+
 type User struct {
 	ID             string
 	Email          string
@@ -15,6 +17,13 @@ type User struct {
 	NameOverridden bool
 	IsVerified     bool
 	TokenVersion   int
+
+	// Minimal account metadata (privacy-conscious: IPs kept server-side only).
+	SignupIP    *string
+	LastLoginIP *string
+	LastLoginAt *time.Time
+	CreatedAt   time.Time
+	UpdatedAt   time.Time
 }
 
 func NewUser(id, email, hashedPassword, firstName, lastName string) *User {

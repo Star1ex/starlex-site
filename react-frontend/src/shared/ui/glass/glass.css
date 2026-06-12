@@ -1,0 +1,166 @@
+/* =====================================================
+   <Glass> — the material system (Phase 2)
+   One layered surface: body gradient → interior thickness →
+   surface noise → light-catching rim. Consumes ONLY the
+   Phase-1 token contract. No theme selectors, no new hues.
+   Variants tune blur / radius / fill / shadow via local
+   custom props so the same layers scale to every surface.
+   ===================================================== */
+@layer components {
+  .sx-glass {
+    position: relative;
+    isolation: isolate;
+    border-radius: var(--glass-radius, var(--radius-lg));
+    color: var(--sx-text);
+    /* body: vertical luminance gradient (top catches light) */
+    background:
+      linear-gradient(180deg,
+        var(--glass-fill-top, var(--sx-glass-fill-top)),
+        var(--glass-fill-bottom, var(--sx-glass-fill-bottom)));
+    backdrop-filter: blur(var(--glass-blur, var(--sx-glass-blur))) saturate(var(--sx-glass-saturate)) brightness(var(--sx-glass-brightness, 1));
+    -webkit-backdrop-filter: blur(var(--glass-blur, var(--sx-glass-blur))) saturate(var(--sx-glass-saturate)) brightness(var(--sx-glass-brightness, 1));
+    /* outer edge (light-theme hairline, transparent in dark) + drop + interior thickness */
+    box-shadow:
+      0 0 0 1px var(--sx-edge),
+      var(--glass-shadow, var(--sx-shadow-soft)),
+      inset 0 -12px 24px -16px var(--sx-thickness);
+    /* own compositing layer; animate transform/opacity only */
+    transform: translateZ(0);
+    transition:
+      background 180ms var(--ease-out-expo),
+      box-shadow 180ms var(--ease-out-expo),
+      transform 200ms var(--spring-snappy);
+  }
+
+  /* keep content above the noise layer */
+  .sx-glass > * { position: relative; z-index: 1; }
+
+  /* Surface noise — kills banding, adds tactile grain (below content) */
+  .sx-glass::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    opacity: 0.35;
+    mix-blend-mode: overlay;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='gn'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.04 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23gn)'/%3E%3C/svg%3E");
+  }
+
+  /* Rim — a masked 1px ring, bright top-left → invisible bottom.
+     REPLACES borders (Design Law 3). Sits above content edge. */
+  .sx-glass::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    border-radius: inherit;
+    padding: 1px;
+    pointer-events: none;
+    background: linear-gradient(160deg,
+      var(--sx-rim-bright),
+      var(--sx-rim-faint) 22%,
+      transparent 45%,
+      transparent 100%);
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask:
+      linear-gradient(#000 0 0) content-box,
+      linear-gradient(#000 0 0);
+            mask-composite: exclude;
+  }
+
+  /* ---------- Variants (token-driven deltas only) ---------- */
+  .sx-glass--sidebar {
+    --glass-radius: var(--radius-xl);
+    --glass-blur: var(--sx-blur-sidebar);
+    --glass-fill-top: var(--sx-glass-fill-top-raised);
+    --glass-shadow: var(--sx-shadow-elevated);
+  }
+  /* Tier B: no blur, alpha surface fill (Law 13) */
+  .sx-glass--card {
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    background: var(--sx-surface);
+  }
+  .sx-glass--menu {
+    --glass-radius: var(--radius-lg);
+    --glass-blur: var(--sx-blur-menu);
+    --glass-fill-top: var(--sx-glass-fill-top-strong);
+    --glass-shadow: var(--sx-shadow-elevated);
+  }
+  .sx-glass--modal {
+    --glass-radius: var(--radius-xl);
+    --glass-blur: var(--sx-blur-modal);
+    --glass-fill-top: var(--sx-glass-fill-top-strong);
+    --glass-shadow: var(--sx-shadow-elevated);
+  }
+  .sx-glass--dock {
+    --glass-radius: var(--radius-lg);
+    --glass-blur: 28px;
+  }
+  /* Pills are too small/numerous for live blur (Design Law 8):
+     solid pre-mixed surface, rim only on hover. */
+  .sx-glass--pill {
+    --glass-radius: 9999px;
+    background: var(--sx-surface);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    box-shadow: none;
+  }
+  .sx-glass--pill::before { opacity: 0; transition: opacity 160ms ease; }
+  .sx-glass--pill::after  { display: none; }
+  .sx-glass--pill.sx-glass--interactive:hover::before { opacity: 1; }
+
+  /* ---------- Depth (shadow tier, independent of border tier) ---------- */
+  .sx-glass--rest     { --glass-shadow: var(--sx-shadow-soft); }
+  .sx-glass--raised   { --glass-shadow: var(--sx-shadow-soft); }
+  .sx-glass--floating { --glass-shadow: var(--sx-shadow-elevated); }
+
+  /* ---------- Interactive physics (opt-in) ---------- */
+  .sx-glass--interactive { cursor: pointer; }
+  .sx-glass--interactive:hover {
+    --glass-fill-top: color-mix(in srgb, #fff 2%, var(--sx-glass-fill-top));
+    transform: translateY(-1px);
+  }
+  .sx-glass--interactive:active { transform: scale(0.98); }
+  /* Tier-B press: fill steps up on active (physics cue). */
+  .sx-glass--pill.sx-glass--interactive:active,
+  .sx-glass--card.sx-glass--interactive:active {
+    background: var(--sx-surface-active);
+    transition: transform var(--motion-fast), background var(--motion-fast);
+  }
+  /* Cards lift further and raise a shadow tier on hover (signature card feel). */
+  .sx-glass--card.sx-glass--interactive:hover {
+    --glass-shadow: var(--sx-shadow-elevated);
+    transform: translateY(-2px);
+  }
+
+  /* ---------- Specular rim highlight (cursor-tracked, opt-in) ----------
+     The light-catch follows the pointer along the RIM only — never the
+     body (a body glow = the haze Design Law 2 forbids). --mx/--my are
+     written by one rAF-throttled pointermove listener (sidebar only).
+     The radial is composited into the ::before rim, whose 1px mask
+     clamps it to the edge: a faint glint travels the slab's border. */
+  .sx-glass--specular::before {
+    background:
+      radial-gradient(180px circle at var(--mx, 50%) var(--my, 0%),
+        var(--sx-rim-bright), transparent 50%),
+      linear-gradient(160deg,
+        var(--sx-rim-bright),
+        var(--sx-rim-faint) 22%,
+        transparent 45%,
+        transparent 100%);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sx-glass,
+    .sx-glass--interactive:hover,
+    .sx-glass--interactive:active { transform: none; transition: none; }
+    /* freeze the glint at the resting position */
+    .sx-glass--specular { --mx: 50%; --my: 0%; }
+  }
+}

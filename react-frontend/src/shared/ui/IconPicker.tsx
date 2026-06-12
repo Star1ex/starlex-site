@@ -2,70 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Curated minimalist icon set — like Notion
-export const ICONS = [
-  // No icon
-  { value: '', label: 'None' },
-  // Tech / Dev
-  { value: '💻', label: 'Laptop' },
-  { value: '🖥️', label: 'Desktop' },
-  { value: '⌨️', label: 'Keyboard' },
-  { value: '🖱️', label: 'Mouse' },
-  { value: '📱', label: 'Phone' },
-  { value: '🔧', label: 'Wrench' },
-  { value: '⚙️', label: 'Settings' },
-  { value: '🔌', label: 'Plug' },
-  { value: '💾', label: 'Save' },
-  { value: '📡', label: 'Antenna' },
-  { value: '🤖', label: 'Robot' },
-  // Knowledge / Learning
-  { value: '📚', label: 'Books' },
-  { value: '📖', label: 'Open book' },
-  { value: '🎓', label: 'Graduation' },
-  { value: '🧠', label: 'Brain' },
-  { value: '🔬', label: 'Microscope' },
-  { value: '🧪', label: 'Test tube' },
-  { value: '📐', label: 'Ruler' },
-  { value: '✏️', label: 'Pencil' },
-  { value: '📝', label: 'Notepad' },
-  // Fitness / Health
-  { value: '🏋️', label: 'Dumbbell' },
-  { value: '🤸', label: 'Gymnastics' },
-  { value: '🏃', label: 'Running' },
-  { value: '💪', label: 'Muscle' },
-  { value: '🧘', label: 'Yoga' },
-  // Business / Work
-  { value: '📊', label: 'Chart' },
-  { value: '📈', label: 'Growth' },
-  { value: '💼', label: 'Briefcase' },
-  { value: '🤝', label: 'Handshake' },
-  { value: '📋', label: 'Clipboard' },
-  { value: '💡', label: 'Idea' },
-  { value: '🎯', label: 'Target' },
-  { value: '🚀', label: 'Rocket' },
-  // Creative
-  { value: '🎨', label: 'Palette' },
-  { value: '🎵', label: 'Music' },
-  { value: '🎬', label: 'Film' },
-  { value: '📷', label: 'Camera' },
-  // Nature / Elements
-  { value: '🌿', label: 'Plant' },
-  { value: '🌱', label: 'Sprout' },
-  { value: '⚡', label: 'Lightning' },
-  { value: '🔥', label: 'Fire' },
-  { value: '💧', label: 'Water' },
-  { value: '🌙', label: 'Moon' },
-  { value: '⭐', label: 'Star' },
-  // Misc
-  { value: '🏠', label: 'Home' },
-  { value: '🔑', label: 'Key' },
-  { value: '📌', label: 'Pin' },
-  { value: '🎁', label: 'Gift' },
-  { value: '🏆', label: 'Trophy' },
-  { value: '💬', label: 'Chat' },
-  { value: '🗓️', label: 'Calendar' },
-  { value: '🔗', label: 'Link' },
-];
+import { ICONS } from './IconPickerIcons.js';
 
 interface IconPickerProps {
   value: string;

@@ -10,47 +10,47 @@ import type {
 } from '../../types/dto.js';
 
 export const sprintService = {
-  async getTeamSprints(teamId: string, options?: { signal?: AbortSignal }): Promise<SprintDTO[]> {
-    const response = await httpClient.get<SprintDTO[]>(`/api/teams/${teamId}/sprints`, {
+  async getWorkspaceSprints(workspaceId: string, options?: { signal?: AbortSignal }): Promise<SprintDTO[]> {
+    const response = await httpClient.get<SprintDTO[]>(`/api/workspaces/${workspaceId}/sprints`, {
       signal: options?.signal as AbortSignal | undefined,
     });
     return response.data;
   },
 
-  async getSprintById(teamId: string, sprintId: string, options?: { signal?: AbortSignal }): Promise<SprintDTO> {
-    const response = await httpClient.get<SprintDTO>(`/api/teams/${teamId}/sprints/${sprintId}`, {
+  async getSprintById(workspaceId: string, sprintId: string, options?: { signal?: AbortSignal }): Promise<SprintDTO> {
+    const response = await httpClient.get<SprintDTO>(`/api/workspaces/${workspaceId}/sprints/${sprintId}`, {
       signal: options?.signal as AbortSignal | undefined,
     });
     return response.data;
   },
 
-  async createSprint(teamId: string, data: CreateSprintRequest): Promise<SprintDTO> {
-    const response = await httpClient.post<SprintDTO>(`/api/teams/${teamId}/sprints`, data);
+  async createSprint(workspaceId: string, data: CreateSprintRequest): Promise<SprintDTO> {
+    const response = await httpClient.post<SprintDTO>(`/api/workspaces/${workspaceId}/sprints`, data);
     return response.data;
   },
 
-  async updateSprint(teamId: string, sprintId: string, data: UpdateSprintRequest): Promise<SprintDTO> {
-    const response = await httpClient.patch<SprintDTO>(`/api/teams/${teamId}/sprints/${sprintId}`, data);
+  async updateSprint(workspaceId: string, sprintId: string, data: UpdateSprintRequest): Promise<SprintDTO> {
+    const response = await httpClient.patch<SprintDTO>(`/api/workspaces/${workspaceId}/sprints/${sprintId}`, data);
     return response.data;
   },
 
-  async startSprint(teamId: string, sprintId: string): Promise<SprintDTO> {
-    const response = await httpClient.post<SprintDTO>(`/api/teams/${teamId}/sprints/${sprintId}/start`);
+  async startSprint(workspaceId: string, sprintId: string): Promise<SprintDTO> {
+    const response = await httpClient.post<SprintDTO>(`/api/workspaces/${workspaceId}/sprints/${sprintId}/start`);
     return response.data;
   },
 
-  async completeSprint(teamId: string, sprintId: string, data?: CompleteSprintRequest): Promise<SprintDTO> {
-    const response = await httpClient.post<SprintDTO>(`/api/teams/${teamId}/sprints/${sprintId}/complete`, data ?? {});
+  async completeSprint(workspaceId: string, sprintId: string, data?: CompleteSprintRequest): Promise<SprintDTO> {
+    const response = await httpClient.post<SprintDTO>(`/api/workspaces/${workspaceId}/sprints/${sprintId}/complete`, data ?? {});
     return response.data;
   },
 
-  async archiveSprint(teamId: string, sprintId: string): Promise<SprintDTO> {
-    const response = await httpClient.post<SprintDTO>(`/api/teams/${teamId}/sprints/${sprintId}/archive`);
+  async archiveSprint(workspaceId: string, sprintId: string): Promise<SprintDTO> {
+    const response = await httpClient.post<SprintDTO>(`/api/workspaces/${workspaceId}/sprints/${sprintId}/archive`);
     return response.data;
   },
 
-  async deleteSprint(teamId: string, sprintId: string): Promise<void> {
-    await httpClient.delete(`/api/teams/${teamId}/sprints/${sprintId}`);
+  async deleteSprint(workspaceId: string, sprintId: string): Promise<void> {
+    await httpClient.delete(`/api/workspaces/${workspaceId}/sprints/${sprintId}`);
   },
 
   async moveTaskToSprint(taskId: string, sprintId: string | null): Promise<void> {

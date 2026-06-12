@@ -1,0 +1,59 @@
+@layer base {
+  html {
+    /* Ultimate canvas fallback for routes that don't render the depth field */
+    background: var(--sx-canvas);
+    font-family: 'Geist Variable', system-ui, sans-serif;
+  }
+  body {
+    /* Transparent so the .sx-depth field reads through on app routes */
+    background: transparent;
+    color: var(--sx-text);
+    font-family: 'Geist Variable', system-ui, sans-serif;
+    font-size: 13px;
+    line-height: 1.45;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    @apply transition-colors duration-200;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    letter-spacing: -0.015em;
+  }
+
+  /* Mono caps for keys / metadata */
+  .label-caps {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--sx-text-subtle);
+  }
+
+  /* Priority pills */
+  .priority-pill {
+    background-color: var(--priority-pill-bg);
+    color: var(--priority-pill-text);
+  }
+  .priority-pill:hover { background-color: var(--priority-pill-bg-hover); }
+  .priority-pill--active {
+    background-color: var(--priority-pill-bg-active);
+    color: var(--priority-pill-text-active);
+  }
+
+  * {
+    border-color: var(--sx-line);
+    outline-color: rgb(var(--sx-accent-rgb) / 0.50);
+    scrollbar-width: thin;
+    scrollbar-color: var(--sx-scrollbar-thumb) transparent;
+  }
+  *::-webkit-scrollbar { width: 8px; height: 8px; }
+  *::-webkit-scrollbar-track { background: transparent; }
+  *::-webkit-scrollbar-thumb {
+    background: var(--sx-scrollbar-thumb);
+    border-radius: 4px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: color-mix(in srgb, var(--sx-scrollbar-thumb) 130%, transparent);
+  }
+  *::-webkit-scrollbar-button { display: none; }
+}

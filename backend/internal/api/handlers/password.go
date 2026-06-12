@@ -128,14 +128,12 @@ func (h *Handlers) ChangePassword(ctx *fiber.Ctx) error {
 		})
 	}
 
-	accessTokenStr, refreshTokenStr, err := h.issueTokens(updatedUser)
+	accessTokenStr, err := h.issueDeviceSession(ctx, updatedUser)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to create session",
 		})
 	}
-
-	h.setRefreshCookie(ctx, refreshTokenStr)
 
 	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
 		"message":      "Password updated successfully",
@@ -265,32 +263,64 @@ func (h *Handlers) ResetPassword(ctx *fiber.Ctx) error {
 	})
 }
 
-func (h *Handlers) issueTokens(userEntity *entity.User) (string, string, error) {
+func (h *Handlers) issueDeviceSession(ctx *fiber.Ctx, userEntity *entity.User) (string, error) {
+	deviceID := h.ensureDeviceID(ctx)
+	refreshExpiresAt := time.Now().Add(refreshTokenTTL)
+
+	accessTokenStr, err := h.issueAccessToken(userEntity)
+	if err != nil {
+		return "", err
+	}
+	refreshTokenStr, err := h.issueRefreshToken(userEntity, refreshExpiresAt)
+	if err != nil {
+		return "", err
+	}
+
+	if _, err := h.sessionService.Create(
+		ctx.Context(),
+		userEntity.ID,
+		deviceID,
+		ctx.Get("User-Agent"),
+		ctx.IP(),
+		refreshTokenStr,
+		refreshExpiresAt,
+	); err != nil {
+		return "", fmt.Errorf("create session: %w", err)
+	}
+
+	h.setRefreshCookie(ctx, refreshTokenStr, refreshExpiresAt)
+	return accessTokenStr, nil
+}
+
+func (h *Handlers) issueAccessToken(userEntity *entity.User) (string, error) {
 	accessToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"email":         userEntity.Email,
 		"user_id":       userEntity.ID,
 		"type":          "access",
 		"token_version": userEntity.TokenVersion,
-		"exp":           time.Now().Add(1 * time.Hour).Unix(),
+		"exp":           time.Now().Add(accessTokenTTL).Unix(),
 	})
 	accessTokenStr, err := accessToken.SignedString([]byte(h.jwtSecret))
 	if err != nil {
-		return "", "", fmt.Errorf("access token: %w", err)
+		return "", fmt.Errorf("access token: %w", err)
 	}
+	return accessTokenStr, nil
+}
 
+func (h *Handlers) issueRefreshToken(userEntity *entity.User, expiresAt time.Time) (string, error) {
 	refreshToken := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"email":         userEntity.Email,
 		"user_id":       userEntity.ID,
 		"type":          "refresh",
 		"token_version": userEntity.TokenVersion,
-		"exp":           time.Now().Add(7 * 24 * time.Hour).Unix(),
+		"exp":           expiresAt.Unix(),
 	})
 	refreshTokenStr, err := refreshToken.SignedString([]byte(h.jwtSecret))
 	if err != nil {
-		return "", "", fmt.Errorf("refresh token: %w", err)
+		return "", fmt.Errorf("refresh token: %w", err)
 	}
 
-	return accessTokenStr, refreshTokenStr, nil
+	return refreshTokenStr, nil
 }
 
 func requireCSRF(ctx *fiber.Ctx) error {

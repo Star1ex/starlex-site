@@ -3,6 +3,7 @@ package routes
 import (
 	//  _ "github.com/Star1ex/starlex-site/docs"
 	"github.com/Star1ex/starlex-site/internal/api/handlers"
+	fiberws "github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 	// fiberSwagger "github.com/swaggo/fiber-swagger"
 )
@@ -17,20 +18,26 @@ func InitRoutes(app *fiber.App, h *handlers.Handlers) {
 	api.Get("/health", h.HealthCheck)
 
 	setupAuthRoutes(api, h)
+	api.Get("/invites/:token", h.GetInvitePreview)
+	api.Get("/ws", h.PrepareWorkspaceWebSocket, fiberws.New(h.HandleWorkspaceWebSocket))
 
 	protected := api.Group("", h.UserIndentity, h.CSRFProtect)
 	{
 		protected.Post("/auth/password-change", h.ChangePassword)
 		protected.Post("/auth/logout", h.Logout)
+		protected.Get("/auth/sessions", h.GetSessions)
+		protected.Delete("/auth/sessions/:id", h.DeleteSession)
 		protected.Post("/auth/link-google", h.OAuthRateLimit, h.LinkGoogle)
 		protected.Post("/auth/link-github", h.OAuthRateLimit, h.LinkGithub)
 		protected.Delete("/auth/unlink-google", h.UnlinkGoogle)
 		protected.Delete("/auth/unlink-github", h.UnlinkGithub)
 		setupUserRoutes(protected, h)
 		setupSearchRoutes(protected, h)
-		setupFolderRoutes(protected, h)
 		setupTaskRoutes(protected, h)
-		setupTeamRoutes(protected, h)
+		setupWorkspaceRoutes(protected, h)
+		setupInviteRoutes(protected, h)
+		setupLabelRoutes(protected, h)
+		setupProjectRoutes(protected, h)
 		setupSprintRoutes(protected, h)
 		setupDiscussionRoutes(protected, h)
 	}
@@ -58,7 +65,9 @@ func setupAuthRoutes(api fiber.Router, h *handlers.Handlers) {
 func setupUserRoutes(api fiber.Router, h *handlers.Handlers) {
 	users := api.Group("/users")
 	users.Get("/profile", h.GetUser)
-	users.Get("/teams", h.GetTeams)
+	users.Get("/workspaces", h.GetWorkspaces)
+	users.Get("/preferences", h.GetUserPreferences)
+	users.Patch("/preferences", h.PatchUserPreferences)
 	users.Put("/update", h.UserUpdate)
 	users.Post("/photo", h.UploadPhoto)
 	users.Get("/photo", h.GetPhoto)
@@ -69,25 +78,9 @@ func setupSearchRoutes(api fiber.Router, h *handlers.Handlers) {
 	api.Get("/search", h.GlobalSearch)
 }
 
-func setupFolderRoutes(api fiber.Router, h *handlers.Handlers) {
-	folders := api.Group("/folders")
-
-	folders.Post("/", h.CreateFolder)
-	folders.Get("/:id", h.GetFolderByID)
-	folders.Put("/:id", h.UpdateFolder)
-	folders.Delete("/:id", h.DeleteFolder)
-	folders.Put("/:id/move", h.MoveFolder)
-
-	folders.Get("/", h.GetFoldersByUserID)
-	folders.Get("/team/:team_id", h.GetFoldersByTeam)
-	folders.Get("/:id/children", h.GetFoldersByParentID)
-}
-
 func setupTaskRoutes(api fiber.Router, h *handlers.Handlers) {
 	tasks := api.Group("/tasks")
 
-	tasks.Post("/", h.CreatePersonalTask)
-	tasks.Get("/", h.GetPersonalTasks)
 	tasks.Get("/:id", h.GetTaskByID)
 	tasks.Put("/:id", h.UpdateTask)
 	tasks.Delete("/:id", h.DeleteTask)
@@ -98,48 +91,99 @@ func setupTaskRoutes(api fiber.Router, h *handlers.Handlers) {
 	tasks.Patch("/:id/description", h.PatchTaskDescription)
 	tasks.Patch("/:id/priority", h.PatchTaskPriority)
 	tasks.Patch("/:id/progress", h.PatchTaskProgress)
+	tasks.Patch("/:id/status", h.PatchTaskStatus)
+	tasks.Patch("/:id/due-date", h.PatchTaskDueDate)
 	tasks.Patch("/:id/assignees", h.PatchTaskAssignees)
+	tasks.Patch("/:id/labels", h.PatchTaskLabels)
 
-	tasks.Get("/folder/:folder_id", h.GetFolderTasks)
-	tasks.Get("/without-folder", h.GetTasksWithoutFolder)
-	tasks.Put("/:id/move", h.MoveTaskToFolder)
 }
 
-func setupTeamRoutes(api fiber.Router, h *handlers.Handlers) {
-	teams := api.Group("/teams")
+func setupWorkspaceRoutes(api fiber.Router, h *handlers.Handlers) {
+	workspaces := api.Group("/workspaces")
 
-	teams.Post("/", h.CreateTeam)
-	teams.Delete("/:id", h.DeleteTeam)
-	teams.Patch("/:id/name", h.PatchTeamName)
-	teams.Patch("/:id/description", h.PatchTeamDescription)
-	teams.Patch("/:id/icon", h.PatchTeamIcon)
+	workspaces.Post("/", h.CreateWorkspace)
+	workspaces.Delete("/:id", h.DeleteWorkspace)
+	workspaces.Patch("/:id/name", h.PatchWorkspaceName)
+	workspaces.Patch("/:id/description", h.PatchWorkspaceDescription)
+	workspaces.Patch("/:id/icon", h.PatchWorkspaceIcon)
+	workspaces.Patch("/:id/color", h.PatchWorkspaceColor)
+	workspaces.Patch("/:id/settings", h.PatchWorkspaceSettings)
 
-	teams.Get("/:id/users", h.GetUsers)
-	teams.Post("/:id/users", h.AddUserToTeam)
-	teams.Delete("/:id/users", h.RemoveUserFromTeam)
+	workspaces.Get("/:id/users", h.GetUsers)
+	workspaces.Post("/:id/users", h.AddUserToWorkspace)
+	workspaces.Delete("/:id/users", h.RemoveUserFromWorkspace)
+	workspaces.Get("/:id/members", h.ListWorkspaceMembers)
+	workspaces.Post("/:id/members", h.AddWorkspaceMember)
+	workspaces.Patch("/:id/members/:user_id", h.PatchWorkspaceMemberRole)
+	workspaces.Delete("/:id/members/:user_id", h.DeleteWorkspaceMember)
+	workspaces.Get("/:id/invites", h.ListWorkspaceInvites)
+	workspaces.Post("/:id/invites", h.CreateWorkspaceInvite)
+	workspaces.Get("/:id/labels", h.ListWorkspaceLabels)
+	workspaces.Post("/:id/labels", h.CreateWorkspaceLabel)
 
-	teamTasks := teams.Group("/:team_id/tasks")
+	workspaceTasks := workspaces.Group("/:workspace_id/tasks")
 	{
-		teamTasks.Post("/", h.CreateTeamTask)
-		teamTasks.Get("/", h.GetTeamTasks)
-		teamTasks.Get("/user/:user_id", h.GetUserTasks)
-		teamTasks.Put("/:id", h.UpdateTask)
-		teamTasks.Put("/:id/progress", h.UpdateTaskProgress)
-		teamTasks.Patch("/:id/icon", h.PatchTaskIcon)
-		teamTasks.Patch("/:id/title", h.PatchTaskTitle)
-		teamTasks.Patch("/:id/description", h.PatchTaskDescription)
-		teamTasks.Patch("/:id/priority", h.PatchTaskPriority)
-		teamTasks.Patch("/:id/progress", h.PatchTaskProgress)
-		teamTasks.Patch("/:id/assignees", h.PatchTaskAssignees)
-		teamTasks.Delete("/:id", h.DeleteTask)
+		workspaceTasks.Post("/", h.CreateWorkspaceTask)
+		workspaceTasks.Get("/", h.GetWorkspaceTasks)
+		workspaceTasks.Get("/query", h.QueryWorkspaceTasks)
+		workspaceTasks.Get("/categories", h.GetWorkspaceTaskCategories)
+		workspaceTasks.Get("/user/:user_id", h.GetUserTasks)
+		workspaceTasks.Put("/:id", h.UpdateTask)
+		workspaceTasks.Put("/:id/progress", h.UpdateTaskProgress)
+		workspaceTasks.Patch("/:id/icon", h.PatchTaskIcon)
+		workspaceTasks.Patch("/:id/title", h.PatchTaskTitle)
+		workspaceTasks.Patch("/:id/description", h.PatchTaskDescription)
+		workspaceTasks.Patch("/:id/priority", h.PatchTaskPriority)
+		workspaceTasks.Patch("/:id/progress", h.PatchTaskProgress)
+		workspaceTasks.Patch("/:id/status", h.PatchTaskStatus)
+		workspaceTasks.Patch("/:id/due-date", h.PatchTaskDueDate)
+		workspaceTasks.Patch("/:id/assignees", h.PatchTaskAssignees)
+		workspaceTasks.Patch("/:id/labels", h.PatchTaskLabels)
+		workspaceTasks.Delete("/:id", h.DeleteTask)
+	}
+}
+
+func setupLabelRoutes(api fiber.Router, h *handlers.Handlers) {
+	labels := api.Group("/labels")
+	labels.Patch("/:id", h.PatchLabel)
+	labels.Delete("/:id", h.DeleteLabel)
+}
+
+func setupInviteRoutes(api fiber.Router, h *handlers.Handlers) {
+	invites := api.Group("/invites")
+	invites.Post("/:token/accept", h.AcceptInvite)
+	invites.Delete("/:id", h.DeleteInvite)
+}
+
+func setupProjectRoutes(api fiber.Router, h *handlers.Handlers) {
+	// Workspace-scoped: create and list projects.
+	wsProjects := api.Group("/workspaces/:workspace_id/projects")
+	{
+		wsProjects.Post("/", h.CreateProject)
+		wsProjects.Get("/", h.GetWorkspaceProjects)
+	}
+
+	// Project-scoped operations.
+	projects := api.Group("/projects")
+	{
+		projects.Get("/:id", h.GetProjectByID)
+		projects.Patch("/:id", h.UpdateProject)
+		projects.Delete("/:id", h.DeleteProject)
+
+		projects.Get("/:id/members", h.GetProjectMembers)
+		projects.Post("/:id/members", h.AddProjectMember)
+		projects.Delete("/:id/members", h.RemoveProjectMember)
+
+		projects.Get("/:id/tasks", h.GetProjectTasks)
+		projects.Post("/:id/tasks", h.CreateProjectTask)
 	}
 }
 
 func setupSprintRoutes(api fiber.Router, h *handlers.Handlers) {
-	sprints := api.Group("/teams/:team_id/sprints")
+	sprints := api.Group("/workspaces/:workspace_id/sprints")
 	{
 		sprints.Post("/", h.CreateSprint)
-		sprints.Get("/", h.GetTeamSprints)
+		sprints.Get("/", h.GetWorkspaceSprints)
 		sprints.Get("/:id", h.GetSprintByID)
 		sprints.Patch("/:id", h.UpdateSprint)
 		sprints.Post("/:id/start", h.StartSprint)
@@ -160,9 +204,7 @@ func setupSprintRoutes(api fiber.Router, h *handlers.Handlers) {
 
 func setupDiscussionRoutes(api fiber.Router, h *handlers.Handlers) {
 	api.Post("/tasks/:id/discussions", h.CreateTaskDiscussion)
-	api.Post("/folders/:id/discussions", h.CreateFolderDiscussion)
 	api.Get("/tasks/:id/discussions", h.GetTaskDiscussions)
-	api.Get("/folders/:id/discussions", h.GetFolderDiscussions)
 	api.Get("/discussions/:id", h.GetDiscussionByID)
 	api.Patch("/discussions/:id", h.UpdateDiscussion)
 	api.Delete("/discussions/:id", h.DeleteDiscussion)
@@ -170,77 +212,3 @@ func setupDiscussionRoutes(api fiber.Router, h *handlers.Handlers) {
 	api.Patch("/discussions/:did/messages/:mid", h.UpdateDiscussionMessage)
 	api.Delete("/discussions/:did/messages/:mid", h.DeleteDiscussionMessage)
 }
-
-//		----- OLD ROUTES -----
-
-/*
-func InitRoutes(app *fiber.App, handlers *handlers.Handlers) {
-
-	// --- Swagger ---
-
-	app.Static("/uploads", "./uploads")
-
-	app.Get("/swagger/*", fiberSwagger.WrapHandler)
-
-	api := app.Group("/api")
-
-	users := api.Group("/users", handlers.UserIndentity)
-	{
-		users.Post("/photo", handlers.UploadPhoto)
-		users.Get("/teams", handlers.GetTeams)
-		users.Get("/photo", handlers.GetPhoto)
-		users.Put("/update", handlers.UserUpdate)
-		users.Get("/profile", handlers.GetUser)
-	}
-
-	auth := api.Group("/auth")
-	{
-		auth.Post("/login", handlers.Login)
-		auth.Post("/register", handlers.Register)
-		auth.Post("/resend-code", handlers.ResendCode)
-		auth.Post("/verify", handlers.VerifyEmail)
-	}
-
-	folder := api.Group("/folder", handlers.UserIndentity)
-	{
-		folder.Post("/", handlers.CreateFolder)
-		folder.Get("/", handlers.GetFolderByID)
-		folder.Get("/direct", handlers.GetFoldersByUserID)
-		folder.Get("/team/:team_id", handlers.GetFoldersByTeam)
-		folder.Get("/sub", handlers.GetFoldersByParentID)
-		folder.Put("/update", handlers.UpdateFolder)
-		folder.Delete("/delete", handlers.DeleteFolder)
-		folder.Put("/move", handlers.MoveFolder)
-	}
-
-	app.Get("/api/health", func(c *fiber.Ctx) error {
-		return c.SendString("healthy")
-	})
-
-	search := api.Group("/search", handlers.UserIndentity)
-	{
-		search.Get("/:email", handlers.Search)
-	}
-
-	// After we add a dashboard with UserIndentity by jwt
-
-	team := api.Group("/team", handlers.UserIndentity)
-	{
-		team.Post("/", handlers.CreateTeam)
-		team.Get("/:id", handlers.GetUsers)
-		team.Delete("/:id/users", handlers.RemoveUserFromTeam)
-		team.Post("/:id/add", handlers.AddUserToTeam)
-		team.Delete("/delete", handlers.DeleteTeam)
-		tasks := team.Group("/:team_id/tasks")
-		{
-			tasks.Post("/", handlers.CreateTask)
-			tasks.Get("/", handlers.GetTeamTasks)
-			tasks.Get("/assigned/:user_id", handlers.GetUserTasks)
-			tasks.Put("/:task_id/update_progress", handlers.UpdateTaskProgress)
-			tasks.Put("/:task_id/update", handlers.UpdateTask)
-			tasks.Delete("/:task_id", handlers.DeleteTask)
-		}
-	}
-}
-
-*/
