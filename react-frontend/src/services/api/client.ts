@@ -61,11 +61,9 @@ class ApiClient {
 
   private async refreshAccessToken(): Promise<string> {
     if (this.refreshing) {
-      console.debug(' Waiting for ongoing refresh request...');
       return this.refreshing as Promise<string>;
     }
 
-    console.debug('Requesting access token via refresh endpoint...');
     this.refreshing = this.client
       .post<{ access_token: string }>('/api/auth/refresh')
       .then((response) => {
@@ -73,11 +71,9 @@ class ApiClient {
         if (!token) {
           throw new Error('No access token returned');
         }
-        console.debug('Refresh returned new access token');
         return token;
       })
       .catch((err) => {
-        console.error(' Refresh endpoint returned error:', err);
         this.clearAccessToken();
         throw err;
       })
@@ -99,10 +95,8 @@ class ApiClient {
 
   private async _doInit(): Promise<boolean> {
     try {
-      console.debug('Initializing session...');
       const token = await this.refreshAccessToken();
       this.setAccessToken(token);
-      console.debug('Session restored from refresh token');
 
       // Fetch CSRF token so all protected mutations (POST/PUT/DELETE) work
       try {
@@ -110,16 +104,13 @@ class ApiClient {
         const csrfToken = csrfResponse.data?.csrf_token;
         if (csrfToken) {
           this.setCsrfToken(csrfToken);
-          console.debug('CSRF token fetched');
         }
       } catch {
-        console.debug('CSRF token fetch failed — mutations may return 403');
+        // Non-fatal: mutations may fail with 403 until next CSRF fetch
       }
 
       return true;
-    } catch (err) {
-      console.debug('No valid session found (user not authenticated)');
-      // Don't clear cookie here - just clear in-memory token
+    } catch {
       this.clearAccessToken();
       return false;
     }
@@ -127,7 +118,6 @@ class ApiClient {
 
   public setAccessToken(token: string) {
     this.accessToken = token;
-    console.debug('Access token set');
   }
 
   public getAccessToken(): string | null {
@@ -138,7 +128,6 @@ class ApiClient {
     this.accessToken = null;
     this.csrfToken = null;
     this.initPromise = null;
-    console.debug('Access token cleared');
   }
 
   public setCsrfToken(token: string) {

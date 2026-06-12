@@ -1,4 +1,4 @@
-FROM golang:1.24.9-alpine AS builder
+FROM golang:1.25.11-alpine AS builder
 
 WORKDIR /usr/local/src
 
@@ -22,6 +22,5 @@ COPY --from=builder /usr/local/src/bin/app /
 EXPOSE 3000
 
 CMD ["/app"]
-
 
 

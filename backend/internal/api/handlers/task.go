@@ -1,37 +1,49 @@
 package handlers
 
 import (
+	"encoding/json"
 	"errors"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/Star1ex/starlex-site/internal/api/dto"
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
+	domaintask "github.com/Star1ex/starlex-site/internal/domain/task"
+	domainworkspace "github.com/Star1ex/starlex-site/internal/domain/workspace"
 	"github.com/Star1ex/starlex-site/internal/logger"
 	"github.com/Star1ex/starlex-site/internal/repository"
+	appservice "github.com/Star1ex/starlex-site/internal/service"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
 )
 
 // Swagger disabled: CreateTask godoc
 // Swagger disabled: Summary      Create task
-// Swagger disabled: Description  Creates a new task within the specified team. Requires JWT authentication.
+// Swagger disabled: Description  Creates a new task within the specified workspace. Requires JWT authentication.
 // Swagger disabled: Tags         tasks
 // Swagger disabled: Accept       json
 // Swagger disabled: Produce      json
-// Swagger disabled: Param        team_id         path      string       true   "Team ID"
+// Swagger disabled: Param        workspace_id         path      string       true   "Workspace ID"
 // Swagger disabled: Param        task_data       body      dto.TaskApi  true   "Task data"
 // Swagger disabled: Success      201  {object}   map[string]interface{}    "Task created successfully"
 // Swagger disabled: Failure      400  {object}   map[string]string         "Bad request or invalid JSON"
 // Swagger disabled: Failure      401  {object}   map[string]string         "User not authorized"
 // Swagger disabled: Failure      500  {object}   map[string]string         "Internal server error"
 // Swagger disabled: Security BearerAuth
-// Swagger disabled: Router       /team/{team_id}/tasks [post]
-func (h *Handlers) CreateTeamTask(ctx *fiber.Ctx) error {
-	teamID := ctx.Params("team_id")
+// Swagger disabled: Router       /workspace/{workspace_id}/tasks [post]
+func (h *Handlers) CreateWorkspaceTask(ctx *fiber.Ctx) error {
+	workspaceID := ctx.Params("workspace_id")
+	if workspaceID == "" || workspaceID == "nil" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "workspace ID is required in URL"})
+	}
 
 	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
 		return authErr
+	}
+	if err := h.requireWorkspaceRole(ctx, workspaceID, userID, domainworkspace.RoleMember); err != nil {
+		return err
 	}
 	var input dto.TaskApi
 	if err := ctx.BodyParser(&input); err != nil {
@@ -44,14 +56,18 @@ func (h *Handlers) CreateTeamTask(ctx *fiber.Ctx) error {
 	entityTask := &entity.Task{
 		Task:        input.Task,
 		Description: input.Description,
+		Status:      input.Status,
 		Priority:    input.Priority,
 		Progress:    input.Progress,
 	}
 
-	err := h.taskService.CreateTeamTask(ctx.Context(), teamID, input.AssignedToID, entityTask, userID)
+	err := h.taskService.CreateWorkspaceTask(ctx.Context(), workspaceID, input.AssignedToID, entityTask, userID)
 
 	if err != nil {
-		logger.Log.Errorw("create team task failed", "error", err)
+		if errors.Is(err, appservice.ErrTaskAssigneeNotWorkspaceMember) {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "assignee must belong to workspace"})
+		}
+		logger.Log.Errorw("create workspace task failed", "error", err)
 		return ctx.Status(500).JSON(fiber.Map{"error": "internal server error"})
 	}
 
@@ -67,48 +83,6 @@ func (h *Handlers) CreateTeamTask(ctx *fiber.Ctx) error {
 	return ctx.Status(201).JSON(dto.ToTaskResponse(createdTask))
 }
 
-func (h *Handlers) CreatePersonalTask(ctx *fiber.Ctx) error {
-	userID, authErr := h.getAuthenticatedUserID(ctx)
-	if authErr != nil {
-		return authErr
-	}
-
-	var input dto.TaskApi
-	if err := ctx.BodyParser(&input); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad json"})
-	}
-
-	input.Task = sanitizeStrict(input.Task)
-	input.Description = sanitizeMarkdown(input.Description)
-
-	entityTask := &entity.Task{
-		Task:        input.Task,
-		Description: input.Description,
-		Priority:    input.Priority,
-		Progress:    input.Progress,
-		OwnerID:     userID,
-		TeamID:      "",
-		FolderID:    input.FolderID,
-	}
-	if input.FolderID != nil && *input.FolderID != "" {
-		folderEntity, err := h.requireFolderAccess(ctx, *input.FolderID, userID)
-		if err != nil {
-			return err
-		}
-		if folderEntity.TeamID != nil && *folderEntity.TeamID != "" {
-			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "personal tasks cannot be created in team folders"})
-		}
-	}
-
-	err := h.taskService.CreatePersonalTask(ctx.Context(), entityTask)
-	if err != nil {
-		logger.Log.Errorw("create personal task failed", "error", err)
-		return ctx.Status(500).JSON(fiber.Map{"error": "internal server error"})
-	}
-
-	return ctx.Status(201).JSON(dto.ToTaskResponse(entityTask))
-}
-
 func (h *Handlers) UpdateTask(c *fiber.Ctx) error {
 	taskID := c.Params("id")
 
@@ -118,7 +92,7 @@ func (h *Handlers) UpdateTask(c *fiber.Ctx) error {
 			"error": "unauthorized",
 		})
 	}
-	if _, err := h.requireTaskAccess(c, taskID, userID); err != nil {
+	if _, err := h.requireTaskWriteAccess(c, taskID, userID); err != nil {
 		return err
 	}
 
@@ -147,6 +121,9 @@ func (h *Handlers) UpdateTask(c *fiber.Ctx) error {
 				"error": "task was modified by someone else, please refresh",
 			})
 		}
+		if errors.Is(err, appservice.ErrTaskAssigneeNotWorkspaceMember) {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "assignee must belong to workspace"})
+		}
 		logger.Log.Errorw("update task failed", "error", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "internal server error",
@@ -166,7 +143,7 @@ func (h *Handlers) PatchTaskIcon(ctx *fiber.Ctx) error {
 	if taskID == "" || taskID == "nil" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
 	}
-	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+	if _, err := h.requireTaskWriteAccess(ctx, taskID, userID); err != nil {
 		return err
 	}
 
@@ -199,7 +176,7 @@ func (h *Handlers) PatchTaskTitle(ctx *fiber.Ctx) error {
 	if taskID == "" || taskID == "nil" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
 	}
-	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+	if _, err := h.requireTaskWriteAccess(ctx, taskID, userID); err != nil {
 		return err
 	}
 
@@ -236,7 +213,7 @@ func (h *Handlers) PatchTaskDescription(ctx *fiber.Ctx) error {
 	if taskID == "" || taskID == "nil" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
 	}
-	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+	if _, err := h.requireTaskWriteAccess(ctx, taskID, userID); err != nil {
 		return err
 	}
 
@@ -248,7 +225,8 @@ func (h *Handlers) PatchTaskDescription(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "description field is required"})
 	}
 
-	if err := h.taskService.UpdateTaskDescription(ctx.Context(), taskID, *input.Description); err != nil {
+	description := sanitizeMarkdown(*input.Description)
+	if err := h.taskService.UpdateTaskDescription(ctx.Context(), taskID, description); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "task not found"})
 		}
@@ -269,7 +247,7 @@ func (h *Handlers) PatchTaskPriority(ctx *fiber.Ctx) error {
 	if taskID == "" || taskID == "nil" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
 	}
-	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+	if _, err := h.requireTaskWriteAccess(ctx, taskID, userID); err != nil {
 		return err
 	}
 
@@ -307,7 +285,7 @@ func (h *Handlers) PatchTaskProgress(ctx *fiber.Ctx) error {
 	if taskID == "" || taskID == "nil" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
 	}
-	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+	if _, err := h.requireTaskWriteAccess(ctx, taskID, userID); err != nil {
 		return err
 	}
 
@@ -324,11 +302,113 @@ func (h *Handlers) PatchTaskProgress(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad task progress"})
 	}
 
-	if err := h.taskService.UpdateTaskStatus(ctx.Context(), taskID, progressValue); err != nil {
+	if _, err := h.taskService.UpdateTaskProgress(ctx.Context(), taskID, progressValue); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "task not found"})
 		}
 		logger.Log.Errorw("update task progress failed", "error", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
+	}
+
+	return ctx.SendStatus(fiber.StatusNoContent)
+}
+
+// PatchTaskStatus godoc
+// @Summary      Update task status
+// @Description  Updates the status field of an existing task.
+// @Tags         tasks
+// @Accept       json
+// @Produce      json
+// @Param        id      path  string                true  "Task ID"
+// @Param        status  body  dto.UpdateTaskStatus  true  "Task status"
+// @Success      204
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      403  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Security     BearerAuth
+// @Router       /tasks/{id}/status [patch]
+func (h *Handlers) PatchTaskStatus(ctx *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+
+	taskID := ctx.Params("id")
+	if taskID == "" || taskID == "nil" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
+	}
+	if _, err := h.requireTaskWriteAccess(ctx, taskID, userID); err != nil {
+		return err
+	}
+
+	var input dto.UpdateTaskStatus
+	if err := ctx.BodyParser(&input); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad json"})
+	}
+	if input.Status == nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "status field is required"})
+	}
+
+	statusValue := strings.TrimSpace(*input.Status)
+	if err := h.taskService.UpdateTaskStatus(ctx.Context(), taskID, statusValue); err != nil {
+		switch {
+		case errors.Is(err, domaintask.ErrInvalidStatus):
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid status"})
+		case errors.Is(err, gorm.ErrRecordNotFound):
+			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "task not found"})
+		default:
+			logger.Log.Errorw("update task status failed", "error", err)
+			return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
+		}
+	}
+
+	return ctx.SendStatus(fiber.StatusNoContent)
+}
+
+// PatchTaskDueDate godoc
+// @Summary      Update task due date
+// @Description  Sets or clears the due_date field of an existing task.
+// @Tags         tasks
+// @Accept       json
+// @Produce      json
+// @Param        id        path  string                 true  "Task ID"
+// @Param        due_date  body  dto.UpdateTaskDueDate  true  "Due date or null"
+// @Success      204
+// @Failure      400  {object}  map[string]string
+// @Failure      401  {object}  map[string]string
+// @Failure      403  {object}  map[string]string
+// @Failure      404  {object}  map[string]string
+// @Security     BearerAuth
+// @Router       /tasks/{id}/due-date [patch]
+func (h *Handlers) PatchTaskDueDate(ctx *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+
+	taskID := ctx.Params("id")
+	if taskID == "" || taskID == "nil" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
+	}
+	if _, err := h.requireTaskWriteAccess(ctx, taskID, userID); err != nil {
+		return err
+	}
+
+	payload := map[string]*time.Time{}
+	if err := json.Unmarshal(ctx.Body(), &payload); err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "bad json"})
+	}
+	dueDate, ok := payload["due_date"]
+	if !ok {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "due_date field is required"})
+	}
+
+	if err := h.taskService.UpdateTaskDueDate(ctx.Context(), taskID, dueDate); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "task not found"})
+		}
+		logger.Log.Errorw("update task due date failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
 	}
 
@@ -345,7 +425,7 @@ func (h *Handlers) PatchTaskAssignees(ctx *fiber.Ctx) error {
 	if taskID == "" || taskID == "nil" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
 	}
-	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+	if _, err := h.requireTaskWriteAccess(ctx, taskID, userID); err != nil {
 		return err
 	}
 
@@ -358,6 +438,9 @@ func (h *Handlers) PatchTaskAssignees(ctx *fiber.Ctx) error {
 	}
 
 	if err := h.taskService.UpdateTaskAssignees(ctx.Context(), taskID, *input.UserIDs); err != nil {
+		if errors.Is(err, appservice.ErrTaskAssigneeNotWorkspaceMember) {
+			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "assignee must belong to workspace"})
+		}
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "task not found"})
 		}
@@ -368,48 +451,115 @@ func (h *Handlers) PatchTaskAssignees(ctx *fiber.Ctx) error {
 	return ctx.SendStatus(fiber.StatusNoContent)
 }
 
-func (h *Handlers) GetPersonalTasks(ctx *fiber.Ctx) error {
-	userID, authErr := h.getAuthenticatedUserID(ctx)
-	if authErr != nil {
-		return authErr
-	}
-
-	tasks, err := h.taskService.GetTasksWithoutFolder(ctx.Context(), userID)
-	if err != nil {
-		logger.Log.Errorw("get personal tasks failed", "error", err)
-		return ctx.Status(500).JSON(fiber.Map{"error": "internal server error"})
-	}
-
-	return ctx.Status(200).JSON(dto.TeamTasksList(tasks))
-}
-
-// Swagger disabled: GetTeamTasks godoc
-// Swagger disabled: Summary      Get all tasks from team
-// Swagger disabled: Description  Returns a list of all tasks for a given team.
+// Swagger disabled: GetWorkspaceTasks godoc
+// Swagger disabled: Summary      Get all tasks from workspace
+// Swagger disabled: Description  Returns a list of all tasks for a given workspace.
 // Swagger disabled: Tags         tasks
-// Swagger disabled: Param        team_id  path      string       true  "Team ID"
+// Swagger disabled: Param        workspace_id  path      string       true  "Workspace ID"
 // Swagger disabled: Success      200      {array}   dto.TaskResponse "List of tasks"
 // Swagger disabled: Failure      500      {object}  map[string]string "Server error"
 // Swagger disabled: Security BearerAuth
-// Swagger disabled: Router       /team/{team_id}/tasks [get]
-func (h *Handlers) GetTeamTasks(ctx *fiber.Ctx) error {
+// Swagger disabled: Router       /workspace/{workspace_id}/tasks [get]
+func (h *Handlers) GetWorkspaceTasks(ctx *fiber.Ctx) error {
 	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
 		return authErr
 	}
-	var teamID string = ctx.Params("team_id")
-	if err := h.requireTeamMember(ctx, teamID, userID); err != nil {
+	var workspaceID string = ctx.Params("workspace_id")
+	if err := h.requireWorkspaceMember(ctx, workspaceID, userID); err != nil {
 		return err
 	}
-	tasks, err := h.taskService.GetTeamTasks(ctx.Context(), teamID)
+	tasks, err := h.taskService.GetWorkspaceTasks(ctx.Context(), workspaceID)
 	if err != nil {
-		logger.Log.Errorw("update team task progress failed", "error", err)
+		logger.Log.Errorw("update workspace task progress failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to get tasks",
 		})
 	}
-	response := dto.TeamTasksList(tasks)
+	response := dto.WorkspaceTasksList(tasks)
 	return ctx.Status(fiber.StatusOK).JSON(response)
+}
+
+// QueryWorkspaceTasks godoc
+// @Summary      Query workspace tasks
+// @Description  Returns workspace tasks with indexed filters, sorting, and keyset pagination.
+// @Tags         tasks
+// @Produce      json
+// @Param        workspace_id  path   string  true   "Workspace ID"
+// @Param        project_id    query  string  false  "Comma-separated project IDs or __none"
+// @Param        sprint_id     query  string  false  "Comma-separated sprint IDs or __none"
+// @Param        status        query  string  false  "Comma-separated task statuses"
+// @Param        priority      query  string  false  "Comma-separated priorities"
+// @Param        assignee_id   query  string  false  "Comma-separated assignee IDs"
+// @Param        label_id      query  string  false  "Comma-separated label IDs"
+// @Param        q             query  string  false  "Search text"
+// @Param        due_from      query  string  false  "RFC3339 or YYYY-MM-DD"
+// @Param        due_to        query  string  false  "RFC3339 or YYYY-MM-DD"
+// @Param        sort_by       query  string  false  "updated_at|created_at|due_date|priority|status|key"
+// @Param        direction     query  string  false  "asc|desc"
+// @Param        limit         query  int     false  "Page size, max 100"
+// @Param        cursor        query  string  false  "Opaque cursor from previous response"
+// @Success      200           {object} dto.TaskQueryResponse
+// @Failure      400           {object} map[string]string
+// @Failure      401           {object} map[string]string
+// @Failure      403           {object} map[string]string
+// @Security     BearerAuth
+// @Router       /workspaces/{workspace_id}/tasks/query [get]
+func (h *Handlers) QueryWorkspaceTasks(ctx *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+	workspaceID := ctx.Params("workspace_id")
+	if workspaceID == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "workspace ID is required in URL"})
+	}
+	if err := h.requireWorkspaceMember(ctx, workspaceID, userID); err != nil {
+		return err
+	}
+
+	query, err := parseTaskQuery(ctx, workspaceID)
+	if err != nil {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
+	}
+	result, err := h.taskService.QueryWorkspaceTasks(ctx.Context(), query)
+	if err != nil {
+		logger.Log.Errorw("query workspace tasks failed", "error", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
+	}
+	return ctx.Status(fiber.StatusOK).JSON(dto.ToTaskQueryResponse(result, query))
+}
+
+// GetWorkspaceTaskCategories godoc
+// @Summary      Get workspace task categories
+// @Description  Returns computed task category facets for fast workspace filtering.
+// @Tags         tasks
+// @Produce      json
+// @Param        workspace_id  path  string  true  "Workspace ID"
+// @Success      200           {object} dto.WorkspaceTaskCategoriesResponse
+// @Failure      401           {object} map[string]string
+// @Failure      403           {object} map[string]string
+// @Security     BearerAuth
+// @Router       /workspaces/{workspace_id}/tasks/categories [get]
+func (h *Handlers) GetWorkspaceTaskCategories(ctx *fiber.Ctx) error {
+	userID, authErr := h.getAuthenticatedUserID(ctx)
+	if authErr != nil {
+		return authErr
+	}
+	workspaceID := ctx.Params("workspace_id")
+	if workspaceID == "" {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "workspace ID is required in URL"})
+	}
+	if err := h.requireWorkspaceMember(ctx, workspaceID, userID); err != nil {
+		return err
+	}
+
+	categories, err := h.taskService.GetWorkspaceTaskCategories(ctx.Context(), workspaceID)
+	if err != nil {
+		logger.Log.Errorw("get workspace task categories failed", "error", err)
+		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "internal server error"})
+	}
+	return ctx.Status(fiber.StatusOK).JSON(dto.ToWorkspaceTaskCategoriesResponse(categories))
 }
 
 // Swagger disabled: GetUserTasks godoc
@@ -426,15 +576,15 @@ func (h *Handlers) GetUserTasks(ctx *fiber.Ctx) error {
 	if authErr != nil {
 		return authErr
 	}
-	teamID := ctx.Params("team_id")
-	if err := h.requireTeamMember(ctx, teamID, currentUserID); err != nil {
+	workspaceID := ctx.Params("workspace_id")
+	if err := h.requireWorkspaceMember(ctx, workspaceID, currentUserID); err != nil {
 		return err
 	}
 
 	id := ctx.Params("user_id")
-	tasks, err := h.taskService.GetTeamTasks(ctx.Context(), teamID)
+	tasks, err := h.taskService.GetWorkspaceTasks(ctx.Context(), workspaceID)
 	if err != nil {
-		logger.Log.Errorw("get team tasks failed", "error", err)
+		logger.Log.Errorw("get workspace tasks failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to get tasks",
 		})
@@ -449,7 +599,7 @@ func (h *Handlers) GetUserTasks(ctx *fiber.Ctx) error {
 		}
 	}
 
-	response := dto.TeamTasksList(filtered)
+	response := dto.WorkspaceTasksList(filtered)
 	return ctx.Status(fiber.StatusOK).JSON(response)
 }
 
@@ -459,7 +609,7 @@ func (h *Handlers) GetUserTasks(ctx *fiber.Ctx) error {
 // Swagger disabled: Tags         tasks
 // Swagger disabled: Accept       json
 // Swagger disabled: Produce      json
-// Swagger disabled: Param        team_id      path      string                     true  "Team ID"
+// Swagger disabled: Param        workspace_id      path      string                     true  "Workspace ID"
 // Swagger disabled: Param        task_id      path      string                     true  "Task ID"
 // Swagger disabled: Param        updates      body      dto.UpdateDto              true  "Updated progress value"
 // Swagger disabled: Success      200      {object}  dto.TaskResponse           "Task progress updated successfully"
@@ -468,7 +618,7 @@ func (h *Handlers) GetUserTasks(ctx *fiber.Ctx) error {
 // Swagger disabled: Failure      404      {object}  map[string]string           "Task not found"
 // Swagger disabled: Failure      500      {object}  map[string]string           "Internal server error"
 // Swagger disabled: Security BearerAuth
-// Swagger disabled: Router       /team/{team_id}/tasks/{task_id} [put]
+// Swagger disabled: Router       /workspace/{workspace_id}/tasks/{task_id} [put]
 func (h *Handlers) UpdateTaskProgress(ctx *fiber.Ctx) error {
 	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
@@ -478,7 +628,7 @@ func (h *Handlers) UpdateTaskProgress(ctx *fiber.Ctx) error {
 	if taskId == "" {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
 	}
-	if _, err := h.requireTaskAccess(ctx, taskId, userID); err != nil {
+	if _, err := h.requireTaskWriteAccess(ctx, taskId, userID); err != nil {
 		return err
 	}
 	var updates dto.UpdateDto
@@ -515,7 +665,7 @@ func (h *Handlers) DeleteTask(c *fiber.Ctx) error {
 	if taskID == "nil" {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID is required in URL"})
 	}
-	if _, err := h.requireTaskAccess(c, taskID, userID); err != nil {
+	if _, err := h.requireTaskDeleteAccess(c, taskID, userID); err != nil {
 		return err
 	}
 
@@ -528,95 +678,6 @@ func (h *Handlers) DeleteTask(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON("Successfuly deleted task")
-}
-
-// Swagger disabled: GetTasksWithoutFolder godoc
-// Swagger disabled: Summary      Get tasks without folder
-// Swagger disabled: Description  Returns a list of all tasks without a folder.
-// Swagger disabled: Tags         tasks
-// Swagger disabled: Param        user_id  path      string       true  "User ID"
-// Swagger disabled: Success      200      {array}   dto.TaskResponse "List of tasks without folder"
-// Swagger disabled: Failure      500      {object}  map[string]string "Server error"
-// Swagger disabled: Security BearerAuth
-// Swagger disabled: Router       /tasks/without-folder [get]
-func (h *Handlers) GetTasksWithoutFolder(ctx *fiber.Ctx) error {
-	userID, authErr := h.getAuthenticatedUserID(ctx)
-	if authErr != nil {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "unauthorized",
-		})
-	}
-
-	tasks, err := h.taskService.GetTasksWithoutFolder(ctx.Context(), userID)
-	if err != nil {
-		logger.Log.Errorw("get tasks without folder failed", "error", err)
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "internal server error",
-		})
-	}
-	return ctx.Status(fiber.StatusOK).JSON(dto.TeamTasksList(tasks))
-}
-
-func (h *Handlers) GetFolderTasks(ctx *fiber.Ctx) error {
-
-	userID, authErr := h.getAuthenticatedUserID(ctx)
-	if authErr != nil {
-		return ctx.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "unauthorized",
-		})
-	}
-
-	folderID := ctx.Params("folder_id")
-	if folderID == "nil" || folderID == "" {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "folder ID is required in URL"})
-	}
-	if _, err := h.requireFolderAccess(ctx, folderID, userID); err != nil {
-		return err
-	}
-
-	tasks, err := h.taskService.GetFolderTasks(ctx.Context(), folderID)
-	if err != nil {
-		logger.Log.Errorw("get folder tasks failed", "error", err)
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "internal server error",
-		})
-	}
-	return ctx.Status(fiber.StatusOK).JSON(dto.TeamTasksList(tasks))
-}
-
-func (h *Handlers) MoveTaskToFolder(ctx *fiber.Ctx) error {
-	userID, authErr := h.getAuthenticatedUserID(ctx)
-	if authErr != nil {
-		return authErr
-	}
-
-	taskID := ctx.Params("id")
-	folderID := ctx.Query("folder_id")
-	if taskID == "nil" || folderID == "nil" || taskID == "" || folderID == "" {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "task ID and folder ID are required in URL"})
-	}
-	taskEntity, err := h.requireTaskAccess(ctx, taskID, userID)
-	if err != nil {
-		return err
-	}
-	folderEntity, err := h.requireFolderAccess(ctx, folderID, userID)
-	if err != nil {
-		return err
-	}
-	if taskEntity.TeamID != "" {
-		if folderEntity.TeamID == nil || *folderEntity.TeamID != taskEntity.TeamID {
-			return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "team task must remain in same team folder"})
-		}
-	}
-
-	err = h.taskService.MoveTaskToFolder(ctx.Context(), taskID, folderID)
-	if err != nil {
-		logger.Log.Errorw("move task to folder failed", "error", err)
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "internal server error",
-		})
-	}
-	return ctx.Status(fiber.StatusOK).JSON("Successfully moved task to folder")
 }
 
 func (h *Handlers) GetTaskByID(ctx *fiber.Ctx) error {
@@ -643,4 +704,73 @@ func (h *Handlers) GetTaskByID(ctx *fiber.Ctx) error {
 		})
 	}
 	return ctx.Status(200).JSON(dto.ToTaskResponse(task))
+}
+
+func parseTaskQuery(ctx *fiber.Ctx, workspaceID string) (domaintask.Query, error) {
+	cursor, err := dto.DecodeTaskCursor(strings.TrimSpace(ctx.Query("cursor")))
+	if err != nil {
+		return domaintask.Query{}, err
+	}
+	limit := 0
+	if rawLimit := strings.TrimSpace(ctx.Query("limit")); rawLimit != "" {
+		limit, err = strconv.Atoi(rawLimit)
+		if err != nil {
+			return domaintask.Query{}, err
+		}
+	}
+	dueFrom, err := parseOptionalQueryTime(ctx.Query("due_from"))
+	if err != nil {
+		return domaintask.Query{}, err
+	}
+	dueTo, err := parseOptionalQueryTime(ctx.Query("due_to"))
+	if err != nil {
+		return domaintask.Query{}, err
+	}
+	return domaintask.Query{
+		WorkspaceID: workspaceID,
+		ProjectIDs:  splitQueryList(ctx.Query("project_id")),
+		SprintIDs:   splitQueryList(ctx.Query("sprint_id")),
+		Statuses:    splitQueryList(ctx.Query("status")),
+		Priorities:  splitQueryList(ctx.Query("priority")),
+		AssigneeIDs: splitQueryList(ctx.Query("assignee_id")),
+		LabelIDs:    splitQueryList(ctx.Query("label_id")),
+		Search:      strings.TrimSpace(ctx.Query("q")),
+		DueFrom:     dueFrom,
+		DueTo:       dueTo,
+		SortBy:      domaintask.SortField(strings.TrimSpace(ctx.Query("sort_by"))),
+		Direction:   domaintask.SortDirection(strings.TrimSpace(ctx.Query("direction"))),
+		Limit:       limit,
+		Cursor:      cursor,
+	}, nil
+}
+
+func splitQueryList(value string) []string {
+	if strings.TrimSpace(value) == "" {
+		return nil
+	}
+	parts := strings.Split(value, ",")
+	out := make([]string, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part != "" {
+			out = append(out, part)
+		}
+	}
+	return out
+}
+
+func parseOptionalQueryTime(value string) (*time.Time, error) {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return nil, nil
+	}
+	parsed, err := time.Parse(time.RFC3339, value)
+	if err == nil {
+		return &parsed, nil
+	}
+	parsed, err = time.Parse("2006-01-02", value)
+	if err != nil {
+		return nil, err
+	}
+	return &parsed, nil
 }

@@ -14,24 +14,74 @@ export default defineConfig({
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (!id.includes('node_modules')) return;
+          const moduleId = id.replace(/\\/g, '/');
 
           if (
-            id.includes('@blocknote/') ||
-            id.includes('@tiptap/') ||
-            id.includes('prosemirror') ||
-            id.includes('yjs') ||
-            id.includes('unified') ||
-            id.includes('remark-') ||
-            id.includes('rehype-') ||
-            id.includes('shiki')
+            moduleId.includes('vite/preload-helper') ||
+            moduleId.includes('commonjsHelpers')
+          ) {
+            return 'runtime-vendor';
+          }
+
+          if (!moduleId.includes('node_modules')) return;
+
+          if (
+            moduleId.includes('/node_modules/@blocknote/') ||
+            moduleId.includes('/node_modules/@tiptap/') ||
+            moduleId.includes('/node_modules/prosemirror') ||
+            moduleId.includes('/node_modules/yjs/') ||
+            moduleId.includes('/node_modules/y-prosemirror/') ||
+            moduleId.includes('/node_modules/y-protocols/') ||
+            moduleId.includes('/node_modules/@tanstack/store/') ||
+            moduleId.includes('/node_modules/@tanstack/react-store/')
           ) {
             return 'editor-vendor';
           }
 
-          if (id.includes('react-router-dom')) return 'router-vendor';
-          if (id.includes('axios')) return 'http-vendor';
-          if (id.includes('lucide-react') || id.includes('react-icons')) return 'icons-vendor';
+          if (moduleId.includes('/node_modules/@floating-ui/')) {
+            return 'floating-vendor';
+          }
+
+          if (
+            moduleId.includes('/node_modules/react/') ||
+            moduleId.includes('/node_modules/react-dom/') ||
+            moduleId.includes('/node_modules/react-router/') ||
+            moduleId.includes('/node_modules/react-router-dom/') ||
+            moduleId.includes('/node_modules/scheduler/')
+          ) {
+            return 'react-vendor';
+          }
+
+          if (
+            moduleId.includes('/node_modules/framer-motion/') ||
+            moduleId.includes('/node_modules/motion-dom/') ||
+            moduleId.includes('/node_modules/motion-utils/')
+          ) {
+            return 'motion-vendor';
+          }
+
+          if (
+            moduleId.includes('/node_modules/react-markdown/') ||
+            moduleId.includes('/node_modules/unified/') ||
+            moduleId.includes('/node_modules/remark-') ||
+            moduleId.includes('/node_modules/rehype-') ||
+            moduleId.includes('/node_modules/highlight.js/') ||
+            moduleId.includes('/node_modules/katex/') ||
+            moduleId.includes('/node_modules/shiki')
+          ) {
+            return 'markdown-vendor';
+          }
+
+          if (moduleId.includes('/node_modules/react-virtuoso/')) return 'virtual-list-vendor';
+          if (moduleId.includes('/node_modules/@dnd-kit/')) return 'dnd-vendor';
+          if (moduleId.includes('/node_modules/@sentry/')) return 'sentry-vendor';
+          if (moduleId.includes('/node_modules/axios/')) return 'http-vendor';
+          if (
+            moduleId.includes('/node_modules/lucide-react/') ||
+            moduleId.includes('/node_modules/react-icons/')
+          ) {
+            return 'icons-vendor';
+          }
         },
       },
     },

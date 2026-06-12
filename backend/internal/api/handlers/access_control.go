@@ -2,31 +2,45 @@ package handlers
 
 import (
 	"context"
+	"errors"
 
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
+	domainworkspace "github.com/Star1ex/starlex-site/internal/domain/workspace"
+	"github.com/Star1ex/starlex-site/internal/repository"
 	"github.com/gofiber/fiber/v2"
 )
 
-func (h *Handlers) isTeamMember(ctx context.Context, teamID, userID string) (bool, error) {
-	users, err := h.teamService.GetUsers(ctx, teamID)
+func (h *Handlers) isWorkspaceMember(ctx context.Context, workspaceID, userID string) (bool, error) {
+	_, err := h.workspaceService.GetRole(ctx, workspaceID, userID)
 	if err != nil {
+		if errors.Is(err, repository.ErrUserNotInWorkspace) {
+			return false, nil
+		}
 		return false, err
 	}
-
-	for _, u := range users {
-		if u.ID == userID {
-			return true, nil
-		}
-	}
-	return false, nil
+	return true, nil
 }
 
-func (h *Handlers) requireTeamMember(c *fiber.Ctx, teamID, userID string) error {
-	ok, err := h.isTeamMember(c.Context(), teamID, userID)
+func (h *Handlers) requireWorkspaceMember(c *fiber.Ctx, workspaceID, userID string) error {
+	ok, err := h.isWorkspaceMember(c.Context(), workspaceID, userID)
 	if err != nil {
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "team not found"})
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "workspace not found"})
 	}
 	if !ok {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
+	}
+	return nil
+}
+
+func (h *Handlers) requireWorkspaceRole(c *fiber.Ctx, workspaceID, userID string, minRole domainworkspace.Role) error {
+	role, err := h.workspaceService.GetRole(c.Context(), workspaceID, userID)
+	if err != nil {
+		if errors.Is(err, repository.ErrUserNotInWorkspace) {
+			return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
+		}
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "workspace not found"})
+	}
+	if !role.AtLeast(minRole) {
 		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
 	}
 	return nil
@@ -37,39 +51,59 @@ func (h *Handlers) requireTaskAccess(c *fiber.Ctx, taskID, userID string) (*enti
 	if err != nil {
 		return nil, c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "task not found"})
 	}
+	if taskEntity.WorkspaceID == "" {
+		return nil, c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
+	}
+	if routeWorkspaceID := c.Params("workspace_id"); routeWorkspaceID != "" && routeWorkspaceID != taskEntity.WorkspaceID {
+		return nil, c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "task not found"})
+	}
+	if err := h.requireWorkspaceMember(c, taskEntity.WorkspaceID, userID); err != nil {
+		return nil, err
+	}
+	return taskEntity, nil
+}
 
+func (h *Handlers) requireTaskRole(c *fiber.Ctx, taskID, userID string, minRole domainworkspace.Role) (*entity.Task, error) {
+	taskEntity, err := h.requireTaskAccess(c, taskID, userID)
+	if err != nil {
+		return nil, err
+	}
+	role, err := h.workspaceService.GetRole(c.Context(), taskEntity.WorkspaceID, userID)
+	if err != nil {
+		if errors.Is(err, repository.ErrUserNotInWorkspace) {
+			return nil, c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
+		}
+		return nil, c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "workspace not found"})
+	}
+	if !role.AtLeast(minRole) {
+		return nil, c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
+	}
+	return taskEntity, nil
+}
+
+func (h *Handlers) requireTaskWriteAccess(c *fiber.Ctx, taskID, userID string) (*entity.Task, error) {
+	return h.requireTaskRole(c, taskID, userID, domainworkspace.RoleMember)
+}
+
+func (h *Handlers) requireTaskDeleteAccess(c *fiber.Ctx, taskID, userID string) (*entity.Task, error) {
+	taskEntity, err := h.requireTaskAccess(c, taskID, userID)
+	if err != nil {
+		return nil, err
+	}
 	if taskEntity.OwnerID == userID {
 		return taskEntity, nil
 	}
-
-	if taskEntity.TeamID != "" {
-		if err := h.requireTeamMember(c, taskEntity.TeamID, userID); err != nil {
-			return nil, err
-		}
-		return taskEntity, nil
-	}
-
-	return nil, c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
-}
-
-func (h *Handlers) requireFolderAccess(c *fiber.Ctx, folderID, userID string) (*entity.Folder, error) {
-	folderEntity, err := h.folderService.GetByID(c.Context(), folderID)
+	role, err := h.workspaceService.GetRole(c.Context(), taskEntity.WorkspaceID, userID)
 	if err != nil {
-		return nil, c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "folder not found"})
-	}
-
-	if folderEntity.OwnerID == userID {
-		return folderEntity, nil
-	}
-
-	if folderEntity.TeamID != nil && *folderEntity.TeamID != "" {
-		if err := h.requireTeamMember(c, *folderEntity.TeamID, userID); err != nil {
-			return nil, err
+		if errors.Is(err, repository.ErrUserNotInWorkspace) {
+			return nil, c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
 		}
-		return folderEntity, nil
+		return nil, c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "workspace not found"})
 	}
-
-	return nil, c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
+	if !role.AtLeast(domainworkspace.RoleAdmin) {
+		return nil, c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
+	}
+	return taskEntity, nil
 }
 
 func (h *Handlers) requireDiscussionAccess(c *fiber.Ctx, discussionID, userID string) (*entity.Discussion, error) {
@@ -81,11 +115,13 @@ func (h *Handlers) requireDiscussionAccess(c *fiber.Ctx, discussionID, userID st
 		if _, err := h.requireTaskAccess(c, *disc.TaskID, userID); err != nil {
 			return nil, err
 		}
+		return disc, nil
 	}
-	if disc.FolderID != nil {
-		if _, err := h.requireFolderAccess(c, *disc.FolderID, userID); err != nil {
+	if disc.WorkspaceID != nil && *disc.WorkspaceID != "" {
+		if err := h.requireWorkspaceMember(c, *disc.WorkspaceID, userID); err != nil {
 			return nil, err
 		}
+		return disc, nil
 	}
-	return disc, nil
+	return nil, c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "forbidden"})
 }

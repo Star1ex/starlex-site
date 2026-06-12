@@ -7,30 +7,37 @@ import (
 )
 
 type TaskApi struct {
-	AssignedToID []string  `json:"user_ids"` // Optional: can be empty array
-	Task         string    `json:"task" binding:"required"`
-	Description  string    `json:"description"`
-	Progress     string    `json:"progress"`
-	Priority     string    `json:"priority"`
-	FolderID     *string   `json:"folder_id"`
-	TeamID       *string   `json:"team_id"`
-	OwnerID      string    `json:"owner_id"`
-	CreatedAt    time.Time `json:"created_at"`
+	AssignedToID []string   `json:"user_ids"` // Optional: can be empty array
+	Task         string     `json:"task" binding:"required"`
+	Description  string     `json:"description"`
+	Status       string     `json:"status"`
+	Progress     string     `json:"progress"`
+	DueDate      *time.Time `json:"due_date"`
+	Priority     string     `json:"priority"`
+	WorkspaceID  *string    `json:"workspace_id"`
+	ProjectID    *string    `json:"project_id"`
+	OwnerID      string     `json:"owner_id"`
+	CreatedAt    time.Time  `json:"created_at"`
 }
 
 type TaskResponse struct {
-	ID          string    `json:"id" binding:"required"`
-	Task        string    `json:"task" binding:"required"`
-	Description string    `json:"description"`
-	Icon        string    `json:"icon"`
-	AssignedTo  []string  `json:"user_ids"`
-	TeamID      string    `json:"team_id"`
-	FolderID    *string   `json:"folder_id"`
-	OwnerID     string    `json:"owner_id"`
-	Priority    string    `json:"priority"`
-	Progress    string    `json:"progress"`
-	CreatedAt   time.Time `json:"created_at,omitempty"`
-	UpdatedAt   time.Time `json:"updated_at,omitempty"`
+	ID          string            `json:"id" binding:"required"`
+	Key         string            `json:"key"`
+	Task        string            `json:"task" binding:"required"`
+	Description string            `json:"description"`
+	Icon        string            `json:"icon"`
+	Assignees   []UserResponse    `json:"assignees"`
+	WorkspaceID string            `json:"workspace_id"`
+	ProjectID   *string           `json:"project_id"`
+	OwnerID     string            `json:"owner_id"`
+	Status      string            `json:"status"`
+	Priority    string            `json:"priority"`
+	Progress    string            `json:"progress"`
+	DueDate     *time.Time        `json:"due_date"`
+	Labels      []LabelResponse   `json:"labels"`
+	Subtasks    []SubtaskResponse `json:"subtasks"`
+	CreatedAt   time.Time         `json:"created_at,omitempty"`
+	UpdatedAt   time.Time         `json:"updated_at,omitempty"`
 }
 
 type UpdateTaskIcon struct {
@@ -41,8 +48,8 @@ type UpdateTask struct {
 	Task        string    `json:"task"`
 	Description string    `json:"description"`
 	AssignedTo  []string  `json:"user_ids"`
+	Status      string    `json:"status"`
 	Priority    string    `json:"priority"`
-	FolderID    *string   `json:"folder_id"`
 	OwnerID     string    `json:"owner_id"`
 	UpdatedAt   time.Time `json:"updated_at"`
 }
@@ -63,15 +70,29 @@ type UpdateTaskProgress struct {
 	Progress *string `json:"progress"`
 }
 
+type UpdateTaskStatus struct {
+	Status *string `json:"status"`
+}
+
+type UpdateTaskDueDate struct {
+	DueDate *time.Time `json:"due_date"`
+}
+
 type UpdateTaskAssignees struct {
 	UserIDs *[]string `json:"user_ids"`
 }
 
 func ToTaskResponse(task *entity.Task) *TaskResponse {
-	assignedIDs := make([]string, len(task.AssignedTo))
+	assignees := make([]UserResponse, len(task.AssignedTo))
 	for i, u := range task.AssignedTo {
-		assignedIDs[i] = u.ID
+		assignees[i] = *ToUserResponse(u)
 	}
+
+	subtasks := make([]SubtaskResponse, len(task.Subtasks))
+	for i, s := range task.Subtasks {
+		subtasks[i] = toSubtaskResponse(s)
+	}
+	labels := ToLabelResponses(task.Labels)
 
 	// Use zero time if CreatedAt is not set
 	createdAt := task.CreatedAt
@@ -81,21 +102,26 @@ func ToTaskResponse(task *entity.Task) *TaskResponse {
 
 	return &TaskResponse{
 		ID:          task.ID,
+		Key:         task.Key,
 		Task:        task.Task,
 		Description: task.Description,
 		Icon:        task.Icon,
-		AssignedTo:  assignedIDs,
-		TeamID:      task.TeamID,
-		FolderID:    task.FolderID,
+		Assignees:   assignees,
+		WorkspaceID: task.WorkspaceID,
+		ProjectID:   task.ProjectID,
 		OwnerID:     task.OwnerID,
+		Status:      task.Status,
 		Priority:    task.Priority,
 		Progress:    task.Progress,
+		DueDate:     task.DueDate,
+		Labels:      labels,
+		Subtasks:    subtasks,
 		CreatedAt:   createdAt,
 		UpdatedAt:   task.UpdatedAt,
 	}
 }
 
-func TeamTasksList(tasks []*entity.Task) []TaskResponse {
+func WorkspaceTasksList(tasks []*entity.Task) []TaskResponse {
 	response := make([]TaskResponse, len(tasks))
 	for i, task := range tasks {
 		response[i] = *ToTaskResponse(task)
@@ -107,6 +133,10 @@ func FromTaskApi(api *TaskApi) (*entity.Task, []string) {
 	return &entity.Task{
 		Task:        api.Task,
 		Description: api.Description,
+		Status:      api.Status,
+		Priority:    api.Priority,
+		Progress:    api.Progress,
+		DueDate:     api.DueDate,
 	}, api.AssignedToID
 }
 
@@ -114,6 +144,7 @@ func FromUpdateTask(updates *UpdateTask) (*entity.Task, []string) {
 	return &entity.Task{
 		Task:        updates.Task,
 		Description: updates.Description,
+		Status:      updates.Status,
 		Priority:    updates.Priority,
 		UpdatedAt:   updates.UpdatedAt,
 	}, updates.AssignedTo
@@ -123,9 +154,9 @@ type UpdateDto struct {
 	AssignedToID *[]string `json:"user_id"`
 	Task         *string   `json:"task"`
 	Description  *string   `json:"description"`
-	FolderID     *string   `json:"folder_id"`
-	TeamID       *string   `json:"team_id"`
+	WorkspaceID  *string   `json:"workspace_id"`
 	OwnerID      *string   `json:"owner_id"`
 	Progress     *string   `json:"progress"`
+	Status       *string   `json:"status"`
 	Priority     *string   `json:"priority"`
 }

@@ -1,0 +1,600 @@
+/* =====================================================
+   APP LAYOUT — floating glass slab sidebar + topbar.
+   The sidebar's glass material comes from <Glass variant="sidebar">;
+   this file owns only geometry + the nav/dock/menu chrome.
+   ===================================================== */
+@layer components {
+  /* App shell sidebar — detached floating slab (geometry only).
+     Material (fill/blur/rim/noise/shadow/refraction) = <Glass>. */
+  .app-sidebar {
+    width: 248px;
+    display: flex;
+    flex-direction: column;
+    padding: 1.35rem 0.8rem 1.2rem;
+    z-index: 50;
+  }
+  @media (min-width: 768px) {
+    .app-sidebar {
+      position: fixed;
+      inset: 12px auto 12px 12px;   /* detached: 12px gutter all sides */
+      height: auto;
+    }
+  }
+  @media (max-width: 767px) {
+    .app-sidebar {
+      position: relative;
+      height: 100%;
+    }
+  }
+  .app-sidebar svg,
+  .dropdown-menu svg,
+  .settings-modal-shell svg,
+  .profile-shell svg {
+    vector-effect: non-scaling-stroke;
+  }
+
+  .sidebar-workspace-glyph {
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.20),
+      0 6px 16px rgb(0 0 0 / 0.20);
+  }
+
+  /* Workspace switcher — solid surface (no nested blur inside glass) */
+  .sidebar-workspace-button {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    width: 100%;
+    min-height: 40px;
+    border-radius: var(--radius-md);
+    border: 0;
+    background: var(--sx-surface);
+    padding: 0.48rem 0.55rem;
+    color: var(--sx-text-muted);
+    font-size: 0.875rem;
+    text-decoration: none;
+    cursor: pointer;
+    box-shadow: inset 0 1px 0 var(--sx-rim-faint);
+    transition: color 160ms ease, background 160ms ease, box-shadow 160ms ease;
+  }
+  .sidebar-workspace-button:hover,
+  .sidebar-workspace-button[data-state="open"] {
+    color: var(--sx-text);
+    background: var(--sx-surface-hover);
+    box-shadow: inset 0 1px 0 var(--sx-rim-bright);   /* rim-on-hover */
+  }
+  .sidebar-workspace-name {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.895rem;
+    font-weight: 620;
+    line-height: 1;
+    color: var(--sx-text);
+  }
+  .sidebar-workspace-chevron {
+    color: var(--sx-text-subtle);
+    transition: transform 200ms var(--ease-out-expo), color 160ms ease;
+  }
+  .sidebar-workspace-button:hover .sidebar-workspace-chevron,
+  .sidebar-workspace-button[data-state="open"] .sidebar-workspace-chevron {
+    color: var(--sx-text-muted);
+  }
+  .sidebar-workspace-button[data-state="open"] .sidebar-workspace-chevron {
+    transform: rotate(180deg);
+  }
+
+  /* App shell topbar — borderless; only the search slab floats. */
+  .app-topbar {
+    position: fixed;
+    top: 0;
+    left: 272px;            /* 12 + 248 + 12 slab gutter */
+    right: 0;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    padding: 0 2rem;
+    z-index: 40;
+    pointer-events: none;   /* content scrolls under; search re-enables */
+  }
+  .app-topbar > * { pointer-events: auto; }
+
+  /* The one floating slab in the topbar: the search/command launcher. */
+  .topbar-search {
+    width: 100%;
+    max-width: 32rem;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    padding: 0.55rem 0.9rem;
+    font-size: 0.84rem;
+    color: var(--sx-text-subtle);
+    transition: color 150ms ease, transform 200ms var(--spring-snappy);
+  }
+  .topbar-search:hover { color: var(--sx-text-muted); }
+  .topbar-search:focus-visible {
+    outline: none;
+    box-shadow: var(--sx-focus-ring);
+  }
+  .topbar-search-kbd {
+    flex-shrink: 0;
+    padding: 0.1rem 0.4rem;
+    border-radius: var(--radius-sm);
+    background: var(--sx-surface-active);
+    color: var(--sx-text-subtle);
+    font-size: 0.68rem;
+  }
+
+  /* Sidebar nav — no borders, no glass pills. Surface + accent tick. */
+  .sidebar-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 0.12rem;
+  }
+  .sidebar-nav-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 34px;
+    padding: 0.42rem 0.62rem;
+    border-radius: var(--radius-md);
+    font-size: 0.84rem;
+    font-weight: 470;
+    color: var(--sx-text-subtle);
+    cursor: pointer;
+    transition: color 150ms ease, background 150ms ease;
+    user-select: none;
+    text-decoration: none;
+    width: 100%;
+    border: 0;
+    background: transparent;
+    text-align: left;
+  }
+  .sidebar-nav-item:hover {
+    background: var(--sx-surface-hover);
+    color: var(--sx-text);
+  }
+  .sidebar-nav-item.active {
+    background: var(--sx-surface-active);
+    color: var(--sx-text);
+  }
+  /* The only accent in the sidebar: a 2px tick that springs between items. */
+  .sidebar-nav-tick {
+    position: absolute;
+    left: 0;
+    top: calc(50% - 8px);
+    width: 2px;
+    height: 16px;
+    border-radius: 0 2px 2px 0;
+    background: var(--sx-accent);
+    pointer-events: none;
+  }
+  .sidebar-nav-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 1.1rem;
+    height: 1.1rem;
+    color: var(--sx-text-subtle);
+    transition: color 150ms ease;
+  }
+  .sidebar-nav-icon svg {
+    width: 1rem;
+    height: 1rem;
+  }
+  .sidebar-nav-item:hover .sidebar-nav-icon,
+  .sidebar-nav-item.active .sidebar-nav-icon {
+    color: var(--sx-text);
+  }
+  .sidebar-nav-label {
+    position: relative;
+  }
+
+  /* Bottom dock pills — solid surface, rim-on-hover only */
+  .sidebar-dock-pill {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 38px;
+    padding: 0.5rem 0.6rem;
+    border-radius: var(--radius-md);
+    background: var(--sx-surface);
+    border: 0;
+    cursor: pointer;
+    transition: background 160ms ease, box-shadow 160ms ease, color 160ms ease;
+    text-decoration: none;
+    color: var(--sx-text-muted);
+    font-size: 0.835rem;
+    box-shadow: inset 0 1px 0 var(--sx-rim-faint);
+  }
+  .sidebar-dock-pill:hover,
+  .sidebar-dock-pill.active {
+    background: var(--sx-surface-hover);
+    color: var(--sx-text);
+    box-shadow: inset 0 1px 0 var(--sx-rim-bright);
+  }
+  .sidebar-dock-pill:hover span,
+  .sidebar-dock-pill.active span,
+  .sidebar-dock-pill:hover svg,
+  .sidebar-dock-pill.active svg {
+    color: var(--sx-text);
+  }
+  .sidebar-profile-avatar {
+    width: 1.75rem !important;
+    height: 1.75rem !important;
+    min-width: 1.75rem;
+    min-height: 1.75rem;
+    border-radius: 9999px;
+    background: var(--sx-surface);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .sidebar-profile-copy {
+    display: flex;
+    min-height: 2rem;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  /* Dropdown / select menu — the menu glass material (shared, 10 call-sites). */
+  .dropdown-menu {
+    position: relative;
+    isolation: isolate;
+    min-width: 180px;
+    overflow: hidden;
+    pointer-events: auto;
+    border-radius: var(--radius-lg);
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--sx-menu-fill-top) 70%, var(--sx-canvas-elevated) 30%),
+        color-mix(in srgb, var(--sx-menu-fill-bottom) 52%, var(--sx-canvas-elevated) 48%)
+      ),
+      color-mix(in srgb, var(--sx-menu-scrim) 72%, var(--sx-canvas-elevated) 28%);
+    backdrop-filter: blur(calc(var(--sx-blur-menu) + 12px)) saturate(var(--sx-glass-saturate)) brightness(var(--sx-glass-brightness, 1));
+    -webkit-backdrop-filter: blur(calc(var(--sx-blur-menu) + 12px)) saturate(var(--sx-glass-saturate)) brightness(var(--sx-glass-brightness, 1));
+    box-shadow:
+      0 24px 64px rgb(0 0 0 / 0.42),
+      0 0 0 1px var(--sx-edge),
+      inset 0 -12px 24px -16px var(--sx-thickness);
+    padding: 0.375rem;
+    z-index: 9999;
+    animation: dropdownFadeIn 180ms var(--ease-out-expo);
+  }
+  .dropdown-menu::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    border-radius: inherit;
+    padding: 1px;
+    pointer-events: none;
+    background: linear-gradient(160deg,
+      var(--sx-rim-bright),
+      var(--sx-rim-faint) 22%,
+      transparent 45%,
+      transparent 100%);
+    -webkit-mask:
+      linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor;
+            mask:
+      linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+            mask-composite: exclude;
+  }
+  .dropdown-menu > * { position: relative; z-index: 1; }
+  .sidebar-floating-menu {
+    padding: 0.45rem;
+    background:
+      linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--sx-menu-fill-top) 55%, var(--sx-canvas-elevated) 45%),
+        color-mix(in srgb, var(--sx-menu-fill-bottom) 42%, var(--sx-canvas-elevated) 58%)
+      ),
+      color-mix(in srgb, var(--sx-canvas-elevated) 82%, transparent);
+  }
+  @keyframes dropdownFadeIn {
+    from { opacity: 0; transform: translateY(-6px) scale(0.985); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .dropdown-menu-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    min-height: 40px;
+    padding: 0.58rem 0.68rem;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    font-size: 0.875rem;
+    line-height: 1.2;
+    color: var(--sx-text-muted);
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    border: none;
+    transition: background 150ms ease, color 150ms ease, transform 150ms ease;
+  }
+  .dropdown-menu-item:hover {
+    background: var(--sx-surface-hover);
+    color: var(--sx-text);
+  }
+  .dropdown-menu-item span {
+    min-width: 0;
+  }
+  .dropdown-menu-item svg {
+    flex-shrink: 0;
+    color: var(--sx-text-subtle);
+    transition: color 150ms ease;
+  }
+  .dropdown-menu-item:hover svg {
+    color: var(--sx-text-muted);
+  }
+  .dropdown-menu-item--danger,
+  .dropdown-menu-item--danger svg {
+    color: var(--sx-danger);
+  }
+  .dropdown-menu-item--danger:hover {
+    background: color-mix(in srgb, var(--sx-danger) 12%, transparent);
+    color: var(--sx-danger);
+  }
+  .dropdown-menu-item--danger:hover svg {
+    color: var(--sx-danger);
+  }
+  .dropdown-divider {
+    height: 1px;
+    background: var(--sx-line);
+    margin: 0.25rem 0;
+  }
+
+  @media (max-width: 767px) {
+    .mobile-app-topbar {
+      position: fixed;
+      inset: 0 0 auto;
+      z-index: 52;
+      display: grid;
+      grid-template-columns: 2.75rem minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 0.65rem;
+      min-height: calc(3.5rem + env(safe-area-inset-top));
+      padding: calc(0.45rem + env(safe-area-inset-top)) 0.85rem 0.45rem;
+      background:
+        linear-gradient(180deg, var(--sx-glass-fill-top-strong), var(--sx-glass-fill-bottom)),
+        color-mix(in srgb, var(--sx-canvas-elevated) 84%, transparent);
+      backdrop-filter: blur(calc(var(--sx-blur-menu) + 8px)) saturate(var(--sx-glass-saturate));
+      -webkit-backdrop-filter: blur(calc(var(--sx-blur-menu) + 8px)) saturate(var(--sx-glass-saturate));
+      box-shadow:
+        0 1px 0 var(--sx-line),
+        0 16px 40px rgb(0 0 0 / 0.24);
+    }
+    .mobile-icon-button {
+      display: grid;
+      width: 2.75rem;
+      height: 2.75rem;
+      place-items: center;
+      border-radius: 0.9rem;
+      background: var(--sx-surface);
+      color: var(--sx-text-muted);
+      box-shadow: inset 0 1px 0 var(--sx-rim-faint);
+      transition: background 160ms ease, color 160ms ease, transform 160ms var(--ease-out-expo);
+    }
+    .mobile-icon-button:active {
+      transform: scale(0.96);
+    }
+    .mobile-icon-button:hover,
+    .mobile-icon-button[aria-expanded="true"] {
+      background: var(--sx-surface-hover);
+      color: var(--sx-text);
+    }
+    .mobile-icon-button--accent {
+      background: color-mix(in srgb, var(--sx-accent) 24%, transparent);
+      color: var(--sx-accent);
+    }
+    .mobile-topbar-title {
+      min-width: 0;
+      text-align: left;
+    }
+    .mobile-topbar-title span {
+      display: block;
+      color: var(--sx-text-subtle);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.62rem;
+      letter-spacing: 0.14em;
+      line-height: 1;
+      text-transform: uppercase;
+    }
+    .mobile-topbar-title strong {
+      display: block;
+      margin-top: 0.2rem;
+      overflow: hidden;
+      color: var(--sx-text);
+      font-size: 0.95rem;
+      font-weight: 680;
+      line-height: 1.1;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .mobile-topbar-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+    }
+    .mobile-menu-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 55;
+      background: color-mix(in srgb, var(--sx-overlay) 80%, #000 20%);
+      opacity: 0;
+      pointer-events: none;
+      backdrop-filter: blur(0);
+      -webkit-backdrop-filter: blur(0);
+      transition: opacity 220ms ease, backdrop-filter 220ms ease;
+    }
+    .mobile-menu-overlay.is-open {
+      opacity: 1;
+      pointer-events: auto;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .mobile-sidebar-drawer {
+      position: fixed;
+      inset: auto 0 0;
+      z-index: 60;
+      width: 100%;
+      height: min(82vh, 42rem);
+      max-height: calc(100vh - env(safe-area-inset-top) - 0.75rem);
+      padding: 0 0.65rem max(0.65rem, env(safe-area-inset-bottom));
+      pointer-events: none;
+      transform: translateY(calc(100% + 18px));
+      transition: transform 280ms var(--ease-out-expo);
+      will-change: transform;
+    }
+    .mobile-sidebar-drawer.is-open {
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+    .mobile-sidebar-drawer .app-sidebar--mobile {
+      width: 100%;
+      min-width: 0;
+      height: 100%;
+      border-radius: var(--radius-xl);
+      padding: 3.75rem 0.82rem calc(1rem + env(safe-area-inset-bottom));
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      box-shadow:
+        0 -28px 80px rgb(0 0 0 / 0.46),
+        0 0 0 1px var(--sx-edge),
+        inset 0 1px 0 var(--sx-rim-faint);
+      -webkit-overflow-scrolling: touch;
+    }
+    .mobile-drawer-grabber {
+      position: absolute;
+      top: 0.72rem;
+      left: 50%;
+      z-index: 71;
+      width: 2.7rem;
+      height: 0.28rem;
+      border-radius: 9999px;
+      background: color-mix(in srgb, var(--sx-text-subtle) 42%, transparent);
+      box-shadow: inset 0 1px 0 rgb(255 255 255 / 0.18);
+      transform: translateX(-50%);
+    }
+    .app-sidebar--mobile .sidebar-workspace-button {
+      min-height: 3rem;
+      padding: 0.62rem 3rem 0.62rem 0.68rem;
+      border-radius: 0.95rem;
+    }
+    .app-sidebar--mobile .sidebar-workspace-name {
+      font-size: 0.98rem;
+    }
+    .app-sidebar--mobile .sidebar-nav {
+      gap: 0.34rem;
+    }
+    .app-sidebar--mobile .sidebar-nav-item {
+      min-height: 2.95rem;
+      border-radius: 0.9rem;
+      padding: 0.68rem 0.72rem;
+      font-size: 0.95rem;
+    }
+    .app-sidebar--mobile .sidebar-nav-icon {
+      width: 1.35rem;
+      height: 1.35rem;
+    }
+    .app-sidebar--mobile .sidebar-nav-icon svg {
+      width: 1.08rem;
+      height: 1.08rem;
+    }
+    .app-sidebar--mobile .sidebar-dock-pill {
+      min-height: 3rem;
+      border-radius: 0.9rem;
+      padding: 0.68rem 0.72rem;
+      font-size: 0.94rem;
+    }
+    .app-sidebar--mobile .sidebar-profile-avatar {
+      width: 2rem !important;
+      height: 2rem !important;
+      min-width: 2rem;
+      min-height: 2rem;
+    }
+    .app-sidebar--mobile .sidebar-floating-menu {
+      max-height: min(62vh, 430px);
+      overflow-y: auto;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+    .mobile-drawer-close {
+      position: absolute;
+      top: 1.05rem;
+      right: 1.6rem;
+      z-index: 70;
+      display: grid;
+      width: 2.5rem;
+      height: 2.5rem;
+      place-items: center;
+      border-radius: 0.85rem;
+      background: var(--sx-surface);
+      color: var(--sx-text-subtle);
+      box-shadow:
+        inset 0 1px 0 var(--sx-rim-faint),
+        0 10px 24px rgb(0 0 0 / 0.24);
+      transition: background 160ms ease, color 160ms ease, transform 160ms var(--ease-out-expo);
+    }
+    .mobile-drawer-close:hover {
+      background: var(--sx-surface-hover);
+      color: var(--sx-text);
+    }
+    .mobile-drawer-close:active {
+      transform: scale(0.95);
+    }
+    .mobile-main-content {
+      min-height: 100vh;
+      padding: calc(4.15rem + env(safe-area-inset-top)) clamp(0.9rem, 4vw, 1.2rem) calc(1.25rem + env(safe-area-inset-bottom));
+    }
+  }
+
+  @supports (height: 100dvh) {
+    @media (max-width: 767px) {
+      .mobile-sidebar-drawer {
+        height: min(82dvh, 42rem);
+        max-height: calc(100dvh - env(safe-area-inset-top) - 0.75rem);
+      }
+      .mobile-sidebar-drawer .app-sidebar--mobile {
+        height: 100%;
+      }
+    }
+  }
+
+  @media (max-width: 380px) {
+    .mobile-app-topbar {
+      grid-template-columns: 2.55rem minmax(0, 1fr) auto;
+      gap: 0.45rem;
+      padding-inline: 0.65rem;
+    }
+    .mobile-icon-button {
+      width: 2.55rem;
+      height: 2.55rem;
+      border-radius: 0.78rem;
+    }
+    .mobile-sidebar-drawer {
+      height: min(86vh, 42rem);
+      padding-inline: 0.45rem;
+      padding-bottom: max(0.45rem, env(safe-area-inset-bottom));
+    }
+    .mobile-drawer-close {
+      right: 1.25rem;
+    }
+    .mobile-topbar-title span {
+      display: none;
+    }
+    .mobile-topbar-title strong {
+      margin-top: 0;
+      font-size: 0.9rem;
+    }
+  }
+}

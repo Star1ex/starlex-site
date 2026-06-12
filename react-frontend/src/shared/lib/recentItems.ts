@@ -1,4 +1,4 @@
-export type RecentItemType = 'team' | 'sprint' | 'task';
+export type RecentItemType = 'workspace' | 'team' | 'sprint' | 'task';
 
 export interface RecentItem {
   id: string;
@@ -24,7 +24,9 @@ function load(): RecentItem[] {
 function save(items: RecentItem[]): void {
   try {
     localStorage.setItem(KEY, JSON.stringify(items));
-  } catch {}
+  } catch (err) {
+    console.warn('Failed to save recent items:', err);
+  }
 }
 
 export function trackItem(item: Omit<RecentItem, 'openedAt'>): void {
@@ -47,11 +49,11 @@ export function getRecentByType(type: RecentItemType): RecentItem[] {
     .slice(0, MAX_PER_TYPE);
 }
 
-export function getAllRecent(): { teams: RecentItem[]; sprints: RecentItem[]; tasks: RecentItem[] } {
+export function getAllRecent(): { workspaces: RecentItem[]; sprints: RecentItem[]; tasks: RecentItem[] } {
   const all = load().sort((a, b) => b.openedAt - a.openedAt);
   return {
-    teams:   all.filter((i) => i.type === 'team').slice(0, MAX_PER_TYPE),
-    sprints: all.filter((i) => i.type === 'sprint').slice(0, MAX_PER_TYPE),
-    tasks:   all.filter((i) => i.type === 'task').slice(0, MAX_PER_TYPE),
+    workspaces: all.filter((i) => i.type === 'workspace' || i.type === 'team').slice(0, MAX_PER_TYPE),
+    sprints:    all.filter((i) => i.type === 'sprint').slice(0, MAX_PER_TYPE),
+    tasks:      all.filter((i) => i.type === 'task').slice(0, MAX_PER_TYPE),
   };
 }

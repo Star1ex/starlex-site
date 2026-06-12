@@ -51,45 +51,12 @@ func (h *Handlers) CreateTaskDiscussion(ctx *fiber.Ctx) error {
 	title := sanitizeStrict(req.Title)
 	content := req.Content
 
-	teamID := ""
-	if taskEntity.TeamID != "" {
-		teamID = taskEntity.TeamID
+	workspaceID := ""
+	if taskEntity.WorkspaceID != "" {
+		workspaceID = taskEntity.WorkspaceID
 	}
 
-	discussion, err := h.discussionService.CreateDiscussion(ctx.Context(), &taskID, nil, teamID, userID, title, content, req.ContentType)
-	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to create discussion"})
-	}
-	return ctx.Status(fiber.StatusCreated).JSON(discussion)
-}
-
-func (h *Handlers) CreateFolderDiscussion(ctx *fiber.Ctx) error {
-	userID, authErr := h.getAuthenticatedUserID(ctx)
-	if authErr != nil {
-		return authErr
-	}
-	folderID := ctx.Params("id")
-	folderEntity, err := h.requireFolderAccess(ctx, folderID, userID)
-	if err != nil {
-		return err
-	}
-
-	var req discussionCreateRequest
-	if err := ctx.BodyParser(&req); err != nil {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
-	}
-	if strings.TrimSpace(req.Title) == "" {
-		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "title is required"})
-	}
-	title := sanitizeStrict(req.Title)
-	content := req.Content
-
-	teamID := ""
-	if folderEntity.TeamID != nil {
-		teamID = *folderEntity.TeamID
-	}
-
-	discussion, err := h.discussionService.CreateDiscussion(ctx.Context(), nil, &folderID, teamID, userID, title, content, req.ContentType)
+	discussion, err := h.discussionService.CreateDiscussion(ctx.Context(), &taskID, workspaceID, userID, title, content, req.ContentType)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to create discussion"})
 	}
@@ -107,23 +74,6 @@ func (h *Handlers) GetTaskDiscussions(ctx *fiber.Ctx) error {
 	}
 
 	discussions, err := h.discussionService.GetDiscussionsByTask(ctx.Context(), taskID)
-	if err != nil {
-		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to load discussions"})
-	}
-	return ctx.JSON(discussions)
-}
-
-func (h *Handlers) GetFolderDiscussions(ctx *fiber.Ctx) error {
-	userID, authErr := h.getAuthenticatedUserID(ctx)
-	if authErr != nil {
-		return authErr
-	}
-	folderID := ctx.Params("id")
-	if _, err := h.requireFolderAccess(ctx, folderID, userID); err != nil {
-		return err
-	}
-
-	discussions, err := h.discussionService.GetDiscussionsByFolder(ctx.Context(), folderID)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to load discussions"})
 	}
@@ -292,12 +242,12 @@ func (h *Handlers) canResolveDiscussion(ctx *fiber.Ctx, disc *entity.Discussion,
 	if disc.CreatedBy == userID {
 		return true
 	}
-	if disc.TeamID == nil || *disc.TeamID == "" {
+	if disc.WorkspaceID == nil || *disc.WorkspaceID == "" {
 		return false
 	}
-	team, err := h.teamService.GetTeamByID(ctx.Context(), *disc.TeamID)
+	workspace, err := h.workspaceService.GetWorkspaceByID(ctx.Context(), *disc.WorkspaceID)
 	if err != nil {
 		return false
 	}
-	return team.OwnerID == userID
+	return workspace.OwnerID == userID
 }

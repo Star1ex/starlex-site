@@ -22,7 +22,7 @@ func NewEmailService(config EmailConfig) *EmailService {
 	return &EmailService{config: config}
 }
 
-func (s *EmailService) SendVerificationCode(to, firstName, code string) error {
+func (s *EmailService) SendRegistrationCode(to, firstName, code string) error {
 	subject := "Verify Your Email - Starlex"
 	body := fmt.Sprintf(`
 		<html>

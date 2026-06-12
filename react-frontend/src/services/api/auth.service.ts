@@ -1,11 +1,12 @@
 import { apiClient, httpClient } from './client.js';
-import { clearAuthStorage } from '@/shared/lib/authManager.js';
+import { clearAuthStorage, clearExplicitLogout } from '@/shared/lib/authManager.js';
 import {
   LoginRequest,
   LoginResponse,
   RegisterRequest,
   RegisterResponse,
   VerifyEmailRequest,
+  VerifyResponse,
   ResendCodeRequest,
   AuthResponse,
   PasswordChangeRequest,
@@ -13,11 +14,15 @@ import {
   PasswordResetRequest,
   PasswordResetVerifyRequest,
   PasswordResetConfirmRequest,
+  SessionDTO,
+  RequestEmailChangeRequest,
+  ConfirmEmailChangeRequest,
 } from '../../types/dto.js';
 
 export const authService = {
   async login(credentials: LoginRequest): Promise<LoginResponse> {
     const response = await httpClient.post<LoginResponse>('/api/auth/login', credentials);
+    clearExplicitLogout();
     apiClient.setAccessToken(response.data.access_token);
     // Fetch CSRF token immediately after login so all mutations work
     await this.ensureCsrfToken();
@@ -29,8 +34,13 @@ export const authService = {
     return response.data;
   },
 
-  async verifyEmail(data: VerifyEmailRequest): Promise<AuthResponse> {
-    const response = await httpClient.post<AuthResponse>('/api/auth/verify', data);
+  async verifyEmail(data: VerifyEmailRequest): Promise<VerifyResponse> {
+    const response = await httpClient.post<VerifyResponse>('/api/auth/verify', data);
+    if (response.data.access_token) {
+      clearExplicitLogout();
+      apiClient.setAccessToken(response.data.access_token);
+      await this.ensureCsrfToken();
+    }
     return response.data;
   },
 
@@ -108,12 +118,8 @@ export const authService = {
 
   async logout(): Promise<void> {
     try {
-      // keepalive allows the request to finish even during navigation
-      await fetch('/api/auth/logout', {
-        method: 'POST',
-        credentials: 'include',
-        keepalive: true,
-      });
+      await this.ensureCsrfToken();
+      await httpClient.post('/api/auth/logout');
     } catch (err) {
       console.error('Logout request failed:', err);
     } finally {
@@ -124,5 +130,24 @@ export const authService = {
 
   isAuthenticated(): boolean {
     return apiClient.getAccessToken() !== null;
+  },
+
+  async listSessions(): Promise<SessionDTO[]> {
+    const response = await httpClient.get<SessionDTO[]>('/api/auth/sessions');
+    return Array.isArray(response.data) ? response.data : [];
+  },
+
+  async revokeSession(sessionId: string): Promise<void> {
+    await httpClient.delete(`/api/auth/sessions/${sessionId}`);
+  },
+
+  async requestEmailChange(data: RequestEmailChangeRequest): Promise<void> {
+    await this.ensureCsrfToken();
+    await httpClient.post('/api/auth/email-change/request', data);
+  },
+
+  async confirmEmailChange(data: ConfirmEmailChangeRequest): Promise<void> {
+    await this.ensureCsrfToken();
+    await httpClient.post('/api/auth/email-change/confirm', data);
   },
 };

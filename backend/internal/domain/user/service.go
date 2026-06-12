@@ -4,15 +4,12 @@ import (
 	"context"
 	"mime/multipart"
 
-	"github.com/Star1ex/starlex-site/internal/api/dto"
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
 )
 
 type Service interface {
 
 	// CRUD
-	CreateUnverified(ctx context.Context, u *dto.UserApi) (string, error)
-	Create(ctx context.Context, u *dto.UserApi) error
 	CreateOAuth(ctx context.Context, u *entity.User) error
 	Update(ctx context.Context, u *entity.User, id string) error
 	Get(ctx context.Context, id string) (*entity.User, error)
@@ -23,9 +20,10 @@ type Service interface {
 
 	// Auth
 	Login(ctx context.Context, email, password string) (*entity.User, error)
+	RecordLogin(ctx context.Context, userID, ip string) error
 
 	// Others
-	GetTeams(ctx context.Context, userID string) ([]*entity.Team, error)
+	GetWorkspaces(ctx context.Context, userID string) ([]*entity.Workspace, error)
 
 	// Search users by email
 	Search(ctx context.Context, email string) ([]*entity.User, error)

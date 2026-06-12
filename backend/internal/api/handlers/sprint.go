@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/Star1ex/starlex-site/internal/api/dto"
+	domainworkspace "github.com/Star1ex/starlex-site/internal/domain/workspace"
 	"github.com/Star1ex/starlex-site/internal/service"
 	"github.com/gofiber/fiber/v2"
 	"gorm.io/gorm"
@@ -55,8 +56,8 @@ func (h *Handlers) CreateSprint(ctx *fiber.Ctx) error {
 	if authErr != nil {
 		return authErr
 	}
-	teamID := ctx.Params("team_id")
-	if err := h.requireTeamMember(ctx, teamID, userID); err != nil {
+	workspaceID := ctx.Params("workspace_id")
+	if err := h.requireWorkspaceRole(ctx, workspaceID, userID, domainworkspace.RoleAdmin); err != nil {
 		return err
 	}
 
@@ -75,24 +76,24 @@ func (h *Handlers) CreateSprint(ctx *fiber.Ctx) error {
 	name := sanitizeStrict(req.Name)
 	goal := sanitizeStrict(req.Goal)
 
-	sprint, err := h.sprintService.CreateSprint(ctx.Context(), teamID, userID, name, goal, startDate, endDate)
+	sprint, err := h.sprintService.CreateSprint(ctx.Context(), workspaceID, userID, name, goal, startDate, endDate)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to create sprint"})
 	}
 	return ctx.Status(fiber.StatusCreated).JSON(dto.ToSprintResponse(sprint))
 }
 
-func (h *Handlers) GetTeamSprints(ctx *fiber.Ctx) error {
+func (h *Handlers) GetWorkspaceSprints(ctx *fiber.Ctx) error {
 	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
 		return authErr
 	}
-	teamID := ctx.Params("team_id")
-	if err := h.requireTeamMember(ctx, teamID, userID); err != nil {
+	workspaceID := ctx.Params("workspace_id")
+	if err := h.requireWorkspaceMember(ctx, workspaceID, userID); err != nil {
 		return err
 	}
 
-	sprints, err := h.sprintService.GetTeamSprints(ctx.Context(), teamID)
+	sprints, err := h.sprintService.GetWorkspaceSprints(ctx.Context(), workspaceID)
 	if err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to load sprints"})
 	}
@@ -104,8 +105,8 @@ func (h *Handlers) GetSprintByID(ctx *fiber.Ctx) error {
 	if authErr != nil {
 		return authErr
 	}
-	teamID := ctx.Params("team_id")
-	if err := h.requireTeamMember(ctx, teamID, userID); err != nil {
+	workspaceID := ctx.Params("workspace_id")
+	if err := h.requireWorkspaceMember(ctx, workspaceID, userID); err != nil {
 		return err
 	}
 	id := ctx.Params("id")
@@ -117,7 +118,7 @@ func (h *Handlers) GetSprintByID(ctx *fiber.Ctx) error {
 		}
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to load sprint"})
 	}
-	if sprint.TeamID != teamID {
+	if sprint.WorkspaceID != workspaceID {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "sprint not found"})
 	}
 	return ctx.JSON(dto.ToSprintResponse(sprint))
@@ -128,8 +129,8 @@ func (h *Handlers) UpdateSprint(ctx *fiber.Ctx) error {
 	if authErr != nil {
 		return authErr
 	}
-	teamID := ctx.Params("team_id")
-	if err := h.requireTeamMember(ctx, teamID, userID); err != nil {
+	workspaceID := ctx.Params("workspace_id")
+	if err := h.requireWorkspaceRole(ctx, workspaceID, userID, domainworkspace.RoleAdmin); err != nil {
 		return err
 	}
 	id := ctx.Params("id")
@@ -149,14 +150,14 @@ func (h *Handlers) UpdateSprint(ctx *fiber.Ctx) error {
 	name := sanitizeStrict(req.Name)
 	goal := sanitizeStrict(req.Goal)
 
-	updated, err := h.sprintService.UpdateSprint(ctx.Context(), id, name, goal, startDate, endDate)
+	updated, err := h.sprintService.UpdateSprint(ctx.Context(), id, workspaceID, name, goal, startDate, endDate)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "sprint not found"})
 		}
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to update sprint"})
 	}
-	if updated.TeamID != teamID {
+	if updated.WorkspaceID != workspaceID {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "sprint not found"})
 	}
 	return ctx.JSON(dto.ToSprintResponse(updated))
@@ -167,13 +168,13 @@ func (h *Handlers) StartSprint(ctx *fiber.Ctx) error {
 	if authErr != nil {
 		return authErr
 	}
-	teamID := ctx.Params("team_id")
-	if err := h.requireTeamMember(ctx, teamID, userID); err != nil {
+	workspaceID := ctx.Params("workspace_id")
+	if err := h.requireWorkspaceRole(ctx, workspaceID, userID, domainworkspace.RoleAdmin); err != nil {
 		return err
 	}
 	id := ctx.Params("id")
 
-	updated, err := h.sprintService.StartSprint(ctx.Context(), id, teamID)
+	updated, err := h.sprintService.StartSprint(ctx.Context(), id, workspaceID)
 	if err != nil {
 		if errors.Is(err, service.ErrActiveSprintExists) {
 			return ctx.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "another active sprint exists"})
@@ -191,8 +192,8 @@ func (h *Handlers) CompleteSprint(ctx *fiber.Ctx) error {
 	if authErr != nil {
 		return authErr
 	}
-	teamID := ctx.Params("team_id")
-	if err := h.requireTeamMember(ctx, teamID, userID); err != nil {
+	workspaceID := ctx.Params("workspace_id")
+	if err := h.requireWorkspaceRole(ctx, workspaceID, userID, domainworkspace.RoleAdmin); err != nil {
 		return err
 	}
 	id := ctx.Params("id")
@@ -202,14 +203,14 @@ func (h *Handlers) CompleteSprint(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
 	}
 
-	updated, err := h.sprintService.CompleteSprint(ctx.Context(), id, req.MoveTarget)
+	updated, err := h.sprintService.CompleteSprint(ctx.Context(), id, workspaceID, req.MoveTarget)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "sprint not found"})
 		}
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to complete sprint"})
 	}
-	if updated.TeamID != teamID {
+	if updated.WorkspaceID != workspaceID {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "sprint not found"})
 	}
 	return ctx.JSON(dto.ToSprintResponse(updated))
@@ -220,20 +221,20 @@ func (h *Handlers) ArchiveSprint(ctx *fiber.Ctx) error {
 	if authErr != nil {
 		return authErr
 	}
-	teamID := ctx.Params("team_id")
-	if err := h.requireTeamMember(ctx, teamID, userID); err != nil {
+	workspaceID := ctx.Params("workspace_id")
+	if err := h.requireWorkspaceRole(ctx, workspaceID, userID, domainworkspace.RoleAdmin); err != nil {
 		return err
 	}
 	id := ctx.Params("id")
 
-	updated, err := h.sprintService.ArchiveSprint(ctx.Context(), id)
+	updated, err := h.sprintService.ArchiveSprint(ctx.Context(), id, workspaceID)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "sprint not found"})
 		}
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to archive sprint"})
 	}
-	if updated.TeamID != teamID {
+	if updated.WorkspaceID != workspaceID {
 		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "sprint not found"})
 	}
 	return ctx.JSON(dto.ToSprintResponse(updated))
@@ -244,13 +245,13 @@ func (h *Handlers) DeleteSprint(ctx *fiber.Ctx) error {
 	if authErr != nil {
 		return authErr
 	}
-	teamID := ctx.Params("team_id")
-	if err := h.requireTeamMember(ctx, teamID, userID); err != nil {
+	workspaceID := ctx.Params("workspace_id")
+	if err := h.requireWorkspaceRole(ctx, workspaceID, userID, domainworkspace.RoleAdmin); err != nil {
 		return err
 	}
 	id := ctx.Params("id")
 
-	if err := h.sprintService.DeleteSprint(ctx.Context(), id); err != nil {
+	if err := h.sprintService.DeleteSprint(ctx.Context(), id, workspaceID); err != nil {
 		if errors.Is(err, service.ErrSprintHasTasks) {
 			return ctx.Status(fiber.StatusConflict).JSON(fiber.Map{"error": "sprint has tasks"})
 		}
@@ -268,7 +269,8 @@ func (h *Handlers) MoveTaskToSprint(ctx *fiber.Ctx) error {
 		return authErr
 	}
 	taskID := ctx.Params("id")
-	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+	taskEntity, err := h.requireTaskWriteAccess(ctx, taskID, userID)
+	if err != nil {
 		return err
 	}
 
@@ -277,19 +279,10 @@ func (h *Handlers) MoveTaskToSprint(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
 	}
 
-	if req.SprintID != nil && *req.SprintID != "" {
-		sprint, err := h.sprintService.GetSprintByID(ctx.Context(), *req.SprintID)
-		if err != nil {
+	if err := h.sprintService.MoveTaskToSprint(ctx.Context(), taskID, taskEntity.WorkspaceID, req.SprintID); err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "sprint not found"})
 		}
-		if sprint.TeamID != "" {
-			if err := h.requireTeamMember(ctx, sprint.TeamID, userID); err != nil {
-				return err
-			}
-		}
-	}
-
-	if err := h.sprintService.MoveTaskToSprint(ctx.Context(), taskID, req.SprintID); err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to move task"})
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)
@@ -301,7 +294,8 @@ func (h *Handlers) UpdateTaskPosition(ctx *fiber.Ctx) error {
 		return authErr
 	}
 	taskID := ctx.Params("id")
-	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+	taskEntity, err := h.requireTaskWriteAccess(ctx, taskID, userID)
+	if err != nil {
 		return err
 	}
 
@@ -310,7 +304,7 @@ func (h *Handlers) UpdateTaskPosition(ctx *fiber.Ctx) error {
 		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "invalid request body"})
 	}
 
-	if err := h.sprintService.UpdateTaskPosition(ctx.Context(), taskID, req.Position); err != nil {
+	if err := h.sprintService.UpdateTaskPosition(ctx.Context(), taskID, taskEntity.WorkspaceID, req.Position); err != nil {
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to update task position"})
 	}
 	return ctx.SendStatus(fiber.StatusNoContent)
@@ -322,7 +316,7 @@ func (h *Handlers) CreateSubtask(ctx *fiber.Ctx) error {
 		return authErr
 	}
 	taskID := ctx.Params("task_id")
-	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+	if _, err := h.requireTaskWriteAccess(ctx, taskID, userID); err != nil {
 		return err
 	}
 
@@ -351,7 +345,7 @@ func (h *Handlers) UpdateSubtask(ctx *fiber.Ctx) error {
 		return authErr
 	}
 	taskID := ctx.Params("task_id")
-	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+	if _, err := h.requireTaskWriteAccess(ctx, taskID, userID); err != nil {
 		return err
 	}
 	subtaskID := ctx.Params("id")
@@ -365,15 +359,12 @@ func (h *Handlers) UpdateSubtask(ctx *fiber.Ctx) error {
 		req.Title = &s
 	}
 
-	subtask, err := h.sprintService.UpdateSubtask(ctx.Context(), subtaskID, req.Title, req.IsDone, req.Position)
+	subtask, err := h.sprintService.UpdateSubtask(ctx.Context(), taskID, subtaskID, req.Title, req.IsDone, req.Position)
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "subtask not found"})
 		}
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "failed to update subtask"})
-	}
-	if subtask.TaskID != taskID {
-		return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "subtask not found"})
 	}
 	return ctx.JSON(dto.ToSubtaskResponse(subtask))
 }
@@ -384,12 +375,12 @@ func (h *Handlers) DeleteSubtask(ctx *fiber.Ctx) error {
 		return authErr
 	}
 	taskID := ctx.Params("task_id")
-	if _, err := h.requireTaskAccess(ctx, taskID, userID); err != nil {
+	if _, err := h.requireTaskWriteAccess(ctx, taskID, userID); err != nil {
 		return err
 	}
 	subtaskID := ctx.Params("id")
 
-	if err := h.sprintService.DeleteSubtask(ctx.Context(), subtaskID); err != nil {
+	if err := h.sprintService.DeleteSubtask(ctx.Context(), taskID, subtaskID); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return ctx.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "subtask not found"})
 		}

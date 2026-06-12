@@ -1,61 +1,28 @@
-import React, { useEffect, useMemo, useState } from 'react';
-import type { ToastKind } from '@/shared/lib/toast.js';
+import React from 'react';
+import { Toaster } from 'sonner';
 
-type ToastItem = {
-  id: string;
-  message: string;
-  type: ToastKind;
-};
-
-const MAX_TOASTS = 3;
-const TOAST_DURATION_MS = 3200;
-
-export const ToastHost: React.FC = () => {
-  const [toasts, setToasts] = useState<ToastItem[]>([]);
-
-  useEffect(() => {
-    const handler = (event: Event) => {
-      const ev = event as CustomEvent;
-      const detail = ev.detail || {};
-      if (!detail?.message) return;
-      const toast: ToastItem = {
-        id: `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-        message: detail.message,
-        type: detail.type === 'success' ? 'success' : 'error',
-      };
-      setToasts((prev) => {
-        const next = [...prev, toast];
-        if (next.length > MAX_TOASTS) {
-          return next.slice(next.length - MAX_TOASTS);
-        }
-        return next;
-      });
-      window.setTimeout(() => {
-        setToasts((prev) => prev.filter((item) => item.id !== toast.id));
-      }, TOAST_DURATION_MS);
-    };
-
-    window.addEventListener('appToast', handler as EventListener);
-    return () => window.removeEventListener('appToast', handler as EventListener);
-  }, []);
-
-  const hasToasts = toasts.length > 0;
-  const containerClass = useMemo(
-    () => `app-toast-container ${hasToasts ? 'app-toast-container--active' : ''}`,
-    [hasToasts]
-  );
-
-  if (!hasToasts) return null;
-
-  return (
-    <div className={containerClass} role="status" aria-live="polite">
-      {toasts.map((toast) => (
-        <div key={toast.id} className={`app-toast app-toast--${toast.type}`}>
-          {toast.message}
-        </div>
-      ))}
-    </div>
-  );
-};
+/**
+ * Glass toast host — sonner `<Toaster>` styled to the material system.
+ * Bottom-right, no colored backgrounds: tint comes only from the status
+ * icon hue + a 3px left accent bar (see `.sx-toast` in components.css).
+ */
+export const ToastHost: React.FC = () => (
+  <Toaster
+    position="bottom-right"
+    gap={10}
+    offset={20}
+    duration={3600}
+    toastOptions={{
+      unstyled: true,
+      classNames: {
+        toast: 'sx-toast',
+        title: 'sx-toast__title',
+        description: 'sx-toast__desc',
+        icon: 'sx-toast__icon',
+        closeButton: 'sx-toast__close',
+      },
+    }}
+  />
+);
 
 export default ToastHost;

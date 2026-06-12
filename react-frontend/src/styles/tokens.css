@@ -1,0 +1,165 @@
+/* =====================================================
+   STARLEX SEMANTIC TOKEN CONTRACT
+   The complete public API. Components consume ONLY these
+   tokens (plus the status/priority set). Ultra-dark is the
+   default declared on :root; themes/light.css re-values the
+   same names under :root[data-theme="light"].
+   ===================================================== */
+@layer base {
+  :root {
+    color-scheme: dark;
+
+    /* Canvas & depth field */
+    --sx-canvas: #08070a;
+    --sx-canvas-elevated: #0e0d11;
+    --sx-depth-a: rgb(255 255 255 / 0.07);   /* depth-field blobs — monochrome ONLY */
+    --sx-depth-b: rgb(255 255 255 / 0.04);
+    --sx-depth-c: rgb(255 255 255 / 0.05);
+    --sx-depth-noise: 0.5;
+
+    /* Glass material inputs (consumed by glass recipes) */
+    --sx-glass-fill-top: rgb(255 255 255 / 0.05);
+    --sx-glass-fill-bottom: rgb(255 255 255 / 0.015);
+    --sx-glass-fill-top-raised: rgb(255 255 255 / 0.06);   /* sidebar / dock */
+    --sx-glass-fill-top-strong: rgb(255 255 255 / 0.12);   /* menu / modal — legibility over content */
+    --sx-glass-blur: 28px;
+    --sx-blur-sidebar: 36px;
+    --sx-blur-menu: 36px;
+    --sx-blur-modal: 40px;
+    --sx-glass-saturate: 130%;
+    --sx-glass-brightness: 1.12;
+    --sx-menu-fill-top: rgb(255 255 255 / 0.07);
+    --sx-menu-fill-bottom: rgb(255 255 255 / 0.018);
+    --sx-menu-scrim: rgb(0 0 0 / 0.26);
+    --sx-rim-bright: rgb(255 255 255 / 0.38);  /* light-catching edge */
+    --sx-rim-faint: rgb(255 255 255 / 0.05);
+    --sx-thickness: rgb(0 0 0 / 0.35);          /* bottom inner shadow */
+    --sx-edge: transparent;                      /* dark: rim is the only edge */
+
+    /* Tier B surfaces — alpha fills over canvas (Law 11) */
+    --sx-surface: rgb(255 255 255 / 0.045);
+    --sx-surface-hover: rgb(255 255 255 / 0.08);
+    --sx-surface-active: rgb(255 255 255 / 0.115);
+    --sx-opaque: #121116;                        /* escape hatch for sticky/scroll-clip contexts */
+
+    /* Hairlines (rare; see Design Law 3) */
+    --sx-line: rgb(255 255 255 / 0.06);
+    --sx-line-strong: rgb(255 255 255 / 0.11);
+
+    /* Text */
+    --sx-text: #f4f2f0;
+    --sx-text-muted: rgb(244 242 240 / 0.64);
+    --sx-text-subtle: rgb(244 242 240 / 0.44);
+    --sx-text-disabled: rgb(244 242 240 / 0.28);
+
+    /* Accent — brand crimson, scalpel use only (Design Law 6) */
+    --sx-accent: #e6455a;
+    --sx-accent-rgb: 230 69 90;
+    --sx-accent-contrast: #ffffff;
+    --sx-focus-ring: 0 0 0 3px rgb(var(--sx-accent-rgb) / 0.28);
+
+    /* Danger — destructive actions only (delete, irreversible) */
+    --sx-danger: #e0726f;
+
+    /* Shadows — NEUTRAL, never tinted; two-layer: contact + ambient */
+    --sx-shadow-soft: 0 1px 2px rgb(0 0 0 / 0.40), 0 16px 48px rgb(0 0 0 / 0.50);
+    --sx-shadow-elevated: 0 2px 6px rgb(0 0 0 / 0.45), 0 32px 80px rgb(0 0 0 / 0.60);
+    --sx-overlay: rgb(0 0 0 / 0.42);
+    --sx-scrollbar-thumb: rgb(255 255 255 / 0.14);
+
+    /* Radii */
+    --radius-sm: 8px;
+    --radius-md: 10px;
+    --radius-lg: 14px;
+    --radius-xl: 20px;
+
+    /* Motion easings/durations now live in styles/motion.css (Phase 5). */
+
+    /* ===== Status & priority palette — custom desaturated set =====
+       -bg derived as color-mix(text 14%, transparent). */
+    --status-backlog-text: #9b97a3;
+    --status-backlog-bg: color-mix(in srgb, var(--status-backlog-text) 14%, transparent);
+    --status-todo-text: #7d9bd1;
+    --status-todo-bg: color-mix(in srgb, var(--status-todo-text) 14%, transparent);
+    --status-progress-text: #d4c06b;
+    --status-progress-bg: color-mix(in srgb, var(--status-progress-text) 14%, transparent);
+    --status-review-text: #d9a06b;
+    --status-review-bg: color-mix(in srgb, var(--status-review-text) 14%, transparent);
+    --status-done-text: #79c9a4;
+    --status-done-bg: color-mix(in srgb, var(--status-done-text) 14%, transparent);
+    --status-canceled-text: var(--sx-text-disabled);
+    --status-canceled-bg: var(--sx-surface);
+
+    --priority-urgent-text: #e0726f;
+    --priority-urgent-bg: color-mix(in srgb, var(--priority-urgent-text) 14%, transparent);
+    --priority-high-text: #d9a06b;
+    --priority-high-bg: color-mix(in srgb, var(--priority-high-text) 14%, transparent);
+    --priority-medium-text: #cdb964;
+    --priority-medium-bg: color-mix(in srgb, var(--priority-medium-text) 14%, transparent);
+    --priority-low-text: #7d9bd1;
+    --priority-low-bg: color-mix(in srgb, var(--priority-low-text) 14%, transparent);
+    --priority-none-text: var(--sx-text-subtle);
+    --priority-none-bg: var(--sx-surface);
+
+    /* =====================================================
+       LEGACY ALIASES — @deprecated, remove in Phase 3.
+       Re-point old consumers onto the contract so the app
+       keeps rendering. Do NOT add new consumers of these.
+       ===================================================== */
+
+    /* rgb/alpha machinery still consumed inline by recipes */
+    --sx-panel-rgb: 255 255 255;
+    --sx-panel-alpha: 0.05;
+    --sx-panel-strong-alpha: 0.085;
+    --sx-panel-muted-alpha: 0.024;
+    --sx-border-rgb: 255 255 255;
+    --sx-border-alpha: 0.06;
+    --sx-border-strong-alpha: 0.11;
+    --sx-text-rgb: 244 242 240;
+
+    /* surface/line aliases */
+    --sx-panel: var(--sx-surface);
+    --sx-panel-strong: var(--sx-surface-active);
+    --sx-panel-muted: var(--sx-surface);
+    --sx-border: var(--sx-line);
+    --sx-border-strong: var(--sx-line-strong);
+    --sx-control: var(--sx-surface);
+    --sx-control-hover: var(--sx-surface-hover);
+    --sx-control-active: var(--sx-surface-active);
+    --sx-control-border: var(--sx-line);
+    --sx-control-border-strong: var(--sx-line-strong);
+    --sx-body-bg: var(--sx-canvas);
+
+    /* accent aliases */
+    --starlex-accent: var(--sx-accent);
+    --starlex-accent-rgb: var(--sx-accent-rgb);
+    --starlex-accent-soft: rgb(var(--sx-accent-rgb) / 0.14);
+    --starlex-accent-border: rgb(var(--sx-accent-rgb) / 0.32);
+    --starlex-accent-contrast: var(--sx-accent-contrast);
+    --workspace-accent: var(--sx-accent);
+
+    /* pre-contract surface/text/border aliases */
+    --bg-primary: var(--sx-canvas);
+    --bg-secondary: var(--sx-canvas-elevated);
+    --bg-tertiary: var(--sx-surface);
+    --bg-hover: var(--sx-surface-hover);
+    --bg-active: var(--sx-surface-active);
+    --text-primary: var(--sx-text);
+    --text-secondary: var(--sx-text-muted);
+    --text-tertiary: var(--sx-text-subtle);
+    --border-color: var(--sx-line);
+    --glass-bg: var(--sx-surface);
+    --glass-border: var(--sx-line);
+    --button-bg: var(--sx-surface);
+    --button-bg-hover: var(--sx-surface-hover);
+    --button-bg-active: var(--sx-surface-active);
+    --priority-pill-bg: var(--sx-surface);
+    --priority-pill-text: var(--sx-text-muted);
+    --priority-pill-bg-hover: var(--sx-surface-hover);
+    --priority-pill-bg-active: var(--sx-surface-active);
+    --priority-pill-text-active: var(--sx-text);
+
+    /* decorative star (neutral, no halo) */
+    --star-color: var(--sx-text);
+  }
+}

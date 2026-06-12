@@ -1,11 +1,11 @@
 import { httpClient } from './client.js';
 import { UserDTO } from '../../types/dto.js';
 
-export interface SearchTeamResult { id: string; name: string; }
-export interface SearchSprintResult { id: string; name: string; team_id: string; status: string; }
-export interface SearchTaskResult { id: string; task: string; team_id: string; sprint_id: string | null; progress: string; priority: string; }
+export interface SearchWorkspaceResult { id: string; name: string; }
+export interface SearchSprintResult { id: string; name: string; workspace_id: string; status: string; }
+export interface SearchTaskResult { id: string; task: string; workspace_id: string; sprint_id: string | null; progress: string; priority: string; }
 export interface GlobalSearchResponse {
-  teams: SearchTeamResult[];
+  workspaces: SearchWorkspaceResult[];
   sprints: SearchSprintResult[];
   tasks: SearchTaskResult[];
 }

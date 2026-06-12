@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+	"time"
 
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
 )
@@ -9,19 +10,17 @@ import (
 type Service interface {
 
 	// Create task
-	CreateTeamTask(ctx context.Context, teamID string, assignedIDs []string, task *entity.Task, userId string) error
-	CreatePersonalTask(ctx context.Context, task *entity.Task) error
+	CreateWorkspaceTask(ctx context.Context, workspaceID string, assignedIDs []string, task *entity.Task, userId string) error
+	CreateProjectTask(ctx context.Context, projectID, workspaceID string, assignedIDs []string, task *entity.Task) error
 
 	// Get task by ID
 	GetTaskByID(ctx context.Context, taskID string) (*entity.Task, error)
-	// Get all tasks from team by ID
-	GetTeamTasks(ctx context.Context, teamID string) ([]*entity.Task, error)
-	// Retrieves all tasks by ID
-	GetUserTasks(ctx context.Context, userID string) ([]*entity.Task, error)
-	// Get tasks without folder
-	GetTasksWithoutFolder(ctx context.Context, userID string) ([]*entity.Task, error)
-	// Get tasks from folder
-	GetFolderTasks(ctx context.Context, folderID string) ([]*entity.Task, error)
+	// Get all tasks from workspace by ID
+	GetWorkspaceTasks(ctx context.Context, workspaceID string) ([]*entity.Task, error)
+	// Get tasks from project
+	GetProjectTasks(ctx context.Context, projectID string) ([]*entity.Task, error)
+	QueryWorkspaceTasks(ctx context.Context, query Query) (*QueryResult, error)
+	GetWorkspaceTaskCategories(ctx context.Context, workspaceID string) (*WorkspaceTaskCategories, error)
 
 	Update(ctx context.Context, id string, data *entity.Task, assignedTo []string) (*entity.Task, error)
 	// Update task
@@ -30,14 +29,13 @@ type Service interface {
 	UpdateTaskTitle(ctx context.Context, taskID, title string) error
 	UpdateTaskDescription(ctx context.Context, taskID, description string) error
 	UpdateTaskPriority(ctx context.Context, taskID, priority string) error
-	UpdateTaskStatus(ctx context.Context, taskID, progress string) error
+	UpdateTaskStatus(ctx context.Context, taskID, status string) error
+	UpdateTaskDueDate(ctx context.Context, taskID string, dueDate *time.Time) error
 	UpdateTaskAssignees(ctx context.Context, taskID string, assignedTo []string) error
+	UpdateTaskLabels(ctx context.Context, taskID string, labelIDs []string) error
 	// Delete task
 	Delete(ctx context.Context, id string) error
 
-	// Move task to folder
-	MoveTaskToFolder(ctx context.Context, taskID, folderID string) error
-
-	// Search tasks across multiple teams
-	SearchInTeams(ctx context.Context, teamIDs []string, query string) ([]*entity.Task, error)
+	// Search tasks across multiple workspaces
+	SearchInWorkspaces(ctx context.Context, workspaceIDs []string, query string) ([]*entity.Task, error)
 }

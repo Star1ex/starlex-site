@@ -35,26 +35,26 @@ func (h *Handlers) GetUser(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(dto.ToUserProfile(user))
 }
 
-// Swagger disabled: GetTeams godoc
-// Swagger disabled: Summary      Get teams by user
-// Swagger disabled: Description  Returns a list of all tasks for a given team.
+// Swagger disabled: GetWorkspaces godoc
+// Swagger disabled: Summary      Get workspaces by user
+// Swagger disabled: Description  Returns a list of all tasks for a given workspace.
 // Swagger disabled: Tags         users
 // Swagger disabled: Param        user_id  path      string       true  "User ID"
-// Swagger disabled: Success      200      {array}   dto.TeamResponse "List of teams"
+// Swagger disabled: Success      200      {array}   dto.WorkspaceResponse "List of workspaces"
 // Swagger disabled: Failure      500      {object}  map[string]string "Server error"
 // Swagger disabled: Security BearerAuth
-// Swagger disabled: Router       /team/:id [get]
-func (h *Handlers) GetTeams(ctx *fiber.Ctx) error {
+// Swagger disabled: Router       /workspace/:id [get]
+func (h *Handlers) GetWorkspaces(ctx *fiber.Ctx) error {
 	userID, authErr := h.getAuthenticatedUserID(ctx)
 	if authErr != nil {
 		return authErr
 	}
-	teams, err := h.userService.GetTeams(ctx.Context(), userID)
+	workspaces, err := h.userService.GetWorkspaces(ctx.Context(), userID)
 	if err != nil {
-		logger.Log.Errorw("get teams failed", "error", err)
+		logger.Log.Errorw("get workspaces failed", "error", err)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{})
 	}
-	response := dto.ToTeamsResponse(teams)
+	response := dto.ToWorkspacesResponse(workspaces)
 	return ctx.Status(fiber.StatusOK).JSON(response)
 }
 
@@ -102,6 +102,7 @@ func (h *Handlers) UploadPhoto(c *fiber.Ctx) error {
 
 	url, err := h.userService.UploadUserPhoto(c.Context(), userID, file)
 	if err != nil {
+		logger.Log.Errorw("upload user photo failed", "user_id", userID, "error", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"error": "failed to upload photo",
 		})

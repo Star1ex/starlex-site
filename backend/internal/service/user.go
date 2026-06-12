@@ -5,15 +5,18 @@ import (
 	"errors"
 	"fmt"
 	"mime/multipart"
+	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
-	"github.com/Star1ex/starlex-site/internal/api/dto"
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
 	"github.com/Star1ex/starlex-site/internal/domain/user"
 	"github.com/Star1ex/starlex-site/internal/events"
+	"github.com/Star1ex/starlex-site/internal/logger"
 	"github.com/Star1ex/starlex-site/internal/security"
 	"github.com/Star1ex/starlex-site/internal/storage"
+	"github.com/google/uuid"
 )
 
 type UserService struct {
@@ -67,30 +70,6 @@ func NewUserService(repo user.Repository, storage storage.Storage, bus *events.B
 	}
 }
 
-func (s *UserService) CreateUnverified(ctx context.Context, u *dto.UserApi) (string, error) {
-	id := security.GenerateNewID()
-	hashedPassword, err := security.HashPassword(u.Password)
-	if err != nil {
-		return "", err
-	}
-	newUser := entity.NewUser(id, u.Email, hashedPassword, u.FirstName, u.LastName)
-	// User is created as unverified (IsVerified = false by default)
-
-	if err := s.repo.Create(ctx, newUser); err != nil {
-		return "", err
-	}
-
-	s.PublishUserRegistered(newUser)
-
-	return newUser.ID, nil
-}
-
-// Old Create method - keep for backward compatibility if needed, or remove
-func (s *UserService) Create(ctx context.Context, u *dto.UserApi) error {
-	_, err := s.CreateUnverified(ctx, u)
-	return err
-}
-
 func (s *UserService) CreateOAuth(ctx context.Context, u *entity.User) error {
 	if u == nil {
 		return errors.New("missing user")
@@ -141,12 +120,12 @@ func (s *UserService) Login(ctx context.Context, email, password string) (*entit
 	return user, nil
 }
 
-func (s *UserService) GetTeams(ctx context.Context, userID string) ([]*entity.Team, error) {
-	teams, err := s.repo.GetUserTeams(ctx, userID)
+func (s *UserService) GetWorkspaces(ctx context.Context, userID string) ([]*entity.Workspace, error) {
+	workspaces, err := s.repo.GetUserWorkspaces(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
-	return teams, nil
+	return workspaces, nil
 }
 
 func (s *UserService) Search(ctx context.Context, email string) ([]*entity.User, error) {
@@ -158,18 +137,33 @@ func (s *UserService) SetUserPhoto(id, photo_url string) error {
 }
 
 func (s *UserService) UploadUserPhoto(ctx context.Context, username string, file *multipart.FileHeader) (string, error) {
-	path := fmt.Sprintf("avatars/%s/%s", username, file.Filename)
+	path := avatarPhotoPath(username, file.Filename)
 
 	url, err := s.storage.UploadFile(ctx, file, path)
 	if err != nil {
 		return "", err
 	}
 
+	previousURL, _ := s.repo.GetPhoto(ctx, username)
 	if err := s.repo.UpdatePhoto(username, url); err != nil {
+		if deleteErr := s.storage.DeleteFile(ctx, url); deleteErr != nil {
+			logger.Log.Warnw("rollback uploaded user photo failed", "user_id", username, "error", deleteErr)
+		}
 		return "", err
 	}
 
+	if previousURL != "" && previousURL != url {
+		if deleteErr := s.storage.DeleteFile(ctx, previousURL); deleteErr != nil {
+			logger.Log.Warnw("delete previous user photo failed", "user_id", username, "error", deleteErr)
+		}
+	}
+
 	return url, nil
+}
+
+func avatarPhotoPath(userID, filename string) string {
+	ext := strings.ToLower(filepath.Ext(filename))
+	return fmt.Sprintf("avatars/%s/%s%s", userID, uuid.NewString(), ext)
 }
 
 func (s *UserService) GetPhoto(ctx context.Context, userID string) (string, error) {
@@ -181,6 +175,12 @@ func (s *UserService) Update(ctx context.Context, u *entity.User, id string) err
 		u.NameOverridden = true
 	}
 	return s.repo.Update(ctx, u, id)
+}
+
+// RecordLogin stores the most recent login time and source IP for the user.
+// Failures are non-fatal to the login flow and handled by the caller.
+func (s *UserService) RecordLogin(ctx context.Context, userID, ip string) error {
+	return s.repo.MarkLastLogin(ctx, userID, ip)
 }
 
 func (s *UserService) GetTokenVersion(ctx context.Context, userID string) (int, error) {

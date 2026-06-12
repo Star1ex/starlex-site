@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"time"
 
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
 	"github.com/Star1ex/starlex-site/internal/domain/user"
@@ -12,21 +13,26 @@ import (
 )
 
 type UserModel struct {
-	ID             string         `gorm:"primaryKey"`
-	Email          string         `gorm:"unique;not null"`
-	Password       *string        `gorm:"default:null"`
-	FirstName      string         `gorm:"not null;size:50"`
-	LastName       string         `gorm:"not null;size:50"`
-	PhotoURL       *string        `gorm:"default:null"`
-	AvatarURL      *string        `gorm:"default:null"`
-	GoogleID       *string        `gorm:"uniqueIndex;default:null"`
-	GithubID       *string        `gorm:"uniqueIndex;default:null"`
-	AuthProviders  datatypes.JSON `gorm:"type:jsonb;default:'[]'"`
-	NameOverridden bool           `gorm:"default:false"`
-	Role           string         `gorm:"default:'member'"`
-	IsVerified     bool           `gorm:"default:false"`
-	TokenVersion   int            `gorm:"default:1"`
-	Teams          []TeamModel    `gorm:"many2many:users_teams"`
+	ID             string           `gorm:"primaryKey"`
+	Email          string           `gorm:"unique;not null"`
+	Password       *string          `gorm:"default:null"`
+	FirstName      string           `gorm:"not null;size:50"`
+	LastName       string           `gorm:"not null;size:50"`
+	PhotoURL       *string          `gorm:"default:null"`
+	AvatarURL      *string          `gorm:"default:null"`
+	GoogleID       *string          `gorm:"uniqueIndex;default:null"`
+	GithubID       *string          `gorm:"uniqueIndex;default:null"`
+	AuthProviders  datatypes.JSON   `gorm:"type:jsonb;default:'[]'"`
+	NameOverridden bool             `gorm:"default:false"`
+	Role           string           `gorm:"default:'member'"`
+	IsVerified     bool             `gorm:"default:false"`
+	TokenVersion   int              `gorm:"default:1"`
+	SignupIP       *string          `gorm:"default:null"`
+	LastLoginIP    *string          `gorm:"default:null"`
+	LastLoginAt    *time.Time       `gorm:"default:null"`
+	CreatedAt      time.Time        `gorm:"autoCreateTime"`
+	UpdatedAt      time.Time        `gorm:"autoUpdateTime"`
+	Workspaces     []WorkspaceModel `gorm:"many2many:users_workspaces"`
 }
 
 type UserRepository struct {
@@ -48,6 +54,10 @@ func fromDomain(u *entity.User) *UserModel {
 		GithubID:       u.GithubID,
 		NameOverridden: u.NameOverridden,
 		AuthProviders:  marshalAuthProviders(authProviders),
+		IsVerified:     u.IsVerified,
+		SignupIP:       u.SignupIP,
+		LastLoginIP:    u.LastLoginIP,
+		LastLoginAt:    u.LastLoginAt,
 	}
 	if u.Password != "" {
 		model.Password = &u.Password
@@ -89,6 +99,11 @@ func toDomain(u *UserModel) *entity.User {
 		NameOverridden: u.NameOverridden,
 		IsVerified:     u.IsVerified,
 		TokenVersion:   tokenVersion,
+		SignupIP:       u.SignupIP,
+		LastLoginIP:    u.LastLoginIP,
+		LastLoginAt:    u.LastLoginAt,
+		CreatedAt:      u.CreatedAt,
+		UpdatedAt:      u.UpdatedAt,
 	}
 }
 
@@ -169,22 +184,55 @@ func (r *UserRepository) GetByGithubID(ctx context.Context, githubID string) (*e
 	return toDomain(&model), nil
 }
 
-func (r *UserRepository) GetUserTeams(ctx context.Context, userID string) ([]*entity.Team, error) {
-	var userModel UserModel
-	err := r.db.WithContext(ctx).Preload("Teams").Find(&userModel, "id = ?", userID).Error
+func (r *UserRepository) GetUserWorkspaces(ctx context.Context, userID string) ([]*entity.Workspace, error) {
+	type workspaceRow struct {
+		ID                string
+		Name              string
+		Description       string
+		Icon              string
+		Color             string
+		OwnerID           string
+		KeyPrefix         string
+		DefaultTaskStatus string
+		MemberDefaultRole string
+		Role              string
+		MemberCount       int
+		ProjectCount      int
+	}
+
+	var rows []workspaceRow
+	err := r.db.WithContext(ctx).
+		Table("workspace_models AS w").
+		Select(`w.id, w.name, w.description, w.icon, w.color, w.owner_id, w.key_prefix,
+			w.default_task_status, w.member_default_role, wm.role,
+			(SELECT COUNT(*) FROM workspace_members WHERE workspace_id = w.id) AS member_count,
+			(SELECT COUNT(*) FROM project_models WHERE workspace_id = w.id) AS project_count`).
+		Joins("JOIN workspace_members wm ON wm.workspace_id = w.id").
+		Where("wm.user_id = ?", userID).
+		Order("w.name ASC").
+		Scan(&rows).Error
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, ErrUserNotFound
-		}
 		return nil, err
 	}
 
-	teams := userModel.Teams
-	teamsInUser := make([]*entity.Team, len(teams))
-	for i, team := range teams {
-		teamsInUser[i] = toTeamDomain(&team)
+	workspaces := make([]*entity.Workspace, len(rows))
+	for i, row := range rows {
+		workspaces[i] = &entity.Workspace{
+			ID:                row.ID,
+			Name:              row.Name,
+			Description:       row.Description,
+			Icon:              row.Icon,
+			Color:             row.Color,
+			OwnerID:           row.OwnerID,
+			KeyPrefix:         row.KeyPrefix,
+			DefaultTaskStatus: row.DefaultTaskStatus,
+			MemberDefaultRole: row.MemberDefaultRole,
+			Role:              row.Role,
+			MemberCount:       row.MemberCount,
+			ProjectCount:      row.ProjectCount,
+		}
 	}
-	return teamsInUser, nil
+	return workspaces, nil
 }
 
 func (r *UserRepository) GetByIDs(ctx context.Context, ids []string) ([]*entity.User, error) {
@@ -324,6 +372,18 @@ func (r *UserRepository) GetPhoto(ctx context.Context, userID string) (string, e
 	}
 
 	return photo, err
+}
+
+// MarkLastLogin records the most recent successful login time and source IP.
+func (r *UserRepository) MarkLastLogin(ctx context.Context, userID, ip string) error {
+	updates := map[string]interface{}{"last_login_at": time.Now()}
+	if ip != "" {
+		updates["last_login_ip"] = ip
+	}
+	return r.db.WithContext(ctx).
+		Model(&UserModel{}).
+		Where("id = ?", userID).
+		Updates(updates).Error
 }
 
 // mark is verified user

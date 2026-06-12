@@ -2,7 +2,9 @@ import React, { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Eye, EyeOff } from 'lucide-react';
 import { authService } from '@/services/api/index.js';
+import { getApiErrorMessage } from '@/shared/lib/apiError.js';
 import { PasswordStrengthMeter } from '@/shared/ui/PasswordStrengthMeter.js';
+import { Glass } from '@/shared/ui/glass/index.js';
 
 export const ResetPasswordPage: React.FC = () => {
   const navigate = useNavigate();
@@ -77,162 +79,140 @@ export const ResetPasswordPage: React.FC = () => {
       setTimeout(() => {
         navigate('/sign-in', { state: { message: 'Password reset successful. Please sign in.' } });
       }, 1500);
-    } catch (err: any) {
-      setErrorMessage(err?.response?.data?.error || 'Invalid or expired reset code');
+    } catch (err: unknown) {
+      setErrorMessage(getApiErrorMessage(err, 'Invalid or expired reset code'));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-white dark:bg-dark-bg transition-colors duration-300">
-      <div className="flex flex-col md:flex-row w-full max-w-5xl overflow-hidden bg-white dark:bg-dark-surface">
-        <div className="w-full md:w-1/2 p-8 md:p-16 flex flex-col justify-center items-start">
-          <h1 className="text-4xl sm:text-5xl md:text-7xl text-black dark:text-dark-text font-serif mb-4 md:mb-6 transition-colors duration-300">
-            Restore
-          </h1>
-          <div className="w-16 sm:w-24 md:w-1/3 h-0.5 bg-black dark:bg-dark-text mb-4 md:mb-6 transition-colors duration-300"></div>
-          <p className="text-base sm:text-lg text-black dark:text-dark-text-muted transition-colors duration-300">
-            Set a new password to regain access.
-          </p>
+    <div className="auth-page min-h-screen flex items-center justify-center p-4">
+      <Glass variant="modal" depth="floating" as="form" className="w-full max-w-sm p-8 space-y-5" onSubmit={handleSubmit}>
+        <div className="text-center space-y-1.5">
+          <p className="label-caps text-[color:var(--sx-text-subtle)] tracking-[0.25em]">Starlex</p>
+          <h1 className="text-headline-lg font-hanken font-bold text-[color:var(--sx-text)]">Restore access</h1>
+          <p className="text-body-sm text-[color:var(--sx-text-muted)]">Set a new password to regain access.</p>
         </div>
 
-        <div className="auth-panel w-full md:w-1/2 p-8 md:p-16 flex flex-col justify-center">
-          <form className="space-y-6 sm:space-y-7" onSubmit={handleSubmit}>
-            {tokenFromUrl && (
-              <div className="p-3 bg-gray-50 border border-gray-200 rounded-md">
-                <p className="text-xs text-gray-700">
-                  Secure link detected. You can reset your password without entering a code.
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setUseCode(!useCode)}
-                  className="mt-2 text-xs uppercase tracking-wider text-black/70 hover:text-black transition-colors duration-200"
-                >
-                  {useCode ? 'Use secure link' : 'Use code instead'}
-                </button>
-              </div>
-            )}
-
-            {message && (
-              <div className="p-3 bg-green-50 border border-green-200 rounded-md">
-                <p className="text-center text-sm text-green-700 font-medium">
-                  {message}
-                </p>
-              </div>
-            )}
-
-            {errorMessage && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-md">
-                <p className="text-center text-sm text-red-700 font-medium">
-                  {errorMessage}
-                </p>
-              </div>
-            )}
-
-            {useCode && (
-              <>
-                <div>
-                  <label className="block text-sm font-medium text-black dark:text-dark-text uppercase tracking-wider mb-1">
-                    Email
-                  </label>
-                  <input
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    type="email"
-                    placeholder="your@email.com"
-                    disabled={isSubmitting}
-                    className="auth-input mt-1 w-full border-b border-black dark:border-dark-border focus:border-black dark:focus:border-dark-text focus:outline-none py-2 text-black dark:text-dark-text placeholder-gray-500 dark:placeholder-dark-text-muted transition-colors duration-300 disabled:opacity-50"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-black dark:text-dark-text uppercase tracking-wider mb-1">
-                    Reset Code
-                  </label>
-                  <input
-                    value={code}
-                    onChange={(e) => setCode(e.target.value)}
-                    type="text"
-                    placeholder="Enter the 6-digit code"
-                    disabled={isSubmitting}
-                    className="auth-input mt-1 w-full border-b border-black dark:border-dark-border focus:border-black dark:focus:border-dark-text focus:outline-none py-2 text-black dark:text-dark-text placeholder-gray-500 dark:placeholder-dark-text-muted transition-colors duration-300 disabled:opacity-50"
-                  />
-                </div>
-              </>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium text-black dark:text-dark-text uppercase tracking-wider mb-1">
-                New Password
-              </label>
-              <div className="relative">
-                <input
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  type={showNewPassword ? 'text' : 'password'}
-                  placeholder="Create a strong password"
-                  disabled={isSubmitting}
-                  className="auth-input mt-1 w-full border-b border-black dark:border-dark-border focus:border-black dark:focus:border-dark-text focus:outline-none py-2 text-black dark:text-dark-text placeholder-gray-500 dark:placeholder-dark-text-muted transition-colors duration-300 disabled:opacity-50"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowNewPassword(!showNewPassword)}
-                  disabled={isSubmitting}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-dark-text-muted hover:text-black dark:hover:text-dark-text transition-colors"
-                >
-                  {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-black dark:text-dark-text uppercase tracking-wider mb-1">
-                Confirm Password
-              </label>
-              <div className="relative">
-                <input
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  placeholder="Confirm your new password"
-                  disabled={isSubmitting}
-                  className="auth-input mt-1 w-full border-b border-black dark:border-dark-border focus:border-black dark:focus:border-dark-text focus:outline-none py-2 text-black dark:text-dark-text placeholder-gray-500 dark:placeholder-dark-text-muted transition-colors duration-300 disabled:opacity-50"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  disabled={isSubmitting}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-500 dark:text-dark-text-muted hover:text-black dark:hover:text-dark-text transition-colors"
-                >
-                  {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-            </div>
-
-            <PasswordStrengthMeter password={newPassword} />
-
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="w-full py-3 mt-6 sm:mt-8 bg-black dark:bg-white text-white dark:text-black font-semibold rounded-md shadow-md hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors duration-200 disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? 'Updating...' : 'Reset Password'}
-            </button>
-
-            <p className="text-center text-sm text-black dark:text-dark-text pt-4 transition-colors duration-300">
-              Back to{' '}
-              <button
-                type="button"
-                onClick={() => navigate('/sign-in')}
-                disabled={isSubmitting}
-                className="text-black dark:text-dark-text font-medium hover:text-gray-700 dark:hover:text-dark-text-muted transition-colors duration-200"
-              >
-                Sign in
-              </button>
+        {tokenFromUrl && (
+          <div className="rounded-lg px-3 py-2.5 bg-[color:var(--sx-surface)]">
+            <p className="text-xs text-[color:var(--sx-text-muted)]">
+              Secure link detected. You can reset your password without entering a code.
             </p>
-          </form>
+            <button
+              type="button"
+              onClick={() => setUseCode(!useCode)}
+              className="mt-2 label-caps text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] transition-colors"
+            >
+              {useCode ? 'Use secure link' : 'Use code instead'}
+            </button>
+          </div>
+        )}
+
+        {message && (
+          <div className="rounded-lg px-3 py-2 bg-[color:var(--status-done-bg)]">
+            <p className="text-center text-sm text-[color:var(--status-done-text)] font-medium">{message}</p>
+          </div>
+        )}
+
+        {errorMessage && (
+          <p className="text-center text-sm text-[color:var(--sx-danger)] font-medium">{errorMessage}</p>
+        )}
+
+        {useCode && (
+          <>
+            <div>
+              <label className="label-caps block text-[color:var(--sx-text-subtle)] mb-1.5">Email</label>
+              <input
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                type="email"
+                placeholder="your@email.com"
+                disabled={isSubmitting}
+                className="glass-input w-full px-3 py-2.5 !rounded-[var(--radius-md)] text-body-md disabled:opacity-50"
+              />
+            </div>
+            <div>
+              <label className="label-caps block text-[color:var(--sx-text-subtle)] mb-1.5">Reset Code</label>
+              <input
+                value={code}
+                onChange={(e) => setCode(e.target.value)}
+                type="text"
+                placeholder="Enter the 6-digit code"
+                disabled={isSubmitting}
+                className="glass-input w-full px-3 py-2.5 !rounded-[var(--radius-md)] text-body-md disabled:opacity-50"
+              />
+            </div>
+          </>
+        )}
+
+        <div>
+          <label className="label-caps block text-[color:var(--sx-text-subtle)] mb-1.5">New Password</label>
+          <div className="relative">
+            <input
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              type={showNewPassword ? 'text' : 'password'}
+              placeholder="Create a strong password"
+              disabled={isSubmitting}
+              className="glass-input w-full px-3 py-2.5 pr-10 !rounded-[var(--radius-md)] text-body-md disabled:opacity-50"
+            />
+            <button
+              type="button"
+              onClick={() => setShowNewPassword(!showNewPassword)}
+              disabled={isSubmitting}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] transition-colors"
+            >
+              {showNewPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
         </div>
-      </div>
+
+        <div>
+          <label className="label-caps block text-[color:var(--sx-text-subtle)] mb-1.5">Confirm Password</label>
+          <div className="relative">
+            <input
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              type={showConfirmPassword ? 'text' : 'password'}
+              placeholder="Confirm your new password"
+              disabled={isSubmitting}
+              className="glass-input w-full px-3 py-2.5 pr-10 !rounded-[var(--radius-md)] text-body-md disabled:opacity-50"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              disabled={isSubmitting}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-[color:var(--sx-text-subtle)] hover:text-[color:var(--sx-text)] transition-colors"
+            >
+              {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+            </button>
+          </div>
+        </div>
+
+        <PasswordStrengthMeter password={newPassword} />
+
+        <button
+          type="submit"
+          disabled={isSubmitting}
+          className="w-full py-3 bg-[color:var(--sx-accent)] text-[color:var(--sx-accent-contrast)] font-semibold rounded-[var(--radius-md)] hover:brightness-110 transition-[filter] disabled:opacity-45 disabled:cursor-not-allowed"
+        >
+          {isSubmitting ? 'Updating...' : 'Reset Password'}
+        </button>
+
+        <p className="text-center text-sm text-[color:var(--sx-text-muted)]">
+          Back to{' '}
+          <button
+            type="button"
+            onClick={() => navigate('/sign-in')}
+            disabled={isSubmitting}
+            className="text-[color:var(--sx-text)] font-medium hover:text-[color:var(--sx-accent)] transition-colors"
+          >
+            Sign in
+          </button>
+        </p>
+      </Glass>
     </div>
   );
 };

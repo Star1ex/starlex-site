@@ -2,6 +2,7 @@ package task
 
 import (
 	"context"
+	"time"
 
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
 )
@@ -16,16 +17,17 @@ type Repository interface {
 	UpdateDescription(ctx context.Context, id string, description string) error
 	UpdatePriority(ctx context.Context, id string, priority string) error
 	UpdateProgress(ctx context.Context, id string, progress string) error
+	UpdateStatus(ctx context.Context, id string, status string) error
+	UpdateDueDate(ctx context.Context, id string, dueDate *time.Time) error
 	UpdateAssignees(ctx context.Context, id string, assignedTo []string) error
+	UpdateLabels(ctx context.Context, id string, labelIDs []string) error
 	Delete(ctx context.Context, id string) error
 
 	// Getters
-	GetTeamTasks(ctx context.Context, teamID string) ([]*entity.Task, error)
-	GetUserTasks(ctx context.Context, userID string) ([]*entity.Task, error)
-	GetTasksWithoutFolder(ctx context.Context, userID string) ([]*entity.Task, error)
-	GetFolderTasks(ctx context.Context, folderID string) ([]*entity.Task, error)
+	GetWorkspaceTasks(ctx context.Context, workspaceID string) ([]*entity.Task, error)
+	GetProjectTasks(ctx context.Context, projectID string) ([]*entity.Task, error)
+	QueryWorkspaceTasks(ctx context.Context, query Query) (*QueryResult, error)
+	GetWorkspaceTaskCategories(ctx context.Context, workspaceID string) (*WorkspaceTaskCategories, error)
 
-	MoveTaskToFolder(ctx context.Context, taskID, folderID string) error
-
-	SearchInTeams(ctx context.Context, teamIDs []string, query string) ([]*entity.Task, error)
+	SearchInWorkspaces(ctx context.Context, workspaceIDs []string, query string) ([]*entity.Task, error)
 }

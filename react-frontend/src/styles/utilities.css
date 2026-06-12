@@ -1,0 +1,208 @@
+/* =====================================================
+   GLOBAL UTILITIES
+   ===================================================== */
+@layer utilities {
+  /* Custom scrollbar — glass style */
+  .scrollbar-glass {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--sx-border-rgb) / 0.18) transparent;
+  }
+  .scrollbar-glass::-webkit-scrollbar        { width: 6px; }
+  .scrollbar-glass::-webkit-scrollbar-track  { background: transparent; }
+  .scrollbar-glass::-webkit-scrollbar-thumb  { background: rgb(var(--sx-border-rgb) / 0.18); border-radius: 10px; }
+  .scrollbar-glass::-webkit-scrollbar-thumb:hover { background: rgb(var(--sx-border-rgb) / 0.30); }
+
+  /* Thin scroll (legacy alias) */
+  .scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(156,163,175,0.3) transparent;
+  }
+  .scrollbar-thin::-webkit-scrollbar        { height: 8px; width: 8px; }
+  .scrollbar-thin::-webkit-scrollbar-track  { background: transparent; }
+  .scrollbar-thin::-webkit-scrollbar-thumb  { background-color: rgba(156,163,175,0.25); border-radius: 6px; border: 2px solid transparent; background-clip: content-box; }
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover { background-color: rgba(156,163,175,0.45); }
+
+  /* Sidebar scroll alias */
+  .sidebar-scroll {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--sx-border-rgb) / 0.16) transparent;
+  }
+  .sidebar-scroll::-webkit-scrollbar        { width: 4px; }
+  .sidebar-scroll::-webkit-scrollbar-track  { background: transparent; }
+  .sidebar-scroll::-webkit-scrollbar-thumb  { background: rgb(var(--sx-border-rgb) / 0.16); border-radius: 4px; }
+  .sidebar-scroll::-webkit-scrollbar-thumb:hover { background: rgb(var(--sx-border-rgb) / 0.26); }
+
+  /* Hide scrollbar */
+  .scrollbar-none {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-none::-webkit-scrollbar { display: none; }
+
+  /* Page transition */
+  .route-content-shell {
+    min-height: calc(100vh - 140px);
+  }
+  .route-content-fallback {
+    min-height: min(34rem, calc(100vh - 140px));
+  }
+  .page-transition {
+    animation: pageFadeIn 420ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  @keyframes pageFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Drag ghost */
+  .drag-ghost {
+    transform: scale(1.03) rotate(0.5deg);
+    box-shadow: var(--sx-shadow-elevated);
+    opacity: 0.98;
+  }
+
+  /* Focus ring */
+  .focus-ring:focus-visible {
+    outline: none;
+    box-shadow: var(--sx-focus-ring);
+  }
+
+  /* App loading gate */
+  .app-loading-gate {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background: var(--sx-body-bg, var(--bg-primary, #000000));
+  }
+  .app-loading-spinner {
+    width: 24px;
+    height: 24px;
+    border: 2px solid var(--sx-line);
+    border-top-color: var(--sx-accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  .app-error-gate {
+    display: flex;
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background: var(--sx-body-bg, var(--bg-primary, #000000));
+  }
+  .app-error-card {
+    width: min(100%, 26rem);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--sx-line);
+    background: var(--sx-canvas-elevated);
+    padding: 1.5rem;
+    text-align: center;
+    box-shadow: var(--sx-shadow-elevated);
+  }
+  .app-error-card h2 {
+    color: var(--sx-text);
+    font-size: 1rem;
+    font-weight: 650;
+  }
+  .app-error-card p {
+    margin-top: 0.45rem;
+    color: var(--sx-text-subtle);
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+  .app-error-card button {
+    margin-top: 1rem;
+    border-radius: 9999px;
+    background: var(--sx-accent);
+    padding: 0.55rem 0.9rem;
+    color: var(--sx-accent-contrast);
+    font-size: 0.8125rem;
+    font-weight: 620;
+    transition: filter 150ms ease, transform 150ms ease;
+  }
+  .app-error-card button:hover {
+    filter: brightness(1.06);
+    transform: translateY(-1px);
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Star field decorative */
+  .star-field { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  .star {
+    position: absolute;
+    width: 2px;
+    height: 2px;
+    border-radius: 9999px;
+    background: var(--star-color);
+    opacity: 0.7;
+    animation: starTwinkle 6s ease-in-out infinite;
+    will-change: opacity, transform;
+  }
+  @keyframes starTwinkle {
+    0%, 100% { opacity: 0.35; transform: translateY(0); }
+    50%       { opacity: 0.90; transform: translateY(-2px); }
+  }
+
+  /* Headline font helper */
+  .font-display {
+    font-family: 'Hanken Grotesk', sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  /* Legacy alias — kept so existing consumers don't break */
+  .tt-font-display { font-family: 'Hanken Grotesk', sans-serif; letter-spacing: -0.02em; }
+
+  .tt-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 9999px;
+    background: var(--button-bg);
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: transform 300ms ease, background 300ms ease, box-shadow 300ms ease;
+    will-change: transform;
+    border: 1px solid var(--glass-border);
+  }
+  .tt-button:hover {
+    background: var(--button-bg-hover);
+    transform: translateY(-1px) scale(1.01);
+    box-shadow: var(--sx-shadow-soft);
+  }
+  .tt-button:active {
+    background: var(--button-bg-active);
+    transform: translateY(0) scale(0.99);
+  }
+  .tt-button-primary {
+    background: var(--sx-accent);
+    color: var(--sx-accent-contrast);
+    box-shadow: var(--sx-shadow-soft);
+    border-color: transparent;
+  }
+  .tt-button-primary:hover { filter: brightness(1.10); }
+
+  .tt-link { color: var(--sx-text); transition: color 180ms ease, opacity 180ms ease; }
+  .tt-link:hover { color: var(--sx-accent); }
+
+  /* Interactions */
+  a, button {
+    transition: color 180ms ease, opacity 180ms ease, transform 180ms ease;
+  }
+  a:focus-visible, button:focus-visible {
+    outline: none;
+    box-shadow: var(--sx-focus-ring);
+  }
+
+  /* Global reduced-motion lives in styles/motion.css; these are the
+     component-specific hard stops that also drop the residual 0.01ms. */
+  @media (prefers-reduced-motion: reduce) {
+    .page-transition, .star, .tt-button,
+    .dropdown-overlay, .dropdown-panel,
+    .app-sidebar::before { transition: none; animation: none; }
+    a, button { transition: none; }
+  }
+}

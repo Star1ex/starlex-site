@@ -3,12 +3,12 @@ package service
 import (
 	"context"
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/Star1ex/starlex-site/internal/domain/entity"
 	"github.com/Star1ex/starlex-site/internal/repository"
 	"github.com/Star1ex/starlex-site/internal/security"
-	"gorm.io/gorm"
 )
 
 var (
@@ -21,26 +21,26 @@ type SprintService struct {
 	sprintRepo *repository.SprintRepository
 }
 
-func (s *SprintService) SearchInTeams(ctx context.Context, teamIDs []string, query string) ([]*entity.Sprint, error) {
-	return s.sprintRepo.SearchInTeams(ctx, teamIDs, query)
+func (s *SprintService) SearchInWorkspaces(ctx context.Context, workspaceIDs []string, query string) ([]*entity.Sprint, error) {
+	return s.sprintRepo.SearchInWorkspaces(ctx, workspaceIDs, query)
 }
 
 func NewSprintService(sprintRepo *repository.SprintRepository) *SprintService {
 	return &SprintService{sprintRepo: sprintRepo}
 }
 
-func (s *SprintService) CreateSprint(ctx context.Context, teamID, createdBy, name, goal string, startDate, endDate *time.Time) (*entity.Sprint, error) {
+func (s *SprintService) CreateSprint(ctx context.Context, workspaceID, createdBy, name, goal string, startDate, endDate *time.Time) (*entity.Sprint, error) {
 	sprint := &entity.Sprint{
-		ID:        security.GenerateNewID(),
-		Name:      name,
-		Goal:      goal,
-		TeamID:    teamID,
-		Status:    "planning",
-		StartDate: startDate,
-		EndDate:   endDate,
-		CreatedBy: createdBy,
-		CreatedAt: time.Now().UTC(),
-		UpdatedAt: time.Now().UTC(),
+		ID:          security.GenerateNewID(),
+		Name:        name,
+		Goal:        goal,
+		WorkspaceID: workspaceID,
+		Status:      "planning",
+		StartDate:   startDate,
+		EndDate:     endDate,
+		CreatedBy:   createdBy,
+		CreatedAt:   time.Now().UTC(),
+		UpdatedAt:   time.Now().UTC(),
 	}
 	if err := s.sprintRepo.Create(ctx, sprint); err != nil {
 		return nil, err
@@ -48,15 +48,15 @@ func (s *SprintService) CreateSprint(ctx context.Context, teamID, createdBy, nam
 	return sprint, nil
 }
 
-func (s *SprintService) GetTeamSprints(ctx context.Context, teamID string) ([]*entity.Sprint, error) {
-	return s.sprintRepo.GetTeamSprints(ctx, teamID)
+func (s *SprintService) GetWorkspaceSprints(ctx context.Context, workspaceID string) ([]*entity.Sprint, error) {
+	return s.sprintRepo.GetWorkspaceSprints(ctx, workspaceID)
 }
 
 func (s *SprintService) GetSprintByID(ctx context.Context, id string) (*entity.Sprint, error) {
 	return s.sprintRepo.GetByID(ctx, id)
 }
 
-func (s *SprintService) UpdateSprint(ctx context.Context, id, name, goal string, startDate, endDate *time.Time) (*entity.Sprint, error) {
+func (s *SprintService) UpdateSprint(ctx context.Context, id, workspaceID, name, goal string, startDate, endDate *time.Time) (*entity.Sprint, error) {
 	sprint := &entity.Sprint{
 		ID:        id,
 		Name:      name,
@@ -64,21 +64,18 @@ func (s *SprintService) UpdateSprint(ctx context.Context, id, name, goal string,
 		StartDate: startDate,
 		EndDate:   endDate,
 	}
-	if err := s.sprintRepo.Update(ctx, sprint); err != nil {
+	if err := s.sprintRepo.UpdateInWorkspace(ctx, sprint, workspaceID); err != nil {
 		return nil, err
 	}
-	return s.sprintRepo.GetByID(ctx, id)
+	return s.sprintRepo.GetByIDInWorkspace(ctx, id, workspaceID)
 }
 
-func (s *SprintService) StartSprint(ctx context.Context, id, teamID string) (*entity.Sprint, error) {
-	sprint, err := s.sprintRepo.GetByID(ctx, id)
+func (s *SprintService) StartSprint(ctx context.Context, id, workspaceID string) (*entity.Sprint, error) {
+	sprint, err := s.sprintRepo.GetByIDInWorkspace(ctx, id, workspaceID)
 	if err != nil {
 		return nil, err
 	}
-	if sprint.TeamID != teamID {
-		return nil, gorm.ErrRecordNotFound
-	}
-	active, err := s.sprintRepo.HasActiveSprint(ctx, teamID, id)
+	active, err := s.sprintRepo.HasActiveSprint(ctx, workspaceID, id)
 	if err != nil {
 		return nil, err
 	}
@@ -94,16 +91,22 @@ func (s *SprintService) StartSprint(ctx context.Context, id, teamID string) (*en
 		Status:    "active",
 		StartDate: sprint.StartDate,
 	}
-	if err := s.sprintRepo.Update(ctx, updates); err != nil {
+	if err := s.sprintRepo.UpdateInWorkspace(ctx, updates, workspaceID); err != nil {
 		return nil, err
 	}
-	return s.sprintRepo.GetByID(ctx, id)
+	return s.sprintRepo.GetByIDInWorkspace(ctx, id, workspaceID)
 }
 
-func (s *SprintService) CompleteSprint(ctx context.Context, id string, moveTarget *string) (*entity.Sprint, error) {
-	sprint, err := s.sprintRepo.GetByID(ctx, id)
+func (s *SprintService) CompleteSprint(ctx context.Context, id, workspaceID string, moveTarget *string) (*entity.Sprint, error) {
+	moveTarget = normalizeSprintIDPtr(moveTarget)
+	sprint, err := s.sprintRepo.GetByIDInWorkspace(ctx, id, workspaceID)
 	if err != nil {
 		return nil, err
+	}
+	if moveTarget != nil && *moveTarget != "" {
+		if _, err := s.sprintRepo.GetByIDInWorkspace(ctx, *moveTarget, workspaceID); err != nil {
+			return nil, err
+		}
 	}
 	if err := s.sprintRepo.MoveIncompleteTasks(ctx, id, moveTarget); err != nil {
 		return nil, err
@@ -117,20 +120,23 @@ func (s *SprintService) CompleteSprint(ctx context.Context, id string, moveTarge
 		Status:  "completed",
 		EndDate: sprint.EndDate,
 	}
-	if err := s.sprintRepo.Update(ctx, updates); err != nil {
+	if err := s.sprintRepo.UpdateInWorkspace(ctx, updates, workspaceID); err != nil {
 		return nil, err
 	}
-	return s.sprintRepo.GetByID(ctx, id)
+	return s.sprintRepo.GetByIDInWorkspace(ctx, id, workspaceID)
 }
 
-func (s *SprintService) ArchiveSprint(ctx context.Context, id string) (*entity.Sprint, error) {
-	if err := s.sprintRepo.Update(ctx, &entity.Sprint{ID: id, Status: "archived"}); err != nil {
+func (s *SprintService) ArchiveSprint(ctx context.Context, id, workspaceID string) (*entity.Sprint, error) {
+	if err := s.sprintRepo.UpdateInWorkspace(ctx, &entity.Sprint{ID: id, Status: "archived"}, workspaceID); err != nil {
 		return nil, err
 	}
-	return s.sprintRepo.GetByID(ctx, id)
+	return s.sprintRepo.GetByIDInWorkspace(ctx, id, workspaceID)
 }
 
-func (s *SprintService) DeleteSprint(ctx context.Context, id string) error {
+func (s *SprintService) DeleteSprint(ctx context.Context, id, workspaceID string) error {
+	if _, err := s.sprintRepo.GetByIDInWorkspace(ctx, id, workspaceID); err != nil {
+		return err
+	}
 	count, err := s.sprintRepo.CountTasks(ctx, id)
 	if err != nil {
 		return err
@@ -138,15 +144,21 @@ func (s *SprintService) DeleteSprint(ctx context.Context, id string) error {
 	if count > 0 {
 		return ErrSprintHasTasks
 	}
-	return s.sprintRepo.Delete(ctx, id)
+	return s.sprintRepo.DeleteInWorkspace(ctx, id, workspaceID)
 }
 
-func (s *SprintService) MoveTaskToSprint(ctx context.Context, taskID string, sprintID *string) error {
-	return s.sprintRepo.UpdateTaskSprint(ctx, taskID, sprintID)
+func (s *SprintService) MoveTaskToSprint(ctx context.Context, taskID, workspaceID string, sprintID *string) error {
+	sprintID = normalizeSprintIDPtr(sprintID)
+	if sprintID != nil {
+		if _, err := s.sprintRepo.GetByIDInWorkspace(ctx, *sprintID, workspaceID); err != nil {
+			return err
+		}
+	}
+	return s.sprintRepo.UpdateTaskSprint(ctx, taskID, workspaceID, sprintID)
 }
 
-func (s *SprintService) UpdateTaskPosition(ctx context.Context, taskID string, position int) error {
-	return s.sprintRepo.UpdateTaskPosition(ctx, taskID, position)
+func (s *SprintService) UpdateTaskPosition(ctx context.Context, taskID, workspaceID string, position int) error {
+	return s.sprintRepo.UpdateTaskPosition(ctx, taskID, workspaceID, position)
 }
 
 func (s *SprintService) CreateSubtask(ctx context.Context, taskID, title string) (*entity.Subtask, error) {
@@ -174,8 +186,8 @@ func (s *SprintService) GetSubtaskByID(ctx context.Context, id string) (*entity.
 	return s.sprintRepo.GetSubtask(ctx, id)
 }
 
-func (s *SprintService) UpdateSubtask(ctx context.Context, id string, title *string, isDone *bool, position *int) (*entity.Subtask, error) {
-	existing, err := s.sprintRepo.GetSubtask(ctx, id)
+func (s *SprintService) UpdateSubtask(ctx context.Context, taskID, id string, title *string, isDone *bool, position *int) (*entity.Subtask, error) {
+	existing, err := s.sprintRepo.GetSubtaskForTask(ctx, taskID, id)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +201,7 @@ func (s *SprintService) UpdateSubtask(ctx context.Context, id string, title *str
 	if position != nil {
 		updates["position"] = *position
 	}
-	if err := s.sprintRepo.UpdateSubtask(ctx, id, updates); err != nil {
+	if err := s.sprintRepo.UpdateSubtask(ctx, taskID, id, updates); err != nil {
 		return nil, err
 	}
 	if title != nil {
@@ -204,6 +216,17 @@ func (s *SprintService) UpdateSubtask(ctx context.Context, id string, title *str
 	return existing, nil
 }
 
-func (s *SprintService) DeleteSubtask(ctx context.Context, id string) error {
-	return s.sprintRepo.DeleteSubtask(ctx, id)
+func (s *SprintService) DeleteSubtask(ctx context.Context, taskID, id string) error {
+	return s.sprintRepo.DeleteSubtask(ctx, taskID, id)
+}
+
+func normalizeSprintIDPtr(value *string) *string {
+	if value == nil {
+		return nil
+	}
+	trimmed := strings.TrimSpace(*value)
+	if trimmed == "" {
+		return nil
+	}
+	return &trimmed
 }

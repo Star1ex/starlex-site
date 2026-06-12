@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { NewTabModal } from '@/widgets/NewTabModal/NewTabModal.js';
-import { useModal } from '@/shared/hooks/useModal.js';
 import { useNavigate } from 'react-router-dom';
 import { getAuthUser } from '@/shared/lib/authManager.js';
 import { userService } from '@/services/api/index.js';
@@ -9,9 +7,10 @@ import { pageVariants } from '@/shared/lib/animations.js';
 import { getAllRecent, type RecentItem } from '@/shared/lib/recentItems.js';
 import { Clock, Users, Layers, FileText, Plus, Search } from 'lucide-react';
 import { useDocumentTitle } from '@/shared/hooks/useDocumentTitle.js';
-import { SearchModal } from '@/widgets/SearchModal/SearchModal.js';
-
-type Team = { id: string; name: string; description: string; emails: string[] };
+import SearchModal from '@/widgets/SearchModal/LazySearchModal.js';
+import { preloadSearchModal } from '@/app/routePreload.js';
+import { useWorkspace } from '@/contexts/useWorkspace.js';
+import type { UserProfileDTO } from '@/types/dto.js';
 
 function fmtDate(ts: number): string {
   const d = new Date(ts);
@@ -23,16 +22,17 @@ function fmtDate(ts: number): string {
 }
 
 const TYPE_ICON: Record<RecentItem['type'], React.ReactNode> = {
-  team:   <Users size={20} />,
-  sprint: <Layers size={20} />,
-  task:   <FileText size={20} />,
+  workspace: <Users size={20} />,
+  team:      <Users size={20} />,
+  sprint:    <Layers size={20} />,
+  task:      <FileText size={20} />,
 };
 
-const TYPE_LABEL: Record<RecentItem['type'], string> = {
-  team:   'Team',
-  sprint: 'Sprint',
-  task:   'Task',
-};
+function storedFirstName(): string {
+  const storedUser = getAuthUser();
+  if (!storedUser?.firstName) return '';
+  return storedUser.firstName.split(' ')[0];
+}
 
 const RecentCard: React.FC<{ item: RecentItem; index: number }> = ({ item, index }) => {
   const navigate = useNavigate();
@@ -81,26 +81,24 @@ const RecentCard: React.FC<{ item: RecentItem; index: number }> = ({ item, index
 
 export const Dashboard: React.FC = () => {
   const navigate = useNavigate();
-  const { open, onOpen, onClose } = useModal(false);
+  const { activeWorkspaceId } = useWorkspace();
   const [loading, setLoading] = useState(true);
-  const [userName, setUserName] = useState('');
+  const [userName, setUserName] = useState(storedFirstName);
   const [recent, setRecent] = useState(getAllRecent());
   const [searchOpen, setSearchOpen] = useState(false);
 
   const refreshRecent = useCallback(() => setRecent(getAllRecent()), []);
 
-  useEffect(() => {
-    const storedUser = getAuthUser();
-    if (storedUser?.firstName || storedUser?.first_name) {
-      setUserName((storedUser.firstName || storedUser.first_name || '').split(' ')[0]);
-    }
+  const newTaskPath = activeWorkspaceId ? `/task/new?workspaceId=${activeWorkspaceId}` : '/dashboard';
 
+  useEffect(() => {
     userService.getProfile()
-      .then((data: any) => {
+      .then((data: UserProfileDTO) => {
         setUserName((data.firstName || '').split(' ')[0] || '');
       })
-      .catch((err: any) => {
-        if (err?.response?.status === 401) navigate('/sign-in');
+      .catch((err: unknown) => {
+        const status = (err as { response?: { status?: number } })?.response?.status;
+        if (status === 401) navigate('/sign-in');
       })
       .finally(() => setLoading(false));
   }, [navigate]);
@@ -109,12 +107,6 @@ export const Dashboard: React.FC = () => {
     window.addEventListener('focus', refreshRecent);
     return () => window.removeEventListener('focus', refreshRecent);
   }, [refreshRecent]);
-
-  const handleTeamCreated = useCallback((team: Team) => {
-    window.dispatchEvent(new CustomEvent('teamCreated'));
-    onClose();
-    refreshRecent();
-  }, [onClose, refreshRecent]);
 
   useDocumentTitle('Home');
 
@@ -127,8 +119,8 @@ export const Dashboard: React.FC = () => {
 
   // All recent items sorted by time, max 8
   const allRecent = useMemo(() => {
-    const { teams, sprints, tasks } = recent;
-    return [...teams, ...sprints, ...tasks]
+    const { workspaces, sprints, tasks } = recent;
+    return [...workspaces, ...sprints, ...tasks]
       .sort((a, b) => b.openedAt - a.openedAt)
       .slice(0, 8);
   }, [recent]);
@@ -160,7 +152,10 @@ export const Dashboard: React.FC = () => {
         <motion.button
           initial={{ opacity: 0, y: 6 }}
           animate={{ opacity: 1, y: 0, transition: { delay: 0.08, duration: 0.22, ease: 'easeOut' } }}
-          onClick={() => setSearchOpen(true)}
+          onClick={() => {
+            preloadSearchModal();
+            setSearchOpen(true);
+          }}
           className="w-full max-w-md mx-auto flex items-center gap-3 px-4 py-2.5 rounded-xl mb-10 transition-colors"
           style={{
             background: 'var(--bg-secondary)',
@@ -195,8 +190,7 @@ export const Dashboard: React.FC = () => {
             >
               {/* Placeholder cards */}
               {[
-                { label: 'Open a team', icon: <Users size={20} />, action: onOpen },
-                { label: 'New task', icon: <FileText size={20} />, action: () => navigate('/task/new') },
+                { label: 'New task', icon: <FileText size={20} />, action: () => navigate(newTaskPath) },
               ].map((p, i) => (
                 <motion.button
                   key={i}
@@ -243,8 +237,7 @@ export const Dashboard: React.FC = () => {
           </div>
           <div className="flex flex-wrap gap-2">
             {[
-              { label: 'New team', icon: <Users size={14} />, action: onOpen },
-              { label: 'New task', icon: <FileText size={14} />, action: () => navigate('/task/new') },
+              { label: 'New task', icon: <FileText size={14} />, action: () => navigate(newTaskPath) },
             ].map((a, i) => (
               <motion.button
                 key={i}
@@ -261,14 +254,6 @@ export const Dashboard: React.FC = () => {
           </div>
         </motion.section>
       </div>
-
-      {open && (
-        <NewTabModal
-          open={open}
-          onClose={onClose}
-          onTeamCreated={handleTeamCreated}
-        />
-      )}
 
       <SearchModal isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
     </motion.div>
