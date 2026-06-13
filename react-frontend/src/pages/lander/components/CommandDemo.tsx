@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { startTransition, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useInView, useReducedMotion } from 'framer-motion';
 import { CheckCircle2, Layers, Mail, Palette, Plus, Search, Users } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -37,28 +37,42 @@ export function CommandDemo() {
     let cancelled = false;
     const timers: number[] = [];
     const at = (ms: number, fn: () => void) => {
-      timers.push(window.setTimeout(() => { if (!cancelled) fn(); }, ms));
+      timers.push(window.setTimeout(() => { if (!cancelled && !document.hidden) fn(); }, ms));
     };
+    const defer = (fn: () => void) => startTransition(fn);
 
     const runCycle = (offset: number) => {
-      at(offset, () => { setKeysDown(true); });
-      at(offset + 350, () => { setKeysDown(false); });
+      if (document.hidden) return;
+      at(offset, () => defer(() => setKeysDown(true)));
+      at(offset + 350, () => defer(() => setKeysDown(false)));
       for (let i = 1; i <= QUERY.length; i++) {
-        at(offset + 700 + i * TICK_MS, () => setChars(i));
+        at(offset + 700 + i * TICK_MS, () => defer(() => setChars(i)));
       }
-      at(offset + 700 + QUERY.length * TICK_MS + 700, () => setSelected(true));
+      at(offset + 700 + QUERY.length * TICK_MS + 700, () => defer(() => setSelected(true)));
       at(offset + 700 + QUERY.length * TICK_MS + 2100, () => {
-        setSelected(false);
-        setChars(0);
+        defer(() => {
+          setSelected(false);
+          setChars(0);
+        });
       });
     };
 
     runCycle(400);
     const loop = window.setInterval(() => runCycle(0), 6400);
+    const onVisibilityChange = () => {
+      if (!document.hidden) return;
+      startTransition(() => {
+        setKeysDown(false);
+        setSelected(false);
+        setChars(0);
+      });
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
     return () => {
       cancelled = true;
       timers.forEach((t) => window.clearTimeout(t));
       window.clearInterval(loop);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
     };
   }, [inView, reduceMotion]);
 

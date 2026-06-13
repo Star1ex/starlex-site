@@ -73,6 +73,7 @@
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
+  contain: layout paint style;
 }
 /* Static, pre-softened gradients — no filter, no animation. A live filter
    here forces every blur surface above to resample each frame (scroll jank). */
@@ -115,6 +116,7 @@
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
+  contain: layout paint style;
 }
 .lx-lines svg { width: 100%; height: 100%; display: block; }
 
@@ -390,6 +392,8 @@
   overflow: hidden;
   transform-style: preserve-3d;
   will-change: transform;
+  backface-visibility: hidden;
+  contain: layout paint style;
   /* framer drives transform per scroll frame — the glass CSS transition
      would fight it and stutter */
   transition: none;
@@ -484,6 +488,7 @@
   gap: 4px;
   padding: 10px;
   min-height: 500px;
+  contain: layout paint style;
 }
 /* sidebar as a floating island: own rounded slab + rim, detached from edges */
 .lx-board-side {
@@ -630,6 +635,7 @@
   gap: 12px;
   padding: 14px 18px 20px;
   align-items: start;
+  contain: layout paint;
 }
 .lx-board-col { min-width: 0; }
 .lx-board-col-head {
@@ -756,7 +762,11 @@
 }
 
 /* ---------- chapters ---------- */
-.lx-section { margin-top: var(--lx-section-gap); }
+.lx-section {
+  margin-top: var(--lx-section-gap);
+  content-visibility: auto;
+  contain-intrinsic-size: auto 680px;
+}
 
 .lx-divider {
   height: 1px;
@@ -808,6 +818,7 @@
   width: min(480px, 100%);
   margin-inline: auto;
   overflow: hidden;
+  contain: layout paint style;
 }
 .lx-cmdk-input {
   display: flex;
@@ -893,6 +904,7 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+  contain: layout paint style;
 }
 .lx-rt-head {
   position: relative;
@@ -980,6 +992,7 @@
   flex-direction: column;
   gap: 2px;
   text-align: left;
+  contain: layout paint style;
 }
 .lx-tree-row {
   display: flex;
@@ -996,6 +1009,22 @@
 .lx-tree-row--sub { padding-left: 58px; font-size: 0.84rem; }
 .lx-tree-row--done { color: var(--sx-text-disabled); text-decoration: line-through; }
 .lx-tree-row .lx-kbd { margin-left: auto; }
+.lx-tree-subtasks {
+  display: grid;
+  grid-template-rows: 0fr;
+  opacity: 0;
+  transition:
+    grid-template-rows 520ms var(--ease-out-expo),
+    opacity 220ms ease;
+}
+.lx-tree-subtasks--open {
+  grid-template-rows: 1fr;
+  opacity: 1;
+}
+.lx-tree-subtasks-inner {
+  min-height: 0;
+  overflow: hidden;
+}
 .lx-tree-progress {
   margin-left: auto;
   font-family: var(--lx-font-mono);
@@ -1136,6 +1165,8 @@
   text-align: center;
   gap: 26px;
   position: relative;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 560px;
 }
 .lx-finale::before {
   content: "";
@@ -1161,6 +1192,8 @@
 .lx-finale-letter {
   display: inline-block;
   will-change: transform;
+  backface-visibility: hidden;
+  contain: paint;
   background: linear-gradient(180deg, var(--sx-text) 30%, rgb(244 242 240 / 0.22));
   -webkit-background-clip: text;
   background-clip: text;
@@ -1176,6 +1209,8 @@
   position: relative;
   z-index: 1;
   padding: 24px 0 40px;
+  content-visibility: auto;
+  contain-intrinsic-size: auto 320px;
 }
 .lx-footer-grid {
   display: grid;

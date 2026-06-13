@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { startTransition, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useInView, useReducedMotion } from 'framer-motion';
 import { Glass } from '@/shared/ui/glass/index.js';
-import { AVATARS, Av, TEAM } from './avatars.js';
+import { AVATARS, TEAM } from './avatarData.js';
+import { Av } from './avatars.js';
 
 interface Beat {
   status: string;
@@ -29,7 +30,10 @@ export function RealtimeDemo() {
 
   useEffect(() => {
     if (!inView || reduceMotion) return undefined;
-    const timer = window.setInterval(() => setBeat((b) => (b + 1) % BEATS.length), 2400);
+    const timer = window.setInterval(() => {
+      if (document.hidden) return;
+      startTransition(() => setBeat((b) => (b + 1) % BEATS.length));
+    }, 2400);
     return () => window.clearInterval(timer);
   }, [inView, reduceMotion]);
 

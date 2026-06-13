@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useReducedMotion, useScroll, useTransform } from 'framer-motion';
 import { ArrowUp } from 'lucide-react';
 import iconStarlex from '@/assets/icon-starlex.png';
 import { Reveal } from './Reveal.js';
@@ -23,6 +23,7 @@ function scrollToSection(id: string) {
 export function LanderFinale() {
   const ref = useRef<HTMLDivElement>(null);
   const wordRef = useRef<HTMLHeadingElement>(null);
+  const reduceMotion = useReducedMotion();
 
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end end'] });
   const scale = useTransform(scrollYProgress, [0, 1], [0.92, 1]);
@@ -31,11 +32,23 @@ export function LanderFinale() {
 
   // Per-letter cursor repulsion — imperative so it never re-renders React.
   useEffect(() => {
+    if (reduceMotion) return undefined;
+    if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return undefined;
+    const section = ref.current;
     const wrap = wordRef.current;
-    if (!wrap || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return undefined;
+    if (!section || !wrap) return undefined;
     const letters = Array.from(wrap.querySelectorAll<HTMLElement>('.lx-finale-letter'));
     const RADIUS = 240;
     let raf = 0;
+    let pointer: { x: number; y: number } | null = null;
+    let metrics: Array<{ el: HTMLElement; x: number; y: number }> = [];
+
+    const measure = () => {
+      metrics = letters.map((el) => {
+        const r = el.getBoundingClientRect();
+        return { el, x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      });
+    };
 
     const reset = () => {
       for (const el of letters) {
@@ -44,13 +57,15 @@ export function LanderFinale() {
       }
     };
     const onMove = (e: PointerEvent) => {
+      pointer = { x: e.clientX, y: e.clientY };
+      if (metrics.length === 0) measure();
       if (raf) return;
       raf = requestAnimationFrame(() => {
         raf = 0;
-        for (const el of letters) {
-          const r = el.getBoundingClientRect();
-          const dx = r.left + r.width / 2 - e.clientX;
-          const dy = r.top + r.height / 2 - e.clientY;
+        if (!pointer) return;
+        for (const { el, x, y } of metrics) {
+          const dx = x - pointer.x;
+          const dy = y - pointer.y;
           const dist = Math.hypot(dx, dy);
           if (dist < RADIUS) {
             const f = 1 - dist / RADIUS;
@@ -65,15 +80,27 @@ export function LanderFinale() {
         }
       });
     };
+    const invalidateMetrics = () => { metrics = []; };
+    const onLeave = () => {
+      pointer = null;
+      invalidateMetrics();
+      reset();
+    };
 
-    window.addEventListener('pointermove', onMove, { passive: true });
-    window.addEventListener('pointerleave', reset);
+    section.addEventListener('pointerenter', measure);
+    section.addEventListener('pointermove', onMove, { passive: true });
+    section.addEventListener('pointerleave', onLeave);
+    window.addEventListener('resize', invalidateMetrics, { passive: true });
+    window.addEventListener('scroll', invalidateMetrics, { passive: true });
     return () => {
-      window.removeEventListener('pointermove', onMove);
-      window.removeEventListener('pointerleave', reset);
+      section.removeEventListener('pointerenter', measure);
+      section.removeEventListener('pointermove', onMove);
+      section.removeEventListener('pointerleave', onLeave);
+      window.removeEventListener('resize', invalidateMetrics);
+      window.removeEventListener('scroll', invalidateMetrics);
       if (raf) cancelAnimationFrame(raf);
     };
-  }, []);
+  }, [reduceMotion]);
 
   return (
     <>
