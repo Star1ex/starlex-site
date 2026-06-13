@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
+import { LanderLines } from './components/LanderLines.js';
 import { LanderNav } from './components/LanderNav.js';
 import { LanderHero } from './components/LanderHero.js';
 import { LanderChapters } from './components/LanderChapters.js';
@@ -25,11 +26,12 @@ export function LanderPage() {
         <title>Starlex — every task, one pane of glass</title>
         <meta
           name="description"
-          content="Starlex is a fast, open-source task tracker for small teams. Projects, subtasks, and realtime boards in a keyboard-driven liquid-glass workspace."
+          content="Starlex is a fast task tracker for small teams. Projects, subtasks, and realtime boards in a keyboard-driven liquid-glass workspace."
         />
       </Helmet>
 
       <div className="lx-ambient" aria-hidden />
+      <LanderLines />
       <LanderNav />
 
       <main className="lx-main">

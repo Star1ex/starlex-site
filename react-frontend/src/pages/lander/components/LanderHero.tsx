@@ -4,6 +4,7 @@ import { motion, useInView, useScroll, useSpring, useTransform } from 'framer-mo
 import { Glass } from '@/shared/ui/glass/index.js';
 import iconStarlex from '@/assets/icon-starlex.png';
 import { BoardDemo } from './BoardDemo.js';
+import { Av, TEAM } from './avatars.js';
 import { EASE } from './Reveal.js';
 
 const lineReveal = {
@@ -53,19 +54,14 @@ export function LanderHero() {
       </h1>
 
       <motion.p className="lx-lede" {...fadeIn(0.45)}>
-        The open-source tracker for small teams: boards that move when your
-        teammates do, and a command palette that makes the mouse optional.
+        A fast tracker for small teams: boards that move when your teammates
+        do, and a command palette that makes the mouse optional.
       </motion.p>
 
       <motion.div className="lx-hero-actions" {...fadeIn(0.58)}>
         <Link to="/sign-up" className="lx-btn lx-btn--primary lx-btn--lg">Start for free</Link>
-        <a
-          href="https://github.com/critiq17/team-track"
-          target="_blank"
-          rel="noreferrer"
-          className="lx-btn lx-btn--ghost lx-btn--lg"
-        >
-          View source
+        <a href="mailto:support@starlex.cc" className="lx-btn lx-btn--ghost lx-btn--lg">
+          Contact us
         </a>
       </motion.div>
 
@@ -78,18 +74,20 @@ export function LanderHero() {
           style={{ rotateX, scale, opacity: frameOpacity, transformOrigin: 'center 20%' }}
         >
           <div className="lx-frame-bar" aria-hidden>
+            <span className="lx-frame-tick" />
             <img src={iconStarlex} className="lx-frame-glyph" alt="" />
-            <span className="lx-frame-crumbs">
-              Starlex HQ <i>›</i> Tasks <i>›</i> <strong>Board</strong>
+            <span className="lx-frame-route">
+              starlex<i>/</i>tasks<i>/</i><strong>board</strong>
+            </span>
+            <span className="lx-frame-views">
+              <span className="lx-frame-view lx-frame-view--on">Board</span>
+              <span className="lx-frame-view">List</span>
+              <span className="lx-frame-view">Timeline</span>
             </span>
             <span className="lx-frame-bar-right">
               <span className="lx-rt-avatars">
-                <span className="lx-avatar">AR</span>
-                <span className="lx-avatar">ZK</span>
-                <span className="lx-avatar">AT</span>
+                {TEAM.map((who) => <Av key={who} who={who} />)}
               </span>
-              <span className="lx-frame-sync"><i />Synced</span>
-              <span className="lx-kbd">⌘K</span>
             </span>
           </div>
           <BoardDemo active={boardInView} />
