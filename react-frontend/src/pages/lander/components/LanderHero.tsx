@@ -4,6 +4,7 @@ import { motion, useInView, useScroll, useSpring, useTransform } from 'framer-mo
 import { Glass } from '@/shared/ui/glass/index.js';
 import iconStarlex from '@/assets/icon-starlex.png';
 import { BoardDemo } from './BoardDemo.js';
+import { MobileWindowDeck } from './MobileWindowDeck.js';
 import { TEAM } from './avatarData.js';
 import { Av } from './avatars.js';
 import { EASE } from './Reveal.js';
@@ -66,33 +67,37 @@ export function LanderHero() {
         </a>
       </motion.div>
 
-      <div className="lx-hero-stage" ref={stageRef} id="product">
-        <Glass
-          as={motion.div}
-          variant="modal"
-          depth="floating"
-          className="lx-frame"
-          style={{ rotateX, scale, opacity: frameOpacity, transformOrigin: 'center 20%' }}
-        >
-          <div className="lx-frame-bar" aria-hidden>
-            <span className="lx-frame-tick" />
-            <img src={iconStarlex} className="lx-frame-glyph" alt="" />
-            <span className="lx-frame-route">
-              starlex<i>/</i>tasks<i>/</i><strong>board</strong>
-            </span>
-            <span className="lx-frame-views">
-              <span className="lx-frame-view lx-frame-view--on">Board</span>
-              <span className="lx-frame-view">List</span>
-              <span className="lx-frame-view">Timeline</span>
-            </span>
-            <span className="lx-frame-bar-right">
-              <span className="lx-rt-avatars">
-                {TEAM.map((who) => <Av key={who} who={who} />)}
+      <div className="lx-product-stage" id="product">
+        <MobileWindowDeck />
+
+        <div className="lx-hero-stage" ref={stageRef}>
+          <Glass
+            as={motion.div}
+            variant="modal"
+            depth="floating"
+            className="lx-frame"
+            style={{ rotateX, scale, opacity: frameOpacity, transformOrigin: 'center 20%' }}
+          >
+            <div className="lx-frame-bar" aria-hidden>
+              <span className="lx-frame-tick" />
+              <img src={iconStarlex} className="lx-frame-glyph" alt="" />
+              <span className="lx-frame-route">
+                starlex<i>/</i>tasks<i>/</i><strong>board</strong>
               </span>
-            </span>
-          </div>
-          <BoardDemo active={boardInView} />
-        </Glass>
+              <span className="lx-frame-views">
+                <span className="lx-frame-view lx-frame-view--on">Board</span>
+                <span className="lx-frame-view">List</span>
+                <span className="lx-frame-view">Timeline</span>
+              </span>
+              <span className="lx-frame-bar-right">
+                <span className="lx-rt-avatars">
+                  {TEAM.map((who) => <Av key={who} who={who} />)}
+                </span>
+              </span>
+            </div>
+            <BoardDemo active={boardInView} />
+          </Glass>
+        </div>
       </div>
     </header>
   );
