@@ -2,6 +2,7 @@ import React, { useRef, useState, useEffect } from "react";
 import { motion, useInView, type Variants } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "@/shared/contexts/useTheme.js";
+import { Seo } from "@/shared/seo/Seo.js";
 import iconStarlex from "@/assets/icon-starlex.png";
 
 type AboutUsProps = { variant?: "page" | "settings" };
@@ -140,6 +141,13 @@ export default function AboutUs({ variant = "page" }: AboutUsProps) {
       className="relative font-sans bg-[color:var(--bg-primary)] text-[color:var(--text-primary)] transition-colors duration-300"
       style={isSettings ? undefined : darkVars}
     >
+      {!isSettings && (
+        <Seo
+          title="About"
+          path="/about-us"
+          description="Meet the team behind Starlex and the principles that shape it: calm tools, speed-first interactions, and visible teams. Source is public by default."
+        />
+      )}
       {/* Star field — page only */}
       {!isSettings && (
         <div className="star-field pointer-events-none">
