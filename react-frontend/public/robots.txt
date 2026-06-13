@@ -1,9 +1,25 @@
+# Starlex — https://starlex.cc
 User-agent: *
 Allow: /
+Allow: /sign-in
+Allow: /sign-up
+Allow: /about-us
+
+# Private application surface — keep out of the index
 Disallow: /dashboard
+Disallow: /personal
+Disallow: /onboarding
+Disallow: /workspace/
+Disallow: /my-issues
 Disallow: /task/
 Disallow: /team/
 Disallow: /settings
 Disallow: /profile
+Disallow: /invite/
+Disallow: /verify-email
+Disallow: /reset-password
+Disallow: /forgot-password
+Disallow: /oauth/
 Disallow: /api/
+
 Sitemap: https://starlex.cc/sitemap.xml

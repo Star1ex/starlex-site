@@ -2,15 +2,116 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Primary meta. Tags also managed by react-helmet-async on the landing
+         route carry data-rh="true" so Helmet adopts and replaces them on
+         hydration instead of duplicating. Crawlers/social scrapers read this
+         static markup before any JS runs. -->
+    <title data-rh="true">Starlex — Task Tracker for Small Teams</title>
+    <meta
+      data-rh="true"
+      name="description"
+      content="Starlex is a fast, keyboard-first task tracker for small teams. Projects, subtasks, and realtime boards in one calm workspace. Start free."
+    />
+    <link data-rh="true" rel="canonical" href="https://starlex.cc/" />
+    <meta data-rh="true" name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="application-name" content="Starlex" />
+    <meta name="author" content="Starlex" />
+
+    <!-- Icons & PWA -->
     <link id="app-favicon" rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#050407" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f6f7fb" media="(prefers-color-scheme: light)" />
+    <meta name="apple-mobile-web-app-title" content="Starlex" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- Open Graph -->
+    <meta data-rh="true" property="og:type" content="website" />
+    <meta data-rh="true" property="og:site_name" content="Starlex" />
+    <meta data-rh="true" property="og:title" content="Starlex — Task Tracker for Small Teams" />
+    <meta
+      data-rh="true"
+      property="og:description"
+      content="A fast, keyboard-first task tracker for small teams. Projects, subtasks, and realtime boards in one calm workspace."
+    />
+    <meta data-rh="true" property="og:url" content="https://starlex.cc/" />
+    <meta data-rh="true" property="og:image" content="https://starlex.cc/og-image.png" />
+    <meta property="og:image:secure_url" content="https://starlex.cc/og-image.png" />
+    <meta property="og:image:type" content="image/png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Starlex — every task, one pane of glass" />
+    <meta data-rh="true" property="og:locale" content="en_US" />
+
+    <!-- Twitter / X -->
+    <meta data-rh="true" name="twitter:card" content="summary_large_image" />
+    <meta data-rh="true" name="twitter:title" content="Starlex — Task Tracker for Small Teams" />
+    <meta
+      data-rh="true"
+      name="twitter:description"
+      content="A fast, keyboard-first task tracker for small teams. Projects, subtasks, and realtime boards in one calm workspace."
+    />
+    <meta data-rh="true" name="twitter:image" content="https://starlex.cc/og-image.png" />
+    <meta name="twitter:image:alt" content="Starlex — every task, one pane of glass" />
+
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com" crossorigin />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@500;600;700;800&family=Inter:wght@400;450;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
-    <meta name="theme-color" content="#f6f7fb" media="(prefers-color-scheme: light)" />
+
+    <!-- Structured data: Organization + WebSite + SoftwareApplication -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://starlex.cc/#organization",
+          "name": "Starlex",
+          "url": "https://starlex.cc/",
+          "logo": "https://starlex.cc/icon-512.png",
+          "email": "support@starlex.cc",
+          "description": "Starlex is a fast, keyboard-first task tracker for small teams."
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://starlex.cc/#website",
+          "url": "https://starlex.cc/",
+          "name": "Starlex",
+          "publisher": { "@id": "https://starlex.cc/#organization" },
+          "inLanguage": "en"
+        },
+        {
+          "@type": "SoftwareApplication",
+          "name": "Starlex",
+          "applicationCategory": "BusinessApplication",
+          "applicationSubCategory": "Task Management",
+          "operatingSystem": "Web",
+          "url": "https://starlex.cc/",
+          "image": "https://starlex.cc/og-image.png",
+          "description": "A fast, keyboard-first task tracker for small teams. Projects, subtasks, and realtime boards in one calm, command-driven workspace.",
+          "featureList": [
+            "Command palette and keyboard shortcuts for every action",
+            "Realtime boards that sync across the whole team",
+            "Projects, subtasks, labels, and saved views",
+            "Personal My Issues queue"
+          ],
+          "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+          },
+          "publisher": { "@id": "https://starlex.cc/#organization" }
+        }
+      ]
+    }
+    </script>
+
     <script src="/theme-init.js"></script>
-    <title>Starlex</title>
   </head>
   <body>
     <div id="root"></div>
