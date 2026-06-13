@@ -16,11 +16,14 @@ function scrollToSection(id: string) {
 }
 
 /**
- * Floating glass header. Starts as bare text over the hero; once the page
- * scrolls, the glass material fades in underneath (Raycast-style pill dock).
+ * Floating glass header. Over the hero it sits wide and bare; once the page
+ * scrolls it contracts into a tight glass dock (CSS transitions the padding/
+ * gap, framer springs the lift). A shared-layout pill chases whichever link
+ * the cursor is on.
  */
 export function LanderNav() {
   const [scrolled, setScrolled] = useState(false);
+  const [hovered, setHovered] = useState<string | null>(null);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
@@ -37,8 +40,8 @@ export function LanderNav() {
         className={`lx-nav ${scrolled ? '' : 'lx-nav--top'}`}
         aria-label="Landing"
         initial={false}
-        animate={scrolled ? { y: 0, scale: 1 } : { y: 10, scale: 1.045 }}
-        transition={{ type: 'spring', stiffness: 220, damping: 24 }}
+        animate={scrolled ? { y: 0, scale: 1 } : { y: 8, scale: 1.04 }}
+        transition={{ type: 'spring', stiffness: 260, damping: 26, mass: 0.7 }}
       >
         <a
           className="lx-nav-brand"
@@ -48,14 +51,23 @@ export function LanderNav() {
           <img src={iconStarlex} alt="" />
           Starlex
         </a>
-        <div className="lx-nav-links">
+        <div className="lx-nav-links" onMouseLeave={() => setHovered(null)}>
           {links.map((l) => (
-            <button key={l.target} type="button" className="lx-nav-link" onClick={() => scrollToSection(l.target)}>
-              {l.label}
+            <button
+              key={l.target}
+              type="button"
+              className="lx-nav-link"
+              onMouseEnter={() => setHovered(l.target)}
+              onClick={() => scrollToSection(l.target)}
+            >
+              {hovered === l.target && (
+                <motion.span className="lx-nav-pill" layoutId="lx-nav-pill" transition={{ type: 'spring', stiffness: 420, damping: 34 }} />
+              )}
+              <span className="lx-nav-link-label">{l.label}</span>
             </button>
           ))}
         </div>
-        <Link to="/sign-in" className="lx-nav-link">Log in</Link>
+        <Link to="/sign-in" className="lx-nav-link lx-nav-link--login">Log in</Link>
         <Link to="/sign-up" className="lx-btn lx-btn--primary lx-nav-cta">Get started</Link>
       </Glass>
     </div>

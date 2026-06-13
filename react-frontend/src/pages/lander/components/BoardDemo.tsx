@@ -3,6 +3,7 @@ import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'framer-m
 import {
   CalendarDays, CheckCircle2, Home, Inbox, Kanban, LayoutList, Plus, Search, Settings, Users,
 } from 'lucide-react';
+import { Av } from './avatars.js';
 
 type ColumnId = 'backlog' | 'todo' | 'progress' | 'review' | 'done';
 
@@ -118,10 +119,10 @@ export function BoardDemo({ active }: { active: boolean }) {
         <div className="lx-board-side-foot">
           <div className="lx-board-nav-item"><Settings /> Settings</div>
           <div className="lx-board-user">
-            <span className="lx-avatar">AC</span>
+            <Av who="AC" />
             <span className="lx-board-user-meta">
               <strong>Artem Chaika</strong>
-              <span>artem@starlex.app</span>
+              <span>artem@starlex.cc</span>
             </span>
           </div>
         </div>
@@ -180,7 +181,7 @@ export function BoardDemo({ active }: { active: boolean }) {
                               {card.due.text}
                             </span>
                           )}
-                          <span className="lx-avatar">{card.who}</span>
+                          <Av who={card.who} />
                         </div>
                       </motion.div>
                     );

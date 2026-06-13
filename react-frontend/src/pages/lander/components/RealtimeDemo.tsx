@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { AnimatePresence, motion, useInView, useReducedMotion } from 'framer-motion';
 import { Glass } from '@/shared/ui/glass/index.js';
+import { AVATARS, Av, TEAM } from './avatars.js';
 
 interface Beat {
   status: string;
@@ -39,9 +40,7 @@ export function RealtimeDemo() {
       <div className="lx-rt-head">
         <span className="lx-rt-live"><i />Live</span>
         <div className="lx-rt-avatars" aria-hidden>
-          <span className="lx-avatar">AR</span>
-          <span className="lx-avatar">ZK</span>
-          <span className="lx-avatar">AT</span>
+          {TEAM.map((who) => <Av key={who} who={who} />)}
         </div>
       </div>
 
@@ -73,7 +72,9 @@ export function RealtimeDemo() {
               exit={{ opacity: 0, scale: 0.6 }}
               transition={{ type: 'spring', stiffness: 420, damping: 30 }}
             >
-              {current.who}
+              {AVATARS[current.who]
+                ? <img src={AVATARS[current.who].src} alt="" />
+                : current.who}
             </motion.span>
           </AnimatePresence>
         </div>
@@ -89,7 +90,7 @@ export function RealtimeDemo() {
             exit={{ opacity: 0, x: 8 }}
             transition={{ duration: 0.25, ease: 'easeOut' }}
           >
-            <span className="lx-avatar">{current.who}</span>
+            <Av who={current.who} />
             {current.event} · just now
           </motion.span>
         </AnimatePresence>
