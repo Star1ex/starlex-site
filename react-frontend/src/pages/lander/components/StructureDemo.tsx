@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { startTransition, useEffect, useRef, useState } from 'react';
 import { motion, useInView, useReducedMotion } from 'framer-motion';
 import { CheckCircle2, ChevronRight, Circle, Kanban } from 'lucide-react';
 import { Glass } from '@/shared/ui/glass/index.js';
@@ -48,19 +48,33 @@ export function StructureDemo() {
     let cancelled = false;
     const timers: number[] = [];
     const at = (ms: number, fn: () => void) => {
-      timers.push(window.setTimeout(() => { if (!cancelled) fn(); }, ms));
+      timers.push(window.setTimeout(() => { if (!cancelled && !document.hidden) fn(); }, ms));
     };
+    const defer = (fn: () => void) => startTransition(fn);
     const cycle = () => {
-      at(400, () => setOpen(true));
-      [1, 2, 3].forEach((n) => at(1300 + n * 1100, () => setDone(n)));
-      at(6400, () => { setOpen(false); setDone(0); });
+      if (document.hidden) return;
+      at(400, () => defer(() => setOpen(true)));
+      [1, 2, 3].forEach((n) => at(1300 + n * 1100, () => defer(() => setDone(n))));
+      at(6400, () => defer(() => {
+        setOpen(false);
+        setDone(0);
+      }));
     };
     cycle();
     const loop = window.setInterval(cycle, 7600);
+    const onVisibilityChange = () => {
+      if (!document.hidden) return;
+      startTransition(() => {
+        setOpen(false);
+        setDone(0);
+      });
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
     return () => {
       cancelled = true;
       timers.forEach((t) => window.clearTimeout(t));
       window.clearInterval(loop);
+      document.removeEventListener('visibilitychange', onVisibilityChange);
     };
   }, [inView, reduceMotion]);
 
@@ -84,29 +98,27 @@ export function StructureDemo() {
         <ProgressRing done={done} total={SUBTASKS.length} />
       </div>
 
-      <motion.div
-        style={{ overflow: 'hidden' }}
-        animate={{ height: open ? 'auto' : 0, opacity: open ? 1 : 0 }}
-        transition={{ type: 'spring', stiffness: 260, damping: 30 }}
-      >
-        {SUBTASKS.map((title, i) => {
-          const checked = done > i;
-          return (
-            <motion.div
-              key={title}
-              className={`lx-tree-row lx-tree-row--sub ${checked ? 'lx-tree-row--done' : ''}`}
-              initial={false}
-              animate={{ opacity: open ? 1 : 0, x: open ? 0 : -10 }}
-              transition={{ type: 'spring', stiffness: 260, damping: 30, delay: open ? 0.08 * i : 0 }}
-            >
-              {checked
-                ? <CheckCircle2 style={{ color: '#79c9a4' }} />
-                : <Circle style={{ opacity: 0.45 }} />}
-              {title}
-            </motion.div>
-          );
-        })}
-      </motion.div>
+      <div className={`lx-tree-subtasks ${open ? 'lx-tree-subtasks--open' : ''}`}>
+        <div className="lx-tree-subtasks-inner">
+          {SUBTASKS.map((title, i) => {
+            const checked = done > i;
+            return (
+              <motion.div
+                key={title}
+                className={`lx-tree-row lx-tree-row--sub ${checked ? 'lx-tree-row--done' : ''}`}
+                initial={false}
+                animate={{ opacity: open ? 1 : 0, x: open ? 0 : -10 }}
+                transition={{ type: 'spring', stiffness: 260, damping: 30, delay: open ? 0.08 * i : 0 }}
+              >
+                {checked
+                  ? <CheckCircle2 style={{ color: '#79c9a4' }} />
+                  : <Circle style={{ opacity: 0.45 }} />}
+                {title}
+              </motion.div>
+            );
+          })}
+        </div>
+      </div>
     </Glass>
   );
 }

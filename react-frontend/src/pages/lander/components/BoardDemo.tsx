@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { startTransition, useEffect, useRef, useState } from 'react';
 import { AnimatePresence, LayoutGroup, motion, useReducedMotion } from 'framer-motion';
 import {
   CalendarDays, CheckCircle2, Home, Inbox, Kanban, LayoutList, Plus, Search, Settings, Users,
@@ -88,16 +88,19 @@ export function BoardDemo({ active }: { active: boolean }) {
   useEffect(() => {
     if (!active || reduceMotion) return undefined;
     const timer = window.setInterval(() => {
+      if (document.hidden) return;
       const [card, from, to] = SCRIPT[stepRef.current % SCRIPT.length];
       stepRef.current += 1;
-      setLastMoved(card);
-      setCols((prev) => {
-        if (!prev[from].includes(card) || prev[to].includes(card)) return prev;
-        return {
-          ...prev,
-          [from]: prev[from].filter((id) => id !== card),
-          [to]: [card, ...prev[to]],
-        };
+      startTransition(() => {
+        setLastMoved(card);
+        setCols((prev) => {
+          if (!prev[from].includes(card) || prev[to].includes(card)) return prev;
+          return {
+            ...prev,
+            [from]: prev[from].filter((id) => id !== card),
+            [to]: [card, ...prev[to]],
+          };
+        });
       });
     }, 2400);
     return () => window.clearInterval(timer);
@@ -160,7 +163,7 @@ export function BoardDemo({ active }: { active: boolean }) {
                     return (
                       <motion.div
                         key={id}
-                        layout
+                        layout="position"
                         layoutId={id}
                         className={`lx-card ${lastMoved === id ? 'lx-card--moved' : ''}`}
                         transition={{ type: 'spring', stiffness: 320, damping: 30 }}

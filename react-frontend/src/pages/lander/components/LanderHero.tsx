@@ -4,7 +4,8 @@ import { motion, useInView, useScroll, useSpring, useTransform } from 'framer-mo
 import { Glass } from '@/shared/ui/glass/index.js';
 import iconStarlex from '@/assets/icon-starlex.png';
 import { BoardDemo } from './BoardDemo.js';
-import { Av, TEAM } from './avatars.js';
+import { TEAM } from './avatarData.js';
+import { Av } from './avatars.js';
 import { EASE } from './Reveal.js';
 
 const lineReveal = {
